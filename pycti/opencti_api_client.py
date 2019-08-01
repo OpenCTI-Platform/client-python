@@ -19,7 +19,7 @@ class OpenCTIApiClient:
         :param token: The API key
     """
 
-    def __init__(self, url, token, log_level='info'):
+    def __init__(self, url, token, ssl_verify=True, log_level='info'):
         self.log_level = log_level
         # Configure logger
         numeric_level = getattr(logging, self.log_level.upper(), None)
@@ -32,9 +32,10 @@ class OpenCTIApiClient:
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json'
         }
+        self.ssl_verify = ssl_verify
 
     def query(self, query, variables={}):
-        r = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.request_headers)
+        r = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.request_headers, verify=self.ssl_verify)
         if r.status_code == requests.codes.ok:
             result = r.json()
             if 'errors' in result:
