@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+import io
 import requests
 import datetime
 import dateutil.parser
@@ -10,6 +11,11 @@ import base64
 import logging
 
 from pycti.opencti_stix2 import OpenCTIStix2
+
+class File:
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
 
 
 class OpenCTIApiClient:
@@ -28,13 +34,41 @@ class OpenCTIApiClient:
         logging.basicConfig(level=numeric_level)
 
         self.api_url = url + '/graphql'
-        self.request_headers = {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-        }
+        self.request_headers = {'Authorization': 'Bearer ' + token}
 
     def query(self, query, variables={}):
-        r = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.request_headers)
+        files = []
+        query_var = {}
+        # Check if variables contains byte array
+        # Implementation of spec https://github.com/jaydenseric/graphql-multipart-request-spec
+        var_keys = variables.keys()
+        for key in var_keys:
+            val = variables[key]
+            if type(val) is File:
+                files.append({'key': key, 'file': val})
+                query_var[key] = None
+            else:
+                query_var[key] = val
+        # If yes, transform variable (file to null) and create multipart query
+        if len(files) > 0:
+            multipart_form_data = {'operations': json.dumps({'query': query, 'variables': query_var})}
+            # Add the files
+            multipart_files = []
+            for j, data_file in enumerate(files):
+                file = data_file['file']
+                multipart_files.append((str(j), (file.name, io.BytesIO(file.data.encode()))))
+            # Build the multipart map
+            file_vars = {}
+            for i, data_file in enumerate(files):
+                file = data_file['file']
+                var_name = "variables." + data_file['key']
+                file_vars[str(i)] = [var_name] if len(files) == 1 else [(var_name + "." + i)]
+            multipart_form_data['map'] = json.dumps(file_vars)
+            r = requests.post(self.api_url, data=multipart_form_data, files=multipart_files, headers=self.request_headers)
+        # If no
+        else:
+            r = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.request_headers)
+        # Build response
         if r.status_code == requests.codes.ok:
             result = r.json()
             if 'errors' in result:
@@ -329,17 +363,14 @@ class OpenCTIApiClient:
 
     def push_stix_domain_entity_export(self, id, export_id, data):
         query = """
-            mutation StixDomainEntityEdit($id: ID!, $exportId: String!, $rawData: String!) {
+            mutation StixDomainEntityEdit($id: ID!, $exportId: String!) {
                 stixDomainEntityEdit(id: $id) {
-                    exportPush(exportId: $exportId, rawData: $rawData)
+                    exportPush(exportId: $exportId, file: $file)
                 }
-            }
+            } 
         """
-        self.query(query, {
-            'id': id,
-            'exportId': export_id,
-            'rawData': data
-        })
+        f = File('file_export', data)
+        self.query(query, {'id': id, 'exportId': export_id, 'file': f})
 
     def delete_stix_domain_entity(self, id):
         logging.info('Deleting + ' + id + '...')
