@@ -37,34 +37,54 @@ class OpenCTIApiClient:
         self.request_headers = {'Authorization': 'Bearer ' + token}
 
     def query(self, query, variables={}):
-        files = []
         query_var = {}
-        # Check if variables contains byte array
+        files_vars = []
         # Implementation of spec https://github.com/jaydenseric/graphql-multipart-request-spec
+        # Support for single or multiple upload
+        # Batching or mixed upload or not supported
         var_keys = variables.keys()
         for key in var_keys:
             val = variables[key]
-            if type(val) is File:
-                files.append({'key': key, 'file': val})
-                query_var[key] = None
+            is_file = type(val) is File
+            is_files = isinstance(val, list) and all(map(lambda x: isinstance(x, File), val))
+            if is_file or is_files:
+                files_vars.append({'key': key, 'file': val, 'multiple': is_files})
+                query_var[key] = None if is_file else [None] * len(val)
             else:
                 query_var[key] = val
         # If yes, transform variable (file to null) and create multipart query
-        if len(files) > 0:
-            multipart_form_data = {'operations': json.dumps({'query': query, 'variables': query_var})}
-            # Add the files
-            multipart_files = []
-            for j, data_file in enumerate(files):
-                file = data_file['file']
-                multipart_files.append((str(j), (file.name, io.BytesIO(file.data.encode()))))
+        if len(files_vars) > 0:
+            multipart_data = {'operations': json.dumps({'query': query, 'variables': query_var})}
             # Build the multipart map
+            map_index = 0
             file_vars = {}
-            for i, data_file in enumerate(files):
-                file = data_file['file']
-                var_name = "variables." + data_file['key']
-                file_vars[str(i)] = [var_name] if len(files) == 1 else [(var_name + "." + i)]
-            multipart_form_data['map'] = json.dumps(file_vars)
-            r = requests.post(self.api_url, data=multipart_form_data, files=multipart_files, headers=self.request_headers)
+            for file_var_item in files_vars:
+                is_multiple_files = file_var_item['multiple']
+                var_name = "variables." + file_var_item['key']
+                if is_multiple_files:
+                    # [(var_name + "." + i)] if is_multiple_files else
+                    for _ in file_var_item['file']:
+                        file_vars[str(map_index)] = [(var_name + "." + str(map_index))]
+                        map_index += 1
+                else:
+                    file_vars[str(map_index)] = [var_name]
+                    map_index += 1
+            multipart_data['map'] = json.dumps(file_vars)
+            # Add the files
+            file_index = 0
+            multipart_files = []
+            for file_var_item in files_vars:
+                files = file_var_item['file']
+                is_multiple_files = file_var_item['multiple']
+                if is_multiple_files:
+                    for file in files:
+                        multipart_files.append((str(file_index), (file.name, io.BytesIO(file.data.encode()))))
+                        file_index += 1
+                else:
+                    multipart_files.append((str(file_index), (files.name, io.BytesIO(files.data.encode()))))
+                    file_index += 1
+            # Send the multipart request
+            r = requests.post(self.api_url, data=multipart_data, files=multipart_files, headers=self.request_headers)
         # If no
         else:
             r = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.request_headers)
