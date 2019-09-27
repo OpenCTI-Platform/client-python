@@ -383,14 +383,13 @@ class OpenCTIApiClient:
 
     def push_stix_domain_entity_export(self, id, export_id, data):
         query = """
-            mutation StixDomainEntityEdit($id: ID!, $exportId: String!) {
+            mutation StixDomainEntityEdit($id: ID!, $file: Upload!) {
                 stixDomainEntityEdit(id: $id) {
-                    exportPush(exportId: $exportId, file: $file)
+                    exportPush(file: $file)
                 }
             } 
         """
-        f = File('file_export', data)
-        self.query(query, {'id': id, 'exportId': export_id, 'file': f})
+        self.query(query, {'id': id, 'file': (File(export_id, data))})
 
     def delete_stix_domain_entity(self, id):
         logging.info('Deleting + ' + id + '...')
@@ -3637,7 +3636,7 @@ class OpenCTIApiClient:
             bundle['objects'] = stix2.export_report(self.parse_stix(self.get_report(entity_id)), mode)
         if entity_type == 'threat-actor':
             bundle['objects'] = stix2.export_threat_actor(self.parse_stix(self.get_threat_actor(entity_id)))
-
+        # TODO ADD MORE EXPORT TYPES
         return bundle
 
     def stix2_export_bundle(self, types=[]):
