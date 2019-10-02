@@ -1,27 +1,65 @@
 # coding: utf-8
+import threading
 
 import pika
 import logging
 import json
+import time
 import base64
 import uuid
+
+import requests
+from pika.exceptions import UnroutableError, NackError
 from stix2validator import validate_string
 
-EXCHANGE_NAME = 'amqp.opencti'
+from opencti_connector import OpenCTIConnector
+from pycti import OpenCTIApiClient
+
+
+class ListenQueue(threading.Thread):
+    def __init__(self, queue_name, channel, callback):
+        threading.Thread.__init__(self)
+        self.channel = channel
+        self.callback = callback
+        self.queue_name = queue_name
+
+    def _process_message(self, channel, method, properties, body):
+        try:
+            self.callback(json.loads(body), channel, method, properties)
+            channel.basic_ack(delivery_tag=method.delivery_tag)
+        except requests.exceptions.Timeout:
+            logging.warning('Error calling the API, prevent message ack')
+
+    def run(self):
+        logging.info('Starting consuming listen queue')
+        self.channel.basic_consume(queue=self.queue_name, on_message_callback=self._process_message)
+        self.channel.start_consuming()
+
+
+class PingAlive(threading.Thread):
+    def __init__(self, connector_id, api):
+        threading.Thread.__init__(self)
+        self.connector_id = connector_id
+        self.api = api
+
+    def ping(self):
+        logging.debug('Ping api')
+        self.api.ping_connector(self.connector_id)
+        time.sleep(10)
+        self.ping()
+
+    def run(self):
+        logging.info('Starting ping alive thread')
+        self.ping()
 
 
 class OpenCTIConnectorHelper:
     """
         Python API for OpenCTI connector
-        :param identifier: Connector identifier
-        :param config: Connector configuration
-        :param rabbitmq_hostname: RabbitMQ hostname
-        :param rabbitmq_port: RabbitMQ hostname
-        :param rabbitmq_username: RabbitMQ hostname
-        :param rabbitmq_password: RabbitMQ password
+        :param connector: OpenCTIConnector identifier
+        :param api_client: OpenCTIApiClient api
     """
-
-    def __init__(self, identifier, connector_config, rabbitmq_config, log_level='info'):
+    def __init__(self, connector: OpenCTIConnector, opencti_url: str, opencti_token: str, log_level='info'):
         # Configure logger
         numeric_level = getattr(logging, log_level.upper(), None)
         if not isinstance(numeric_level, int):
@@ -29,71 +67,42 @@ class OpenCTIConnectorHelper:
         logging.basicConfig(level=numeric_level)
 
         # Initialize configuration
-        self.connection = None
-        self.channel = None
-        self.identifier = identifier
-        self.config = connector_config
-        self.rabbitmq_hostname = rabbitmq_config['hostname']
-        self.rabbitmq_port = rabbitmq_config['port']
-        self.rabbitmq_username = rabbitmq_config['username']
-        self.rabbitmq_password = rabbitmq_config['password']
-        self.queue_name = 'import-connectors-' + self.identifier
-        self.routing_key = 'import.connectors.' + self.identifier
+        self.api = OpenCTIApiClient(opencti_url, opencti_token, log_level)
 
-        # Connect to RabbitMQ
-        self.connection = self._connect()
-        self.channel = self._create_channel()
-        self._create_queue()
-        logging.info('Successfully connected to RabbitMQ')
+        # Register the connector in OpenCTI
+        connector_configuration = self.api.register_connector(connector)
+        self.connector_id = connector_configuration['id']
+        self.config = connector_configuration['config']
+
+        # Connect to the broker
+        self.pika_connection = pika.BlockingConnection(pika.URLParameters(self.config['uri']))
+        self.channel = self.pika_connection.channel()
+
+        # Start ping thread
+        self.ping = PingAlive(connector.id, self.api)
+        self.ping.start()
 
         # Initialize caching
         self.cache_index = {}
         self.cache_added = []
 
-    def _connect(self):
-        try:
-            credentials = pika.PlainCredentials(self.rabbitmq_username, self.rabbitmq_password)
-            parameters = pika.ConnectionParameters(self.rabbitmq_hostname, self.rabbitmq_port, '/', credentials)
-            return pika.BlockingConnection(parameters)
-        except:
-            logging.error('Unable to connect to RabbitMQ with the given parameters')
-
-    def _create_channel(self):
-        try:
-            channel = self.connection.channel()
-            channel.exchange_declare(exchange=EXCHANGE_NAME, exchange_type='direct', durable=True)
-            return channel
-        except:
-            logging.error('Unable to open channel to RabbitMQ with the given parameters')
-
-    def _create_queue(self):
-        if self.channel is not None:
-            config_encoded = base64.b64encode(json.dumps(self.config).encode('utf-8')).decode('utf-8')
-            try:
-                self.channel.queue_declare(self.queue_name, durable=True, passive=True, arguments={'config': config_encoded})
-            except:
-                self.channel = self._create_channel()
-                self.channel.queue_delete(self.queue_name)
-                self.channel.queue_declare(self.queue_name, durable=True, arguments={'config': config_encoded})
-            self.channel.queue_bind(queue=self.queue_name, exchange=EXCHANGE_NAME, routing_key=self.routing_key)
-
-    def _reconnect(self):
-        self.connection = self._connect()
-        self.channel = self._create_channel()
+    def listen(self, message_callback):
+        listen_queue = ListenQueue(self.config['listen'], self.channel, message_callback)
+        listen_queue.start()
 
     def send_stix2_bundle(self, bundle, entities_types=[]):
         bundles = self.split_stix2_bundle(bundle)
         for bundle in bundles:
-            self._send_bundle('stix2-bundle', bundle, entities_types)
+            self._send_bundle(bundle, entities_types)
 
-    def _send_bundle(self, type, bundle, entities_types=[]):
+    def _send_bundle(self, bundle, entities_types=[]):
         """
             This method send a STIX2 bundle to RabbitMQ to be consumed by workers
             :param bundle: A valid STIX2 bundle
             :param entities_types: Entities types to ingest
         """
         if self.channel is None or not self.channel.is_open:
-            self._reconnect()
+            self.channel = self.pika_connection.channel()
 
         # Validate the STIX 2 bundle
         # validation = validate_string(bundle)
@@ -102,19 +111,17 @@ class OpenCTIConnectorHelper:
 
         # Prepare the message
         message = {
-            'type': type,
             'entities_types': entities_types,
             'content': base64.b64encode(bundle.encode('utf-8')).decode('utf-8')
         }
 
         # Send the message
         try:
-            self.channel.basic_publish(EXCHANGE_NAME, self.routing_key, json.dumps(message))
+            self.channel.basic_publish('amqp.worker.exchange', self.connector_id, json.dumps(message))
             logging.info('Bundle has been sent')
-        except:
-            logging.error('Unable to send bundle, reconnecting and resending...')
-            self._reconnect()
-            self.channel.basic_publish(EXCHANGE_NAME, self.routing_key, json.dumps(message))
+        except (UnroutableError, NackError) as e:
+            logging.error('Unable to send bundle, retry...', e)
+            self._send_bundle(bundle, entities_types)
 
     def split_stix2_bundle(self, bundle):
         self.cache_index = {}
@@ -151,15 +158,6 @@ class OpenCTIConnectorHelper:
                 bundles.append(self.stix2_create_bundle(items_to_send))
 
         return bundles
-
-    def stix2_create_bundle(self, items):
-        bundle = {
-            'type': 'bundle',
-            'id': 'bundle--' + str(uuid.uuid4()),
-            'spec_version': '2.0',
-            'objects': items
-        }
-        return json.dumps(bundle)
 
     def stix2_get_embedded_objects(self, item):
         # Marking definitions
@@ -225,7 +223,8 @@ class OpenCTIConnectorHelper:
                 items = items + self.stix2_get_entity_objects(item)
         return items
 
-    def stix2_deduplicate_objects(self, items):
+    @staticmethod
+    def stix2_deduplicate_objects(items):
         ids = []
         final_items = []
         for item in items:
@@ -233,3 +232,13 @@ class OpenCTIConnectorHelper:
                 final_items.append(item)
                 ids.append(item['id'])
         return final_items
+
+    @staticmethod
+    def stix2_create_bundle(items):
+        bundle = {
+            'type': 'bundle',
+            'id': 'bundle--' + str(uuid.uuid4()),
+            'spec_version': '2.0',
+            'objects': items
+        }
+        return json.dumps(bundle)

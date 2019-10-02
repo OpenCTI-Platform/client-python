@@ -7,10 +7,11 @@ import datetime
 import dateutil.parser
 import json
 import uuid
-import base64
 import logging
 
+from opencti_connector import OpenCTIConnector
 from pycti.opencti_stix2 import OpenCTIStix2
+
 
 class File:
     def __init__(self, name, data):
@@ -26,15 +27,23 @@ class OpenCTIApiClient:
     """
 
     def __init__(self, url, token, log_level='info'):
-        self.log_level = log_level
+        # Check configuration
+        if url is None or len(token) == 0:
+            raise ValueError('Url configuration must be configurated')
+        if token is None or len(token) == 0 or token == 'ChangeMe':
+            raise ValueError('Token configuration must be the same as APP__ADMIN__TOKEN')
         # Configure logger
+        self.log_level = log_level
         numeric_level = getattr(logging, self.log_level.upper(), None)
         if not isinstance(numeric_level, int):
             raise ValueError('Invalid log level: ' + self.log_level)
         logging.basicConfig(level=numeric_level)
-
+        # Define API
         self.api_url = url + '/graphql'
         self.request_headers = {'Authorization': 'Bearer ' + token}
+        # Check if openCTI is available
+        if not self.health_check():
+            raise ValueError('OpenCTI API seems down')
 
     def query(self, query, variables={}):
         query_var = {}
@@ -113,6 +122,49 @@ class OpenCTIApiClient:
             return False
         return False
 
+    def connectors(self):
+        query = """
+            query GetConnectors {
+                connectors {
+                    id
+                    name
+                    config {
+                        uri
+                        listen
+                        push
+                    }
+                }
+            }
+        """
+        result = self.query(query)
+        return result['data']['connectors']
+
+    def ping_connector(self, connector_id):
+        query = """
+            mutation PingConnector($id: String!) {
+                pingConnector(id: $id) {
+                    id
+                }
+            }
+           """
+        self.query(query, {'id': connector_id})
+
+    def register_connector(self, connector: OpenCTIConnector):
+        query = """
+            mutation RegisterConnector($input: RegisterConnectorInput) {
+                registerConnector(input: $input) {
+                    id
+                    config {
+                        uri
+                        listen
+                        push
+                    }
+                }
+            }
+           """
+        result = self.query(query, connector.to_input())
+        return result['data']['registerConnector']
+
     def parse_stix(self, data):
         if 'createdByRef' in data and data['createdByRef'] is not None and 'node' in data['createdByRef']:
             data['createdByRef'] = data['createdByRef']['node']
@@ -165,31 +217,6 @@ class OpenCTIApiClient:
                 'key': key,
                 'value': value
             }
-        })
-
-    def get_connectors(self):
-        query = """
-            query Connectors {
-                connectors {
-                    identifier
-                    config_template
-                    config
-               }
-            }
-           """
-        result = self.query(query)
-        return result['data']['connectors']
-
-    def update_connector_config(self, identifier, config):
-        logging.info('Updating connector config of ' + identifier + '...')
-        query = """
-            mutation ConnectorConfig($identifier: String!, $config: String!) {
-                connectorConfig(identifier: $identifier, config: $config)
-            }
-        """
-        self.query(query, {
-            'identifier': identifier,
-            'config': base64.b64encode(json.dumps(config).encode('ascii')).decode('ascii')
         })
 
     def get_stix_domain_entity(self, id):
@@ -3623,6 +3650,13 @@ class OpenCTIApiClient:
         data = json.loads(json_data)
         stix2 = OpenCTIStix2(self, self.log_level)
         stix2.import_bundle(data, update, types)
+
+    def stix2_import_bundle_from_uri(self, fetch_uri, update=False, types=[]):
+        r = requests.get(fetch_uri, headers=self.request_headers)
+        data = json.loads(r.text)
+        stix2 = OpenCTIStix2(self, self.log_level)
+        imported_elements = stix2.import_bundle(data, update, types)
+        # TODO
 
     def stix2_export_entity(self, entity_type, entity_id, mode='simple'):
         stix2 = OpenCTIStix2(self, self.log_level)

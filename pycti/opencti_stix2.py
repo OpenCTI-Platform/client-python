@@ -278,7 +278,7 @@ class OpenCTIStix2:
         return result
 
     def import_object(self, stix_object, update=False):
-        logging.info('Importing a ' + stix_object['type'])
+        logging.info('Importing a ' + stix_object['type'] + ' (id: ' + stix_object['id'] + ')')
         # Reports
         reports = {}
         # Created By Ref
@@ -1189,46 +1189,32 @@ class OpenCTIStix2:
 
     def import_bundle(self, stix_bundle, update=False, types=[]):
         self.mapping_cache = {}
-        # Check if the bundle is correctly formated
+        # Check if the bundle is correctly formatted
         if 'type' not in stix_bundle or stix_bundle['type'] != 'bundle':
             logging.error('JSON data type is not a STIX2 bundle')
             return None
         if 'objects' not in stix_bundle or len(stix_bundle['objects']) == 0:
             logging.error('JSON data objects is empty')
             return None
-
-        start_time = time.time()
-        for item in stix_bundle['objects']:
+        # Iter each object of the bundle
+        stix_objects = stix_bundle['objects']
+        imported_elements = []
+        for item in stix_objects:
+            start_time = time.time()
             if item['type'] == 'marking-definition':
                 self.import_object(item, update)
-        end_time = time.time()
-        logging.info("Marking definitions imported in: %ssecs" % round(end_time - start_time))
-
-        start_time = time.time()
-        for item in stix_bundle['objects']:
-            if item['type'] == 'identity' and (len(types) == 0 or 'identity' in types or (CustomProperties.IDENTITY_TYPE in item and item[CustomProperties.IDENTITY_TYPE] in types)):
+            elif item['type'] == 'identity' and (len(types) == 0 or 'identity' in types or (CustomProperties.IDENTITY_TYPE in item and item[CustomProperties.IDENTITY_TYPE] in types)):
                 self.import_object(item, update)
-        end_time = time.time()
-        logging.info("Identities imported in: %ssecs" % round(end_time - start_time))
-
-        start_time = time.time()
-        for item in stix_bundle['objects']:
-            if item['type'] != 'relationship' and item['type'] != 'report' and (
-                    len(types) == 0 or item['type'] in types):
+            elif item['type'] != 'relationship' and item['type'] != 'report' and (len(types) == 0 or item['type'] in types):
                 self.import_object(item, update)
-        end_time = time.time()
-        logging.info("Objects imported in: %ssecs" % round(end_time - start_time))
-
-        start_time = time.time()
-        for item in stix_bundle['objects']:
-            if item['type'] == 'relationship':
+            elif item['type'] == 'relationship':
                 self.import_relationship(item, update)
-        end_time = time.time()
-        logging.info("Relationships imported in: %ssecs" % round(end_time - start_time))
-
-        start_time = time.time()
-        for item in stix_bundle['objects']:
-            if item['type'] == 'report' and (len(types) == 0 or 'report' in types):
+            elif item['type'] == 'report' and (len(types) == 0 or 'report' in types):
                 self.import_object(item, update)
-        end_time = time.time()
-        logging.info("Reports imported in: %ssecs" % round(end_time - start_time))
+            else:
+                logging.warning("%s not imported, need to be implemented.")
+                continue
+            end_time = time.time()
+            logging.info("%s imported in: %ssecs" % (item['type'], round(end_time - start_time)))
+            imported_elements.append({'elementId': item['id'], 'elementType': item['type']})
+        return imported_elements
