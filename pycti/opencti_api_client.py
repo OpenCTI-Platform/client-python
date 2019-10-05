@@ -141,13 +141,21 @@ class OpenCTIApiClient:
 
     def ping_connector(self, connector_id):
         query = """
-            mutation PingConnector($id: String!) {
+            mutation PingConnector($id: ID!) {
                 pingConnector(id: $id) {
                     id
                 }
             }
            """
         self.query(query, {'id': connector_id})
+
+    def report_job_error(self, job_id, message):
+        query = """
+            mutation ReportJobError($id: ID!, $message: String!) {
+                reportJobError(id: $id, message: $message)
+            }
+           """
+        self.query(query, {'id': job_id, 'message': message})
 
     def register_connector(self, connector: OpenCTIConnector):
         query = """
@@ -157,7 +165,9 @@ class OpenCTIApiClient:
                     config {
                         uri
                         listen
+                        listen_exchange
                         push
+                        push_exchange
                     }
                 }
             }
@@ -408,15 +418,15 @@ class OpenCTIApiClient:
             }
         })
 
-    def push_stix_domain_entity_export(self, id, export_id, data):
+    def push_stix_domain_entity_export(self, job_id, entity_id, file_name, data):
         query = """
-            mutation StixDomainEntityEdit($id: ID!, $file: Upload!) {
+            mutation StixDomainEntityEdit($id: ID!, $jobId: ID!, $file: Upload!) {
                 stixDomainEntityEdit(id: $id) {
-                    exportPush(file: $file)
+                    exportPush(jobId: $jobId, file: $file)
                 }
             } 
         """
-        self.query(query, {'id': id, 'file': (File(export_id, data))})
+        self.query(query, {'id': entity_id, 'jobId': job_id, 'file': (File(file_name, data))})
 
     def delete_stix_domain_entity(self, id):
         logging.info('Deleting + ' + id + '...')
@@ -3666,10 +3676,12 @@ class OpenCTIApiClient:
             'spec_version': '2.0',
             'objects': []
         }
-        if entity_type == 'report':
+        if entity_type == 'reportno]':
             bundle['objects'] = stix2.export_report(self.parse_stix(self.get_report(entity_id)), mode)
-        if entity_type == 'threat-actor':
+        elif entity_type == 'threat-actor':
             bundle['objects'] = stix2.export_threat_actor(self.parse_stix(self.get_threat_actor(entity_id)))
+        else:
+            raise Exception("Unsupported export type " + entity_type)
         # TODO ADD MORE EXPORT TYPES
         return bundle
 

@@ -17,18 +17,29 @@ from pycti import OpenCTIApiClient
 
 
 class ListenQueue(threading.Thread):
-    def __init__(self, queue_name, channel, callback):
+    def __init__(self, api, queue_name, channel, callback):
         threading.Thread.__init__(self)
+        self.api = api
         self.channel = channel
         self.callback = callback
         self.queue_name = queue_name
 
     def _process_message(self, channel, method, properties, body):
+        json_data = json.loads(body)
+        job_id = json_data['job_id']
         try:
-            self.callback(json.loads(body), channel, method, properties)
+            self.callback(job_id, json_data, channel, method, properties)
             channel.basic_ack(delivery_tag=method.delivery_tag)
         except requests.exceptions.Timeout:
-            logging.warning('Error calling the API, prevent message ack')
+            logging.warning('API call timeout, prevent message ack')
+        except Exception as e:
+            try:
+                logging.warning('Error in message processing, reporting error to API')
+                self.api.report_job_error(job_id, str(e))
+            except:
+                logging.error('Failing reporting the processing:', e)
+            # We can assume that reprocessing will produce the same error, so ack the message
+            channel.basic_ack(delivery_tag=method.delivery_tag)
 
     def run(self):
         logging.info('Starting consuming listen queue')
@@ -44,7 +55,10 @@ class PingAlive(threading.Thread):
 
     def ping(self):
         logging.debug('Ping api')
-        self.api.ping_connector(self.connector_id)
+        try:
+            self.api.ping_connector(self.connector_id)
+        except Exception as e:
+            logging.error('Error pinging the API')
         time.sleep(10)
         self.ping()
 
@@ -87,7 +101,7 @@ class OpenCTIConnectorHelper:
         self.cache_added = []
 
     def listen(self, message_callback):
-        listen_queue = ListenQueue(self.config['listen'], self.channel, message_callback)
+        listen_queue = ListenQueue(self.api, self.config['listen'], self.channel, message_callback)
         listen_queue.start()
 
     def send_stix2_bundle(self, bundle, entities_types=[]):
@@ -117,7 +131,7 @@ class OpenCTIConnectorHelper:
 
         # Send the message
         try:
-            self.channel.basic_publish('amqp.worker.exchange', self.connector_id, json.dumps(message))
+            self.channel.basic_publish(self.config['push_exchange'], self.connector_id, json.dumps(message))
             logging.info('Bundle has been sent')
         except (UnroutableError, NackError) as e:
             logging.error('Unable to send bundle, retry...', e)
