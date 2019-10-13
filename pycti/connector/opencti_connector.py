@@ -1,5 +1,11 @@
 from enum import Enum
 
+# Scope definition
+# EXTERNAL_IMPORT = None
+# INTERNAL_IMPORT_FILE = Files mime types to support (application/json, ...)
+# INTERNAL_ENRICHMENT = Entity types to support (Report, Hash, ...)
+# INTERNAL_EXPORT_FILE = Files mime types to generate (application/pdf, ...)
+
 
 class ConnectorType(Enum):
     EXTERNAL_IMPORT = 'EXTERNAL_IMPORT'  # From remote sources to OpenCTI stix2
@@ -9,18 +15,13 @@ class ConnectorType(Enum):
 
 
 class OpenCTIConnector:
-    def __init__(self, connector_id: str, connector_name: str, connector_type: str, scope: []):
+    def __init__(self, connector_id: str, connector_name: str, connector_type: str, scope: str):
         self.id = connector_id
         self.name = connector_name
         self.type = ConnectorType(connector_type)
         if self.type is None:
             raise ValueError('Invalid connector type: ' + connector_type)
-        # Scope definition
-        # EXTERNAL_IMPORT = None
-        # INTERNAL_IMPORT_FILE = Files mime types to support (application/json, ...)
-        # INTERNAL_ENRICHMENT = Entity types to support (Report, Hash, ...)
-        # INTERNAL_EXPORT_FILE = Files mime types to generate (application/pdf, ...)
-        self.scope = scope
+        self.scope = scope.split(',')
 
     def to_input(self):
         return {'input': {'id': self.id, 'name': self.name, 'type': self.type.name, 'scope': self.scope}}

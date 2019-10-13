@@ -9,7 +9,7 @@ import pytz
 
 import stix2
 from stix2 import ObjectPath, ObservationExpression, EqualityComparisonExpression, HashConstant
-from pycti.constants import ObservableTypes, CustomProperties
+from utils.constants import ObservableTypes, CustomProperties
 
 datefinder.ValueError = ValueError, OverflowError
 utc = pytz.UTC
@@ -52,9 +52,10 @@ class OpenCTIStix2:
 
     def filter_objects(self, uuids, objects):
         result = []
-        for object in objects:
-            if 'id' in object and object['id'] not in uuids:
-                result.append(object)
+        if objects is not None:
+            for object in objects:
+                if 'id' in object and object['id'] not in uuids:
+                    result.append(object)
         return result
 
     def prepare_export(self, entity, stix_object, mode='simple'):
@@ -1216,5 +1217,5 @@ class OpenCTIStix2:
                 continue
             end_time = time.time()
             logging.info("%s imported in: %ssecs" % (item['type'], round(end_time - start_time)))
-            imported_elements.append({'elementId': item['id'], 'elementType': item['type']})
+            imported_elements.append({'id': item['id'], 'type': item['type']})
         return imported_elements

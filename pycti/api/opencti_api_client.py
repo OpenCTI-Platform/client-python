@@ -9,8 +9,10 @@ import json
 import uuid
 import logging
 
-from opencti_connector import OpenCTIConnector
-from pycti.opencti_stix2 import OpenCTIStix2
+from api.opencti_api_city import OpenCTIApiCity
+from api.opencti_api_connector import OpenCTIApiConnector
+from api.opencti_api_job import OpenCTIApiJob
+from utils.opencti_stix2 import OpenCTIStix2
 
 
 class File:
@@ -29,7 +31,7 @@ class OpenCTIApiClient:
     def __init__(self, url, token, log_level='info'):
         # Check configuration
         if url is None or len(token) == 0:
-            raise ValueError('Url configuration must be configurated')
+            raise ValueError('Url configuration must be configured')
         if token is None or len(token) == 0 or token == 'ChangeMe':
             raise ValueError('Token configuration must be the same as APP__ADMIN__TOKEN')
         # Configure logger
@@ -44,6 +46,10 @@ class OpenCTIApiClient:
         # Check if openCTI is available
         if not self.health_check():
             raise ValueError('OpenCTI API seems down')
+        # Define the dependencies
+        self.job = OpenCTIApiJob(self)
+        self.city = OpenCTIApiCity(self)
+        self.connector = OpenCTIApiConnector(self)
 
     def query(self, query, variables={}):
         query_var = {}
@@ -121,59 +127,6 @@ class OpenCTIApiClient:
         except:
             return False
         return False
-
-    def connectors(self):
-        query = """
-            query GetConnectors {
-                connectors {
-                    id
-                    name
-                    config {
-                        uri
-                        listen
-                        push
-                    }
-                }
-            }
-        """
-        result = self.query(query)
-        return result['data']['connectors']
-
-    def ping_connector(self, connector_id):
-        query = """
-            mutation PingConnector($id: ID!) {
-                pingConnector(id: $id) {
-                    id
-                }
-            }
-           """
-        self.query(query, {'id': connector_id})
-
-    def report_job_error(self, job_id, message):
-        query = """
-            mutation ReportJobError($id: ID!, $message: String!) {
-                reportJobError(id: $id, message: $message)
-            }
-           """
-        self.query(query, {'id': job_id, 'message': message})
-
-    def register_connector(self, connector: OpenCTIConnector):
-        query = """
-            mutation RegisterConnector($input: RegisterConnectorInput) {
-                registerConnector(input: $input) {
-                    id
-                    config {
-                        uri
-                        listen
-                        listen_exchange
-                        push
-                        push_exchange
-                    }
-                }
-            }
-           """
-        result = self.query(query, connector.to_input())
-        return result['data']['registerConnector']
 
     def parse_stix(self, data):
         if 'createdByRef' in data and data['createdByRef'] is not None and 'node' in data['createdByRef']:
@@ -405,7 +358,6 @@ class OpenCTIApiClient:
                     fieldPatch(input: $input) {
                         id
                         entity_type
-                        alias
                     }
                 }
             }
@@ -569,7 +521,7 @@ class OpenCTIApiClient:
                         description,
                         first_seen,
                         last_seen,
-                        weight,
+                        weight=None,
                         role_played=None,
                         score=None,
                         expiration=None,
@@ -2940,22 +2892,6 @@ class OpenCTIApiClient:
                             }
                         }
                     }
-                    externalReferences {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id
-                                source_name
-                                description
-                                url
-                                hash
-                                external_id
-                                created
-                                modified
-                            }
-                        }
-                    }
                     stixRelations {
                         edges {
                             node {
@@ -3654,19 +3590,21 @@ class OpenCTIApiClient:
             data = json.load(file)
 
         stix2 = OpenCTIStix2(self, self.log_level)
-        stix2.import_bundle(data, update, types)
+        return stix2.import_bundle(data, update, types)
 
     def stix2_import_bundle(self, json_data, update=False, types=[]):
         data = json.loads(json_data)
         stix2 = OpenCTIStix2(self, self.log_level)
-        stix2.import_bundle(data, update, types)
+        return stix2.import_bundle(data, update, types)
 
     def stix2_import_bundle_from_uri(self, fetch_uri, update=False, types=[]):
         r = requests.get(fetch_uri, headers=self.request_headers)
-        data = json.loads(r.text)
+        try:
+            data = json.loads(r.text)
+        except:
+            raise Exception('File data is not a valid JSON')
         stix2 = OpenCTIStix2(self, self.log_level)
-        imported_elements = stix2.import_bundle(data, update, types)
-        # TODO
+        return stix2.import_bundle(data, update, types)
 
     def stix2_export_entity(self, entity_type, entity_id, mode='simple'):
         stix2 = OpenCTIStix2(self, self.log_level)
@@ -3676,7 +3614,7 @@ class OpenCTIApiClient:
             'spec_version': '2.0',
             'objects': []
         }
-        if entity_type == 'reportno]':
+        if entity_type == 'report':
             bundle['objects'] = stix2.export_report(self.parse_stix(self.get_report(entity_id)), mode)
         elif entity_type == 'threat-actor':
             bundle['objects'] = stix2.export_threat_actor(self.parse_stix(self.get_threat_actor(entity_id)))
