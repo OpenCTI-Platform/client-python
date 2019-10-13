@@ -576,7 +576,8 @@ class OpenCTIApiClient:
                                       id=None,
                                       stix_id=None,
                                       created=None,
-                                      modified=None
+                                      modified=None,
+                                      update=False
                                       ):
         stix_relation_result = None
         if stix_id is not None:
@@ -589,6 +590,11 @@ class OpenCTIApiClient:
                 first_seen,
                 last_seen)
         if stix_relation_result is not None:
+            if update:
+                self.update_stix_relation_field(stix_relation_result['id'], description, description)
+                stix_relation_result['description'] = description
+                self.update_stix_relation_field(stix_relation_result['id'], 'weight', weight)
+                stix_relation_result['weight'] = weight
             return stix_relation_result
         else:
             roles = self.resolve_role(type, from_type, to_type)
@@ -601,7 +607,8 @@ class OpenCTIApiClient:
                     final_from_id = to_id
                     final_to_id = from_id
                 else:
-                    logging.info('Cannot resolve roles, doing nothing (' + type + ': ' + from_type + ',' + to_type + ')')
+                    logging.info(
+                        'Cannot resolve roles, doing nothing (' + type + ': ' + from_type + ',' + to_type + ')')
                     return None
 
             return self.create_relation(
@@ -1037,10 +1044,16 @@ class OpenCTIApiClient:
                                       id=None,
                                       stix_id=None,
                                       created=None,
-                                      modified=None
+                                      modified=None,
+                                      update=False
                                       ):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, type)
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
             return object_result
         else:
             return self.create_identity(
@@ -1219,10 +1232,19 @@ class OpenCTIApiClient:
                                           id=None,
                                           stix_id=None,
                                           created=None,
-                                          modified=None
+                                          modified=None,
+                                          update=False
                                           ):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Threat-Actor')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
+                if goal is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'goal', goal)
+                    object_result['last_seen'] = goal
             return object_result
         else:
             return self.create_threat_actor(
@@ -1409,10 +1431,25 @@ class OpenCTIApiClient:
                                            id=None,
                                            stix_id=None,
                                            created=None,
-                                           modified=None
+                                           modified=None,
+                                           update=False
                                            ):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Intrusion-Set')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
+                if first_seen is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'first_seen', first_seen)
+                object_result['first_seen'] = first_seen
+                if last_seen is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'last_seen', last_seen)
+                    object_result['last_seen'] = last_seen
+                if goal is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'goal', goal)
+                    object_result['last_seen'] = goal
             return object_result
         else:
             return self.create_intrusion_set(
@@ -1580,10 +1617,25 @@ class OpenCTIApiClient:
                                       id=None,
                                       stix_id=None,
                                       created=None,
-                                      modified=None
+                                      modified=None,
+                                      update=False
                                       ):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Campaign')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
+                if objective is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'objective', objective)
+                object_result['objective'] = objective
+                if first_seen is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'first_seen', first_seen)
+                object_result['first_seen'] = first_seen
+                if last_seen is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'last_seen', last_seen)
+                    object_result['last_seen'] = last_seen
             return object_result
         else:
             return self.create_campaign(
@@ -1747,16 +1799,25 @@ class OpenCTIApiClient:
                                       id=None,
                                       stix_id=None,
                                       created=None,
-                                      modified=None
+                                      modified=None,
+                                      update=False
                                       ):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Incident')
         if object_result is not None:
-            self.update_stix_domain_entity_field(object_result['id'], 'name', name)
-            description is not None and self.update_stix_domain_entity_field(object_result['id'], 'description',
-                                                                             description)
-            first_seen is not None and self.update_stix_domain_entity_field(object_result['id'], 'first_seen',
-                                                                            first_seen)
-            last_seen is not None and self.update_stix_domain_entity_field(object_result['id'], 'last_seen', last_seen)
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
+                if objective is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'objective', objective)
+                object_result['objective'] = objective
+                if first_seen is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'first_seen', first_seen)
+                object_result['first_seen'] = first_seen
+                if last_seen is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'last_seen', last_seen)
+                    object_result['last_seen'] = last_seen
             return object_result
         else:
             return self.create_incident(
@@ -1920,9 +1981,15 @@ class OpenCTIApiClient:
         })
         return result['data']['malwareAdd']
 
-    def create_malware_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_malware_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None,
+                                     update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Malware')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
             return object_result
         else:
             return self.create_malware(
@@ -2057,9 +2124,15 @@ class OpenCTIApiClient:
         })
         return result['data']['toolAdd']
 
-    def create_tool_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_tool_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None,
+                                  update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Tool')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
             return object_result
         else:
             return self.create_tool(
@@ -2192,9 +2265,15 @@ class OpenCTIApiClient:
         })
         return result['data']['vulnerabilityAdd']
 
-    def create_vulnerability_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_vulnerability_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None,
+                                           update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Vulnerability')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
             return object_result
         else:
             return self.create_vulnerability(
@@ -2409,9 +2488,18 @@ class OpenCTIApiClient:
                                             id=None,
                                             stix_id=None,
                                             created=None,
-                                            modified=None):
+                                            modified=None,
+                                            update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Attack-Pattern')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                if platform is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'platform', platform)
+                if required_permission is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'required_permission',
+                                                         required_permission)
             return object_result
         else:
             return self.create_attack_pattern(
@@ -2547,9 +2635,14 @@ class OpenCTIApiClient:
         return result['data']['courseOfActionAdd']
 
     def create_course_of_action_if_not_exists(self, name, description, id=None, stix_id=None, created=None,
-                                              modified=None):
+                                              modified=None, update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Course-Of-Action')
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
             return object_result
         else:
             return self.create_course_of_action(
@@ -2794,13 +2887,19 @@ class OpenCTIApiClient:
                                     id=None,
                                     stix_id=None,
                                     created=None,
-                                    modified=None
+                                    modified=None,
+                                    update=False
                                     ):
         if stix_id is not None:
             object_result = self.check_existing_report(stix_id, name, published)
         else:
             object_result = None
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                object_result['name'] = name
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
             return object_result
         else:
             return self.create_report(
@@ -3102,10 +3201,14 @@ class OpenCTIApiClient:
                                              id=None,
                                              stix_id=None,
                                              created=None,
-                                             modified=None
+                                             modified=None,
+                                             update=False
                                              ):
         object_result = self.get_stix_observable_by_value(observable_value)
         if object_result is not None:
+            if update:
+                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                object_result['description'] = description
             return object_result
         else:
             return self.create_stix_observable(
