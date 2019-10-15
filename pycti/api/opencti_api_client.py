@@ -787,6 +787,17 @@ class OpenCTIApiClient:
         else:
             return None
 
+    def delete_external_reference(self, id):
+        logging.info('Deleting + ' + id + '...')
+        query = """
+             mutation ExternalReferenceEdit($id: ID!) {
+                 externalReferenceEdit(id: $id) {
+                     delete
+                 }
+             }
+         """
+        self.query(query, {'id': id})
+
     def create_external_reference(self,
                                   source_name,
                                   url,
@@ -2900,6 +2911,12 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if object_status is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'object_status', object_status)
+                    object_result['object_status'] = object_status
+                if source_confidence_level is not None:
+                    self.update_stix_domain_entity_field(object_result['id'], 'source_confidence_level', source_confidence_level)
+                    object_result['source_confidence_level'] = source_confidence_level
             return object_result
         else:
             return self.create_report(
