@@ -147,18 +147,18 @@ class OpenCTIApiClient:
             data['stixRelations'] = self.parse_multiple(data['stixRelations'])
         return data
 
-    def check_existing_stix_domain_entity(self, stix_id=None, name=None, type=None):
+    def check_existing_stix_domain_entity(self, stix_id_key=None, name=None, type=None):
         object_result = None
-        if stix_id is not None:
-            object_result = self.get_stix_domain_entity_by_stix_id(stix_id)
+        if stix_id_key is not None:
+            object_result = self.get_stix_domain_entity_by_stix_id_key(stix_id_key)
         if object_result is None and name is not None and type is not None:
             object_result = self.search_stix_domain_entity_by_name(name, type)
         return object_result
 
-    def check_existing_report(self, stix_id=None, name=None, published=None):
+    def check_existing_report(self, stix_id_key=None, name=None, published=None):
         object_result = None
-        if stix_id is not None:
-            object_result = self.get_stix_domain_entity_by_stix_id(stix_id)
+        if stix_id_key is not None:
+            object_result = self.get_stix_domain_entity_by_stix_id_key(stix_id_key)
         if object_result is None and name is not None and published is not None:
             object_result = self.search_report_by_name_and_date(name, published)
         return object_result
@@ -245,10 +245,10 @@ class OpenCTIApiClient:
         else:
             return None
 
-    def get_stix_domain_entity_by_stix_id(self, stix_id):
+    def get_stix_domain_entity_by_stix_id_key(self, stix_id_key):
         query = """
-            query StixDomainEntities($stix_id: String) {
-                stixDomainEntities(stix_id: $stix_id) {
+            query StixDomainEntities($stix_id_key: String) {
+                stixDomainEntities(stix_id_key: $stix_id_key) {
                     edges {
                         node {
                             id
@@ -259,7 +259,7 @@ class OpenCTIApiClient:
                 }
             }
         """
-        result = self.query(query, {'stix_id': stix_id})
+        result = self.query(query, {'stix_id_key': stix_id_key})
         if len(result['data']['stixDomainEntities']['edges']) > 0:
             return result['data']['stixDomainEntities']['edges'][0]['node']
         else:
@@ -391,11 +391,11 @@ class OpenCTIApiClient:
          """
         self.query(query, {'id': id})
 
-    def get_stix_relation_by_stix_id(self, stix_id):
-        logging.info('Getting relation ' + stix_id + '...')
+    def get_stix_relation_by_stix_id_key(self, stix_id_key):
+        logging.info('Getting relation ' + stix_id_key + '...')
         query = """
-            query StixRelations($stix_id: String) {
-                stixRelations(stix_id: $stix_id) {
+            query StixRelations($stix_id_key: String) {
+                stixRelations(stix_id_key: $stix_id_key) {
                     edges {
                         node {
                             id
@@ -405,7 +405,7 @@ class OpenCTIApiClient:
                 }
             }
         """
-        result = self.query(query, {'stix_id': stix_id})
+        result = self.query(query, {'stix_id_key': stix_id_key})
         if len(result['data']['stixRelations']['edges']) > 0:
             return result['data']['stixRelations']['edges'][0]['node']
         else:
@@ -417,7 +417,7 @@ class OpenCTIApiClient:
             query StixRelation($id: String!) {
                 stixRelation(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     entity_type
                     relationship_type
                     description
@@ -431,11 +431,11 @@ class OpenCTIApiClient:
                     modified
                     from {
                         id
-                        stix_id
+                        stix_id_key
                     }
                     to {
                         id
-                        stix_id
+                        stix_id_key
                     }
                 }
             }
@@ -468,7 +468,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             entity_type
                             relationship_type
                             description
@@ -482,11 +482,11 @@ class OpenCTIApiClient:
                             modified
                             from {
                                 id
-                                stix_id
+                                stix_id_key
                             }
                             to {
                                 id
-                                stix_id
+                                stix_id_key
                             }
                         }
                     }
@@ -526,7 +526,7 @@ class OpenCTIApiClient:
                         score=None,
                         expiration=None,
                         id=None,
-                        stix_id=None,
+                        stix_id_key=None,
                         created=None,
                         modified=None
                         ):
@@ -552,8 +552,8 @@ class OpenCTIApiClient:
                 'first_seen': first_seen,
                 'last_seen': last_seen,
                 'weight': weight,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -574,14 +574,14 @@ class OpenCTIApiClient:
                                       score=None,
                                       expiration=None,
                                       id=None,
-                                      stix_id=None,
+                                      stix_id_key=None,
                                       created=None,
                                       modified=None,
                                       update=False
                                       ):
         stix_relation_result = None
-        if stix_id is not None:
-            stix_relation_result = self.get_stix_relation_by_stix_id(stix_id)
+        if stix_id_key is not None:
+            stix_relation_result = self.get_stix_relation_by_stix_id_key(stix_id_key)
         if stix_relation_result is None:
             stix_relation_result = self.get_stix_relation(
                 from_id,
@@ -625,7 +625,7 @@ class OpenCTIApiClient:
                 score,
                 expiration,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -649,7 +649,7 @@ class OpenCTIApiClient:
                     id
                     name
                     description
-                    stix_id
+                    stix_id_key
                     entity_type
                     observable_value
                     created_at
@@ -669,10 +669,10 @@ class OpenCTIApiClient:
         result = self.query(query, {'id': id})
         return result['data']['stixObservable']
 
-    def get_marking_definition_by_stix_id(self, stix_id):
+    def get_marking_definition_by_stix_id_key(self, stix_id_key):
         query = """
-             query MarkingDefinitions($stix_id: String) {
-                 markingDefinitions(stix_id: $stix_id) {
+             query MarkingDefinitions($stix_id_key: String) {
+                 markingDefinitions(stix_id_key: $stix_id_key) {
                      edges {
                          node {
                              id
@@ -682,7 +682,7 @@ class OpenCTIApiClient:
                  }
              }
          """
-        result = self.query(query, {'stix_id': stix_id})
+        result = self.query(query, {'stix_id_key': stix_id_key})
         if len(result['data']['markingDefinitions']['edges']) > 0:
             return result['data']['markingDefinitions']['edges'][0]['node']
         else:
@@ -713,7 +713,7 @@ class OpenCTIApiClient:
                                   level=0,
                                   color=None,
                                   id=None,
-                                  stix_id=None,
+                                  stix_id_key=None,
                                   created=None,
                                   modified=None
                                   ):
@@ -730,10 +730,10 @@ class OpenCTIApiClient:
             'input': {
                 'definition_type': definition_type,
                 'definition': definition,
-                'internal_id': id,
+                'internal_id_key': id,
                 'level': level,
                 'color': color,
-                'stix_id': stix_id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -746,13 +746,13 @@ class OpenCTIApiClient:
                                                 level=0,
                                                 color=None,
                                                 id=None,
-                                                stix_id=None,
+                                                stix_id_key=None,
                                                 created=None,
                                                 modified=None
                                                 ):
         object_result = None
-        if stix_id is not None:
-            object_result = self.get_marking_definition_by_stix_id(stix_id)
+        if stix_id_key is not None:
+            object_result = self.get_marking_definition_by_stix_id_key(stix_id_key)
             if object_result is None:
                 object_result = self.get_marking_definition_by_definition(definition_type, definition)
         if object_result is not None:
@@ -764,7 +764,7 @@ class OpenCTIApiClient:
                 level,
                 color,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -804,7 +804,7 @@ class OpenCTIApiClient:
                                   external_id='',
                                   description='',
                                   id=None,
-                                  stix_id=None,
+                                  stix_id_key=None,
                                   created=None,
                                   modified=None
                                   ):
@@ -822,8 +822,8 @@ class OpenCTIApiClient:
                 'external_id': external_id,
                 'description': description,
                 'url': url,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -836,7 +836,7 @@ class OpenCTIApiClient:
                                                 external_id='',
                                                 description='',
                                                 id=None,
-                                                stix_id=None,
+                                                stix_id_key=None,
                                                 created=None,
                                                 modified=None
                                                 ):
@@ -850,7 +850,7 @@ class OpenCTIApiClient:
                 external_id,
                 description,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -878,7 +878,7 @@ class OpenCTIApiClient:
                                 phase_name,
                                 phase_order=0,
                                 id=None,
-                                stix_id=None,
+                                stix_id_key=None,
                                 created=None,
                                 modified=None):
         logging.info('Creating kill chain phase ' + phase_name + '...')
@@ -894,8 +894,8 @@ class OpenCTIApiClient:
                 'kill_chain_name': kill_chain_name,
                 'phase_name': phase_name,
                 'phase_order': phase_order,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -907,7 +907,7 @@ class OpenCTIApiClient:
                                               phase_name,
                                               phase_order=0,
                                               id=None,
-                                              stix_id=None,
+                                              stix_id_key=None,
                                               created=None,
                                               modified=None):
         kill_chain_phase_result = self.get_kill_chain_phase(phase_name)
@@ -919,7 +919,7 @@ class OpenCTIApiClient:
                 phase_name,
                 phase_order,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -931,7 +931,7 @@ class OpenCTIApiClient:
                 identity(id: $id) {
                    id
                     entity_type
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -942,7 +942,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -956,7 +956,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -981,7 +981,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -992,7 +992,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -1006,7 +1006,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -1024,7 +1024,7 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['identities'])
 
-    def create_identity(self, type, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_identity(self, type, name, description, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating identity ' + name + '...')
         query = """
             mutation IdentityAdd($input: IdentityAddInput) {
@@ -1040,8 +1040,8 @@ class OpenCTIApiClient:
                 'name': name,
                 'description': description,
                 'type': type,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -1053,12 +1053,12 @@ class OpenCTIApiClient:
                                       name,
                                       description,
                                       id=None,
-                                      stix_id=None,
+                                      stix_id_key=None,
                                       created=None,
                                       modified=None,
                                       update=False
                                       ):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, type)
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, type)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1072,7 +1072,7 @@ class OpenCTIApiClient:
                 name,
                 description,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -1084,7 +1084,7 @@ class OpenCTIApiClient:
                 threatActor(id: $id) {
                     id
                     entity_type
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -1101,7 +1101,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1115,7 +1115,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -1140,7 +1140,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1157,7 +1157,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -1171,7 +1171,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -1199,7 +1199,7 @@ class OpenCTIApiClient:
                             secondary_motivation=None,
                             personal_motivation=None,
                             id=None,
-                            stix_id=None,
+                            stix_id_key=None,
                             created=None,
                             modified=None
                             ):
@@ -1223,8 +1223,8 @@ class OpenCTIApiClient:
                 'primary_motivation': primary_motivation,
                 'secondary_motivation': secondary_motivation,
                 'personal_motivation': personal_motivation,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -1241,12 +1241,12 @@ class OpenCTIApiClient:
                                           secondary_motivation=None,
                                           personal_motivation=None,
                                           id=None,
-                                          stix_id=None,
+                                          stix_id_key=None,
                                           created=None,
                                           modified=None,
                                           update=False
                                           ):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Threat-Actor')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Threat-Actor')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1268,7 +1268,7 @@ class OpenCTIApiClient:
                 secondary_motivation,
                 personal_motivation,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -1279,7 +1279,7 @@ class OpenCTIApiClient:
             query IntrusionSet($id: String!) {
                 intrusionSet(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -1297,7 +1297,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1311,7 +1311,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -1335,7 +1335,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1353,7 +1353,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -1367,7 +1367,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -1396,7 +1396,7 @@ class OpenCTIApiClient:
                              primary_motivation=None,
                              secondary_motivation=None,
                              id=None,
-                             stix_id=None,
+                             stix_id_key=None,
                              created=None,
                              modified=None
                              ):
@@ -1421,8 +1421,8 @@ class OpenCTIApiClient:
                 'resource_level': resource_level,
                 'primary_motivation': primary_motivation,
                 'secondary_motivation': secondary_motivation,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -1440,12 +1440,12 @@ class OpenCTIApiClient:
                                            primary_motivation=None,
                                            secondary_motivation=None,
                                            id=None,
-                                           stix_id=None,
+                                           stix_id_key=None,
                                            created=None,
                                            modified=None,
                                            update=False
                                            ):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Intrusion-Set')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Intrusion-Set')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1474,7 +1474,7 @@ class OpenCTIApiClient:
                 primary_motivation,
                 secondary_motivation,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -1485,7 +1485,7 @@ class OpenCTIApiClient:
             query Campaign($id: String!) {
                 campaign(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -1499,7 +1499,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1513,7 +1513,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -1537,7 +1537,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1551,7 +1551,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -1565,7 +1565,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -1590,7 +1590,7 @@ class OpenCTIApiClient:
                         first_seen=None,
                         last_seen=None,
                         id=None,
-                        stix_id=None,
+                        stix_id_key=None,
                         created=None,
                         modified=None
                         ):
@@ -1611,8 +1611,8 @@ class OpenCTIApiClient:
                 'objective': objective,
                 'first_seen': first_seen,
                 'last_seen': last_seen,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -1626,12 +1626,12 @@ class OpenCTIApiClient:
                                       first_seen=None,
                                       last_seen=None,
                                       id=None,
-                                      stix_id=None,
+                                      stix_id_key=None,
                                       created=None,
                                       modified=None,
                                       update=False
                                       ):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Campaign')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Campaign')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1656,7 +1656,7 @@ class OpenCTIApiClient:
                 first_seen,
                 last_seen,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -1667,7 +1667,7 @@ class OpenCTIApiClient:
             query Incident($id: String!) {
                 incident(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -1681,7 +1681,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1695,7 +1695,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -1719,7 +1719,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1733,7 +1733,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -1747,7 +1747,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -1772,7 +1772,7 @@ class OpenCTIApiClient:
                         first_seen=None,
                         last_seen=None,
                         id=None,
-                        stix_id=None,
+                        stix_id_key=None,
                         created=None,
                         modified=None
                         ):
@@ -1793,8 +1793,8 @@ class OpenCTIApiClient:
                 'objective': objective,
                 'first_seen': first_seen,
                 'last_seen': last_seen,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -1808,12 +1808,12 @@ class OpenCTIApiClient:
                                       first_seen=None,
                                       last_seen=None,
                                       id=None,
-                                      stix_id=None,
+                                      stix_id_key=None,
                                       created=None,
                                       modified=None,
                                       update=False
                                       ):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Incident')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Incident')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1838,7 +1838,7 @@ class OpenCTIApiClient:
                 first_seen,
                 last_seen,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -1849,7 +1849,7 @@ class OpenCTIApiClient:
             query Malware($id: String!) {
                 malware(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -1860,7 +1860,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1874,7 +1874,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -1889,7 +1889,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 kill_chain_name
                                 phase_name
                                 phase_order
@@ -1912,7 +1912,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -1923,7 +1923,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -1937,7 +1937,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -1952,7 +1952,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         kill_chain_name
                                         phase_name
                                         phase_order
@@ -1969,7 +1969,7 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['malwares'])
 
-    def create_malware(self, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_malware(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating malware ' + name + '...')
         query = """
             mutation MalwareAdd($input: MalwareAddInput) {
@@ -1984,17 +1984,17 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
         })
         return result['data']['malwareAdd']
 
-    def create_malware_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None,
+    def create_malware_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None, modified=None,
                                      update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Malware')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Malware')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2007,7 +2007,7 @@ class OpenCTIApiClient:
                 name,
                 description,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -2018,7 +2018,7 @@ class OpenCTIApiClient:
             query Tool($id: String!) {
                 tool(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -2030,7 +2030,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2044,7 +2044,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -2068,7 +2068,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2080,7 +2080,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -2094,7 +2094,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -2112,7 +2112,7 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['tools'])
 
-    def create_tool(self, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_tool(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating tool ' + name + '...')
         query = """
             mutation ToolAdd($input: ToolAddInput) {
@@ -2127,17 +2127,17 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
         })
         return result['data']['toolAdd']
 
-    def create_tool_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None,
+    def create_tool_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None, modified=None,
                                   update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Tool')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Tool')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2150,7 +2150,7 @@ class OpenCTIApiClient:
                 name,
                 description,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -2161,7 +2161,7 @@ class OpenCTIApiClient:
             query Vulnerability($id: String!) {
                 vulnerability(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -2172,7 +2172,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2186,7 +2186,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -2210,7 +2210,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2221,7 +2221,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -2235,7 +2235,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -2253,7 +2253,7 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['vulnerabilities'])
 
-    def create_vulnerability(self, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_vulnerability(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating tool ' + name + '...')
         query = """
             mutation VulnerabilityAdd($input: VulnerabilityAddInput) {
@@ -2268,17 +2268,17 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
         })
         return result['data']['vulnerabilityAdd']
 
-    def create_vulnerability_if_not_exists(self, name, description, id=None, stix_id=None, created=None, modified=None,
+    def create_vulnerability_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None, modified=None,
                                            update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Vulnerability')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Vulnerability')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2291,7 +2291,7 @@ class OpenCTIApiClient:
                 name,
                 description,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -2302,7 +2302,7 @@ class OpenCTIApiClient:
             query AttackPattern($id: String!) {
                 attackPattern(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -2315,7 +2315,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2329,7 +2329,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -2344,7 +2344,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 kill_chain_name
                                 phase_name
                                 phase_order
@@ -2358,7 +2358,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 source_name
                                 description
                                 url
@@ -2383,7 +2383,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2396,7 +2396,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -2410,7 +2410,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -2425,7 +2425,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         kill_chain_name
                                         phase_name
                                         phase_order
@@ -2439,7 +2439,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         source_name
                                         description
                                         url
@@ -2464,7 +2464,7 @@ class OpenCTIApiClient:
                               platform=None,
                               required_permission=None,
                               id=None,
-                              stix_id=None,
+                              stix_id_key=None,
                               created=None,
                               modified=None):
         logging.info('Creating attack pattern ' + name + '...')
@@ -2483,8 +2483,8 @@ class OpenCTIApiClient:
                 'description': description,
                 'platform': platform,
                 'required_permission': required_permission,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -2497,11 +2497,11 @@ class OpenCTIApiClient:
                                             platform=None,
                                             required_permission=None,
                                             id=None,
-                                            stix_id=None,
+                                            stix_id_key=None,
                                             created=None,
                                             modified=None,
                                             update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Attack-Pattern')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Attack-Pattern')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2519,7 +2519,7 @@ class OpenCTIApiClient:
                 platform,
                 required_permission,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -2530,7 +2530,7 @@ class OpenCTIApiClient:
             query CourseOfAction($id: String!) {
                 courseOfAction(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -2541,7 +2541,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2555,7 +2555,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -2579,7 +2579,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2590,7 +2590,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -2604,7 +2604,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -2622,7 +2622,7 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['courseOfActions'])
 
-    def create_course_of_action(self, name, description, id=None, stix_id=None, created=None, modified=None):
+    def create_course_of_action(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating course of action ' + name + '...')
         query = """
            mutation CourseOfActionAdd($input: CourseOfActionAddInput) {
@@ -2637,17 +2637,17 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
         })
         return result['data']['courseOfActionAdd']
 
-    def create_course_of_action_if_not_exists(self, name, description, id=None, stix_id=None, created=None,
+    def create_course_of_action_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None,
                                               modified=None, update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id, name, 'Course-Of-Action')
+        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Course-Of-Action')
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2660,7 +2660,7 @@ class OpenCTIApiClient:
                 name,
                 description,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -2671,7 +2671,7 @@ class OpenCTIApiClient:
             query Report($id: String!) {
                 report(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     stix_label
                     name
                     alias
@@ -2687,7 +2687,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2701,7 +2701,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -2716,7 +2716,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 source_name
                                 description
                                 url
@@ -2731,7 +2731,7 @@ class OpenCTIApiClient:
                         edges {
                             node {
                                 id
-                                stix_id
+                                stix_id_key
                                 entity_type
                             }
                         }
@@ -2740,7 +2740,7 @@ class OpenCTIApiClient:
                         edges {
                             node {
                                 id
-                                stix_id
+                                stix_id_key
                                 entity_type
                             }
                         }
@@ -2749,7 +2749,7 @@ class OpenCTIApiClient:
                         edges {
                             node {
                                 id
-                                stix_id
+                                stix_id_key
                             }
                         }
                     }
@@ -2767,7 +2767,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                             id
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2783,7 +2783,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -2797,7 +2797,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -2812,7 +2812,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         source_name
                                         description
                                         url
@@ -2827,7 +2827,7 @@ class OpenCTIApiClient:
                                 edges {
                                     node {
                                         id
-                                        stix_id
+                                        stix_id_key
                                     }
                                 }
                             }
@@ -2835,7 +2835,7 @@ class OpenCTIApiClient:
                                 edges {
                                     node {
                                         id
-                                        stix_id
+                                        stix_id_key
                                     }
                                 }
                             }
@@ -2856,7 +2856,7 @@ class OpenCTIApiClient:
                       source_confidence_level=None,
                       graph_data=None,
                       id=None,
-                      stix_id=None,
+                      stix_id_key=None,
                       created=None,
                       modified=None
                       ):
@@ -2879,8 +2879,8 @@ class OpenCTIApiClient:
                 'object_status': object_status,
                 'source_confidence_level': source_confidence_level,
                 'graph_data': graph_data,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -2896,13 +2896,13 @@ class OpenCTIApiClient:
                                     source_confidence_level=None,
                                     graph_data=None,
                                     id=None,
-                                    stix_id=None,
+                                    stix_id_key=None,
                                     created=None,
                                     modified=None,
                                     update=False
                                     ):
-        if stix_id is not None:
-            object_result = self.check_existing_report(stix_id, name, published)
+        if stix_id_key is not None:
+            object_result = self.check_existing_report(stix_id_key, name, published)
         else:
             object_result = None
         if object_result is not None:
@@ -2928,7 +2928,7 @@ class OpenCTIApiClient:
                 source_confidence_level,
                 graph_data,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -2943,7 +2943,7 @@ class OpenCTIApiClient:
                                                             source_confidence_level=None,
                                                             graph_data=None,
                                                             id=None,
-                                                            stix_id=None,
+                                                            stix_id_key=None,
                                                             created=None,
                                                             modified=None
                                                             ):
@@ -2960,7 +2960,7 @@ class OpenCTIApiClient:
                 source_confidence_level,
                 graph_data,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )
@@ -2973,7 +2973,7 @@ class OpenCTIApiClient:
             query StixObservable($id: String!) {
                 stixObservable(id: $id) {
                     id
-                    stix_id
+                    stix_id_key
                     entity_type
                     name
                     description
@@ -2984,7 +2984,7 @@ class OpenCTIApiClient:
                         node {
                             id
                             entity_type
-                            stix_id
+                            stix_id_key
                             stix_label
                             name
                             alias
@@ -2998,7 +2998,7 @@ class OpenCTIApiClient:
                             node {
                                 id
                                 entity_type
-                                stix_id
+                                stix_id_key
                                 definition_type
                                 definition
                                 level
@@ -3012,7 +3012,7 @@ class OpenCTIApiClient:
                         edges {
                             node {
                                 id
-                                stix_id
+                                stix_id_key
                                 entity_type
                                 relationship_type
                                 description
@@ -3042,7 +3042,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                            id
-                            stix_id
+                            stix_id_key
                             entity_type
                             name
                             description
@@ -3053,7 +3053,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -3067,7 +3067,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -3081,7 +3081,7 @@ class OpenCTIApiClient:
                                 edges {
                                     node {
                                         id
-                                        stix_id
+                                        stix_id_key
                                         entity_type
                                         relationship_type
                                         description
@@ -3116,7 +3116,7 @@ class OpenCTIApiClient:
                     edges {
                         node {
                            id
-                            stix_id
+                            stix_id_key
                             entity_type
                             name
                             description
@@ -3127,7 +3127,7 @@ class OpenCTIApiClient:
                                 node {
                                     id
                                     entity_type
-                                    stix_id
+                                    stix_id_key
                                     stix_label
                                     name
                                     alias
@@ -3141,7 +3141,7 @@ class OpenCTIApiClient:
                                     node {
                                         id
                                         entity_type
-                                        stix_id
+                                        stix_id_key
                                         definition_type
                                         definition
                                         level
@@ -3155,7 +3155,7 @@ class OpenCTIApiClient:
                                 edges {
                                     node {
                                         id
-                                        stix_id
+                                        stix_id_key
                                         entity_type
                                         relationship_type
                                         description
@@ -3184,7 +3184,7 @@ class OpenCTIApiClient:
                                observable_value,
                                description,
                                id=None,
-                               stix_id=None,
+                               stix_id_key=None,
                                created=None,
                                modified=None
                                ):
@@ -3203,8 +3203,8 @@ class OpenCTIApiClient:
                 'type': type,
                 'observable_value': observable_value,
                 'description': description,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
@@ -3216,7 +3216,7 @@ class OpenCTIApiClient:
                                              observable_value,
                                              description,
                                              id=None,
-                                             stix_id=None,
+                                             stix_id_key=None,
                                              created=None,
                                              modified=None,
                                              update=False
@@ -3233,7 +3233,7 @@ class OpenCTIApiClient:
                 observable_value,
                 description,
                 id,
-                stix_id,
+                stix_id_key,
                 created,
                 modified
             )

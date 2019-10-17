@@ -73,7 +73,7 @@ class OpenCTIStix2:
                 identity_class = entity_created_by_ref['entity_type']
 
             created_by_ref = dict()
-            created_by_ref['id'] = entity_created_by_ref['stix_id']
+            created_by_ref['id'] = entity_created_by_ref['stix_id_key']
             created_by_ref['type'] = 'identity'
             created_by_ref['name'] = entity_created_by_ref['name']
             created_by_ref['identity_class'] = identity_class
@@ -94,7 +94,7 @@ class OpenCTIStix2:
             marking_definitions = []
             for entity_marking_definition in entity['markingDefinitions']:
                 marking_definition = {
-                    'id': entity_marking_definition['stix_id'],
+                    'id': entity_marking_definition['stix_id_key'],
                     'type': 'marking-definition',
                     'definition_type': entity_marking_definition['definition_type'],
                     'definition': {
@@ -111,7 +111,7 @@ class OpenCTIStix2:
             kill_chain_phases = []
             for entity_kill_chain_phase in entity['killChainPhases']:
                 kill_chain_phase = {
-                    'id': entity_kill_chain_phase['stix_id'],
+                    'id': entity_kill_chain_phase['stix_id_key'],
                     'kill_chain_name': entity_kill_chain_phase['kill_chain_name'],
                     'phase_name': entity_kill_chain_phase['phase_name'],
                     CustomProperties.ID: entity_kill_chain_phase['id'],
@@ -125,7 +125,7 @@ class OpenCTIStix2:
             external_references = []
             for entity_external_reference in entity['externalReferences']:
                 external_reference = {
-                    'id': entity_external_reference['stix_id'],
+                    'id': entity_external_reference['stix_id_key'],
                     'source_name': entity_external_reference['source_name'],
                     'description': entity_external_reference['description'],
                     'url': entity_external_reference['url'],
@@ -141,17 +141,17 @@ class OpenCTIStix2:
             object_refs = []
             objects_to_get = entity['objectRefs']
             for entity_object_ref in entity['objectRefs']:
-                object_refs.append(entity_object_ref['stix_id'])
+                object_refs.append(entity_object_ref['stix_id_key'])
             if 'observableRefs' in entity and len(entity['observableRefs']) > 0:
                 observables_to_get = entity['observableRefs']
                 for entity_observable_ref in entity['observableRefs']:
-                    if entity_observable_ref['stix_id'] not in object_refs:
-                        object_refs.append(entity_observable_ref['stix_id'])
+                    if entity_observable_ref['stix_id_key'] not in object_refs:
+                        object_refs.append(entity_observable_ref['stix_id_key'])
             if 'relationRefs' in entity and len(entity['relationRefs']) > 0:
                 relations_to_get = entity['relationRefs']
                 for entity_relation_ref in entity['relationRefs']:
-                    if entity_relation_ref['stix_id'] not in object_refs:
-                        object_refs.append(entity_relation_ref['stix_id'])
+                    if entity_relation_ref['stix_id_key'] not in object_refs:
+                        object_refs.append(entity_relation_ref['stix_id_key'])
             stix_object['object_refs'] = object_refs
 
         result.append(stix_object)
@@ -289,7 +289,7 @@ class OpenCTIStix2:
             if created_by_ref in self.mapping_cache:
                 created_by_ref_result = self.mapping_cache[created_by_ref]
             else:
-                created_by_ref_result = self.opencti.get_stix_domain_entity_by_stix_id(created_by_ref)
+                created_by_ref_result = self.opencti.get_stix_domain_entity_by_stix_id_key(created_by_ref)
             if created_by_ref_result is not None:
                 self.mapping_cache[created_by_ref] = {'id': created_by_ref_result['id']}
                 created_by_ref_id = created_by_ref_result['id']
@@ -301,7 +301,7 @@ class OpenCTIStix2:
                 if object_marking_ref in self.mapping_cache:
                     object_marking_ref_result = self.mapping_cache[object_marking_ref]
                 else:
-                    object_marking_ref_result = self.opencti.get_marking_definition_by_stix_id(object_marking_ref)
+                    object_marking_ref_result = self.opencti.get_marking_definition_by_stix_id_key(object_marking_ref)
                 if object_marking_ref_result is not None:
                     self.mapping_cache[object_marking_ref] = {'id': object_marking_ref_result['id']}
                     marking_definitions_ids.append(object_marking_ref_result['id'])
@@ -409,9 +409,9 @@ class OpenCTIStix2:
                 if object_ref in self.mapping_cache:
                     object_ref_result = self.mapping_cache[object_ref]
                 elif 'relationship' in object_ref:
-                    object_ref_result = self.opencti.get_stix_relation_by_stix_id(object_ref)
+                    object_ref_result = self.opencti.get_stix_relation_by_stix_id_key(object_ref)
                 else:
-                    object_ref_result = self.opencti.get_stix_domain_entity_by_stix_id(object_ref)
+                    object_ref_result = self.opencti.get_stix_domain_entity_by_stix_id_key(object_ref)
 
                 if object_ref_result is not None:
                     self.mapping_cache[object_ref] = {'id': object_ref_result['id']}
@@ -509,7 +509,7 @@ class OpenCTIStix2:
             identity_class = 'organization'
 
         identity = dict()
-        identity['id'] = entity['stix_id']
+        identity['id'] = entity['stix_id_key']
         identity['type'] = 'identity'
         identity['name'] = entity['name']
         identity['identity_class'] = identity_class
@@ -554,7 +554,7 @@ class OpenCTIStix2:
 
     def export_threat_actor(self, entity):
         threat_actor = dict()
-        threat_actor['id'] = entity['stix_id']
+        threat_actor['id'] = entity['stix_id_key']
         threat_actor['type'] = 'threat-actor'
         threat_actor['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -594,7 +594,7 @@ class OpenCTIStix2:
 
     def export_intrusion_set(self, entity):
         intrusion_set = dict()
-        intrusion_set['id'] = entity['stix_id']
+        intrusion_set['id'] = entity['stix_id_key']
         intrusion_set['type'] = 'intrusion-set'
         intrusion_set['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -639,7 +639,7 @@ class OpenCTIStix2:
 
     def export_campaign(self, entity):
         campaign = dict()
-        campaign['id'] = entity['stix_id']
+        campaign['id'] = entity['stix_id_key']
         campaign['type'] = 'campaign'
         campaign['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -674,7 +674,7 @@ class OpenCTIStix2:
 
     def export_incident(self, entity):
         incident = dict()
-        incident['id'] = entity['stix_id']
+        incident['id'] = entity['stix_id_key']
         incident['type'] = 'x-opencti-incident'
         incident['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -707,7 +707,7 @@ class OpenCTIStix2:
 
     def export_malware(self, entity):
         malware = dict()
-        malware['id'] = entity['stix_id']
+        malware['id'] = entity['stix_id_key']
         malware['type'] = 'malware'
         malware['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -735,7 +735,7 @@ class OpenCTIStix2:
 
     def export_tool(self, entity):
         tool = dict()
-        tool['id'] = entity['stix_id']
+        tool['id'] = entity['stix_id_key']
         tool['type'] = 'tool'
         tool['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -763,7 +763,7 @@ class OpenCTIStix2:
 
     def export_vulnerability(self, entity):
         vulnerability = dict()
-        vulnerability['id'] = entity['stix_id']
+        vulnerability['id'] = entity['stix_id_key']
         vulnerability['type'] = 'vulnerability'
         vulnerability['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -790,7 +790,7 @@ class OpenCTIStix2:
 
     def export_attack_pattern(self, entity):
         attack_pattern = dict()
-        attack_pattern['id'] = entity['stix_id']
+        attack_pattern['id'] = entity['stix_id_key']
         attack_pattern['type'] = 'attack-pattern'
         attack_pattern['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -822,7 +822,7 @@ class OpenCTIStix2:
 
     def export_course_of_action(self, entity):
         course_of_action = dict()
-        course_of_action['id'] = entity['stix_id']
+        course_of_action['id'] = entity['stix_id_key']
         course_of_action['type'] = 'course-of-action'
         course_of_action['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -849,7 +849,7 @@ class OpenCTIStix2:
 
     def export_report(self, entity, mode='simple'):
         report = dict()
-        report['id'] = entity['stix_id']
+        report['id'] = entity['stix_id_key']
         report['type'] = 'report'
         report['name'] = entity['name']
         if self.not_empty(entity['stix_label']):
@@ -887,7 +887,7 @@ class OpenCTIStix2:
 
     def export_stix_observable(self, entity):
         stix_observable = dict()
-        stix_observable['id'] = entity['stix_id']
+        stix_observable['id'] = entity['stix_id_key']
         stix_observable['type'] = 'indicator'
         stix_observable['name'] = 'Indicator'
         if self.not_empty(entity['description']): stix_observable['description'] = entity['description']
@@ -949,18 +949,18 @@ class OpenCTIStix2:
             )
         else:
             # log that the indicator could not be parsed
-            logging.info("  Cannot handle indicator: {id}".format(id=stix_object['stix_id']))
+            logging.info("  Cannot handle indicator: {id}".format(id=stix_object['stix_id_key']))
 
         return None
 
     def export_stix_relation(self, entity):
         stix_relation = dict()
-        stix_relation['id'] = entity['stix_id']
+        stix_relation['id'] = entity['stix_id_key']
         stix_relation['type'] = 'relationship'
         stix_relation['relationship_type'] = entity['relationship_type']
         if self.not_empty(entity['description']): stix_relation['description'] = entity['description']
-        stix_relation['source_ref'] = entity['from']['stix_id']
-        stix_relation['target_ref'] = entity['to']['stix_id']
+        stix_relation['source_ref'] = entity['from']['stix_id_key']
+        stix_relation['target_ref'] = entity['to']['stix_id_key']
         stix_relation[CustomProperties.SOURCE_REF] = entity['from']['id']
         stix_relation[CustomProperties.TARGET_REF] = entity['to']['id']
         stix_relation['created'] = self.format_date(entity['created'])
@@ -979,7 +979,7 @@ class OpenCTIStix2:
 
     def import_relationship(self, stix_relation, update=False):
         # Check relation
-        stix_relation_result = self.opencti.get_stix_relation_by_stix_id(stix_relation['id'])
+        stix_relation_result = self.opencti.get_stix_relation_by_stix_id_key(stix_relation['id'])
         if stix_relation_result is not None:
             return stix_relation_result
 
@@ -992,7 +992,7 @@ class OpenCTIStix2:
                 stix_object_result = self.opencti.get_stix_domain_entity_by_id(
                     stix_relation[CustomProperties.SOURCE_REF])
             else:
-                stix_object_result = self.opencti.get_stix_domain_entity_by_stix_id(stix_relation['source_ref'])
+                stix_object_result = self.opencti.get_stix_domain_entity_by_stix_id_key(stix_relation['source_ref'])
             if stix_object_result is not None:
                 source_id = stix_object_result['id']
                 source_type = stix_object_result['entity_type'] if stix_relation[
@@ -1009,7 +1009,7 @@ class OpenCTIStix2:
                 stix_object_result = self.opencti.get_stix_domain_entity_by_id(
                     stix_relation[CustomProperties.TARGET_REF])
             else:
-                stix_object_result = self.opencti.get_stix_domain_entity_by_stix_id(stix_relation['target_ref'])
+                stix_object_result = self.opencti.get_stix_domain_entity_by_stix_id_key(stix_relation['target_ref'])
             if stix_object_result is not None:
                 target_id = stix_object_result['id']
                 target_type = stix_object_result['entity_type']

@@ -6,7 +6,7 @@ class OpenCTIApiCity:
     def __init__(self, api):
         self.api = api
 
-    def create_city(self, city_name, id=None, stix_id=None, created=None, modified=None):
+    def create_city(self, city_name, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating city ' + city_name + '...')
         query = """
                mutation CityAdd($input: CityAddInput) {
@@ -18,8 +18,8 @@ class OpenCTIApiCity:
         result = self.api.query(query, {
             'input': {
                 'name': city_name,
-                'internal_id': id,
-                'stix_id': stix_id,
+                'internal_id_key': id,
+                'stix_id_key': stix_id_key,
                 'created': created,
                 'modified': modified
             }
