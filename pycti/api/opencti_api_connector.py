@@ -8,7 +8,7 @@ class OpenCTIApiConnector:
     def __init__(self, api):
         self.api = api
 
-    def connectors(self):
+    def list(self):
         logging.info('Getting connectors ...')
         query = """
             query GetConnectors {

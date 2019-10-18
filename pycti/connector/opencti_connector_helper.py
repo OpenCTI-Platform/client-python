@@ -9,54 +9,39 @@ import uuid
 import os
 import requests
 
-from typing import Callable, Any
+from typing import Callable, Dict, List
 from pika.exceptions import UnroutableError, NackError
 from api.opencti_api_client import OpenCTIApiClient
 from connector.opencti_connector import OpenCTIConnector
 
 
-class JobAnswer:
-    def __init__(self, job_id):
-        self.job_id = job_id
-        self.messages = []
-
-    def add_message(self, message):
-        self.messages.append(message)
-
-    def to_json(self):
-        return json.dumps({'id': self.job_id, 'messages': self.messages})
-
-
 class ListenQueue(threading.Thread):
-    def __init__(self, api, queue_name, channel, log_job, callback):
+    def __init__(self, helper, queue_name, channel, callback):
         threading.Thread.__init__(self)
-        self.api = api
-        self.log_job = log_job
+        self.helper = helper
         self.channel = channel
         self.callback = callback
         self.queue_name = queue_name
 
+    # noinspection PyUnusedLocal
     def _process_message(self, channel, method, properties, body):
         json_data = json.loads(body)
         job_id = json_data['job_id']
-        job_answer = JobAnswer(job_id)
+        work_id = json_data['work_id']
+        self.helper.current_work_id = work_id
         try:
-            self.callback(job_id, job_answer, json_data)
+            self.helper.api.job.update_job(job_id, 'progress', ['Starting process'])
+            messages = self.callback(json_data)
+            self.helper.api.job.update_job(job_id, 'complete', messages)
             channel.basic_ack(delivery_tag=method.delivery_tag)
-            if self.log_job:
-                self.api.job.report_success(job_id, job_answer.to_json())
         except requests.exceptions.Timeout:
             logging.warning('API call timeout, message remains in the queue')
         except Exception as e:
-            job_answer.add_message(str(e))
-            if self.log_job:
-                logging.exception('Error in message processing, reporting error to API')
-                try:
-                    self.api.job.report_error(job_id, job_answer.to_json())
-                except:
-                    logging.error('Failing reporting the processing')
-            else:
-                logging.error('Error in message processing')
+            logging.exception('Error in message processing, reporting error to API')
+            try:
+                self.helper.api.job.update_job(job_id, 'error', [str(e)])
+            except:
+                logging.error('Failing reporting the processing')
             # We can assume that reprocessing will produce the same error, so ack the message
             channel.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -80,7 +65,7 @@ class PingAlive(threading.Thread):
                 if self.in_error:
                     self.in_error = False
                     logging.info('API Ping back to normal')
-            except Exception as e:
+            except Exception:
                 self.in_error = True
                 logging.info('Error pinging the API')
             time.sleep(10)
@@ -103,7 +88,8 @@ class OpenCTIConnectorHelper:
         self.connect_id = os.getenv('CONNECTOR_ID') or config['connector']['id']
         self.connect_type = os.getenv('CONNECTOR_TYPE') or config['connector']['type']
         self.connect_name = os.getenv('CONNECTOR_NAME') or config['connector']['name']
-        self.connect_confidence_level = os.getenv('CONNECTOR_CONFIDENCE_LEVEL') or config['connector']['confidence_level']
+        self.connect_confidence_level = os.getenv('CONNECTOR_CONFIDENCE_LEVEL') or \
+                                        config['connector']['confidence_level']
         self.connect_scope = os.getenv('CONNECTOR_SCOPE') or config['connector']['scope']
         self.log_level = os.getenv('CONNECTOR_LOG_LEVEL') or config['connector']['log_level']
 
@@ -115,6 +101,7 @@ class OpenCTIConnectorHelper:
 
         # Initialize configuration
         self.api = OpenCTIApiClient(self.opencti_url, self.opencti_token, self.log_level)
+        self.current_work_id = None
 
         # Register the connector in OpenCTI
         self.connector = OpenCTIConnector(self.connect_id, self.connect_name, self.connect_type, self.connect_scope)
@@ -134,8 +121,8 @@ class OpenCTIConnectorHelper:
         self.cache_index = {}
         self.cache_added = []
 
-    def listen(self, message_callback: Callable[[str, JobAnswer, Any], None], log_job=True) -> None:
-        listen_queue = ListenQueue(self.api, self.config['listen'], self.channel, log_job, message_callback)
+    def listen(self, message_callback: Callable[[Dict], List[str]]) -> None:
+        listen_queue = ListenQueue(self, self.config['listen'], self.channel, message_callback)
         listen_queue.start()
 
     def get_connector(self):
@@ -151,34 +138,52 @@ class OpenCTIConnectorHelper:
         return datetime.datetime.utcnow().replace(microsecond=0, tzinfo=datetime.timezone.utc).isoformat()
 
     # Push Stix2 helper
-    def send_stix2_bundle(self, bundle, entities_types=[]):
+    def send_stix2_bundle(self, bundle, entities_types=None):
+        if entities_types is None:
+            entities_types = []
         bundles = self.split_stix2_bundle(bundle)
+        if len(bundles) == 0:
+            raise ValueError('Nothing to import')
         for bundle in bundles:
             self._send_bundle(bundle, entities_types)
+        return bundles
 
-    def _send_bundle(self, bundle, entities_types=[]):
+    def _send_bundle(self, bundle, entities_types=None):
         """
             This method send a STIX2 bundle to RabbitMQ to be consumed by workers
             :param bundle: A valid STIX2 bundle
             :param entities_types: Entities types to ingest
         """
+        if entities_types is None:
+            entities_types = []
+
+        # Create a job log expectation
+        if self.current_work_id is not None:
+            job_id = self.api.job.initiate_job(self.current_work_id)
+        else:
+            job_id = None
+
         if self.channel is None or not self.channel.is_open:
             self.channel = self.pika_connection.channel()
 
         # Validate the STIX 2 bundle
         # validation = validate_string(bundle)
         # if not validation.is_valid:
-        # raise ValueError('The bundle is not a valid STIX2 JSON:' + bundle)
+        # raise ValueError('The bundle is not a valid STIX2 JSON')
 
         # Prepare the message
+        if self.current_work_id is None:
+            raise ValueError('The job id must be specified')
         message = {
+            'job_id': job_id,
             'entities_types': entities_types,
             'content': base64.b64encode(bundle.encode('utf-8')).decode('utf-8')
         }
 
         # Send the message
         try:
-            self.channel.basic_publish(self.config['push_exchange'], self.connector_id, json.dumps(message))
+            routing_key = 'push_routing_' + self.connector_id
+            self.channel.basic_publish(self.config['push_exchange'], routing_key, json.dumps(message))
             logging.info('Bundle has been sent')
         except (UnroutableError, NackError) as e:
             logging.error('Unable to send bundle, retry...', e)
@@ -187,7 +192,14 @@ class OpenCTIConnectorHelper:
     def split_stix2_bundle(self, bundle):
         self.cache_index = {}
         self.cache_added = []
-        bundle_data = json.loads(bundle)
+        try:
+            bundle_data = json.loads(bundle)
+        except:
+            raise Exception('File data is not a valid JSON')
+
+        # validation = validate_parsed_json(bundle_data)
+        # if not validation.is_valid:
+        #     raise ValueError('The bundle is not a valid STIX2 JSON:' + bundle)
 
         # Index all objects by id
         for item in bundle_data['objects']:
@@ -252,14 +264,10 @@ class OpenCTIConnectorHelper:
         # Get source ref
         if relationship['source_ref'] in self.cache_index:
             items.append(self.cache_index[relationship['source_ref']])
-        else:
-            return []
 
         # Get target ref
         if relationship['target_ref'] in self.cache_index:
             items.append(self.cache_index[relationship['target_ref']])
-        else:
-            return []
 
         # Get embedded objects
         embedded_objects = self.stix2_get_embedded_objects(relationship)

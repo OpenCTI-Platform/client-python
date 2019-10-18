@@ -3,6 +3,8 @@
 import time
 import datetime
 import logging
+from typing import List
+
 import datefinder
 import dateutil.parser
 import pytz
@@ -289,7 +291,7 @@ class OpenCTIStix2:
             if created_by_ref in self.mapping_cache:
                 created_by_ref_result = self.mapping_cache[created_by_ref]
             else:
-                created_by_ref_result = self.opencti.get_stix_domain_entity_by_stix_id(created_by_ref)
+                created_by_ref_result = self.opencti.get_stix_entity_by_stix_id(created_by_ref)
             if created_by_ref_result is not None:
                 self.mapping_cache[created_by_ref] = {'id': created_by_ref_result['id']}
                 created_by_ref_id = created_by_ref_result['id']
@@ -407,7 +409,7 @@ class OpenCTIStix2:
                 elif 'relationship' in object_ref:
                     object_ref_result = self.opencti.get_stix_relation_by_stix_id(object_ref)
                 else:
-                    object_ref_result = self.opencti.get_stix_domain_entity_by_stix_id(object_ref)
+                    object_ref_result = self.opencti.get_stix_entity_by_stix_id(object_ref)
 
                 if object_ref_result is not None:
                     self.mapping_cache[object_ref] = {'id': object_ref_result['id']}
@@ -975,10 +977,10 @@ class OpenCTIStix2:
             if CustomProperties.SOURCE_REF in stix_relation:
                 stix_object_result = self.opencti.get_stix_domain_entity_by_id(stix_relation[CustomProperties.SOURCE_REF])
             else:
-                stix_object_result = self.opencti.get_stix_domain_entity_by_stix_id(stix_relation['source_ref'])
+                stix_object_result = self.opencti.get_stix_entity_by_stix_id(stix_relation['source_ref'])
             if stix_object_result is not None:
                 source_id = stix_object_result['id']
-                source_type = stix_object_result['entity_type'] if stix_relation['relationship_type'] != 'indicates' else 'observable'
+                source_type = stix_object_result['entity_type']
             else:
                 logging.error('Source ref of the relationship not found, doing nothing...')
                 return None
@@ -990,7 +992,7 @@ class OpenCTIStix2:
             if CustomProperties.TARGET_REF in stix_relation:
                 stix_object_result = self.opencti.get_stix_domain_entity_by_id(stix_relation[CustomProperties.TARGET_REF])
             else:
-                stix_object_result = self.opencti.get_stix_domain_entity_by_stix_id(stix_relation['target_ref'])
+                stix_object_result = self.opencti.get_stix_entity_by_stix_id(stix_relation['target_ref'])
             if stix_object_result is not None:
                 target_id = stix_object_result['id']
                 target_type = stix_object_result['entity_type']
@@ -1188,34 +1190,56 @@ class OpenCTIStix2:
         else:
             return False
 
-    def import_bundle(self, stix_bundle, update=False, types=[]):
+    def import_bundle(self, stix_bundle, update=False, types=None) -> List:
+        if types is None:
+            types = []
         self.mapping_cache = {}
         # Check if the bundle is correctly formatted
         if 'type' not in stix_bundle or stix_bundle['type'] != 'bundle':
-            logging.error('JSON data type is not a STIX2 bundle')
-            return None
+            raise ValueError('JSON data type is not a STIX2 bundle')
         if 'objects' not in stix_bundle or len(stix_bundle['objects']) == 0:
-            logging.error('JSON data objects is empty')
-            return None
-        # Iter each object of the bundle
-        stix_objects = stix_bundle['objects']
+            raise ValueError('JSON data objects is empty')
+
+        # Import every elements in a specific order
         imported_elements = []
-        for item in stix_objects:
-            start_time = time.time()
+        start_time = time.time()
+        for item in stix_bundle['objects']:
             if item['type'] == 'marking-definition':
                 self.import_object(item, update)
-            elif item['type'] == 'identity' and (len(types) == 0 or 'identity' in types or (CustomProperties.IDENTITY_TYPE in item and item[CustomProperties.IDENTITY_TYPE] in types)):
+                imported_elements.append({'id': item['id'], 'type': item['type']})
+        end_time = time.time()
+        logging.info("Marking definitions imported in: %ssecs" % round(end_time - start_time))
+
+        start_time = time.time()
+        for item in stix_bundle['objects']:
+            if item['type'] == 'identity' and (len(types) == 0 or 'identity' in types or (CustomProperties.IDENTITY_TYPE in item and item[CustomProperties.IDENTITY_TYPE] in types)):
                 self.import_object(item, update)
-            elif item['type'] != 'relationship' and item['type'] != 'report' and (len(types) == 0 or item['type'] in types):
+                imported_elements.append({'id': item['id'], 'type': item['type']})
+        end_time = time.time()
+        logging.info("Identities imported in: %ssecs" % round(end_time - start_time))
+
+        start_time = time.time()
+        for item in stix_bundle['objects']:
+            if item['type'] != 'relationship' and item['type'] != 'report' and (
+                    len(types) == 0 or item['type'] in types):
                 self.import_object(item, update)
-            elif item['type'] == 'relationship':
+                imported_elements.append({'id': item['id'], 'type': item['type']})
+        end_time = time.time()
+        logging.info("Objects imported in: %ssecs" % round(end_time - start_time))
+
+        start_time = time.time()
+        for item in stix_bundle['objects']:
+            if item['type'] == 'relationship':
                 self.import_relationship(item, update)
-            elif item['type'] == 'report' and (len(types) == 0 or 'report' in types):
+                imported_elements.append({'id': item['id'], 'type': item['type']})
+        end_time = time.time()
+        logging.info("Relationships imported in: %ssecs" % round(end_time - start_time))
+
+        start_time = time.time()
+        for item in stix_bundle['objects']:
+            if item['type'] == 'report' and (len(types) == 0 or 'report' in types):
                 self.import_object(item, update)
-            else:
-                logging.warning("%s not imported, need to be implemented.")
-                continue
-            end_time = time.time()
-            logging.info("%s imported in: %ssecs" % (item['type'], round(end_time - start_time)))
-            imported_elements.append({'id': item['id'], 'type': item['type']})
+                imported_elements.append({'id': item['id'], 'type': item['type']})
+        end_time = time.time()
+        logging.info("Reports imported in: %ssecs" % round(end_time - start_time))
         return imported_elements
