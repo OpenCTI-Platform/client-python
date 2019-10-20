@@ -11,7 +11,6 @@ import json
 import uuid
 import logging
 
-from api.opencti_api_city import OpenCTIApiCity
 from api.opencti_api_connector import OpenCTIApiConnector
 from api.opencti_api_job import OpenCTIApiJob
 from utils.constants import ObservableTypes
@@ -51,7 +50,6 @@ class OpenCTIApiClient:
             raise ValueError('OpenCTI API seems down')
         # Define the dependencies
         self.job = OpenCTIApiJob(self)
-        self.city = OpenCTIApiCity(self)
         self.connector = OpenCTIApiConnector(self)
 
     def query(self, query, variables={}):

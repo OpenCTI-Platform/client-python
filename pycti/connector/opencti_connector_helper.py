@@ -26,10 +26,10 @@ class ListenQueue(threading.Thread):
     # noinspection PyUnusedLocal
     def _process_message(self, channel, method, properties, body):
         json_data = json.loads(body)
-        job_id = json_data['job_id']
-        work_id = json_data['work_id']
-        self.helper.current_work_id = work_id
+        job_id = json_data['job_id'] if 'job_id' in json_data else None
         try:
+            work_id = json_data['work_id']
+            self.helper.current_work_id = work_id
             self.helper.api.job.update_job(job_id, 'progress', ['Starting process'])
             messages = self.callback(json_data)
             self.helper.api.job.update_job(job_id, 'complete', messages)
