@@ -2,6 +2,8 @@
 
 import os
 import io
+from typing import List
+
 import requests
 import datetime
 import dateutil.parser
@@ -12,6 +14,7 @@ import logging
 from api.opencti_api_city import OpenCTIApiCity
 from api.opencti_api_connector import OpenCTIApiConnector
 from api.opencti_api_job import OpenCTIApiJob
+from utils.constants import ObservableTypes
 from utils.opencti_stix2 import OpenCTIStix2
 
 
@@ -147,10 +150,14 @@ class OpenCTIApiClient:
             data['stixRelations'] = self.parse_multiple(data['stixRelations'])
         return data
 
+    def fetch_opencti_file(self, fetch_uri):
+        r = requests.get(fetch_uri, headers=self.request_headers)
+        return r.text
+
     def check_existing_stix_domain_entity(self, stix_id_key=None, name=None, type=None):
         object_result = None
         if stix_id_key is not None:
-            object_result = self.get_stix_domain_entity_by_stix_id_key(stix_id_key)
+            object_result = self.get_stix_entity_by_stix_id_key(stix_id_key)
         if object_result is None and name is not None and type is not None:
             object_result = self.search_stix_domain_entity_by_name(name, type)
         return object_result
@@ -158,7 +165,7 @@ class OpenCTIApiClient:
     def check_existing_report(self, stix_id_key=None, name=None, published=None):
         object_result = None
         if stix_id_key is not None:
-            object_result = self.get_stix_domain_entity_by_stix_id_key(stix_id_key)
+            object_result = self.get_stix_entity_by_stix_id_key(stix_id_key)
         if object_result is None and name is not None and published is not None:
             object_result = self.search_report_by_name_and_date(name, published)
         return object_result
@@ -245,25 +252,17 @@ class OpenCTIApiClient:
         else:
             return None
 
-    def get_stix_domain_entity_by_stix_id_key(self, stix_id_key):
+    def get_stix_entity_by_stix_id_key(self, stix_id_key):
         query = """
-            query StixDomainEntities($stix_id_key: String) {
-                stixDomainEntities(stix_id_key: $stix_id_key) {
-                    edges {
-                        node {
-                            id
-                            entity_type
-                            alias
-                        }
-                    }
+            query StixEntity($stix_id_key: String, $isStixId: Boolean) {
+                stixEntity(id: $stix_id_key, isStixId: $isStixId) {
+                  id
+                  entity_type
                 }
             }
         """
-        result = self.query(query, {'stix_id_key': stix_id_key})
-        if len(result['data']['stixDomainEntities']['edges']) > 0:
-            return result['data']['stixDomainEntities']['edges'][0]['node']
-        else:
-            return None
+        result = self.query(query, {'stix_id_key': stix_id_key, 'isStixId': True})
+        return result['data']['stixEntity']
 
     def search_stix_domain_entities(self, keyword, type='Stix-Domain-Entity'):
         query = """
@@ -370,15 +369,15 @@ class OpenCTIApiClient:
             }
         })
 
-    def push_stix_domain_entity_export(self, job_id, entity_id, file_name, data):
+    def push_stix_domain_entity_export(self, entity_id, file_name, data):
         query = """
-            mutation StixDomainEntityEdit($id: ID!, $jobId: ID!, $file: Upload!) {
+            mutation StixDomainEntityEdit($id: ID!, $file: Upload!) {
                 stixDomainEntityEdit(id: $id) {
-                    exportPush(jobId: $jobId, file: $file)
+                    exportPush(file: $file)
                 }
             } 
         """
-        self.query(query, {'id': entity_id, 'jobId': job_id, 'file': (File(file_name, data))})
+        self.query(query, {'id': entity_id, 'file': (File(file_name, data))})
 
     def delete_stix_domain_entity(self, id):
         logging.info('Deleting + ' + id + '...')
@@ -3553,8 +3552,9 @@ class OpenCTIApiClient:
             return {'from_role': 'relate_from', 'to_role': 'relate_to'}
 
         relation_type = relation_type.lower()
-        from_type = from_type.lower()
-        to_type = to_type.lower()
+        from_type = from_type.lower() if not ObservableTypes.has_value(from_type) else 'observable'
+        to_type = to_type.lower() if not ObservableTypes.has_value(to_type) else 'observable'
+
         mapping = {
             'uses': {
                 'threat-actor': {
@@ -3667,6 +3667,11 @@ class OpenCTIApiClient:
                 }
             },
             'localization': {
+                'observable': {
+                    'region': {'from_role': 'localized', 'to_role': 'location'},
+                    'country': {'from_role': 'localized', 'to_role': 'location'},
+                    'city': {'from_role': 'localized', 'to_role': 'location'}
+                },
                 'country': {
                     'region': {'from_role': 'localized', 'to_role': 'location'}
                 },
@@ -3701,7 +3706,9 @@ class OpenCTIApiClient:
         else:
             return None
 
-    def stix2_import_bundle_from_file(self, file_path, update=False, types=[]):
+    def stix2_import_bundle_from_file(self, file_path, update=False, types=None):
+        if types is None:
+            types = []
         if not os.path.isfile(file_path):
             logging.error('The bundle file does not exists')
             return None
@@ -3712,17 +3719,10 @@ class OpenCTIApiClient:
         stix2 = OpenCTIStix2(self, self.log_level)
         return stix2.import_bundle(data, update, types)
 
-    def stix2_import_bundle(self, json_data, update=False, types=[]):
+    def stix2_import_bundle(self, json_data, update=False, types=None) -> List:
+        if types is None:
+            types = []
         data = json.loads(json_data)
-        stix2 = OpenCTIStix2(self, self.log_level)
-        return stix2.import_bundle(data, update, types)
-
-    def stix2_import_bundle_from_uri(self, fetch_uri, update=False, types=[]):
-        r = requests.get(fetch_uri, headers=self.request_headers)
-        try:
-            data = json.loads(r.text)
-        except:
-            raise Exception('File data is not a valid JSON')
         stix2 = OpenCTIStix2(self, self.log_level)
         return stix2.import_bundle(data, update, types)
 
