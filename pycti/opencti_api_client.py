@@ -19,7 +19,7 @@ class OpenCTIApiClient:
         :param token: The API key
     """
 
-    def __init__(self, url, token, ssl_verify=True, log_level='info'):
+    def __init__(self, url, token, log_level='info', ssl_verify=True):
         self.log_level = log_level
         # Configure logger
         numeric_level = getattr(logging, self.log_level.upper(), None)
