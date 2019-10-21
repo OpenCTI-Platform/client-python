@@ -30,12 +30,14 @@ class OpenCTIApiClient:
         :param token: The API key
     """
 
-    def __init__(self, url, token, log_level='info'):
+    def __init__(self, url, token, log_level='info', ssl_verify=True):
         # Check configuration
+        self.ssl_verify = ssl_verify
         if url is None or len(token) == 0:
             raise ValueError('Url configuration must be configured')
         if token is None or len(token) == 0 or token == 'ChangeMe':
             raise ValueError('Token configuration must be the same as APP__ADMIN__TOKEN')
+
         # Configure logger
         self.log_level = log_level
         numeric_level = getattr(logging, self.log_level.upper(), None)
@@ -100,10 +102,10 @@ class OpenCTIApiClient:
                     multipart_files.append((str(file_index), (files.name, io.BytesIO(files.data.encode()))))
                     file_index += 1
             # Send the multipart request
-            r = requests.post(self.api_url, data=multipart_data, files=multipart_files, headers=self.request_headers)
+            r = requests.post(self.api_url, data=multipart_data, files=multipart_files, headers=self.request_headers, verify=self.ssl_verify)
         # If no
         else:
-            r = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.request_headers)
+            r = requests.post(self.api_url, json={'query': query, 'variables': variables}, headers=self.request_headers, verify=self.ssl_verify)
         # Build response
         if r.status_code == requests.codes.ok:
             result = r.json()
