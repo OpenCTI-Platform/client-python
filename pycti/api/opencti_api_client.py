@@ -3672,6 +3672,11 @@ class OpenCTIApiClient:
                     'country': {'from_role': 'localized', 'to_role': 'location'},
                     'city': {'from_role': 'localized', 'to_role': 'location'}
                 },
+                'relation': {
+                    'region': {'from_role': 'localized', 'to_role': 'location'},
+                    'country': {'from_role': 'localized', 'to_role': 'location'},
+                    'city': {'from_role': 'localized', 'to_role': 'location'}
+                },
                 'country': {
                     'region': {'from_role': 'localized', 'to_role': 'location'}
                 },
