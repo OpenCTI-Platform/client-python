@@ -21,7 +21,7 @@ class OpenCTIApiClient:
 
     def __init__(self, url, token, log_level='info', ssl_verify=True):
         self.log_level = log_level
-         self.ssl_verify = ssl_verify
+        self.ssl_verify = ssl_verify
         # Configure logger
         numeric_level = getattr(logging, self.log_level.upper(), None)
         if not isinstance(numeric_level, int):
