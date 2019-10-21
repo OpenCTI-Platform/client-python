@@ -38,7 +38,7 @@ setup(
     maintainer='OpenCTI',
     url='https://github.com/OpenCTI-Platform/client-python',
     license='AGPL-V3',
-    packages=['pycti', 'pycti.api', 'pycti.connector', 'pycti.utils'],
+    packages=['pycti'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
