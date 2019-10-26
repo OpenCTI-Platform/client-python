@@ -517,6 +517,7 @@ class OpenCTIApiClient:
         """
         result = self.query(query, {
             'fromId': from_id,
+            'fromId': from_id,
             'toId': to_id,
             'relationType': type,
             'firstSeenStart': first_seen_start,
@@ -1091,7 +1092,11 @@ class OpenCTIApiClient:
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
                 if alias is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'alias', alias)
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
                     object_result['alias'] = alias
             return object_result
         else:
@@ -1221,6 +1226,7 @@ class OpenCTIApiClient:
     def create_threat_actor(self,
                             name,
                             description,
+                            alias=None,
                             goal=None,
                             sophistication=None,
                             resource_level=None,
@@ -1246,6 +1252,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'goal': goal,
                 'sophistication': sophistication,
                 'resource_level': resource_level,
@@ -1263,6 +1270,7 @@ class OpenCTIApiClient:
     def create_threat_actor_if_not_exists(self,
                                           name,
                                           description,
+                                          alias=None,
                                           goal=None,
                                           sophistication=None,
                                           resource_level=None,
@@ -1282,6 +1290,13 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
                 if goal is not None:
                     self.update_stix_domain_entity_field(object_result['id'], 'goal', goal)
                     object_result['last_seen'] = goal
@@ -1290,6 +1305,7 @@ class OpenCTIApiClient:
             return self.create_threat_actor(
                 name,
                 description,
+                alias,
                 goal,
                 sophistication,
                 resource_level,
@@ -1417,6 +1433,7 @@ class OpenCTIApiClient:
     def create_intrusion_set(self,
                              name,
                              description,
+                             alias=None,
                              first_seen=None,
                              last_seen=None,
                              goal=None,
@@ -1443,6 +1460,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'first_seen': first_seen,
                 'last_seen': last_seen,
                 'goal': goal,
@@ -1461,6 +1479,7 @@ class OpenCTIApiClient:
     def create_intrusion_set_if_not_exists(self,
                                            name,
                                            description,
+                                           alias=None,
                                            first_seen=None,
                                            last_seen=None,
                                            goal=None,
@@ -1481,6 +1500,13 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
                 if first_seen is not None:
                     self.update_stix_domain_entity_field(object_result['id'], 'first_seen', first_seen)
                 object_result['first_seen'] = first_seen
@@ -1495,6 +1521,7 @@ class OpenCTIApiClient:
             return self.create_intrusion_set(
                 name,
                 description,
+                alias,
                 first_seen,
                 last_seen,
                 goal,
@@ -1615,6 +1642,7 @@ class OpenCTIApiClient:
     def create_campaign(self,
                         name,
                         description,
+                        alias=None,
                         objective=None,
                         first_seen=None,
                         last_seen=None,
@@ -1637,6 +1665,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'objective': objective,
                 'first_seen': first_seen,
                 'last_seen': last_seen,
@@ -1651,6 +1680,7 @@ class OpenCTIApiClient:
     def create_campaign_if_not_exists(self,
                                       name,
                                       description,
+                                      alias=None,
                                       objective=None,
                                       first_seen=None,
                                       last_seen=None,
@@ -1667,6 +1697,13 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
                 if objective is not None:
                     self.update_stix_domain_entity_field(object_result['id'], 'objective', objective)
                 object_result['objective'] = objective
@@ -1681,6 +1718,7 @@ class OpenCTIApiClient:
             return self.create_campaign(
                 name,
                 description,
+                alias,
                 objective,
                 first_seen,
                 last_seen,
@@ -1797,6 +1835,7 @@ class OpenCTIApiClient:
     def create_incident(self,
                         name,
                         description,
+                        alias=None,
                         objective=None,
                         first_seen=None,
                         last_seen=None,
@@ -1819,6 +1858,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'objective': objective,
                 'first_seen': first_seen,
                 'last_seen': last_seen,
@@ -1833,6 +1873,7 @@ class OpenCTIApiClient:
     def create_incident_if_not_exists(self,
                                       name,
                                       description,
+                                      alias=None,
                                       objective=None,
                                       first_seen=None,
                                       last_seen=None,
@@ -1849,6 +1890,13 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
                 if objective is not None:
                     self.update_stix_domain_entity_field(object_result['id'], 'objective', objective)
                 object_result['objective'] = objective
@@ -1863,6 +1911,7 @@ class OpenCTIApiClient:
             return self.create_incident(
                 name,
                 description,
+                alias,
                 objective,
                 first_seen,
                 last_seen,
@@ -1998,7 +2047,7 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['malwares'])
 
-    def create_malware(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
+    def create_malware(self, name, description, alias=None, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating malware ' + name + '...')
         query = """
             mutation MalwareAdd($input: MalwareAddInput) {
@@ -2013,6 +2062,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'internal_id_key': id,
                 'stix_id_key': stix_id_key,
                 'created': created,
@@ -2021,7 +2071,8 @@ class OpenCTIApiClient:
         })
         return result['data']['malwareAdd']
 
-    def create_malware_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None, modified=None,
+    def create_malware_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
+                                     modified=None,
                                      update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Malware')
         if object_result is not None:
@@ -2030,11 +2081,19 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
             return object_result
         else:
             return self.create_malware(
                 name,
                 description,
+                alias,
                 id,
                 stix_id_key,
                 created,
@@ -2141,7 +2200,7 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['tools'])
 
-    def create_tool(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
+    def create_tool(self, name, description, alias=None, id=None, stix_id_key=None, created=None, modified=None):
         logging.info('Creating tool ' + name + '...')
         query = """
             mutation ToolAdd($input: ToolAddInput) {
@@ -2156,6 +2215,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'internal_id_key': id,
                 'stix_id_key': stix_id_key,
                 'created': created,
@@ -2164,7 +2224,8 @@ class OpenCTIApiClient:
         })
         return result['data']['toolAdd']
 
-    def create_tool_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None, modified=None,
+    def create_tool_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
+                                  modified=None,
                                   update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Tool')
         if object_result is not None:
@@ -2173,11 +2234,19 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
             return object_result
         else:
             return self.create_tool(
                 name,
                 description,
+                alias,
                 id,
                 stix_id_key,
                 created,
@@ -2282,8 +2351,9 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['vulnerabilities'])
 
-    def create_vulnerability(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
-        logging.info('Creating tool ' + name + '...')
+    def create_vulnerability(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
+                             modified=None):
+        logging.info('Creating vulnerability ' + name + '...')
         query = """
             mutation VulnerabilityAdd($input: VulnerabilityAddInput) {
                 vulnerabilityAdd(input: $input) {
@@ -2297,6 +2367,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'internal_id_key': id,
                 'stix_id_key': stix_id_key,
                 'created': created,
@@ -2305,7 +2376,7 @@ class OpenCTIApiClient:
         })
         return result['data']['vulnerabilityAdd']
 
-    def create_vulnerability_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None,
+    def create_vulnerability_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
                                            modified=None,
                                            update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Vulnerability')
@@ -2315,11 +2386,19 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
             return object_result
         else:
             return self.create_vulnerability(
                 name,
                 description,
+                alias,
                 id,
                 stix_id_key,
                 created,
@@ -2491,6 +2570,7 @@ class OpenCTIApiClient:
     def create_attack_pattern(self,
                               name,
                               description,
+                              alias=None,
                               platform=None,
                               required_permission=None,
                               id=None,
@@ -2511,6 +2591,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'platform': platform,
                 'required_permission': required_permission,
                 'internal_id_key': id,
@@ -2524,6 +2605,7 @@ class OpenCTIApiClient:
     def create_attack_pattern_if_not_exists(self,
                                             name,
                                             description,
+                                            alias=None,
                                             platform=None,
                                             required_permission=None,
                                             id=None,
@@ -2536,6 +2618,13 @@ class OpenCTIApiClient:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
                 if platform is not None:
                     self.update_stix_domain_entity_field(object_result['id'], 'platform', platform)
                 if required_permission is not None:
@@ -2546,6 +2635,7 @@ class OpenCTIApiClient:
             return self.create_attack_pattern(
                 name,
                 description,
+                alias,
                 platform,
                 required_permission,
                 id,
@@ -2652,7 +2742,8 @@ class OpenCTIApiClient:
         result = self.query(query, {'first': limit})
         return self.parse_multiple(result['data']['courseOfActions'])
 
-    def create_course_of_action(self, name, description, id=None, stix_id_key=None, created=None, modified=None):
+    def create_course_of_action(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
+                                modified=None):
         logging.info('Creating course of action ' + name + '...')
         query = """
            mutation CourseOfActionAdd($input: CourseOfActionAddInput) {
@@ -2667,6 +2758,7 @@ class OpenCTIApiClient:
             'input': {
                 'name': name,
                 'description': description,
+                'alias': alias,
                 'internal_id_key': id,
                 'stix_id_key': stix_id_key,
                 'created': created,
@@ -2675,7 +2767,8 @@ class OpenCTIApiClient:
         })
         return result['data']['courseOfActionAdd']
 
-    def create_course_of_action_if_not_exists(self, name, description, id=None, stix_id_key=None, created=None,
+    def create_course_of_action_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None,
+                                              created=None,
                                               modified=None, update=False):
         object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Course-Of-Action')
         if object_result is not None:
@@ -2684,11 +2777,19 @@ class OpenCTIApiClient:
                 object_result['name'] = name
                 self.update_stix_domain_entity_field(object_result['id'], 'description', description)
                 object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    object_result['alias'] = alias
             return object_result
         else:
             return self.create_course_of_action(
                 name,
                 description,
+                alias,
                 id,
                 stix_id_key,
                 created,
