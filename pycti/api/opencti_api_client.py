@@ -517,7 +517,6 @@ class OpenCTIApiClient:
         """
         result = self.query(query, {
             'fromId': from_id,
-            'fromId': from_id,
             'toId': to_id,
             'relationType': type,
             'firstSeenStart': first_seen_start,
