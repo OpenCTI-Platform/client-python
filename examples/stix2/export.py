@@ -10,7 +10,7 @@ from pycti import OpenCTIApiClient
 config = yaml.load(open(os.path.dirname(__file__) + '/../config.yml'))
 
 # Export file
-export_file = './654e04de-45b4-4cf5-bd93-461bb7c282a1.json'
+export_file = './threat-actor.json'
 
 # OpenCTI initialization
 opencti_api_client = OpenCTIApiClient(config['opencti']['url'], config['opencti']['token'])
