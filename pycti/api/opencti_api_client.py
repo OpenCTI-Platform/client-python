@@ -5,6 +5,7 @@ import io
 from typing import List
 
 import requests
+import urllib3
 import datetime
 import dateutil.parser
 import json
@@ -15,6 +16,8 @@ from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_job import OpenCTIApiJob
 from pycti.utils.constants import ObservableTypes, IdentityTypes
 from pycti.utils.opencti_stix2 import OpenCTIStix2
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class File:
@@ -30,7 +33,7 @@ class OpenCTIApiClient:
         :param token: The API key
     """
 
-    def __init__(self, url, token, log_level='info', ssl_verify=True):
+    def __init__(self, url, token, log_level='info', ssl_verify=False):
         # Check configuration
         self.ssl_verify = ssl_verify
         if url is None or len(token) == 0:
