@@ -149,6 +149,59 @@ class IntrusionSet:
             return None
 
     """
+        Create a Intrusion-Set object
+
+        :param name: the name of the Intrusion Set
+        :return Intrusion-Set object
+    """
+
+    def create(self, **kwargs):
+        name = kwargs.get('name', None)
+        description = kwargs.get('description', None)
+        alias = kwargs.get('alias', None)
+        first_seen = kwargs.get('first_seen', None)
+        last_seen = kwargs.get('last_seen', None)
+        goal = kwargs.get('goal', None)
+        sophistication = kwargs.get('sophistication', None)
+        resource_level = kwargs.get('resource_level', None)
+        primary_motivation = kwargs.get('primary_motivation', None)
+        secondary_motivation = kwargs.get('secondary_motivation', None)
+        id = kwargs.get('id', None)
+        stix_id_key = kwargs.get('stix_id_key', None)
+        created = kwargs.get('created', None)
+        modified = kwargs.get('modified', None)
+
+        if name is not None and description is not None:
+            self.opencti.log('info', 'Creating Intrusion-Set {' + name + '}.')
+            query = """
+                mutation IntrusionSetAdd($input: IntrusionSetAddInput) {
+                    intrusionSetAdd(input: $input) {
+                        """ + self.properties + """
+                    }
+                }
+            """
+            result = self.opencti.query(query, {
+                'input': {
+                    'name': name,
+                    'description': description,
+                    'alias': alias,
+                    'first_seen': first_seen,
+                    'last_seen': last_seen,
+                    'goal': goal,
+                    'sophistication': sophistication,
+                    'resource_level': resource_level,
+                    'primary_motivation': primary_motivation,
+                    'secondary_motivation': secondary_motivation,
+                    'internal_id_key': id,
+                    'stix_id_key': stix_id_key,
+                    'created': created,
+                    'modified': modified
+                }
+            })
+            return self.opencti.process_multiple_fields(result['data']['intrusionSetAdd'])
+        else:
+            self.opencti.log('error', 'Missing parameters: name and description')
+    """
         Export an Intrusion-Set object in STIX2
     
         :param id: the id of the Intrusion-Set

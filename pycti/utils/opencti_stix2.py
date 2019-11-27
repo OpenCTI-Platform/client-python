@@ -396,16 +396,17 @@ class OpenCTIStix2:
 
             # Get extra reports
             for uuid in uuids:
-                reports = self.opencti.stix_entity.reports(id=uuid, isStixId=True)
-                for report in reports:
-                    report_object_data = self.opencti.report.to_stix2(
-                        entity=report,
-                        mode='simple',
-                        max_marking_definition_entity=max_marking_definition_entity
-                    )
-                    report_object_bundle = self.filter_objects(uuids, report_object_data)
-                    uuids = uuids + [x['id'] for x in report_object_bundle]
-                    result = result + report_object_bundle
+                if 'marking-definition' not in uuid:
+                    reports = self.opencti.stix_entity.reports(id=uuid, isStixId=True)
+                    for report in reports:
+                        report_object_data = self.opencti.report.to_stix2(
+                            entity=report,
+                            mode='simple',
+                            max_marking_definition_entity=max_marking_definition_entity
+                        )
+                        report_object_bundle = self.filter_objects(uuids, report_object_data)
+                        uuids = uuids + [x['id'] for x in report_object_bundle]
+                        result = result + report_object_bundle
 
             # Refilter all the reports object refs
             final_result = []
@@ -430,8 +431,7 @@ class OpenCTIStix2:
             if created_by_ref in self.mapping_cache:
                 created_by_ref_result = self.mapping_cache[created_by_ref]
             else:
-                created_by_ref_result = self.opencti.stix_domain_entity.read(
-                    filters=[{'key': 'stix_id_key', 'values': [created_by_ref]}])
+                created_by_ref_result = self.opencti.stix_domain_entity.read(id=created_by_ref, isStixId=True)
             if created_by_ref_result is not None:
                 self.mapping_cache[created_by_ref] = {'id': created_by_ref_result['id']}
                 created_by_ref_id = created_by_ref_result['id']
@@ -940,8 +940,6 @@ class OpenCTIStix2:
             stix_relation[CustomProperties.LAST_SEEN] if CustomProperties.LAST_SEEN in stix_relation else date,
             stix_relation[CustomProperties.WEIGHT] if CustomProperties.WEIGHT in stix_relation else 1,
             stix_relation[CustomProperties.ROLE_PLAYED] if CustomProperties.ROLE_PLAYED in stix_relation else None,
-            stix_relation[CustomProperties.SCORE] if CustomProperties.SCORE in stix_relation else None,
-            stix_relation[CustomProperties.EXPIRATION] if CustomProperties.EXPIRATION in stix_relation else None,
             stix_relation[CustomProperties.ID] if CustomProperties.ID in stix_relation else None,
             stix_relation['id'] if 'id' in stix_relation else None,
             stix_relation['created'] if 'created' in stix_relation else None,

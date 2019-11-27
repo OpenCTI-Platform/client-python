@@ -8,4 +8,4 @@ logs
 test.py
 .idea
 *.iml
-examples/stix2/test.json
+examples/*.json

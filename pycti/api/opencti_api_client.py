@@ -946,7 +946,7 @@ class OpenCTIApiClient:
     def get_intrusion_sets(self, limit=10000):
         return self.intrusion_set.list(first=limit)
 
-    # TODO Move to IntrusionSet
+    @deprecated(version='2.1.0', reason="Replaced by the IntrusionSet class in pycti")
     def create_intrusion_set(self,
                              name,
                              description,
@@ -963,35 +963,22 @@ class OpenCTIApiClient:
                              created=None,
                              modified=None
                              ):
-        logging.info('Creating intrusion set ' + name + '...')
-        query = """
-            mutation IntrusionSetAdd($input: IntrusionSetAddInput) {
-                intrusionSetAdd(input: $input) {
-                   id
-                   entity_type
-                   alias
-                }
-            }
-        """
-        result = self.query(query, {
-            'input': {
-                'name': name,
-                'description': description,
-                'alias': alias,
-                'first_seen': first_seen,
-                'last_seen': last_seen,
-                'goal': goal,
-                'sophistication': sophistication,
-                'resource_level': resource_level,
-                'primary_motivation': primary_motivation,
-                'secondary_motivation': secondary_motivation,
-                'internal_id_key': id,
-                'stix_id_key': stix_id_key,
-                'created': created,
-                'modified': modified
-            }
-        })
-        return result['data']['intrusionSetAdd']
+        return self.intrusion_set.create(
+            name=name,
+            description=description,
+            alias=alias,
+            first_seen=first_seen,
+            last_seen=last_seen,
+            goal=goal,
+            sophistication=sophistication,
+            resource_level=resource_level,
+            primary_motivation=primary_motivation,
+            secondary_motivation=secondary_motivation,
+            id=id,
+            stix_id_key=stix_id_key,
+            created=created,
+            modified=modified
+        )
 
     # TODO Move to IntrusionSet
     def create_intrusion_set_if_not_exists(self,
@@ -1014,43 +1001,43 @@ class OpenCTIApiClient:
         object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Intrusion-Set'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
-                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
                 object_result['name'] = name
-                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
                 object_result['description'] = description
                 if alias is not None:
                     if 'alias' in object_result:
                         new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
                     else:
                         new_aliases = alias
-                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
                     object_result['alias'] = alias
                 if first_seen is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'first_seen', first_seen)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='first_seen', value=first_seen)
                 object_result['first_seen'] = first_seen
                 if last_seen is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'last_seen', last_seen)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='last_seen', value=last_seen)
                     object_result['last_seen'] = last_seen
                 if goal is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'goal', goal)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='goal', value=goal)
                     object_result['last_seen'] = goal
             return object_result
         else:
-            return self.create_intrusion_set(
-                name,
-                description,
-                alias,
-                first_seen,
-                last_seen,
-                goal,
-                sophistication,
-                resource_level,
-                primary_motivation,
-                secondary_motivation,
-                id,
-                stix_id_key,
-                created,
-                modified
+            return self.intrusion_set.create(
+                name=name,
+                description=description,
+                alias=alias,
+                first_seen=first_seen,
+                last_seen=last_seen,
+                goal=goal,
+                sophistication=sophistication,
+                resource_level=resource_level,
+                primary_motivation=primary_motivation,
+                secondary_motivation=secondary_motivation,
+                id=id,
+                stix_id_key=stix_id_key,
+                created=created,
+                modified=modified
             )
 
     @deprecated(version='2.1.0', reason="Replaced by the Campaign class in pycti")
@@ -1117,25 +1104,25 @@ class OpenCTIApiClient:
         object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Campaign'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
-                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
                 object_result['name'] = name
-                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
                 object_result['description'] = description
                 if alias is not None:
                     if 'alias' in object_result:
                         new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
                     else:
                         new_aliases = alias
-                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
                     object_result['alias'] = alias
                 if objective is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'objective', objective)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='objective', value=objective)
                 object_result['objective'] = objective
                 if first_seen is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'first_seen', first_seen)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='first_seen', value=first_seen)
                 object_result['first_seen'] = first_seen
                 if last_seen is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'last_seen', last_seen)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='last_seen', value=last_seen)
                     object_result['last_seen'] = last_seen
             return object_result
         else:

@@ -339,11 +339,8 @@ class StixRelation:
                 entity['first_seen'])
             if self.opencti.not_empty(entity['last_seen']): stix_relation[CustomProperties.LAST_SEEN] = self.opencti.stix2.format_date(
                 entity['last_seen'])
-            if self.opencti.not_empty(entity['expiration']): stix_relation[CustomProperties.EXPIRATION] = self.opencti.stix2.format_date(
-                entity['expiration'])
             if self.opencti.not_empty(entity['weight']): stix_relation[CustomProperties.WEIGHT] = entity['weight']
             if self.opencti.not_empty(entity['role_played']): stix_relation[CustomProperties.ROLE_PLAYED] = entity['role_played']
-            if self.opencti.not_empty(entity['score']): stix_relation[CustomProperties.SCORE] = entity['score']
             stix_relation[CustomProperties.ID] = entity['id']
             return self.opencti.stix2.prepare_export(entity, stix_relation, mode, max_marking_definition_entity)
         else:
