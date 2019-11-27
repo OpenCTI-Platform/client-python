@@ -13,7 +13,7 @@ import logging
 
 from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_job import OpenCTIApiJob
-from pycti.utils.constants import ObservableTypes, IdentityTypes
+from pycti.utils.constants import ObservableTypes
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 
 from pycti.entities.opencti_marking_definition import MarkingDefinition
@@ -23,6 +23,16 @@ from pycti.entities.opencti_stix_entity import StixEntity
 from pycti.entities.opencti_stix_domain_entity import StixDomainEntity
 from pycti.entities.opencti_stix_observable import StixObservable
 from pycti.entities.opencti_stix_relation import StixRelation
+from pycti.entities.opencti_identity import Identity
+from pycti.entities.opencti_threat_actor import ThreatActor
+from pycti.entities.opencti_intrusion_set import IntrusionSet
+from pycti.entities.opencti_campaign import Campaign
+from pycti.entities.opencti_incident import Incident
+from pycti.entities.opencti_malware import Malware
+from pycti.entities.opencti_tool import Tool
+from pycti.entities.opencti_vulnerability import Vulnerability
+from pycti.entities.opencti_attack_pattern import AttackPattern
+from pycti.entities.opencti_course_of_action import CourseOfAction
 from pycti.entities.opencti_report import Report
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -60,10 +70,6 @@ class OpenCTIApiClient:
         self.api_url = url + '/graphql'
         self.request_headers = {'Authorization': 'Bearer ' + token}
 
-        # Check if openCTI is available
-        if not self.health_check():
-            raise ValueError('OpenCTI API seems down')
-
         # Define the dependencies
         self.job = OpenCTIApiJob(self)
         self.connector = OpenCTIApiConnector(self)
@@ -77,7 +83,21 @@ class OpenCTIApiClient:
         self.stix_domain_entity = StixDomainEntity(self)
         self.stix_observable = StixObservable(self)
         self.stix_relation = StixRelation(self)
+        self.identity = Identity(self)
+        self.threat_actor = ThreatActor(self)
+        self.intrusion_set = IntrusionSet(self)
+        self.campaign = Campaign(self)
+        self.incident = Incident(self)
+        self.malware = Malware(self)
+        self.tool = Tool(self)
+        self.vulnerability = Vulnerability(self)
+        self.attack_pattern = AttackPattern(self)
+        self.course_of_action = CourseOfAction(self)
         self.report = Report(self)
+
+        # Check if openCTI is available
+        if not self.health_check():
+            raise ValueError('OpenCTI API seems down')
 
     def query(self, query, variables={}):
         query_var = {}
@@ -150,6 +170,8 @@ class OpenCTIApiClient:
     def log(self, level, message):
         if level == 'debug':
             logging.debug(message)
+        elif level == 'info':
+            logging.info(message)
         elif level == 'warning':
             logging.warn(message)
         elif level == 'error':
@@ -157,12 +179,26 @@ class OpenCTIApiClient:
 
     def health_check(self):
         try:
-            test = self.get_threat_actors(1)
+            test = self.threat_actor.list(first=1)
             if test is not None:
                 return True
         except:
             return False
         return False
+
+    def not_empty(self, value):
+        if value is not None:
+            if isinstance(value, str) or isinstance(value, list):
+                if len(value) > 0:
+                    return True
+                else:
+                    return False
+            if isinstance(value, int):
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def process_multiple(self, data):
         result = []
@@ -185,6 +221,8 @@ class OpenCTIApiClient:
             data['markingDefinitions'] = self.process_multiple(data['markingDefinitions'])
         if 'tags' in data:
             data['tags'] = self.process_multiple(data['tags'])
+        if 'reports' in data:
+            data['reports'] = self.process_multiple(data['reports'])
         if 'killChainPhases' in data:
             data['killChainPhases'] = self.process_multiple(data['killChainPhases'])
         if 'externalReferences' in data:
@@ -201,7 +239,7 @@ class OpenCTIApiClient:
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def check_existing_stix_domain_entity(self, stix_id_key=None, name=None, type=None):
-        return self.stix_domain_entity.get_by_stix_id_or_name(entity_type=type, stix_id_key=stix_id_key, name=name)
+        return self.stix_domain_entity.get_by_stix_id_or_name(types=[type], stix_id_key=stix_id_key, name=name)
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def get_stix_domain_entity(self, id):
@@ -209,28 +247,23 @@ class OpenCTIApiClient:
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def get_stix_domain_entity_by_external_reference(self, id, type):
-        return self.stix_domain_entity.read(filters=[
-            {'key': 'entity_type', 'values': [type]},
-            {'key': 'hasExternalReference', 'values': [id]}
-        ])
+        return self.stix_domain_entity.read(types=[type], filters=[{'key': 'hasExternalReference', 'values': [id]}])
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def get_stix_domain_entity_by_name(self, name, type='Stix-Domain-Entity'):
-        return self.stix_domain_entity.get_by_stix_id_or_name(entity_type=type, name=name)
+        return self.stix_domain_entity.get_by_stix_id_or_name(types=[type], name=name)
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def get_stix_entity_by_stix_id_key(self, stix_id_key):
-        return self.stix_domain_entity.read(filters=[
-            {'key': 'stix_id_key', 'values': [stix_id_key]}
-        ])
+        return self.stix_entity.read(id=stix_id_key, isStixId=True)
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def search_stix_domain_entities(self, keyword, type='Stix-Domain-Entity'):
-        return self.stix_domain_entity.list(filters=[{'key': 'entity_type', 'values': [type]}], search=keyword)
+        return self.stix_domain_entity.list(types=[type], search=keyword)
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def search_stix_domain_entity_by_name(self, name_or_alias, type='Stix-Domain-Entity'):
-        return self.stix_domain_entity.get_by_stix_id_or_name(entity_type=type, name=name_or_alias)
+        return self.stix_domain_entity.get_by_stix_id_or_name(types=[type], name=name_or_alias)
 
     @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def update_stix_domain_entity_field(self, id, key, value):
@@ -258,26 +291,9 @@ class OpenCTIApiClient:
             }
         })
 
-    # TODO Move to StixRelation
+    @deprecated(version='2.1.0', reason="Replaced by the StixDomainEntity class in pycti")
     def update_stix_relation_field(self, id, key, value):
-        logging.info('Updating field ' + key + ' of ' + id + '...')
-        query = """
-            mutation StixRelationEdit($id: ID!, $input: EditInput!) {
-                stixRelationEdit(id: $id) {
-                    fieldPatch(input: $input) {
-                        id
-                        entity_type
-                    }
-                }
-            }
-        """
-        self.query(query, {
-            'id': id,
-            'input': {
-                'key': key,
-                'value': value
-            }
-        })
+        return self.stix_relation.update_field(id=id, key=key, value=value)
 
     # TODO Move to StixDomainEntity
     def push_stix_domain_entity_export(self, entity_id, file_name, data):
@@ -444,19 +460,34 @@ class OpenCTIApiClient:
                                       ):
         stix_relation_result = None
         if stix_id_key is not None:
-            stix_relation_result = self.get_stix_relation_by_stix_id_key(stix_id_key)
+            stix_relation_result = self.stix_relation.read(stix_id_key=stix_id_key)
         if stix_relation_result is None:
-            stix_relation_result = self.get_stix_relation(
-                from_id,
-                to_id,
-                type,
-                first_seen,
-                last_seen)
+            if first_seen is not None and last_seen is not None:
+                first_seen = dateutil.parser.parse(first_seen)
+                first_seen_start = (first_seen + datetime.timedelta(days=-1)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
+                first_seen_stop = (first_seen + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
+                last_seen = dateutil.parser.parse(last_seen)
+                last_seen_start = (last_seen + datetime.timedelta(days=-1)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
+                last_seen_stop = (last_seen + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
+            else:
+                first_seen_start = None
+                first_seen_stop = None
+                last_seen_start = None
+                last_seen_stop = None
+            stix_relation_result = self.stix_relation.read(
+                fromId=from_id,
+                toId=to_id,
+                relationType=type,
+                firstSeenStart=first_seen_start,
+                firstSeenStop=first_seen_stop,
+                lastSeenStart=last_seen_start,
+                lastSeenStop=last_seen_stop,
+            )
         if stix_relation_result is not None:
             if update:
-                self.update_stix_relation_field(stix_relation_result['id'], description, description)
+                self.stix_relation.update_field(id=stix_relation_result['id'], key='description', value=description)
                 stix_relation_result['description'] = description
-                self.update_stix_relation_field(stix_relation_result['id'], 'weight', weight)
+                self.stix_relation.update_field(id=stix_relation_result['id'], key='weight', value=weight)
                 stix_relation_result['weight'] = weight
             return stix_relation_result
         else:
@@ -511,12 +542,14 @@ class OpenCTIApiClient:
 
     @deprecated(version='2.1.0', reason="Replaced by the MarkingDefinition class in pycti")
     def get_marking_definition_by_stix_id_key(self, stix_id_key):
-        return self.marking_definition.read(filters=[{'key': 'stix_id_key', 'values': [stix_id_key]}])
+        return self.marking_definition.read(id=stix_id_key, isStixId=True)
 
     @deprecated(version='2.1.0', reason="Replaced by the MarkingDefinition class in pycti")
     def get_marking_definition_by_definition(self, definition_type, definition):
-        return self.marking_definition.read(filters=[{'key': 'definition_type', 'values': [definition_type]},
-                                                     {'key': 'definition', 'values': [definition]}])
+        return self.marking_definition.read(filters=[
+            {'key': 'definition_type', 'values': [definition_type]},
+            {'key': 'definition', 'values': [definition]}]
+        )
 
     # TODO Move to MarkingDefinition
     def create_marking_definition(self,
@@ -565,9 +598,12 @@ class OpenCTIApiClient:
                                                 ):
         object_result = None
         if stix_id_key is not None:
-            object_result = self.get_marking_definition_by_stix_id_key(stix_id_key)
+            object_result = self.marking_definition.read(filters=[{'key': 'stix_id_key', 'values': [stix_id_key]}])
             if object_result is None:
-                object_result = self.get_marking_definition_by_definition(definition_type, definition)
+                object_result = self.marking_definition.read(filters=[
+                    {'key': 'definition_type', 'values': [definition_type]},
+                    {'key': 'definition', 'values': [definition]}
+                ])
         if object_result is not None:
             return object_result
         else:
@@ -642,7 +678,7 @@ class OpenCTIApiClient:
                                                 created=None,
                                                 modified=None
                                                 ):
-        external_reference_result = self.get_external_reference_by_url(url)
+        external_reference_result = self.external_reference.read(filters=[{'key': 'url', 'values': [url]}])
         if external_reference_result is not None:
             return external_reference_result
         else:
@@ -700,7 +736,7 @@ class OpenCTIApiClient:
                                               stix_id_key=None,
                                               created=None,
                                               modified=None):
-        kill_chain_phase_result = self.get_kill_chain_phase(phase_name)
+        kill_chain_phase_result = self.kill_chain_phase.read(filters=[{'key': 'phase_name', 'values': [phase_name]}])
         if kill_chain_phase_result is not None:
             return kill_chain_phase_result
         else:
@@ -714,131 +750,26 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to Identity
+    @deprecated(version='2.1.0', reason="Replaced by the Identity class in pycti")
     def get_identity(self, id):
-        logging.info('Getting identity ' + id + '...')
-        query = """
-            query Identity($id: String!) {
-                identity(id: $id) {
-                   id
-                    entity_type
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['identity']
+        return self.identity.read(id=id)
 
-    # TODO Move to Identity
+    @deprecated(version='2.1.0', reason="Replaced by the Identity class in pycti")
     def get_identities(self, limit=10000):
-        logging.info('Getting identities...')
-        query = """
-            query Identities($first: Int) {
-                identities(first: $first) {
-                    edges {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['identities'])
+        return self.identity.list(first=limit)
 
     # TODO Move to Identity
-    def create_identity(self, type, name, description, alias=None, id=None, stix_id_key=None, created=None,
-                        modified=None):
+    def create_identity(
+            self,
+            type,
+            name,
+            description,
+            alias=None,
+            id=None,
+            stix_id_key=None,
+            created=None,
+            modified=None
+    ):
         logging.info('Creating identity ' + name + '...')
         query = """
             mutation IdentityAdd($input: IdentityAddInput) {
@@ -875,19 +806,19 @@ class OpenCTIApiClient:
                                       modified=None,
                                       update=False
                                       ):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, type)
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=[type], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
-                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
                 object_result['name'] = name
-                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
                 object_result['description'] = description
                 if alias is not None:
                     if 'alias' in object_result:
                         new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
                     else:
                         new_aliases = alias
-                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
                     object_result['alias'] = alias
             return object_result
         else:
@@ -902,139 +833,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to ThreatActor
+    @deprecated(version='2.1.0', reason="Replaced by the ThreatActor class in pycti")
     def get_threat_actor(self, id):
-        logging.info('Getting threat actor ' + id + '...')
-        query = """
-            query ThreatActor($id: String!) {
-                threatActor(id: $id) {
-                    id
-                    entity_type
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    goal
-                    sophistication
-                    resource_level
-                    primary_motivation
-                    secondary_motivation
-                    personal_motivation
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['threatActor']
+        return self.threat_actor.read(id=id)
 
-    # TODO Move to ThreatActor
+    @deprecated(version='2.1.0', reason="Replaced by the ThreatActor class in pycti")
     def get_threat_actors(self, limit=10000):
-        logging.info('Getting threat actors...')
-        query = """
-            query ThreatActors($first: Int) {
-                threatActors(first: $first) {
-                    edges {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            goal
-                            sophistication
-                            resource_level
-                            primary_motivation
-                            secondary_motivation
-                            personal_motivation
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['threatActors'])
+        return self.threat_actor.list(first=limit)
 
     # TODO Move to ThreatActor
     def create_threat_actor(self,
@@ -1098,7 +903,7 @@ class OpenCTIApiClient:
                                           modified=None,
                                           update=False
                                           ):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Threat-Actor')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Threat-Actor'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1133,139 +938,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to IntrusionSet
+    @deprecated(version='2.1.0', reason="Replaced by the IntrusionSet class in pycti")
     def get_intrusion_set(self, id):
-        logging.info('Getting intrusion set ' + id + '...')
-        query = """
-            query IntrusionSet($id: String!) {
-                intrusionSet(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    goal
-                    sophistication
-                    resource_level
-                    primary_motivation
-                    secondary_motivation
-                    first_seen
-                    last_seen
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['intrusionSet']
+        return self.intrusion_set.read(id=id)
 
-    # TODO Move to IntrusionSet
+    @deprecated(version='2.1.0', reason="Replaced by the IntrusionSet class in pycti")
     def get_intrusion_sets(self, limit=10000):
-        logging.info('Getting intrusion sets...')
-        query = """
-            query IntrusionSets($first: Int) {
-                intrusionSets(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            goal
-                            sophistication
-                            resource_level
-                            primary_motivation
-                            secondary_motivation
-                            first_seen
-                            last_seen
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['intrusionSets'])
+        return self.intrusion_set.list(first=limit)
 
     # TODO Move to IntrusionSet
     def create_intrusion_set(self,
@@ -1332,7 +1011,7 @@ class OpenCTIApiClient:
                                            modified=None,
                                            update=False
                                            ):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Intrusion-Set')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Intrusion-Set'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1374,131 +1053,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to Campaign
+    @deprecated(version='2.1.0', reason="Replaced by the Campaign class in pycti")
     def get_campaign(self, id):
-        logging.info('Getting campaign ' + id + '...')
-        query = """
-            query Campaign($id: String!) {
-                campaign(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    objective
-                    first_seen
-                    last_seen
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['campaign']
+        return self.campaign.read(id=id)
 
-    # TODO Move to Campaign
+    @deprecated(version='2.1.0', reason="Replaced by the Campaign class in pycti")
     def get_campaigns(self, limit=10000):
-        logging.info('Getting campaigns...')
-        query = """
-            query Campaigns($first: Int) {
-                campaigns(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            objective
-                            first_seen
-                            last_seen
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['campaigns'])
+        return self.campaign.list(first=limit)
 
     # TODO Move to Campaign
     def create_campaign(self,
@@ -1553,7 +1114,7 @@ class OpenCTIApiClient:
                                       modified=None,
                                       update=False
                                       ):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Campaign')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Campaign'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1591,131 +1152,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to Incident
+    @deprecated(version='2.1.0', reason="Replaced by the Incident class in pycti")
     def get_incident(self, id):
-        logging.info('Getting incident ' + id + '...')
-        query = """
-            query Incident($id: String!) {
-                incident(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    objective
-                    first_seen
-                    last_seen
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['incident']
+        return self.incident.read(id=id)
 
-    # TODO Move to Incident
+    @deprecated(version='2.1.0', reason="Replaced by the Incident class in pycti")
     def get_incidents(self, limit=10000):
-        logging.info('Getting incidents...')
-        query = """
-            query Incidents($first: Int) {
-                incidents(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            objective
-                            first_seen
-                            last_seen
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['incidents'])
+        return self.incident.list(first=limit)
 
     # TODO Move to Incident
     def create_incident(self,
@@ -1770,7 +1213,7 @@ class OpenCTIApiClient:
                                       modified=None,
                                       update=False
                                       ):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Incident')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Incident'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -1808,153 +1251,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to Malware
+    @deprecated(version='2.1.0', reason="Replaced by the Malware class in pycti")
     def get_malware(self, id):
-        logging.info('Getting malware ' + id + '...')
-        query = """
-            query Malware($id: String!) {
-                malware(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                    killChainPhases {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                kill_chain_name
-                                phase_name
-                                phase_order
-                                created
-                                modified
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['malware']
+        return self.malware.read(id=id)
 
-    # TODO Move to Malware
+    @deprecated(version='2.1.0', reason="Replaced by the Malware class in pycti")
     def get_malwares(self, limit=10000):
-        logging.info('Getting malwares...')
-        query = """
-            query Malwares($first: Int) {
-                malwares(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                            killChainPhases {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        kill_chain_name
-                                        phase_name
-                                        phase_order
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['malwares'])
+        return self.malware.list(first=limit)
 
     # TODO Move to Malware
     def create_malware(self, name, description, alias=None, id=None, stix_id_key=None, created=None, modified=None):
@@ -1985,7 +1288,7 @@ class OpenCTIApiClient:
     def create_malware_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
                                      modified=None,
                                      update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Malware')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Malware'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2011,127 +1314,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to Tool
+    @deprecated(version='2.1.0', reason="Replaced by the Tool class in pycti")
     def get_tool(self, id):
-        logging.info('Getting tool ' + id + '...')
-        query = """
-            query Tool($id: String!) {
-                tool(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    tool_version
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['tool']
+        return self.tool.read(id=id)
 
-    # TODO Move to Tool
+    @deprecated(version='2.1.0', reason="Replaced by the Tool class in pycti")
     def get_tools(self, limit=10000):
-        logging.info('Getting tools...')
-        query = """
-            query Tools($first: Int) {
-                tools(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            tool_version
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['tools'])
+        return self.tool.list(first=limit)
 
     # TODO Move to Tool
     def create_tool(self, name, description, alias=None, id=None, stix_id_key=None, created=None, modified=None):
@@ -2162,7 +1351,7 @@ class OpenCTIApiClient:
     def create_tool_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
                                   modified=None,
                                   update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Tool')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Tool'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2188,125 +1377,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to Vulnerability
+    @deprecated(version='2.1.0', reason="Replaced by the Vulnerability class in pycti")
     def get_vulnerability(self, id):
-        logging.info('Getting vulnerability ' + id + '...')
-        query = """
-            query Vulnerability($id: String!) {
-                vulnerability(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['vulnerability']
+        return self.vulnerability.read(id=id)
 
-    # TODO Move to Vulnerability
+    @deprecated(version='2.1.0', reason="Replaced by the Vulnerability class in pycti")
     def get_vulnerabilities(self, limit=10000):
-        logging.info('Getting vulnerabilities...')
-        query = """
-            query Vulnerabilities($first: Int) {
-                vulnerabilities(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['vulnerabilities'])
+        return self.vulnerability.list(first=limit)
 
     # TODO Move to Vulnerability
     def create_vulnerability(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
@@ -2337,7 +1414,7 @@ class OpenCTIApiClient:
     # TODO Move to Vulnerability
     def create_vulnerability_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
                                            modified=None, update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Vulnerability')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Vulnerability'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2363,189 +1440,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to AttackPattern
+    @deprecated(version='2.1.0', reason="Replaced by the AttackPattern class in pycti")
     def get_attack_pattern(self, id):
-        logging.info('Getting attack pattern ' + id + '...')
-        query = """
-            query AttackPattern($id: String!) {
-                attackPattern(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    platform
-                    required_permission
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                    killChainPhases {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                kill_chain_name
-                                phase_name
-                                phase_order
-                                created
-                                modified
-                            }
-                        }
-                    }
-                    externalReferences {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                source_name
-                                description
-                                url
-                                hash
-                                external_id
-                                created
-                                modified
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['attackPattern']
+        return self.attack_pattern.read(id=id)
 
-    # TODO Move to AttackPattern
+    @deprecated(version='2.1.0', reason="Replaced by the AttackPattern class in pycti")
     def get_attack_patterns(self, limit=10000):
-        logging.info('Getting attack patterns...')
-        query = """
-            query AttackPatterns($first: Int) {
-                attackPatterns(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            platform
-                            required_permission
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                            killChainPhases {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        kill_chain_name
-                                        phase_name
-                                        phase_order
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            externalReferences {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        source_name
-                                        description
-                                        url
-                                        hash
-                                        external_id
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['attackPatterns'])
+        return self.attack_pattern.list(first=limit)
 
     # TODO Move to AttackPattern
     def create_attack_pattern(self,
@@ -2595,23 +1496,22 @@ class OpenCTIApiClient:
                                             created=None,
                                             modified=None,
                                             update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Attack-Pattern')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Attack-Pattern'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
-                self.update_stix_domain_entity_field(object_result['id'], 'name', name)
-                self.update_stix_domain_entity_field(object_result['id'], 'description', description)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
+                self.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
                 if alias is not None:
                     if 'alias' in object_result:
                         new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
                     else:
                         new_aliases = alias
-                    self.update_stix_domain_entity_field(object_result['id'], 'alias', new_aliases)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
                     object_result['alias'] = alias
                 if platform is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'platform', platform)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='platform', value=platform)
                 if required_permission is not None:
-                    self.update_stix_domain_entity_field(object_result['id'], 'required_permission',
-                                                         required_permission)
+                    self.stix_domain_entity.update_field(id=object_result['id'], key='required_permission', value=required_permission)
             return object_result
         else:
             return self.create_attack_pattern(
@@ -2626,125 +1526,13 @@ class OpenCTIApiClient:
                 modified
             )
 
-    # TODO Move to CourseOfAction
+    @deprecated(version='2.1.0', reason="Replaced by the CourseOfAction class in pycti")
     def get_course_of_action(self, id):
-        logging.info('Getting course of action ' + id + '...')
-        query = """
-            query CourseOfAction($id: String!) {
-                courseOfAction(id: $id) {
-                    id
-                    stix_id_key
-                    stix_label
-                    name
-                    alias
-                    description
-                    created
-                    modified
-                    createdByRef {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                        }
-                    }
-                    tags {
-                        edges {
-                            node {
-                                id
-                                tag_type
-                                value
-                                color
-                            }
-                        }
-                    }
-                    markingDefinitions {
-                        edges {
-                            node {
-                                id
-                                entity_type
-                                stix_id_key
-                                definition_type
-                                definition
-                                level
-                                color
-                                created
-                                modified
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'id': id})
-        return result['data']['courseOfAction']
+        return self.course_of_action.read(id=id)
 
-    # TODO Move to CourseOfAction
+    @deprecated(version='2.1.0', reason="Replaced by the CourseOfAction class in pycti")
     def get_course_of_actions(self, limit=10000):
-        logging.info('Getting course of actions...')
-        query = """
-            query CourseOfActions($first: Int) {
-                courseOfActions(first: $first) {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            stix_label
-                            name
-                            alias
-                            description
-                            created
-                            modified
-                            createdByRef {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id_key
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    created
-                                    modified
-                                }
-                            }
-                            markingDefinitions {
-                                edges {
-                                    node {
-                                        id
-                                        entity_type
-                                        stix_id_key
-                                        definition_type
-                                        definition
-                                        level
-                                        color
-                                        created
-                                        modified
-                                    }
-                                }
-                            }
-                            tags {
-                                edges {
-                                    node {
-                                        id
-                                        tag_type
-                                        value
-                                        color
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """
-        result = self.query(query, {'first': limit})
-        return self.process_multiple(result['data']['courseOfActions'])
+        return self.course_of_action.list(first=limit)
 
     # TODO Move to CourseOfAction
     def create_course_of_action(self, name, description, alias=None, id=None, stix_id_key=None, created=None,
@@ -2776,7 +1564,7 @@ class OpenCTIApiClient:
     def create_course_of_action_if_not_exists(self, name, description, alias=None, id=None, stix_id_key=None,
                                               created=None,
                                               modified=None, update=False):
-        object_result = self.check_existing_stix_domain_entity(stix_id_key, name, 'Course-Of-Action')
+        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Course-Of-Action'], stix_id_key=stix_id_key, name=name)
         if object_result is not None:
             if update:
                 self.update_stix_domain_entity_field(object_result['id'], 'name', name)
@@ -2833,7 +1621,7 @@ class OpenCTIApiClient:
         stix_entity_result = self.stix_entity.read(filters=[{'key': 'stix_id_key', 'values': [stix_entity_stix_id]}])
         if stix_entity_result is not None:
             return self.report.list(filters=[
-                {'key': 'knowledgeContains', 'values': [stix_entity_result['stix_id_key']]},
+                {'key': 'knowledgeContains', 'values': [stix_entity_result['id']]},
             ], first=limit)
         else:
             return []
@@ -2895,7 +1683,7 @@ class OpenCTIApiClient:
                                     update=False
                                     ):
         if stix_id_key is not None:
-            object_result = self.check_existing_report(stix_id_key, name, published)
+            object_result = self.report.get_by_stix_id_or_name(stix_id_key=stix_id_key, name=name, published=published)
         else:
             object_result = None
         if object_result is not None:
@@ -2942,7 +1730,7 @@ class OpenCTIApiClient:
                                                             created=None,
                                                             modified=None
                                                             ):
-        object_result = self.get_stix_domain_entity_by_external_reference(external_reference_id, 'Report')
+        object_result = self.stix_domain_entity.read(types=['Report'], filters=[{'key': 'hasExternalReference', 'values': [external_reference_id]}])
         if object_result is not None:
             return object_result
         else:
@@ -2959,7 +1747,7 @@ class OpenCTIApiClient:
                 created,
                 modified
             )
-            self.add_external_reference_if_not_exists(report['id'], external_reference_id)
+            self.stix_entity.add_external_reference(id=report['id'], external_reference_id=external_reference_id)
             return report
 
     @deprecated(version='2.1.0', reason="Replaced by the StixObservable class in pycti")
@@ -3254,7 +2042,7 @@ class OpenCTIApiClient:
 
     @deprecated(version='2.1.0', reason="Replaced by the same method in class OpenCTIStix2 in pycti")
     def stix2_import_bundle(self, json_data, update=False, types=None) -> List:
-        return self.stix2.import_bundle(json_data, update, types)
+        return self.stix2.import_bundle_from_json(json_data, update, types)
 
     @deprecated(version='2.1.0', reason="Replaced by the same method in class OpenCTIStix2 in pycti")
     def stix2_export_entity(self, entity_type, entity_id, mode='simple', max_marking_definition=None):

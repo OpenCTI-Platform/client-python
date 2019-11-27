@@ -1,5 +1,8 @@
 # coding: utf-8
 
+import json
+
+
 class KillChainPhase:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -29,10 +32,12 @@ class KillChainPhase:
         filters = kwargs.get('filters', None)
         first = kwargs.get('first', 500)
         after = kwargs.get('after', None)
-        self.opencti.log('info', 'Listing Kill-Chain-Phase with filters.')
+        order_by = kwargs.get('orderBy', None)
+        order_mode = kwargs.get('orderMode', None)
+        self.opencti.log('info', 'Listing Kill-Chain-Phase with filters ' + json.dumps(filters) + '.')
         query = """
-            query KillChainPhases($filters: [KillChainPhasesFiltering], $first: Int, $after: ID) {
-                killChainPhases(filters: $filters, first: $first, after: $after) {
+            query KillChainPhases($filters: [KillChainPhasesFiltering], $first: Int, $after: ID, $orderBy: KillChainPhasesOrdering, $orderMode: OrderingMode) {
+                killChainPhases(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """ + self.properties + """
@@ -48,7 +53,7 @@ class KillChainPhase:
                 }
             }
         """
-        result = self.opencti.query(query, {'filters': filters, 'first': first, 'after': after})
+        result = self.opencti.query(query, {'filters': filters, 'first': first, 'after': after, 'orderBy': order_by, 'orderMode': order_mode})
         return self.opencti.process_multiple(result['data']['killChainPhases'])
 
     """

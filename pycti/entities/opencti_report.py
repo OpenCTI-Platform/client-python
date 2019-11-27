@@ -1,5 +1,9 @@
 # coding: utf-8
 
+import json
+from pycti.utils.constants import CustomProperties
+
+
 class Report:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -54,6 +58,19 @@ class Report:
                     }
                 }
             }
+            tags {
+                edges {
+                    node {
+                        id
+                        tag_type
+                        value
+                        color
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }            
             externalReferences {
                 edges {
                     node {
@@ -125,10 +142,12 @@ class Report:
         search = kwargs.get('search', None)
         first = kwargs.get('first', 500)
         after = kwargs.get('after', None)
-        self.opencti.log('info', 'Listing Reports with filters.')
+        order_by = kwargs.get('orderBy', None)
+        order_mode = kwargs.get('orderMode', None)
+        self.opencti.log('info', 'Listing Reports with filters ' + json.dumps(filters) + '.')
         query = """
-            query Reports($filters: [ReportsFiltering], $search: String, $first: Int, $after: ID) {
-                reports(filters: $filters, search: $search, first: $first, after: $after) {
+            query Reports($filters: [ReportsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ReportsOrdering, $orderMode: OrderingMode) {
+                reports(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """ + self.properties + """
@@ -144,7 +163,7 @@ class Report:
                 }
             }
         """
-        result = self.opencti.query(query, {'filters': filters, 'search': search, 'first': first, 'after': after})
+        result = self.opencti.query(query, {'filters': filters, 'search': search, 'first': first, 'after': after, 'orderBy': order_by, 'orderMode': order_mode})
         return self.opencti.process_multiple(result['data']['reports'])
 
     """
@@ -248,3 +267,41 @@ class Report:
         else:
             self.opencti.log('error', 'Missing parameters: id and entity_id')
             return False
+
+    """
+        Export an Threat-Actor object in STIX2
+
+        :param id: the id of the Threat-Actor
+        :return Threat-Actor object
+    """
+
+    def to_stix2(self, **kwargs):
+        id = kwargs.get('id', None)
+        mode = kwargs.get('mode', 'simple')
+        max_marking_definition_entity = kwargs.get('max_marking_definition_entity', None)
+        entity = kwargs.get('entity', None)
+        if id is not None and entity is None:
+            entity = self.read(id=id)
+        if entity is not None:
+            report = dict()
+            report['id'] = entity['stix_id_key']
+            report['type'] = 'report'
+            report['name'] = entity['name']
+            if self.opencti.not_empty(entity['stix_label']):
+                report['labels'] = entity['stix_label']
+            else:
+                report['labels'] = ['report']
+            if self.opencti.not_empty(entity['description']): report['description'] = entity['description']
+            report['published'] = self.opencti.stix2.format_date(entity['published'])
+            report['created'] = self.opencti.stix2.format_date(entity['created'])
+            report['modified'] = self.opencti.stix2.format_date(entity['modified'])
+            if self.opencti.not_empty(entity['alias']): report[CustomProperties.ALIASES] = entity['alias']
+            if self.opencti.not_empty(entity['report_class']): report[CustomProperties.REPORT_CLASS] = entity['report_class']
+            if self.opencti.not_empty(entity['object_status']): report[CustomProperties.OBJECT_STATUS] = entity['object_status']
+            if self.opencti.not_empty(entity['source_confidence_level']): report[CustomProperties.SRC_CONF_LEVEL] = entity[
+                'source_confidence_level']
+            if self.opencti.not_empty(entity['graph_data']): report[CustomProperties.GRAPH_DATA] = entity['graph_data']
+            report[CustomProperties.ID] = entity['id']
+            return self.opencti.stix2.prepare_export(entity, report, mode, max_marking_definition_entity)
+        else:
+            self.opencti.log('error', 'Missing parameters: id or entity')

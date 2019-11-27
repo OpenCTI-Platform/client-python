@@ -1,5 +1,8 @@
 # coding: utf-8
 
+import json
+
+
 class StixObservable:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -83,10 +86,12 @@ class StixObservable:
         search = kwargs.get('search', None)
         first = kwargs.get('first', 500)
         after = kwargs.get('after', None)
-        self.opencti.log('info', 'Listing StixObservables with filters.')
+        order_by = kwargs.get('orderBy', None)
+        order_mode = kwargs.get('orderMode', None)
+        self.opencti.log('info', 'Listing StixObservables with filters ' + json.dumps(filters) + '.')
         query = """
-            query StixObservables($filters: [StixObservablesFiltering], $search: String, $first: Int, $after: ID) {
-                stixObservables(filters: $filters, search: $search, first: $first, after: $after) {
+            query StixObservables($filters: [StixObservablesFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixObservablesOrdering, $orderMode: OrderingMode) {
+                stixObservables(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """ + self.properties + """
@@ -102,7 +107,7 @@ class StixObservable:
                 }
             }
         """
-        result = self.opencti.query(query, {'filters': filters, 'search': search, 'first': first, 'after': after})
+        result = self.opencti.query(query, {'filters': filters, 'search': search, 'first': first, 'after': after, 'orderBy': order_by, 'orderMode': order_mode})
         return self.opencti.process_multiple(result['data']['stixObservables'])
 
     """

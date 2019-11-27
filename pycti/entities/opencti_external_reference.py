@@ -1,5 +1,8 @@
 # coding: utf-8
 
+import json
+
+
 class ExternalReference:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -31,10 +34,12 @@ class ExternalReference:
         filters = kwargs.get('filters', None)
         first = kwargs.get('first', 500)
         after = kwargs.get('after', None)
-        self.opencti.log('info', 'Listing External-Reference with filters.')
+        order_by = kwargs.get('orderBy', None)
+        order_mode = kwargs.get('orderMode', None)
+        self.opencti.log('info', 'Listing External-Reference with filters ' + json.dumps(filters) + '.')
         query = """
-            query ExternalReferences($filters: [ExternalReferencesFiltering], $first: Int, $after: ID) {
-                externalReferences(filters: $filters, first: $first, after: $after) {
+            query ExternalReferences($filters: [ExternalReferencesFiltering], $first: Int, $after: ID, $orderBy: ExternalReferencesOrdering, $orderMode: OrderingMode) {
+                externalReferences(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """ + self.properties + """
@@ -50,7 +55,7 @@ class ExternalReference:
                 }
             }
         """
-        result = self.opencti.query(query, {'filters': filters, 'first': first, 'after': after})
+        result = self.opencti.query(query, {'filters': filters, 'first': first, 'after': after, 'orderBy': order_by, 'orderMode': order_mode})
         return self.opencti.process_multiple(result['data']['externalReferences'])
 
     """

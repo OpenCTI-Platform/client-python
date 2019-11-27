@@ -1,5 +1,9 @@
 # coding: utf-8
 
+import json
+from pycti.utils.constants import CustomProperties
+
+
 class StixRelation:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -22,10 +26,20 @@ class StixRelation:
             from {
                 id
                 stix_id_key
+                entity_type
+                ...on StixDomainEntity {
+                    name
+                    description
+                }
             }
             to {
                 id
                 stix_id_key
+                entity_type
+                ...on StixDomainEntity {
+                    name
+                    description
+                }                
             }
             createdByRef {
                 node {
@@ -81,7 +95,7 @@ class StixRelation:
         """
 
     """
-        List Stix-Relation objects
+        List stix_relation objects
 
         :param fromId: the id of the source entity of the relation
         :param toId: the id of the target entity of the relation
@@ -93,7 +107,7 @@ class StixRelation:
         :param inferred: includes inferred relations
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination        
-        :return List of Stix-Relation objects
+        :return List of stix_relation objects
     """
 
     def list(self, **kwargs):
@@ -109,10 +123,12 @@ class StixRelation:
         inferred = kwargs.get('inferred', None)
         first = kwargs.get('first', 500)
         after = kwargs.get('after', None)
-        self.opencti.log('info', 'Listing Stix-Relations with filters.')
+        order_by = kwargs.get('orderBy', None)
+        order_mode = kwargs.get('orderMode', None)
+        self.opencti.log('info', 'Listing stix_relations with {from_id: ' + str(from_id) + ', to_id: ' + str(to_id) + '}')
         query = """
-            query StixRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationType: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID) {
-                stixRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationType: $relationType, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after) {
+            query StixRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationType: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID, $orderBy: StixRelationsOrdering, $orderMode: OrderingMode) {
+                stixRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationType: $relationType, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """ + self.properties + """
@@ -140,15 +156,17 @@ class StixRelation:
             'lastSeenStop': last_seen_stop,
             'inferred': inferred,
             'first': first,
-            'after': after
+            'after': after,
+            'orderBy': order_by,
+            'orderMode': order_mode
         })
         return self.opencti.process_multiple(result['data']['stixRelations'])
 
     """
-        Read a Stix-Relation object
+        Read a stix_relation object
         
-        :param id: the id of the Stix-Relation
-        :param stix_id_key: the STIX id of the Stix-Relation
+        :param id: the id of the stix_relation
+        :param stix_id_key: the STIX id of the stix_relation
         :param fromId: the id of the source entity of the relation
         :param toId: the id of the target entity of the relation
         :param relationType: the relation type
@@ -157,7 +175,7 @@ class StixRelation:
         :param lastSeenStart: the last_seen date start filter
         :param lastSeenStop: the last_seen date stop filter
         :param inferred: includes inferred relations
-        :return Stix-Relation object
+        :return stix_relation object
     """
 
     def read(self, **kwargs):
@@ -172,7 +190,7 @@ class StixRelation:
         last_seen_stop = kwargs.get('lastSeenStop', None)
         inferred = kwargs.get('inferred', None)
         if id is not None:
-            self.opencti.log('info', 'Reading Stix-Relation {' + id + '}.')
+            self.opencti.log('info', 'Reading stix_relation {' + id + '}.')
             query = """
                 query StixRelation($id: String!) {
                     stixRelation(id: $id) {
@@ -183,7 +201,7 @@ class StixRelation:
             result = self.opencti.query(query, {'id': id})
             return self.opencti.process_multiple_fields(result['data']['stixRelation'])
         elif stix_id_key is not None:
-            self.opencti.log('info', 'Reading Stix-Relation with stix_id_key {' + stix_id_key + '}.')
+            self.opencti.log('info', 'Reading stix_relation with stix_id_key {' + stix_id_key + '}.')
             query = """
                 query StixRelation($stix_id_key: String!) {
                     stixRelation(stix_id_key: $stix_id_key) {
@@ -210,20 +228,20 @@ class StixRelation:
                 return None
 
     """
-        Update a Stix-Relation object field
+        Update a stix_relation object field
 
-        :param id: the Stix-Relation id
+        :param id: the stix_relation id
         :param key: the key of the field
         :param value: the value of the field
-        :return The updated Stix-Relation object
+        :return The updated stix_relation object
     """
 
     def update_field(self, **kwargs):
         id = kwargs.get('id', None)
         key = kwargs.get('key', None)
-        value = kwargs.get('key', None)
+        value = kwargs.get('value', None)
         if id is not None and key is not None and value is not None:
-            self.opencti.log('info', 'Updatating Stix-Relation {' + id + '} field {' + key + '}.')
+            self.opencti.log('info', 'Updating stix_relation {' + id + '} field {' + key + '}.')
             query = """
                 mutation StixRelationEdit($id: ID!, $input: EditInput!) {
                     stixRelationEdit(id: $id) {
@@ -246,9 +264,9 @@ class StixRelation:
             return None
 
     """
-        Add a Kill-Chain-Phase object to Stix-Relation object (kill_chain_phases)
+        Add a Kill-Chain-Phase object to stix_relation object (kill_chain_phases)
 
-        :param id: the id of the Stix-Relation
+        :param id: the id of the stix_relation
         :param kill_chain_phase_id: the id of the Kill-Chain-Phase
         :return Boolean
     """
@@ -290,3 +308,43 @@ class StixRelation:
         else:
             self.opencti.log('error', 'Missing parameters: id and kill_chain_phase_id')
             return False
+
+    """
+        Export an stix_relation object in STIX2
+
+        :param id: the id of the stix_relation
+        :return stix_relation object
+    """
+
+    def to_stix2(self, **kwargs):
+        id = kwargs.get('id', None)
+        mode = kwargs.get('mode', 'simple')
+        max_marking_definition_entity = kwargs.get('max_marking_definition_entity', None)
+        entity = kwargs.get('entity', None)
+        if id is not None and entity is None:
+            entity = self.read(id=id)
+        if entity is not None:
+            stix_relation = dict()
+            stix_relation['id'] = entity['stix_id_key']
+            stix_relation['type'] = 'relationship'
+            stix_relation['relationship_type'] = entity['relationship_type']
+            if self.opencti.not_empty(entity['description']): stix_relation['description'] = entity['description']
+            stix_relation['source_ref'] = entity['from']['stix_id_key']
+            stix_relation['target_ref'] = entity['to']['stix_id_key']
+            stix_relation[CustomProperties.SOURCE_REF] = entity['from']['id']
+            stix_relation[CustomProperties.TARGET_REF] = entity['to']['id']
+            stix_relation['created'] = self.opencti.stix2.format_date(entity['created'])
+            stix_relation['modified'] = self.opencti.stix2.format_date(entity['modified'])
+            if self.opencti.not_empty(entity['first_seen']): stix_relation[CustomProperties.FIRST_SEEN] = self.opencti.stix2.format_date(
+                entity['first_seen'])
+            if self.opencti.not_empty(entity['last_seen']): stix_relation[CustomProperties.LAST_SEEN] = self.opencti.stix2.format_date(
+                entity['last_seen'])
+            if self.opencti.not_empty(entity['expiration']): stix_relation[CustomProperties.EXPIRATION] = self.opencti.stix2.format_date(
+                entity['expiration'])
+            if self.opencti.not_empty(entity['weight']): stix_relation[CustomProperties.WEIGHT] = entity['weight']
+            if self.opencti.not_empty(entity['role_played']): stix_relation[CustomProperties.ROLE_PLAYED] = entity['role_played']
+            if self.opencti.not_empty(entity['score']): stix_relation[CustomProperties.SCORE] = entity['score']
+            stix_relation[CustomProperties.ID] = entity['id']
+            return self.opencti.stix2.prepare_export(entity, stix_relation, mode, max_marking_definition_entity)
+        else:
+            self.opencti.log('error', 'Missing parameters: id or entity')

@@ -1,5 +1,8 @@
 # coding: utf-8
 
+import json
+
+
 class MarkingDefinition:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -30,10 +33,12 @@ class MarkingDefinition:
         filters = kwargs.get('filters', None)
         first = kwargs.get('first', 500)
         after = kwargs.get('after', None)
-        self.opencti.log('info', 'Listing Marking-Definitions with filters.')
+        order_by = kwargs.get('orderBy', None)
+        order_mode = kwargs.get('orderMode', None)
+        self.opencti.log('info', 'Listing Marking-Definitions with filters ' + json.dumps(filters) + '.')
         query = """
-            query MarkingDefinitions($filters: [MarkingDefinitionsFiltering], $first: Int, $after: ID) {
-                markingDefinitions(filters: $filters, first: $first, after: $after) {
+            query MarkingDefinitions($filters: [MarkingDefinitionsFiltering], $first: Int, $after: ID, $orderBy: MarkingDefinitionsOrdering, $orderMode: OrderingMode) {
+                markingDefinitions(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """ + self.properties + """
@@ -49,7 +54,7 @@ class MarkingDefinition:
                 }
             }
         """
-        result = self.opencti.query(query, {'filters': filters, 'first': first, 'after': after})
+        result = self.opencti.query(query, {'filters': filters, 'first': first, 'after': after, 'orderBy': order_by, 'orderMode': order_mode})
         return self.opencti.process_multiple(result['data']['markingDefinitions'])
 
     """
@@ -62,17 +67,18 @@ class MarkingDefinition:
 
     def read(self, **kwargs):
         id = kwargs.get('id', None)
+        is_stix_id = kwargs.get('isStixId', False)
         filters = kwargs.get('filters', None)
         if id is not None:
             self.opencti.log('info', 'Reading Marking-Definition {' + id + '}.')
             query = """
-                query MarkingDefinition($id: String!) {
-                    markingDefinition(id: $id) {
+                query MarkingDefinition($id: String!, isStixId: Boolean) {
+                    markingDefinition(id: $id, isStixId: $isStixId) {
                         """ + self.properties + """
                     }
                 }
             """
-            result = self.opencti.query(query, {'id': id})
+            result = self.opencti.query(query, {'id': id, 'isStixId': is_stix_id})
             return self.opencti.process_multiple_fields(result['data']['markingDefinition'])
         elif filters is not None:
             result = self.list(filters=filters)

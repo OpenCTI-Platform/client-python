@@ -1,17 +1,23 @@
 # coding: utf-8
 
+import json
+
+
 class StixDomainEntity:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
             id
             stix_id_key
+            stix_label
             entity_type
             parent_types
             name
             alias
             description
             graph_data
+            created
+            modified            
             created_at
             updated_at
             createdByRef {
@@ -48,11 +54,25 @@ class StixDomainEntity:
                     }
                 }
             }
+            tags {
+                edges {
+                    node {
+                        id
+                        tag_type
+                        value
+                        color
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }            
         """
 
     """
         List Stix-Domain-Entity objects
 
+        :param types: the array of types
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
@@ -61,14 +81,17 @@ class StixDomainEntity:
     """
 
     def list(self, **kwargs):
+        types = kwargs.get('types', None)
         filters = kwargs.get('filters', None)
         search = kwargs.get('search', None)
         first = kwargs.get('first', 500)
         after = kwargs.get('after', None)
-        self.opencti.log('info', 'Listing Stix-Domain-Entities with filters.')
+        order_by = kwargs.get('orderBy', None)
+        order_mode = kwargs.get('orderMode', None)
+        self.opencti.log('info', 'Listing Stix-Domain-Entities with filters ' + json.dumps(filters) + '.')
         query = """
-            query StixDomainEntities($filters: [StixDomainEntitiesFiltering], $search: String, $first: Int, $after: ID) {
-                stixDomainEntities(filters: $filters, search: $search, first: $first, after: $after) {
+            query StixDomainEntities($types: [String], $filters: [StixDomainEntitiesFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainEntitiesOrdering, $orderMode: OrderingMode) {
+                stixDomainEntities(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """ + self.properties + """
@@ -84,33 +107,38 @@ class StixDomainEntity:
                 }
             }
         """
-        result = self.opencti.query(query, {'filters': filters, 'search': search, 'first': first, 'after': after})
+        result = self.opencti.query(query, {'types': types, 'filters': filters, 'search': search, 'first': first, 'after': after, 'orderBy': order_by,
+                                            'orderMode': order_mode})
         return self.opencti.process_multiple(result['data']['stixDomainEntities'])
 
     """
         Read a Stix-Domain-Entity object
         
         :param id: the id of the Stix-Domain-Entity
+        :param isStixId: is the id a STIX id?
+        :param types: the array of types
         :param filters: the filters to apply if no id provided
         :return Stix-Domain-Entity object
     """
 
     def read(self, **kwargs):
         id = kwargs.get('id', None)
+        is_stix_id = kwargs.get('isStixId', False)
+        types = kwargs.get('types', None)
         filters = kwargs.get('filters', None)
         if id is not None:
             self.opencti.log('info', 'Reading Stix-Domain-Entity {' + id + '}.')
             query = """
-                query StixDomainEntity($id: String!) {
-                    stixDomainEntity(id: $id) {
+                query StixDomainEntity($id: String!, isStixId: Boolean) {
+                    stixDomainEntity(id: $id, isStixId: $isStixId) {
                         """ + self.properties + """
                     }
                 }
              """
-            result = self.opencti.query(query, {'id': id})
+            result = self.opencti.query(query, {'id': id, 'isStixId': is_stix_id})
             return self.opencti.process_multiple_fields(result['data']['stixDomainEntity'])
         elif filters is not None:
-            result = self.list(filters=filters)
+            result = self.list(types=types, filters=filters)
             if len(result) > 0:
                 return result[0]
             else:
@@ -129,22 +157,16 @@ class StixDomainEntity:
     """
 
     def get_by_stix_id_or_name(self, **kwargs):
-        entity_type = kwargs.get('entity_type', None)
+        types = kwargs.get('types', None)
         stix_id_key = kwargs.get('stix_id_key', None)
         name = kwargs.get('name', None)
         object_result = None
         if stix_id_key is not None:
-            object_result = self.read(filters=[{'key': 'stix_id_key', 'values': [stix_id_key]}])
-        if object_result is None and name is not None and entity_type is not None:
-            object_result = self.read(filters=[
-                {'key': 'entity_type', 'values': [entity_type]},
-                {'key': 'name', 'values': [name]}
-            ])
+            object_result = self.read(id=stix_id_key, isStixId=True)
+        if object_result is None and name is not None and type is not None:
+            object_result = self.read(types=types, filters=[{'key': 'name', 'values': [name]}])
             if object_result is None:
-                object_result = self.read(filters=[
-                    {'key': 'entity_type', 'values': [entity_type]},
-                    {'key': 'alias', 'values': [name]}
-                ])
+                object_result = self.read(types=types, filters=[{'key': 'alias', 'values': [name]}])
         return object_result
 
     """
@@ -159,9 +181,9 @@ class StixDomainEntity:
     def update_field(self, **kwargs):
         id = kwargs.get('id', None)
         key = kwargs.get('key', None)
-        value = kwargs.get('key', None)
+        value = kwargs.get('value', None)
         if id is not None and key is not None and value is not None:
-            self.opencti.log('info', 'Updatating Stix-Domain-Entity {' + id + '} field {' + key + '}.')
+            self.opencti.log('info', 'Updating Stix-Domain-Entity {' + id + '} field {' + key + '}.')
             query = """
                 mutation StixDomainEntityEdit($id: ID!, $input: EditInput!) {
                     stixDomainEntityEdit(id: $id) {
