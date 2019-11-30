@@ -4,7 +4,7 @@ import json
 from pycti import OpenCTIApiClient
 
 # Variables
-api_url = 'http://localhost:4000'
+api_url = 'https://demo.opencti.io'
 api_token = '22566f94-9091-49ba-b583-efd76cf8b29c'
 
 # OpenCTI initialization
