@@ -68,6 +68,63 @@ class StixEntity:
                     }
                 }
             }
+            ... on AttackPattern {
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }
+            ... on Malware {
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }                
+            }
+            ... on StixRelation {
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }                
+            } 
         """
 
     """
@@ -127,9 +184,7 @@ class StixEntity:
                         mutation StixEntityEdit($id: ID!, $relationId: ID!) {
                             stixEntityEdit(id: $id) {
                                 relationDelete(relationId: $relationId) {
-                                    node {
-                                        id
-                                    }
+                                    id
                                 }
                             }
                         }
@@ -140,9 +195,7 @@ class StixEntity:
                    mutation StixEntityEdit($id: ID!, $input: RelationAddInput) {
                        stixEntityEdit(id: $id) {
                             relationAdd(input: $input) {
-                                node {
-                                    id
-                                }
+                                id
                             }
                        }
                    }
@@ -187,9 +240,7 @@ class StixEntity:
                    mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
                        stixEntityEdit(id: $id) {
                             relationAdd(input: $input) {
-                                node {
-                                    id
-                                }
+                                id
                             }
                        }
                    }
@@ -233,9 +284,7 @@ class StixEntity:
                    mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
                        stixEntityEdit(id: $id) {
                             relationAdd(input: $input) {
-                                node {
-                                    id
-                                }
+                                id
                             }
                        }
                    }
@@ -252,6 +301,50 @@ class StixEntity:
                 return True
         else:
             self.opencti.log('error', 'Missing parameters: id and external_reference_id')
+            return False
+
+    """
+        Add a Kill-Chain-Phase object to Stix-Entity object (kill_chain_phases)
+
+        :param id: the id of the Stix-Entity
+        :param kill_chain_phase_id: the id of the Kill-Chain-Phase
+        :return Boolean
+    """
+
+    def add_kill_chain_phase(self, **kwargs):
+        id = kwargs.get('id', None)
+        kill_chain_phase_id = kwargs.get('kill_chain_phase_id', None)
+        if id is not None and kill_chain_phase_id is not None:
+            self.opencti.log('info',
+                             'Adding Kill-Chain-Phase {' + kill_chain_phase_id + '} to Stix-Entity {' + id + '}')
+            stix_entity = self.read(id=id)
+            kill_chain_phases_ids = []
+            for kill_chain_phase in stix_entity['killChainPhases']:
+                kill_chain_phases_ids.append(kill_chain_phase['id'])
+            if kill_chain_phase_id in kill_chain_phases_ids:
+                return True
+            else:
+                query = """
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                """
+                self.opencti.query(query, {
+                    'id': id,
+                    'input': {
+                        'fromRole': 'phase_belonging',
+                        'toId': kill_chain_phase_id,
+                        'toRole': 'kill_chain_phase',
+                        'through': 'kill_chain_phases'
+                    }
+                })
+                return True
+        else:
+            self.opencti.log('error', 'Missing parameters: id and kill_chain_phase_id')
             return False
 
     """

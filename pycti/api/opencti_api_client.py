@@ -202,6 +202,8 @@ class OpenCTIApiClient:
 
     def process_multiple(self, data):
         result = []
+        if data is None:
+            return result
         for edge in data['edges'] if 'edges' in data and data['edges'] is not None else []:
             row = edge['node']
             # Handle remote relation ID
@@ -211,6 +213,8 @@ class OpenCTIApiClient:
         return result
 
     def process_multiple_fields(self, data):
+        if data is None:
+            return data
         if 'createdByRef' in data and data['createdByRef'] is not None and 'node' in data['createdByRef']:
             row = data['createdByRef']['node']
             # Handle remote relation ID
@@ -980,7 +984,7 @@ class OpenCTIApiClient:
             modified=modified
         )
 
-    # TODO Move to IntrusionSet
+    @deprecated(version='2.1.0', reason="Replaced by the IntrusionSet class in pycti")
     def create_intrusion_set_if_not_exists(self,
                                            name,
                                            description,
@@ -998,47 +1002,23 @@ class OpenCTIApiClient:
                                            modified=None,
                                            update=False
                                            ):
-        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Intrusion-Set'], stix_id_key=stix_id_key, name=name)
-        if object_result is not None:
-            if update:
-                self.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
-                object_result['name'] = name
-                self.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
-                object_result['description'] = description
-                if alias is not None:
-                    if 'alias' in object_result:
-                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
-                    else:
-                        new_aliases = alias
-                    self.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
-                    object_result['alias'] = alias
-                if first_seen is not None:
-                    self.stix_domain_entity.update_field(id=object_result['id'], key='first_seen', value=first_seen)
-                object_result['first_seen'] = first_seen
-                if last_seen is not None:
-                    self.stix_domain_entity.update_field(id=object_result['id'], key='last_seen', value=last_seen)
-                    object_result['last_seen'] = last_seen
-                if goal is not None:
-                    self.stix_domain_entity.update_field(id=object_result['id'], key='goal', value=goal)
-                    object_result['last_seen'] = goal
-            return object_result
-        else:
-            return self.intrusion_set.create(
-                name=name,
-                description=description,
-                alias=alias,
-                first_seen=first_seen,
-                last_seen=last_seen,
-                goal=goal,
-                sophistication=sophistication,
-                resource_level=resource_level,
-                primary_motivation=primary_motivation,
-                secondary_motivation=secondary_motivation,
-                id=id,
-                stix_id_key=stix_id_key,
-                created=created,
-                modified=modified
-            )
+        return self.intrusion_set.create_or_update(
+            name=name,
+            description=description,
+            alias=alias,
+            first_seen=first_seen,
+            last_seen=last_seen,
+            goal=goal,
+            sophistication=sophistication,
+            resource_level=resource_level,
+            primary_motivation=primary_motivation,
+            secondary_motivation=secondary_motivation,
+            id=id,
+            stix_id_key=stix_id_key,
+            created=created,
+            modified=modified,
+            update=update
+        )
 
     @deprecated(version='2.1.0', reason="Replaced by the Campaign class in pycti")
     def get_campaign(self, id):
@@ -1435,7 +1415,7 @@ class OpenCTIApiClient:
     def get_attack_patterns(self, limit=10000):
         return self.attack_pattern.list(first=limit)
 
-    # TODO Move to AttackPattern
+    @deprecated(version='2.1.0', reason="Replaced by the AttackPattern class in pycti")
     def create_attack_pattern(self,
                               name,
                               description,
@@ -1446,32 +1426,19 @@ class OpenCTIApiClient:
                               stix_id_key=None,
                               created=None,
                               modified=None):
-        logging.info('Creating attack pattern ' + name + '...')
-        query = """
-           mutation AttackPatternAdd($input: AttackPatternAddInput) {
-               attackPatternAdd(input: $input) {
-                   id
-                   entity_type
-                   alias
-               }
-           }
-        """
-        result = self.query(query, {
-            'input': {
-                'name': name,
-                'description': description,
-                'alias': alias,
-                'platform': platform,
-                'required_permission': required_permission,
-                'internal_id_key': id,
-                'stix_id_key': stix_id_key,
-                'created': created,
-                'modified': modified
-            }
-        })
-        return result['data']['attackPatternAdd']
+        return self.attack_pattern.create(
+            name=name,
+            description=description,
+            alias=alias,
+            platform=platform,
+            required_permission=required_permission,
+            id=id,
+            stix_id_key=stix_id_key,
+            created=created,
+            modified=modified
+        )
 
-    # TODO Move to AttackPattern
+    @deprecated(version='2.1.0', reason="Replaced by the AttackPattern class in pycti")
     def create_attack_pattern_if_not_exists(self,
                                             name,
                                             description,
@@ -1483,35 +1450,18 @@ class OpenCTIApiClient:
                                             created=None,
                                             modified=None,
                                             update=False):
-        object_result = self.stix_domain_entity.get_by_stix_id_or_name(types=['Attack-Pattern'], stix_id_key=stix_id_key, name=name)
-        if object_result is not None:
-            if update:
-                self.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
-                self.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
-                if alias is not None:
-                    if 'alias' in object_result:
-                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
-                    else:
-                        new_aliases = alias
-                    self.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
-                    object_result['alias'] = alias
-                if platform is not None:
-                    self.stix_domain_entity.update_field(id=object_result['id'], key='platform', value=platform)
-                if required_permission is not None:
-                    self.stix_domain_entity.update_field(id=object_result['id'], key='required_permission', value=required_permission)
-            return object_result
-        else:
-            return self.create_attack_pattern(
-                name,
-                description,
-                alias,
-                platform,
-                required_permission,
-                id,
-                stix_id_key,
-                created,
-                modified
-            )
+        return self.attack_pattern.create_or_update(
+            name=name,
+            description=description,
+            alias=alias,
+            platform=platform,
+            required_permission=required_permission,
+            id=id,
+            stix_id_key=stix_id_key,
+            created=created,
+            modified=modified,
+            update=update
+        )
 
     @deprecated(version='2.1.0', reason="Replaced by the CourseOfAction class in pycti")
     def get_course_of_action(self, id):
@@ -1824,7 +1774,7 @@ class OpenCTIApiClient:
 
     @deprecated(version='2.1.0', reason="Replaced by the StixEntity class in pycti")
     def add_kill_chain_phase_if_not_exists(self, object_id, kill_chain_phase_id):
-        logging.error('Impossible to add kill chain phase through this function anymore')
+        return self.stix_entity.add_kill_chain_phase(id=object_id, kill_chain_phase_id=kill_chain_phase_id)
 
     @deprecated(version='2.1.0', reason="Replaced by the StixEntity class in pycti")
     def add_external_reference_if_not_exists(self, object_id, external_reference_id):

@@ -15,8 +15,6 @@ class StixRelation:
             description
             weight
             role_played
-            score
-            expiration
             first_seen
             last_seen
             created

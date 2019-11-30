@@ -138,7 +138,8 @@ class OpenCTIStix2:
             entity_type,
             lambda **kwargs: self.unknown_type({'type': entity_type})
         )
-        bundle['objects'] = do_export(id=entity_id, mode=mode, max_marking_definition_entity=max_marking_definition_entity)
+        bundle['objects'] = do_export(id=entity_id, mode=mode,
+                                      max_marking_definition_entity=max_marking_definition_entity)
         return bundle
 
     def export_bundle(self, types=[]):
@@ -159,13 +160,15 @@ class OpenCTIStix2:
         if 'Threat-Actor' in types:
             threat_actors = self.opencti.get_threat_actors()
             for threat_actor in threat_actors:
-                threat_actor_bundle = self.filter_objects(uuids, self.opencti.threat_actor.to_stix2(entity=threat_actor))
+                threat_actor_bundle = self.filter_objects(uuids,
+                                                          self.opencti.threat_actor.to_stix2(entity=threat_actor))
                 uuids = uuids + [x['id'] for x in threat_actor_bundle]
                 bundle['objects'] = bundle['objects'] + threat_actor_bundle
         if 'Intrusion-Set' in types:
             intrusion_sets = self.opencti.get_intrusion_sets()
             for intrusion_set in intrusion_sets:
-                intrusion_set_bundle = self.opencti.filter_objects(uuids, self.opencti.intrusion_set.to_stix2(entity=intrusion_set))
+                intrusion_set_bundle = self.opencti.filter_objects(uuids, self.opencti.intrusion_set.to_stix2(
+                    entity=intrusion_set))
                 uuids = uuids + [x['id'] for x in intrusion_set_bundle]
                 bundle['objects'] = bundle['objects'] + intrusion_set_bundle
         if 'Campaign' in types:
@@ -195,19 +198,22 @@ class OpenCTIStix2:
         if 'Vulnerability' in types:
             vulnerabilities = self.opencti.get_vulnerabilities()
             for vulnerability in vulnerabilities:
-                vulnerability_bundle = self.filter_objects(uuids, self.opencti.vulnerability.to_stix2(entity=vulnerability))
+                vulnerability_bundle = self.filter_objects(uuids,
+                                                           self.opencti.vulnerability.to_stix2(entity=vulnerability))
                 uuids = uuids + [x['id'] for x in vulnerability_bundle]
                 bundle['objects'] = bundle['objects'] + vulnerability_bundle
         if 'Attack-Pattern' in types:
             attack_patterns = self.opencti.get_attack_patterns()
             for attack_pattern in attack_patterns:
-                attack_pattern_bundle = self.filter_objects(uuids, self.opencti.attack_pattern.to_stix2(entity=attack_pattern))
+                attack_pattern_bundle = self.filter_objects(uuids,
+                                                            self.opencti.attack_pattern.to_stix2(entity=attack_pattern))
                 uuids = uuids + [x['id'] for x in attack_pattern_bundle]
                 bundle['objects'] = bundle['objects'] + attack_pattern_bundle
         if 'Course-Of-Action' in types:
             course_of_actions = self.opencti.get_course_of_actions()
             for course_of_action in course_of_actions:
-                course_of_action_bundle = self.filter_objects(uuids, self.opencti.course_of_action.to_stix2(entity=course_of_action))
+                course_of_action_bundle = self.filter_objects(uuids, self.opencti.course_of_action.to_stix2(
+                    entity=course_of_action))
                 uuids = uuids + [x['id'] for x in course_of_action_bundle]
                 bundle['objects'] = bundle['objects'] + course_of_action_bundle
         if 'Report' in types:
@@ -219,7 +225,8 @@ class OpenCTIStix2:
         if 'Relationship' in types:
             stix_relations = self.opencti.get_stix_relations()
             for stix_relation in stix_relations:
-                stix_relation_bundle = self.filter_objects(uuids, self.opencti.stix_relation.to_stix2(entity=stix_relation))
+                stix_relation_bundle = self.filter_objects(uuids,
+                                                           self.opencti.stix_relation.to_stix2(entity=stix_relation))
                 uuids = uuids + [x['id'] for x in stix_relation_bundle]
                 bundle['objects'] = bundle['objects'] + stix_relation_bundle
         return bundle
@@ -373,7 +380,8 @@ class OpenCTIStix2:
             }
             # Get extra objects
             for entity_object in objects_to_get:
-                do_export = exporter.get(entity_object['entity_type'], lambda **kwargs: self.unknown_type({'type': entity_object['entity_type']}))
+                do_export = exporter.get(entity_object['entity_type'],
+                                         lambda **kwargs: self.unknown_type({'type': entity_object['entity_type']}))
                 entity_object_data = do_export(id=entity_object['id'])
                 # Add to result
                 entity_object_bundle = self.filter_objects(uuids, entity_object_data)
@@ -591,23 +599,36 @@ class OpenCTIStix2:
 
             # Update created by ref
             if created_by_ref_id is not None and stix_object['type'] != 'marking-definition':
-                self.opencti.stix_entity.update_created_by_ref(id=stix_object_result['id'], identity_id=created_by_ref_id)
+                self.opencti.stix_entity.update_created_by_ref(
+                    id=stix_object_result['id'],
+                    identity_id=created_by_ref_id
+                )
             # Add marking definitions
             for marking_definition_id in marking_definitions_ids:
-                self.opencti.stix_entity.add_marking_definition(id=stix_object_result['id'], marking_definition_id=marking_definition_id)
+                self.opencti.stix_entity.add_marking_definition(
+                    id=stix_object_result['id'],
+                    marking_definition_id=marking_definition_id
+                )
             # Add external references
             for external_reference_id in external_references_ids:
-                self.opencti.stix_entity.add_external_reference(id=stix_object_result['id'], external_reference_id=external_reference_id)
+                self.opencti.stix_entity.add_external_reference(
+                    id=stix_object_result['id'],
+                    external_reference_id=external_reference_id
+                )
                 if external_reference_id in reports:
-                    self.opencti.add_object_ref_to_report_if_not_exists(reports[external_reference_id], stix_object_result['id'])
-
+                    self.opencti.report.add_stix_entity(
+                        id=reports[external_reference_id],
+                        entity_id=stix_object_result['id']
+                    )
             # Add kill chain phases
-            # TODO REFACTOR THIS
-            # for kill_chain_phase_id in kill_chain_phases_ids:
-            #    self.opencti.add_kill_chain_phase_if_not_exists(stix_object_result['id'], kill_chain_phase_id)
+            for kill_chain_phase_id in kill_chain_phases_ids:
+                self.opencti.stix_entity.add_kill_chain_phase(
+                    id=stix_object_result['id'],
+                    kill_chain_phase_id=kill_chain_phase_id
+                )
             # Add object refs
             for object_refs_id in object_refs_ids:
-                self.opencti.add_object_ref_to_report_if_not_exists(stix_object_result['id'], object_refs_id)
+                self.opencti.report.add_stix_entity(id=stix_object_result['id'], entity_id=object_refs_id)
 
         return stix_object_result
 
@@ -674,23 +695,25 @@ class OpenCTIStix2:
             update
         )
 
+    # TODO move in IntrusionSet
     def create_intrusion_set(self, stix_object, update=False):
-        return self.opencti.create_intrusion_set_if_not_exists(
-            stix_object['name'],
-            self.convert_markdown(stix_object['description']) if 'description' in stix_object else '',
-            self.pick_aliases(stix_object),
-            stix_object[CustomProperties.FIRST_SEEN] if CustomProperties.FIRST_SEEN in stix_object else None,
-            stix_object[CustomProperties.LAST_SEEN] if CustomProperties.LAST_SEEN in stix_object else None,
-            stix_object['goals'] if 'goals' in stix_object else None,
-            stix_object['sophistication'] if 'sophistication' in stix_object else None,
-            stix_object['resource_level'] if 'resource_level' in stix_object else None,
-            stix_object['primary_motivation'] if 'primary_motivation' in stix_object else None,
-            stix_object['secondary_motivations'] if 'secondary_motivations' in stix_object else None,
-            stix_object[CustomProperties.ID] if CustomProperties.ID in stix_object else None,
-            stix_object['id'] if 'id' in stix_object else None,
-            stix_object['created'] if 'created' in stix_object else None,
-            stix_object['modified'] if 'modified' in stix_object else None,
-            update
+        return self.opencti.intrusion_set.create_or_update(
+            name=stix_object['name'],
+            description=self.convert_markdown(stix_object['description']) if 'description' in stix_object else '',
+            alias=self.pick_aliases(stix_object),
+            first_seen=stix_object[CustomProperties.FIRST_SEEN] if CustomProperties.FIRST_SEEN in stix_object else None,
+            last_seen=stix_object[CustomProperties.LAST_SEEN] if CustomProperties.LAST_SEEN in stix_object else None,
+            goal=stix_object['goals'] if 'goals' in stix_object else None,
+            sophistication=stix_object['sophistication'] if 'sophistication' in stix_object else None,
+            resource_level=stix_object['resource_level'] if 'resource_level' in stix_object else None,
+            primary_motivation=stix_object['primary_motivation'] if 'primary_motivation' in stix_object else None,
+            secondary_motivation=stix_object[
+                'secondary_motivations'] if 'secondary_motivations' in stix_object else None,
+            id=stix_object[CustomProperties.ID] if CustomProperties.ID in stix_object else None,
+            stix_id_key=stix_object['id'] if 'id' in stix_object else None,
+            created=stix_object['created'] if 'created' in stix_object else None,
+            modified=stix_object['modified'] if 'modified' in stix_object else None,
+            update=update
         )
 
     def create_campaign(self, stix_object, update=False):
@@ -760,18 +783,7 @@ class OpenCTIStix2:
         )
 
     def create_attack_pattern(self, stix_object, update=False):
-        return self.opencti.create_attack_pattern_if_not_exists(
-            stix_object['name'],
-            self.convert_markdown(stix_object['description']) if 'description' in stix_object else '',
-            self.pick_aliases(stix_object),
-            stix_object['x_mitre_platforms'] if 'x_mitre_platforms' in stix_object else None,
-            stix_object['x_mitre_permissions_required'] if 'x_mitre_permissions_required' in stix_object else None,
-            stix_object[CustomProperties.ID] if CustomProperties.ID in stix_object else None,
-            stix_object['id'] if 'id' in stix_object else None,
-            stix_object['created'] if 'created' in stix_object else None,
-            stix_object['modified'] if 'modified' in stix_object else None,
-            update
-        )
+        return self.opencti.attack_pattern.from_stix2(stixObject=stix_object, update=update)
 
     def create_course_of_action(self, stix_object, update=False):
         return self.opencti.create_course_of_action_if_not_exists(

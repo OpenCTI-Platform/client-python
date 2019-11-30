@@ -9,15 +9,12 @@ class StixDomainEntity:
         self.properties = """
             id
             stix_id_key
-            stix_label
             entity_type
             parent_types
             name
             alias
             description
-            graph_data
-            created
-            modified            
+            graph_data        
             created_at
             updated_at
             createdByRef {
@@ -129,7 +126,7 @@ class StixDomainEntity:
         if id is not None:
             self.opencti.log('info', 'Reading Stix-Domain-Entity {' + id + '}.')
             query = """
-                query StixDomainEntity($id: String!, isStixId: Boolean) {
+                query StixDomainEntity($id: String!, $isStixId: Boolean) {
                     stixDomainEntity(id: $id, isStixId: $isStixId) {
                         """ + self.properties + """
                     }

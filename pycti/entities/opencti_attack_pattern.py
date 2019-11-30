@@ -161,6 +161,145 @@ class AttackPattern:
             return None
 
     """
+        Create a Attack-Pattern object
+
+        :param name: the name of the Attack Pattern
+        :return Attack-Pattern object
+    """
+
+    def create(self, **kwargs):
+        name = kwargs.get('name', None)
+        description = kwargs.get('description', None)
+        alias = kwargs.get('alias', None)
+        platform = kwargs.get('platform', None)
+        required_permission = kwargs.get('required_permission', None)
+        external_id = kwargs.get('external_id', None)
+        id = kwargs.get('id', None)
+        stix_id_key = kwargs.get('stix_id_key', None)
+        created = kwargs.get('created', None)
+        modified = kwargs.get('modified', None)
+
+        if name is not None and description is not None:
+            self.opencti.log('info', 'Creating Attack-Pattern {' + name + '}.')
+            query = """
+                mutation AttackPatternAdd($input: AttackPatternAddInput) {
+                    attackPatternAdd(input: $input) {
+                        id
+                        entity_type
+                        alias
+                    }
+                }
+            """
+            result = self.opencti.query(query, {
+                'input': {
+                    'name': name,
+                    'description': description,
+                    'alias': alias,
+                    'platform': platform,
+                    'required_permission': required_permission,
+                    'external_id': external_id,
+                    'internal_id_key': id,
+                    'stix_id_key': stix_id_key,
+                    'created': created,
+                    'modified': modified
+                }
+            })
+            return self.opencti.process_multiple_fields(result['data']['attackPatternAdd'])
+        else:
+            self.opencti.log('error', 'Missing parameters: name and description')
+
+    """
+        Create a Attack-Pattern object only if it not exists, update it on request
+
+        :param name: the name of the Attack-Pattern
+        :returnAttack-Pattern object
+    """
+
+    def create_or_update(self, **kwargs):
+        name = kwargs.get('name', None)
+        description = kwargs.get('description', None)
+        alias = kwargs.get('alias', None)
+        platform = kwargs.get('platform', None)
+        required_permission = kwargs.get('required_permission', None)
+        external_id = kwargs.get('external_id', None)
+        id = kwargs.get('id', None)
+        stix_id_key = kwargs.get('stix_id_key', None)
+        created = kwargs.get('created', None)
+        modified = kwargs.get('modified', None)
+        update = kwargs.get('update', False)
+
+        object_result = self.opencti.stix_domain_entity.get_by_stix_id_or_name(types=['Attack-Pattern'], stix_id_key=stix_id_key, name=name)
+        if object_result is not None:
+            if update:
+                self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
+                object_result['name'] = name
+                self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
+                object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
+                    object_result['alias'] = alias
+                if platform is not None:
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='platform', value=platform)
+                    object_result['platform'] = platform
+                if required_permission is not None:
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='required_permission', value=required_permission)
+                    object_result['required_permission'] = required_permission
+                if external_id is not None:
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='external_id', value=external_id)
+                    object_result['external_id'] = external_id
+            return object_result
+        else:
+            return self.create(
+                name=name,
+                description=description,
+                alias=alias,
+                platform=platform,
+                required_permission=required_permission,
+                external_id=external_id,
+                id=id,
+                stix_id_key=stix_id_key,
+                created=created,
+                modified=modified
+            )
+
+    """
+        Import an Attack-Pattern object from a STIX2 object
+
+        :param stixObject: the id of the Attack-Pattern
+        :return Attack-Pattern object
+    """
+
+    def from_stix2(self, **kwargs):
+        stix_object = kwargs.get('stixObject', None)
+        update = kwargs.get('update', False)
+        if stix_object is not None:
+            # Extract external ID
+            external_id = None
+            if 'external_references' in stix_object:
+                for external_reference in stix_object['external_references']:
+                    if external_reference['source_name'] == 'mitre-attack':
+                        external_id = external_reference['external_id']
+            return self.create_or_update(
+                name=stix_object['name'],
+                description=self.opencti.stix2.convert_markdown(stix_object['description']) if 'description' in stix_object else '',
+                alias=self.opencti.stix2.pick_aliases(stix_object),
+                platform=stix_object['x_mitre_platforms'] if 'x_mitre_platforms' in stix_object else None,
+                required_permission=stix_object['x_mitre_permissions_required'] if 'x_mitre_permissions_required' in stix_object else None,
+                external_id=external_id,
+                id=stix_object[CustomProperties.ID] if CustomProperties.ID in stix_object else None,
+                stix_id_key=stix_object['id'] if 'id' in stix_object else None,
+                created=stix_object['created'] if 'created' in stix_object else None,
+                modified=stix_object['modified'] if 'modified' in stix_object else None,
+                update=update
+            )
+        else:
+            self.opencti.log('error', 'Missing parameters: stixObject')
+
+    """
         Export an Attack-Pattern object in STIX2
     
         :param id: the id of the Attack-Pattern

@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import json
+
 from pycti.utils.constants import CustomProperties
 
 
@@ -201,6 +202,73 @@ class IntrusionSet:
             return self.opencti.process_multiple_fields(result['data']['intrusionSetAdd'])
         else:
             self.opencti.log('error', 'Missing parameters: name and description')
+
+    """
+        Create a Intrusion-Set object only if it not exists, update it on request
+
+        :param name: the name of the Intrusion Set
+        :return Intrusion-Set object
+    """
+
+    def create_or_update(self, **kwargs):
+        name = kwargs.get('name', None)
+        description = kwargs.get('description', None)
+        alias = kwargs.get('alias', None)
+        first_seen = kwargs.get('first_seen', None)
+        last_seen = kwargs.get('last_seen', None)
+        goal = kwargs.get('goal', None)
+        sophistication = kwargs.get('sophistication', None)
+        resource_level = kwargs.get('resource_level', None)
+        primary_motivation = kwargs.get('primary_motivation', None)
+        secondary_motivation = kwargs.get('secondary_motivation', None)
+        id = kwargs.get('id', None)
+        stix_id_key = kwargs.get('stix_id_key', None)
+        created = kwargs.get('created', None)
+        modified = kwargs.get('modified', None)
+        update = kwargs.get('update', False)
+
+        object_result = self.opencti.stix_domain_entity.get_by_stix_id_or_name(types=['Intrusion-Set'], stix_id_key=stix_id_key, name=name)
+        if object_result is not None:
+            if update:
+                self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='name', value=name)
+                object_result['name'] = name
+                self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='description', value=description)
+                object_result['description'] = description
+                if alias is not None:
+                    if 'alias' in object_result:
+                        new_aliases = object_result['alias'] + list(set(alias) - set(object_result['alias']))
+                    else:
+                        new_aliases = alias
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='alias', value=new_aliases)
+                    object_result['alias'] = alias
+                if first_seen is not None:
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='first_seen', value=first_seen)
+                    object_result['first_seen'] = first_seen
+                if last_seen is not None:
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='last_seen', value=last_seen)
+                    object_result['last_seen'] = last_seen
+                if goal is not None:
+                    self.opencti.stix_domain_entity.update_field(id=object_result['id'], key='goal', value=goal)
+                    object_result['last_seen'] = goal
+            return object_result
+        else:
+            return self.create(
+                name=name,
+                description=description,
+                alias=alias,
+                first_seen=first_seen,
+                last_seen=last_seen,
+                goal=goal,
+                sophistication=sophistication,
+                resource_level=resource_level,
+                primary_motivation=primary_motivation,
+                secondary_motivation=secondary_motivation,
+                id=id,
+                stix_id_key=stix_id_key,
+                created=created,
+                modified=modified
+            )
+
     """
         Export an Intrusion-Set object in STIX2
     
