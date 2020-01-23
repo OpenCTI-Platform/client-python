@@ -67,7 +67,7 @@ class StixDomainEntity:
                         id
                     }
                 }
-            } 
+            }
             externalReferences {
                 edges {
                     node {
