@@ -75,6 +75,7 @@ class OpenCTIApiClient:
 
         # Define API
         self.api_url = url + "/graphql"
+        self.api_session = requests.session()
         self.request_headers = {"Authorization": "Bearer " + token}
 
         # Define the dependencies
@@ -186,7 +187,7 @@ class OpenCTIApiClient:
                     multipart_files.append(file_multi)
                     file_index += 1
             # Send the multipart request
-            r = requests.post(
+            r = self.api_session.post(
                 self.api_url,
                 data=multipart_data,
                 files=multipart_files,
@@ -195,7 +196,7 @@ class OpenCTIApiClient:
             )
         # If no
         else:
-            r = requests.post(
+            r = self.api_session.post(
                 self.api_url,
                 json={"query": query, "variables": variables},
                 headers=self.request_headers,
@@ -212,7 +213,7 @@ class OpenCTIApiClient:
             logging.info(r.text)
 
     def fetch_opencti_file(self, fetch_uri, binary=False):
-        r = requests.get(fetch_uri, headers=self.request_headers)
+        r = self.api_session.get(fetch_uri, headers=self.request_headers)
         if binary:
             return r.content
         return r.text
