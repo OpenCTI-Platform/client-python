@@ -2,7 +2,7 @@
 
 import json
 from pycti.utils.constants import CustomProperties
-
+from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 class Identity:
     def __init__(self, opencti):
@@ -366,6 +366,7 @@ class Identity:
             if (
                 entity["entity_type"] == "organization"
                 and "organization_class" in entity
+                and self.opencti.not_empty(entity["organization_class"])
             ):
                 identity[CustomProperties.ORG_CLASS] = entity["organization_class"]
             identity[CustomProperties.IDENTITY_TYPE] = entity["entity_type"]

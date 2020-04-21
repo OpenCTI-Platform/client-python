@@ -2,7 +2,7 @@
 
 import json
 from pycti.utils.constants import CustomProperties
-
+from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 class AttackPattern:
     def __init__(self, opencti):
@@ -498,6 +498,7 @@ class AttackPattern:
             attack_pattern = dict()
             attack_pattern["id"] = entity["stix_id_key"]
             attack_pattern["type"] = "attack-pattern"
+            attack_pattern["spec_version"] = SPEC_VERSION
             if self.opencti.not_empty(entity["external_id"]):
                 attack_pattern[CustomProperties.EXTERNAL_ID] = entity["external_id"]
             attack_pattern["name"] = entity["name"]

@@ -29,6 +29,8 @@ from pycti.entities.opencti_vulnerability import Vulnerability
 from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_course_of_action import CourseOfAction
 from pycti.entities.opencti_report import Report
+from pycti.entities.opencti_note import Note
+from pycti.entities.opencti_opinion import Opinion
 from pycti.entities.opencti_indicator import Indicator
 
 from pycti.utils.opencti_stix2 import OpenCTIStix2

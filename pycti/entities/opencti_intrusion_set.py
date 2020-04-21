@@ -3,7 +3,7 @@
 import json
 
 from pycti.utils.constants import CustomProperties
-
+from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 class IntrusionSet:
     def __init__(self, opencti):
