@@ -5,7 +5,7 @@ import sys
 from setuptools import setup
 from setuptools.command.install import install
 
-VERSION = "3.1.0"
+VERSION = "3.1.1"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -50,16 +50,16 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        "requests",
-        "PyYAML",
-        "python-dateutil",
-        "datefinder",
-        "stix2",
-        "stix2-validator",
-        "pytz",
-        "pika",
-        "deprecated",
-        "python-magic",
+        "requests==2.23.0",
+        "PyYAML==5.3.1",
+        "python-dateutil==2.8.1",
+        "datefinder==0.7.0",
+        "stix2==1.4.0",
+        "stix2-validator==1.1.2",
+        "pytz==2019.3",
+        "pika==1.1.0",
+        "python-magic==0.4.15;sys.platform=='linux' or sys.platform=='darwin'",
+        "python-magic-bin==0.4.14;sys.platform=='win32'",
     ],
     cmdclass={"verify": VerifyVersionCommand},
     extras_require={"dev": ["black", "wheel"]},  # Optional
