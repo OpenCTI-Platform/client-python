@@ -352,6 +352,7 @@ class Identity:
             identity = dict()
             identity["id"] = entity["stix_id_key"]
             identity["type"] = "identity"
+            identity["spec_version"] = SPEC_VERSION
             identity["name"] = entity["name"]
             identity["identity_class"] = identity_class
             if self.opencti.not_empty(entity["stix_label"]):
