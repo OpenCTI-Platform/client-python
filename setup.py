@@ -62,7 +62,6 @@ setup(
         "stix2-validator==1.1.2",
         "pytz==2019.3",
         "pika==1.1.0",
-        "deprecated==1.2.9",
         "python-magic==0.4.15;sys.platform=='linux' or sys.platform=='darwin'",
         "python-magic-bin==0.4.14;sys.platform=='win32'",
     ],
