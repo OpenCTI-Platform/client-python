@@ -6,6 +6,7 @@ from dateutil.parser import parse
 from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
+
 class Note:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -258,8 +259,7 @@ class Note:
         entity_id = kwargs.get("entity_id", None)
         if id is not None and entity_id is not None:
             self.opencti.log(
-                "info",
-                "Checking Stix-Entity {" + entity_id + "} in Note {" + id + "}",
+                "info", "Checking Stix-Entity {" + entity_id + "} in Note {" + id + "}",
             )
             query = """
                 query NoteContainsStixDomainEntity($id: String!, $objectId: String!) {
@@ -310,8 +310,7 @@ class Note:
             return result["data"]["noteContainsStixObservable"]
         else:
             self.opencti.log(
-                "error",
-                "[opencti_note] Missing parameters: id or stix_observable_id",
+                "error", "[opencti_note] Missing parameters: id or stix_observable_id",
             )
 
     """
@@ -333,12 +332,8 @@ class Note:
         created_by_ref = kwargs.get("createdByRef", None)
         marking_definitions = kwargs.get("markingDefinitions", None)
 
-        if (
-            name is not None
-            and description is not None
-            and content is not None
-        ):
-            self.opencti.log("info", "Creating Note {" + name + "}.")
+        if name is not None and description is not None and content is not None:
+            self.opencti.log("info", "Creating Note {" + description + "}.")
             query = (
                 """
                 mutation NoteAdd($input: NoteAddInput) {
@@ -426,11 +421,11 @@ class Note:
                 ],
                 customAttributes=custom_attributes,
             )
-        if object_result is None and name is not None:
+        if object_result is None and description is not None and content is not None:
             object_result = self.get_by_stix_id_or_name(
                 stix_id_key=stix_id_key,
-                name=name,
                 description=description,
+                content=content,
                 custom_attributes=custom_attributes,
             )
         if object_result is not None:
@@ -584,8 +579,7 @@ class Note:
             return True
         else:
             self.opencti.log(
-                "error",
-                "[opencti_note] Missing parameters: id and stix_observable_id",
+                "error", "[opencti_note] Missing parameters: id and stix_observable_id",
             )
             return False
 
@@ -675,6 +669,4 @@ class Note:
                 entity, note, mode, max_marking_definition_entity
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_note] Missing parameters: id or entity"
-            )
+            self.opencti.log("error", "[opencti_note] Missing parameters: id or entity")

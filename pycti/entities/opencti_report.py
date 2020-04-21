@@ -6,6 +6,7 @@ from dateutil.parser import parse
 from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
+
 class Report:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -615,10 +616,14 @@ class Report:
         if stix_object is not None:
             return self.create(
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(stix_object["description"])
+                description=self.opencti.stix2.convert_markdown(
+                    stix_object["description"]
+                )
                 if "description" in stix_object
                 else "",
-                published=stix_object["published"] if "published" in stix_object else "",
+                published=stix_object["published"]
+                if "published" in stix_object
+                else "",
                 report_class=stix_object[CustomProperties.REPORT_CLASS]
                 if CustomProperties.REPORT_CLASS in stix_object
                 else "Threat Report",

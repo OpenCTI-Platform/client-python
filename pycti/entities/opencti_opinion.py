@@ -6,6 +6,7 @@ from dateutil.parser import parse
 from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
+
 class Opinion:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -17,7 +18,7 @@ class Opinion:
             name
             alias
             description
-            content
+            explanation
             graph_data
             created
             modified
@@ -230,18 +231,22 @@ class Opinion:
     def get_by_stix_id_or_name(self, **kwargs):
         stix_id_key = kwargs.get("stix_id_key", None)
         description = kwargs.get("description", None)
-        content = kwargs.get("content", None)
-        custom_attributes = kwargs.get("customAttributes", None)
+        explanation = kwargs.get("explanation", None)
+        custom_attributes = kwargs.get(explanation, None)
         object_result = None
         if stix_id_key is not None:
             object_result = self.read(
                 id=stix_id_key, customAttributes=custom_attributes
             )
-        if object_result is None and description is not None and content is not None:
+        if (
+            object_result is None
+            and description is not None
+            and explanation is not None
+        ):
             object_result = self.read(
                 filters=[
                     {"key": "description", "values": [description]},
-                    {"key": "content", "values": [content]},
+                    {"key": "explanation", "values": [explanation]},
                 ],
                 customAttributes=custom_attributes,
             )
@@ -324,7 +329,7 @@ class Opinion:
     def create_raw(self, **kwargs):
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        content = kwargs.get("content", None)
+        explanation = kwargs.get("explanation", None)
         graph_data = kwargs.get("graph_data", None)
         id = kwargs.get("id", None)
         stix_id_key = kwargs.get("stix_id_key", None)
@@ -333,11 +338,7 @@ class Opinion:
         created_by_ref = kwargs.get("createdByRef", None)
         marking_definitions = kwargs.get("markingDefinitions", None)
 
-        if (
-            name is not None
-            and description is not None
-            and content is not None
-        ):
+        if name is not None and description is not None and explanation is not None:
             self.opencti.log("info", "Creating Opinion {" + name + "}.")
             query = (
                 """
@@ -356,7 +357,7 @@ class Opinion:
                     "input": {
                         "name": name,
                         "description": description,
-                        "content": content,
+                        "explanation": explanation,
                         "graph_data": graph_data,
                         "internal_id_key": id,
                         "stix_id_key": stix_id_key,
@@ -371,7 +372,7 @@ class Opinion:
         else:
             self.opencti.log(
                 "error",
-                "[opencti_opinion] Missing parameters: name and description and published and opinion_class",
+                "[opencti_opinion] Missing parameters: name and description and explanation",
             )
 
     """
@@ -387,7 +388,7 @@ class Opinion:
         name = kwargs.get("name", None)
         external_reference_id = kwargs.get("external_reference_id", None)
         description = kwargs.get("description", None)
-        content = kwargs.get("content", None)
+        explanation = kwargs.get("explanation", None)
         graph_data = kwargs.get("graph_data", None)
         id = kwargs.get("id", None)
         stix_id_key = kwargs.get("stix_id_key", None)
@@ -426,11 +427,15 @@ class Opinion:
                 ],
                 customAttributes=custom_attributes,
             )
-        if object_result is None and name is not None:
+        if (
+            object_result is None
+            and description is not None
+            and explanation is not None
+        ):
             object_result = self.get_by_stix_id_or_name(
                 stix_id_key=stix_id_key,
-                name=name,
                 description=description,
+                explanation=explanation,
                 custom_attributes=custom_attributes,
             )
         if object_result is not None:
@@ -445,11 +450,11 @@ class Opinion:
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
-                if object_result["content"] != content:
+                if object_result["explanation"] != explanation:
                     self.opencti.stix_domain_entity.update_field(
-                        id=object_result["id"], key="content", value=content
+                        id=object_result["id"], key="explanation", value=explanation
                     )
-                    object_result["content"] = content
+                    object_result["explanation"] = explanation
             if external_reference_id is not None:
                 self.opencti.stix_entity.add_external_reference(
                     id=object_result["id"],
@@ -461,7 +466,7 @@ class Opinion:
             opinion = self.create_raw(
                 name=name,
                 description=description,
-                content=content,
+                explanation=explanation,
                 graph_data=graph_data,
                 id=id,
                 stix_id_key=stix_id_key,
@@ -501,7 +506,8 @@ class Opinion:
                 if self.contains_stix_entity(id=id, entity_id=entity_id):
                     return True
             self.opencti.log(
-                "info", "Adding Stix-Entity {" + entity_id + "} to Opinion {" + id + "}",
+                "info",
+                "Adding Stix-Entity {" + entity_id + "} to Opinion {" + id + "}",
             )
             query = """
                mutation OpinionEdit($id: ID!, $input: RelationAddInput) {
@@ -602,7 +608,9 @@ class Opinion:
         update = kwargs.get("update", False)
         if stix_object is not None:
             return self.create(
-                explanation=self.opencti.stix2.convert_markdown(stix_object["explanation"])
+                explanation=self.opencti.stix2.convert_markdown(
+                    stix_object["explanation"]
+                )
                 if "explanation" in stix_object
                 else "",
                 description=self.opencti.stix2.convert_markdown(stix_object["opinion"])

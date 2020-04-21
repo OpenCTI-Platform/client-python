@@ -28,6 +28,7 @@ OBSERVABLE_RELATIONS = ["corresponds", "belongs"]
 # Spec version
 SPEC_VERSION = "2.1"
 
+
 class OpenCTIStix2:
     """
         Python API for Stix2 in OpenCTI
@@ -402,7 +403,7 @@ class OpenCTIStix2:
             "kill_chain_phases_ids": kill_chain_phases_ids,
             "object_refs_ids": object_refs_ids,
             "external_references_ids": external_references_ids,
-            "reports": reports
+            "reports": reports,
         }
 
         # Import
@@ -473,14 +474,34 @@ class OpenCTIStix2:
                 if "observed-data" in object_refs_id:
                     if object_refs_id in self.mapping_cache:
                         for observable in self.mapping_cache[object_refs_id]:
-                            self.opencti.report.add_stix_observable(
-                                id=stix_object_result["id"],
-                                stix_observable_id=observable["id"],
-                            )
+                            if stix_object_result["entity_type"] == "report":
+                                self.opencti.report.add_stix_observable(
+                                    id=stix_object_result["id"],
+                                    stix_observable_id=observable["id"],
+                                )
+                            elif stix_object_result["entity_type"] == "note":
+                                self.opencti.note.add_stix_observable(
+                                    id=stix_object_result["id"],
+                                    stix_observable_id=observable["id"],
+                                )
+                            elif stix_object_result["entity_type"] == "opinion":
+                                self.opencti.opinion.add_stix_observable(
+                                    id=stix_object_result["id"],
+                                    stix_observable_id=observable["id"],
+                                )
                 else:
-                    self.opencti.report.add_stix_entity(
-                        id=stix_object_result["id"], entity_id=object_refs_id,
-                    )
+                    if stix_object_result["entity_type"] == "report":
+                        self.opencti.report.add_stix_entity(
+                            id=stix_object_result["id"], entity_id=object_refs_id,
+                        )
+                    elif stix_object_result["entity_type"] == "note":
+                        self.opencti.note.add_stix_entity(
+                            id=stix_object_result["id"], entity_id=object_refs_id,
+                        )
+                    elif stix_object_result["entity_type"] == "opinion":
+                        self.opencti.opinion.add_stix_entity(
+                            id=stix_object_result["id"], entity_id=object_refs_id,
+                        )
                     if (
                         object_refs_id in self.mapping_cache
                         and "observableRefs" in self.mapping_cache[object_refs_id]
@@ -493,10 +514,21 @@ class OpenCTIStix2:
                         for observable_ref in self.mapping_cache[object_refs_id][
                             "observableRefs"
                         ]:
-                            self.opencti.report.add_stix_observable(
-                                id=stix_object_result["id"],
-                                stix_observable_id=observable_ref["id"],
-                            )
+                            if stix_object_result["entity_type"] == "report":
+                                self.opencti.report.add_stix_observable(
+                                    id=stix_object_result["id"],
+                                    stix_observable_id=observable_ref["id"],
+                                )
+                            elif stix_object_result["entity_type"] == "note":
+                                self.opencti.note.add_stix_observable(
+                                    id=stix_object_result["id"],
+                                    stix_observable_id=observable_ref["id"],
+                                )
+                            elif stix_object_result["entity_type"] == "opinion":
+                                self.opencti.opinion.add_stix_observable(
+                                    id=stix_object_result["id"],
+                                    stix_observable_id=observable_ref["id"],
+                                )
             # Add files
             if CustomProperties.FILES in stix_object:
                 for file in stix_object[CustomProperties.FILES]:
@@ -1193,7 +1225,9 @@ class OpenCTIStix2:
                 marking_definition = {
                     "id": entity_marking_definition["stix_id_key"],
                     "type": "marking-definition",
-                    "definition_type": entity_marking_definition["definition_type"].lower(),
+                    "definition_type": entity_marking_definition[
+                        "definition_type"
+                    ].lower(),
                     "definition": {
                         entity_marking_definition[
                             "definition_type"
