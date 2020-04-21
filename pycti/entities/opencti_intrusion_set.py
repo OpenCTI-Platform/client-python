@@ -449,6 +449,7 @@ class IntrusionSet:
             intrusion_set = dict()
             intrusion_set["id"] = entity["stix_id_key"]
             intrusion_set["type"] = "intrusion-set"
+            intrusion_set["spec_version"] = SPEC_VERSION
             intrusion_set["name"] = entity["name"]
             if self.opencti.not_empty(entity["stix_label"]):
                 intrusion_set["labels"] = entity["stix_label"]

@@ -446,6 +446,7 @@ class Incident:
             incident = dict()
             incident["id"] = entity["stix_id_key"]
             incident["type"] = "x-opencti-incident"
+            incident["spec_version"] = SPEC_VERSION
             incident["name"] = entity["name"]
             if self.opencti.not_empty(entity["stix_label"]):
                 incident["labels"] = entity["stix_label"]
