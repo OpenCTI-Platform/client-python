@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>pycti.connector.opencti_connector_helper API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pycti.connector.opencti_connector_helper</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import datetime
+import threading
+import pika
+import logging
+import json
+import time
+import base64
+import uuid
+import os
+
+from typing import Callable, Dict, List
+from pika.exceptions import UnroutableError, NackError
+from pycti.api.opencti_api_client import OpenCTIApiClient
+from pycti.connector.opencti_connector import OpenCTIConnector
+
+
+def get_config_variable(envvar, yaml_path, config={}, isNumber=False):
+    if os.getenv(envvar) is not None:
+        result = os.getenv(envvar)
+    elif yaml_path is not None:
+        if yaml_path[0] in config and yaml_path[1] in config[yaml_path[0]]:
+            result = config[yaml_path[0]][yaml_path[1]]
+        else:
+            return None
+    else:
+        return None
+
+    if result == &#34;yes&#34; or result == &#34;true&#34; or result == &#34;True&#34;:
+        return True
+    elif result == &#34;no&#34; or result == &#34;false&#34; or result == &#34;False&#34;:
+        return False
+    elif isNumber:
+        return int(result)
+    else:
+        return result
+
+
+class ListenQueue(threading.Thread):
+    def __init__(self, helper, config, callback):
+        threading.Thread.__init__(self)
+        self.pika_connection = None
+        self.channel = None
+        self.helper = helper
+        self.callback = callback
+        self.uri = config[&#34;uri&#34;]
+        self.queue_name = config[&#34;listen&#34;]
+
+    # noinspection PyUnusedLocal
+    def _process_message(self, channel, method, properties, body):
+        json_data = json.loads(body)
+        thread = threading.Thread(target=self._data_handler, args=[json_data])
+        thread.start()
+        while thread.is_alive():  # Loop while the thread is processing
+            self.pika_connection.sleep(1.0)
+        logging.info(
+            &#34;Message (delivery_tag=&#34;
+            + str(method.delivery_tag)
+            + &#34;) processed, thread terminated&#34;
+        )
+        channel.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _data_handler(self, json_data):
+        job_id = json_data[&#34;job_id&#34;] if &#34;job_id&#34; in json_data else None
+        try:
+            work_id = json_data[&#34;work_id&#34;]
+            self.helper.current_work_id = work_id
+            self.helper.api.job.update_job(job_id, &#34;progress&#34;, [&#34;Starting process&#34;])
+            messages = self.callback(json_data)
+            self.helper.api.job.update_job(job_id, &#34;complete&#34;, messages)
+        except Exception as e:
+            logging.exception(&#34;Error in message processing, reporting error to API&#34;)
+            try:
+                self.helper.api.job.update_job(job_id, &#34;error&#34;, [str(e)])
+            except:
+                logging.error(&#34;Failing reporting the processing&#34;)
+
+    def run(self):
+        while True:
+            try:
+                # Connect the broker
+                self.pika_connection = pika.BlockingConnection(
+                    pika.URLParameters(self.uri)
+                )
+                self.channel = self.pika_connection.channel()
+                self.channel.basic_consume(
+                    queue=self.queue_name, on_message_callback=self._process_message
+                )
+                self.channel.start_consuming()
+            except (KeyboardInterrupt, SystemExit):
+                self.helper.log_info(&#34;Connector stop&#34;)
+                exit(0)
+            except Exception as e:
+                self.helper.log_error(str(e))
+                time.sleep(10)
+
+
+class PingAlive(threading.Thread):
+    def __init__(self, connector_id, api, get_state, set_state):
+        threading.Thread.__init__(self)
+        self.connector_id = connector_id
+        self.in_error = False
+        self.api = api
+        self.get_state = get_state
+        self.set_state = set_state
+
+    def ping(self):
+        while True:
+            try:
+                initial_state = self.get_state()
+                result = self.api.connector.ping(self.connector_id, initial_state)
+                remote_state = (
+                    json.loads(result[&#34;connector_state&#34;])
+                    if len(result[&#34;connector_state&#34;]) &gt; 0
+                    else None
+                )
+                if initial_state != remote_state:
+                    self.set_state(result[&#34;connector_state&#34;])
+                    logging.info(
+                        &#39;Connector state has been remotely reset to: &#34;&#39;
+                        + self.get_state()
+                        + &#39;&#34;&#39;
+                    )
+                if self.in_error:
+                    self.in_error = False
+                    logging.error(&#34;API Ping back to normal&#34;)
+            except Exception:
+                self.in_error = True
+                logging.error(&#34;Error pinging the API&#34;)
+            time.sleep(40)
+
+    def run(self):
+        logging.info(&#34;Starting ping alive thread&#34;)
+        self.ping()
+
+
+class OpenCTIConnectorHelper:
+    &#34;&#34;&#34;
+        Python API for OpenCTI connector
+        :param config: Dict standard config
+    &#34;&#34;&#34;
+
+    def __init__(self, config: dict):
+        # Load API config
+        self.opencti_url = get_config_variable(
+            &#34;OPENCTI_URL&#34;, [&#34;opencti&#34;, &#34;url&#34;], config
+        )
+        self.opencti_token = get_config_variable(
+            &#34;OPENCTI_TOKEN&#34;, [&#34;opencti&#34;, &#34;token&#34;], config
+        )
+        # Load connector config
+        self.connect_id = get_config_variable(
+            &#34;CONNECTOR_ID&#34;, [&#34;connector&#34;, &#34;id&#34;], config
+        )
+        self.connect_type = get_config_variable(
+            &#34;CONNECTOR_TYPE&#34;, [&#34;connector&#34;, &#34;type&#34;], config
+        )
+        self.connect_name = get_config_variable(
+            &#34;CONNECTOR_NAME&#34;, [&#34;connector&#34;, &#34;name&#34;], config
+        )
+        self.connect_confidence_level = get_config_variable(
+            &#34;CONNECTOR_CONFIDENCE_LEVEL&#34;,
+            [&#34;connector&#34;, &#34;confidence_level&#34;],
+            config,
+            True,
+        )
+        self.connect_scope = get_config_variable(
+            &#34;CONNECTOR_SCOPE&#34;, [&#34;connector&#34;, &#34;scope&#34;], config
+        )
+        self.log_level = get_config_variable(
+            &#34;CONNECTOR_LOG_LEVEL&#34;, [&#34;connector&#34;, &#34;log_level&#34;], config
+        )
+
+        # Configure logger
+        numeric_level = getattr(logging, self.log_level.upper(), None)
+        if not isinstance(numeric_level, int):
+            raise ValueError(&#34;Invalid log level: &#34; + self.log_level)
+        logging.basicConfig(level=numeric_level)
+
+        # Initialize configuration
+        self.api = OpenCTIApiClient(
+            self.opencti_url, self.opencti_token, self.log_level
+        )
+        self.current_work_id = None
+
+        # Register the connector in OpenCTI
+        self.connector = OpenCTIConnector(
+            self.connect_id, self.connect_name, self.connect_type, self.connect_scope
+        )
+        connector_configuration = self.api.connector.register(self.connector)
+        self.connector_id = connector_configuration[&#34;id&#34;]
+        self.connector_state = connector_configuration[&#34;connector_state&#34;]
+        self.config = connector_configuration[&#34;config&#34;]
+
+        # Start ping thread
+        self.ping = PingAlive(
+            self.connector.id, self.api, self.get_state, self.set_state
+        )
+        self.ping.start()
+
+        # Initialize caching
+        self.cache_index = {}
+        self.cache_added = []
+
+    def set_state(self, state) -&gt; None:
+        self.connector_state = json.dumps(state)
+
+    def get_state(self):
+        try:
+            return (
+                None
+                if self.connector_state is None
+                else json.loads(self.connector_state)
+            )
+        except:
+            return None
+
+    def listen(self, message_callback: Callable[[Dict], List[str]]) -&gt; None:
+        listen_queue = ListenQueue(self, self.config, message_callback)
+        listen_queue.start()
+
+    def get_connector(self):
+        return self.connector
+
+    def log_error(self, msg):
+        logging.error(msg)
+
+    def log_info(self, msg):
+        logging.info(msg)
+
+    def date_now(self):
+        return (
+            datetime.datetime.utcnow()
+            .replace(microsecond=0, tzinfo=datetime.timezone.utc)
+            .isoformat()
+        )
+
+    # Push Stix2 helper
+    def send_stix2_bundle(self, bundle, entities_types=None, update=False, split=True):
+        if entities_types is None:
+            entities_types = []
+        if split:
+            bundles = self.split_stix2_bundle(bundle)
+            if len(bundles) == 0:
+                raise ValueError(&#34;Nothing to import&#34;)
+            pika_connection = pika.BlockingConnection(
+                pika.URLParameters(self.config[&#34;uri&#34;])
+            )
+            channel = pika_connection.channel()
+            for bundle in bundles:
+                self._send_bundle(channel, bundle, entities_types, update)
+            channel.close()
+            return bundles
+        else:
+            pika_connection = pika.BlockingConnection(
+                pika.URLParameters(self.config[&#34;uri&#34;])
+            )
+            channel = pika_connection.channel()
+            self._send_bundle(channel, bundle, entities_types, update)
+            channel.close()
+            return [bundle]
+
+    def _send_bundle(self, channel, bundle, entities_types=None, update=False):
+        &#34;&#34;&#34;
+            This method send a STIX2 bundle to RabbitMQ to be consumed by workers
+            :param bundle: A valid STIX2 bundle
+            :param entities_types: Entities types to ingest
+        &#34;&#34;&#34;
+        if entities_types is None:
+            entities_types = []
+
+        # Create a job log expectation
+        if self.current_work_id is not None:
+            job_id = self.api.job.initiate_job(self.current_work_id)
+        else:
+            job_id = None
+
+        # Validate the STIX 2 bundle
+        # validation = validate_string(bundle)
+        # if not validation.is_valid:
+        # raise ValueError(&#39;The bundle is not a valid STIX2 JSON&#39;)
+
+        # Prepare the message
+        # if self.current_work_id is None:
+        #    raise ValueError(&#39;The job id must be specified&#39;)
+        message = {
+            &#34;job_id&#34;: job_id,
+            &#34;entities_types&#34;: entities_types,
+            &#34;update&#34;: update,
+            &#34;content&#34;: base64.b64encode(bundle.encode(&#34;utf-8&#34;)).decode(&#34;utf-8&#34;),
+        }
+
+        # Send the message
+        try:
+            routing_key = &#34;push_routing_&#34; + self.connector_id
+            channel.basic_publish(
+                self.config[&#34;push_exchange&#34;], routing_key, json.dumps(message)
+            )
+            logging.info(&#34;Bundle has been sent&#34;)
+        except (UnroutableError, NackError) as e:
+            logging.error(&#34;Unable to send bundle, retry...&#34;, e)
+            self._send_bundle(bundle, entities_types)
+
+    def split_stix2_bundle(self, bundle):
+        self.cache_index = {}
+        self.cache_added = []
+        try:
+            bundle_data = json.loads(bundle)
+        except:
+            raise Exception(&#34;File data is not a valid JSON&#34;)
+
+        # validation = validate_parsed_json(bundle_data)
+        # if not validation.is_valid:
+        #     raise ValueError(&#39;The bundle is not a valid STIX2 JSON:&#39; + bundle)
+
+        # Index all objects by id
+        for item in bundle_data[&#34;objects&#34;]:
+            self.cache_index[item[&#34;id&#34;]] = item
+
+        bundles = []
+        # Reports must be handled because of object_refs
+        for item in bundle_data[&#34;objects&#34;]:
+            if item[&#34;type&#34;] == &#34;report&#34;:
+                items_to_send = self.stix2_deduplicate_objects(
+                    self.stix2_get_report_objects(item)
+                )
+                for item_to_send in items_to_send:
+                    self.cache_added.append(item_to_send[&#34;id&#34;])
+                bundles.append(self.stix2_create_bundle(items_to_send))
+
+        # Relationships not added in previous reports
+        for item in bundle_data[&#34;objects&#34;]:
+            if item[&#34;type&#34;] == &#34;relationship&#34; and item[&#34;id&#34;] not in self.cache_added:
+                items_to_send = self.stix2_deduplicate_objects(
+                    self.stix2_get_relationship_objects(item)
+                )
+                for item_to_send in items_to_send:
+                    self.cache_added.append(item_to_send[&#34;id&#34;])
+                bundles.append(self.stix2_create_bundle(items_to_send))
+
+        # Entities not added in previous reports and relationships
+        for item in bundle_data[&#34;objects&#34;]:
+            if item[&#34;type&#34;] != &#34;relationship&#34; and item[&#34;id&#34;] not in self.cache_added:
+                items_to_send = self.stix2_deduplicate_objects(
+                    self.stix2_get_entity_objects(item)
+                )
+                for item_to_send in items_to_send:
+                    self.cache_added.append(item_to_send[&#34;id&#34;])
+                bundles.append(self.stix2_create_bundle(items_to_send))
+
+        return bundles
+
+    def stix2_get_embedded_objects(self, item):
+        # Marking definitions
+        object_marking_refs = []
+        if &#34;object_marking_refs&#34; in item:
+            for object_marking_ref in item[&#34;object_marking_refs&#34;]:
+                if object_marking_ref in self.cache_index:
+                    object_marking_refs.append(self.cache_index[object_marking_ref])
+        # Created by ref
+        created_by_ref = None
+        if &#34;created_by_ref&#34; in item and item[&#34;created_by_ref&#34;] in self.cache_index:
+            created_by_ref = self.cache_index[item[&#34;created_by_ref&#34;]]
+
+        return {
+            &#34;object_marking_refs&#34;: object_marking_refs,
+            &#34;created_by_ref&#34;: created_by_ref,
+        }
+
+    def stix2_get_entity_objects(self, entity):
+        items = [entity]
+        # Get embedded objects
+        embedded_objects = self.stix2_get_embedded_objects(entity)
+        # Add created by ref
+        if embedded_objects[&#34;created_by_ref&#34;] is not None:
+            items.append(embedded_objects[&#34;created_by_ref&#34;])
+        # Add marking definitions
+        if len(embedded_objects[&#34;object_marking_refs&#34;]) &gt; 0:
+            items = items + embedded_objects[&#34;object_marking_refs&#34;]
+
+        return items
+
+    def stix2_get_relationship_objects(self, relationship):
+        items = [relationship]
+        # Get source ref
+        if relationship[&#34;source_ref&#34;] in self.cache_index:
+            items.append(self.cache_index[relationship[&#34;source_ref&#34;]])
+
+        # Get target ref
+        if relationship[&#34;target_ref&#34;] in self.cache_index:
+            items.append(self.cache_index[relationship[&#34;target_ref&#34;]])
+
+        # Get embedded objects
+        embedded_objects = self.stix2_get_embedded_objects(relationship)
+        # Add created by ref
+        if embedded_objects[&#34;created_by_ref&#34;] is not None:
+            items.append(embedded_objects[&#34;created_by_ref&#34;])
+        # Add marking definitions
+        if len(embedded_objects[&#34;object_marking_refs&#34;]) &gt; 0:
+            items = items + embedded_objects[&#34;object_marking_refs&#34;]
+
+        return items
+
+    def stix2_get_report_objects(self, report):
+        items = [report]
+        # Add all object refs
+        for object_ref in report[&#34;object_refs&#34;]:
+            items.append(self.cache_index[object_ref])
+        for item in items:
+            if item[&#34;type&#34;] == &#34;relationship&#34;:
+                items = items + self.stix2_get_relationship_objects(item)
+            else:
+                items = items + self.stix2_get_entity_objects(item)
+        return items
+
+    @staticmethod
+    def stix2_deduplicate_objects(items):
+        ids = []
+        final_items = []
+        for item in items:
+            if item[&#34;id&#34;] not in ids:
+                final_items.append(item)
+                ids.append(item[&#34;id&#34;])
+        return final_items
+
+    @staticmethod
+    def stix2_create_bundle(items):
+        bundle = {
+            &#34;type&#34;: &#34;bundle&#34;,
+            &#34;id&#34;: &#34;bundle--&#34; + str(uuid.uuid4()),
+            &#34;spec_version&#34;: &#34;2.0&#34;,
+            &#34;objects&#34;: items,
+        }
+        return json.dumps(bundle)
+
+    @staticmethod
+    def check_max_tlp(tlp, max_tlp):
+        allowed_tlps = [&#34;TLP:WHITE&#34;]
+        if max_tlp == &#34;TLP:RED&#34;:
+            allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;, &#34;TLP:AMBER&#34;, &#34;TLP:RED&#34;]
+        elif max_tlp == &#34;TLP:AMBER&#34;:
+            allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;, &#34;TLP:AMBER&#34;]
+        elif max_tlp == &#34;TLP:GREEN&#34;:
+            allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;]
+
+        return tlp in allowed_tlps</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pycti.connector.opencti_connector_helper.get_config_variable"><code class="name flex">
+<span>def <span class="ident">get_config_variable</span></span>(<span>envvar, yaml_path, config={}, isNumber=False)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_config_variable(envvar, yaml_path, config={}, isNumber=False):
+    if os.getenv(envvar) is not None:
+        result = os.getenv(envvar)
+    elif yaml_path is not None:
+        if yaml_path[0] in config and yaml_path[1] in config[yaml_path[0]]:
+            result = config[yaml_path[0]][yaml_path[1]]
+        else:
+            return None
+    else:
+        return None
+
+    if result == &#34;yes&#34; or result == &#34;true&#34; or result == &#34;True&#34;:
+        return True
+    elif result == &#34;no&#34; or result == &#34;false&#34; or result == &#34;False&#34;:
+        return False
+    elif isNumber:
+        return int(result)
+    else:
+        return result</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pycti.connector.opencti_connector_helper.ListenQueue"><code class="flex name class">
+<span>class <span class="ident">ListenQueue</span></span>
+<span>(</span><span>helper, config, callback)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A class that represents a thread of control.</p>
+<p>This class can be safely subclassed in a limited fashion. There are two ways
+to specify the activity: by passing a callable object to the constructor, or
+by overriding the run() method in a subclass.</p>
+<p>This constructor should always be called with keyword arguments. Arguments are:</p>
+<p><em>group</em> should be None; reserved for future extension when a ThreadGroup
+class is implemented.</p>
+<p><em>target</em> is the callable object to be invoked by the run()
+method. Defaults to None, meaning nothing is called.</p>
+<p><em>name</em> is the thread name. By default, a unique name is constructed of
+the form "Thread-N" where N is a small decimal number.</p>
+<p><em>args</em> is the argument tuple for the target invocation. Defaults to ().</p>
+<p><em>kwargs</em> is a dictionary of keyword arguments for the target
+invocation. Defaults to {}.</p>
+<p>If a subclass overrides the constructor, it must make sure to invoke
+the base class constructor (Thread.<strong>init</strong>()) before doing anything
+else to the thread.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ListenQueue(threading.Thread):
+    def __init__(self, helper, config, callback):
+        threading.Thread.__init__(self)
+        self.pika_connection = None
+        self.channel = None
+        self.helper = helper
+        self.callback = callback
+        self.uri = config[&#34;uri&#34;]
+        self.queue_name = config[&#34;listen&#34;]
+
+    # noinspection PyUnusedLocal
+    def _process_message(self, channel, method, properties, body):
+        json_data = json.loads(body)
+        thread = threading.Thread(target=self._data_handler, args=[json_data])
+        thread.start()
+        while thread.is_alive():  # Loop while the thread is processing
+            self.pika_connection.sleep(1.0)
+        logging.info(
+            &#34;Message (delivery_tag=&#34;
+            + str(method.delivery_tag)
+            + &#34;) processed, thread terminated&#34;
+        )
+        channel.basic_ack(delivery_tag=method.delivery_tag)
+
+    def _data_handler(self, json_data):
+        job_id = json_data[&#34;job_id&#34;] if &#34;job_id&#34; in json_data else None
+        try:
+            work_id = json_data[&#34;work_id&#34;]
+            self.helper.current_work_id = work_id
+            self.helper.api.job.update_job(job_id, &#34;progress&#34;, [&#34;Starting process&#34;])
+            messages = self.callback(json_data)
+            self.helper.api.job.update_job(job_id, &#34;complete&#34;, messages)
+        except Exception as e:
+            logging.exception(&#34;Error in message processing, reporting error to API&#34;)
+            try:
+                self.helper.api.job.update_job(job_id, &#34;error&#34;, [str(e)])
+            except:
+                logging.error(&#34;Failing reporting the processing&#34;)
+
+    def run(self):
+        while True:
+            try:
+                # Connect the broker
+                self.pika_connection = pika.BlockingConnection(
+                    pika.URLParameters(self.uri)
+                )
+                self.channel = self.pika_connection.channel()
+                self.channel.basic_consume(
+                    queue=self.queue_name, on_message_callback=self._process_message
+                )
+                self.channel.start_consuming()
+            except (KeyboardInterrupt, SystemExit):
+                self.helper.log_info(&#34;Connector stop&#34;)
+                exit(0)
+            except Exception as e:
+                self.helper.log_error(str(e))
+                time.sleep(10)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>threading.Thread</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pycti.connector.opencti_connector_helper.ListenQueue.run"><code class="name flex">
+<span>def <span class="ident">run</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Method representing the thread's activity.</p>
+<p>You may override this method in a subclass. The standard run() method
+invokes the callable object passed to the object's constructor as the
+target argument, if any, with sequential and keyword arguments taken
+from the args and kwargs arguments, respectively.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run(self):
+    while True:
+        try:
+            # Connect the broker
+            self.pika_connection = pika.BlockingConnection(
+                pika.URLParameters(self.uri)
+            )
+            self.channel = self.pika_connection.channel()
+            self.channel.basic_consume(
+                queue=self.queue_name, on_message_callback=self._process_message
+            )
+            self.channel.start_consuming()
+        except (KeyboardInterrupt, SystemExit):
+            self.helper.log_info(&#34;Connector stop&#34;)
+            exit(0)
+        except Exception as e:
+            self.helper.log_error(str(e))
+            time.sleep(10)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper"><code class="flex name class">
+<span>class <span class="ident">OpenCTIConnectorHelper</span></span>
+<span>(</span><span>config: dict)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Python API for OpenCTI connector
+:param config: Dict standard config</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OpenCTIConnectorHelper:
+    &#34;&#34;&#34;
+        Python API for OpenCTI connector
+        :param config: Dict standard config
+    &#34;&#34;&#34;
+
+    def __init__(self, config: dict):
+        # Load API config
+        self.opencti_url = get_config_variable(
+            &#34;OPENCTI_URL&#34;, [&#34;opencti&#34;, &#34;url&#34;], config
+        )
+        self.opencti_token = get_config_variable(
+            &#34;OPENCTI_TOKEN&#34;, [&#34;opencti&#34;, &#34;token&#34;], config
+        )
+        # Load connector config
+        self.connect_id = get_config_variable(
+            &#34;CONNECTOR_ID&#34;, [&#34;connector&#34;, &#34;id&#34;], config
+        )
+        self.connect_type = get_config_variable(
+            &#34;CONNECTOR_TYPE&#34;, [&#34;connector&#34;, &#34;type&#34;], config
+        )
+        self.connect_name = get_config_variable(
+            &#34;CONNECTOR_NAME&#34;, [&#34;connector&#34;, &#34;name&#34;], config
+        )
+        self.connect_confidence_level = get_config_variable(
+            &#34;CONNECTOR_CONFIDENCE_LEVEL&#34;,
+            [&#34;connector&#34;, &#34;confidence_level&#34;],
+            config,
+            True,
+        )
+        self.connect_scope = get_config_variable(
+            &#34;CONNECTOR_SCOPE&#34;, [&#34;connector&#34;, &#34;scope&#34;], config
+        )
+        self.log_level = get_config_variable(
+            &#34;CONNECTOR_LOG_LEVEL&#34;, [&#34;connector&#34;, &#34;log_level&#34;], config
+        )
+
+        # Configure logger
+        numeric_level = getattr(logging, self.log_level.upper(), None)
+        if not isinstance(numeric_level, int):
+            raise ValueError(&#34;Invalid log level: &#34; + self.log_level)
+        logging.basicConfig(level=numeric_level)
+
+        # Initialize configuration
+        self.api = OpenCTIApiClient(
+            self.opencti_url, self.opencti_token, self.log_level
+        )
+        self.current_work_id = None
+
+        # Register the connector in OpenCTI
+        self.connector = OpenCTIConnector(
+            self.connect_id, self.connect_name, self.connect_type, self.connect_scope
+        )
+        connector_configuration = self.api.connector.register(self.connector)
+        self.connector_id = connector_configuration[&#34;id&#34;]
+        self.connector_state = connector_configuration[&#34;connector_state&#34;]
+        self.config = connector_configuration[&#34;config&#34;]
+
+        # Start ping thread
+        self.ping = PingAlive(
+            self.connector.id, self.api, self.get_state, self.set_state
+        )
+        self.ping.start()
+
+        # Initialize caching
+        self.cache_index = {}
+        self.cache_added = []
+
+    def set_state(self, state) -&gt; None:
+        self.connector_state = json.dumps(state)
+
+    def get_state(self):
+        try:
+            return (
+                None
+                if self.connector_state is None
+                else json.loads(self.connector_state)
+            )
+        except:
+            return None
+
+    def listen(self, message_callback: Callable[[Dict], List[str]]) -&gt; None:
+        listen_queue = ListenQueue(self, self.config, message_callback)
+        listen_queue.start()
+
+    def get_connector(self):
+        return self.connector
+
+    def log_error(self, msg):
+        logging.error(msg)
+
+    def log_info(self, msg):
+        logging.info(msg)
+
+    def date_now(self):
+        return (
+            datetime.datetime.utcnow()
+            .replace(microsecond=0, tzinfo=datetime.timezone.utc)
+            .isoformat()
+        )
+
+    # Push Stix2 helper
+    def send_stix2_bundle(self, bundle, entities_types=None, update=False, split=True):
+        if entities_types is None:
+            entities_types = []
+        if split:
+            bundles = self.split_stix2_bundle(bundle)
+            if len(bundles) == 0:
+                raise ValueError(&#34;Nothing to import&#34;)
+            pika_connection = pika.BlockingConnection(
+                pika.URLParameters(self.config[&#34;uri&#34;])
+            )
+            channel = pika_connection.channel()
+            for bundle in bundles:
+                self._send_bundle(channel, bundle, entities_types, update)
+            channel.close()
+            return bundles
+        else:
+            pika_connection = pika.BlockingConnection(
+                pika.URLParameters(self.config[&#34;uri&#34;])
+            )
+            channel = pika_connection.channel()
+            self._send_bundle(channel, bundle, entities_types, update)
+            channel.close()
+            return [bundle]
+
+    def _send_bundle(self, channel, bundle, entities_types=None, update=False):
+        &#34;&#34;&#34;
+            This method send a STIX2 bundle to RabbitMQ to be consumed by workers
+            :param bundle: A valid STIX2 bundle
+            :param entities_types: Entities types to ingest
+        &#34;&#34;&#34;
+        if entities_types is None:
+            entities_types = []
+
+        # Create a job log expectation
+        if self.current_work_id is not None:
+            job_id = self.api.job.initiate_job(self.current_work_id)
+        else:
+            job_id = None
+
+        # Validate the STIX 2 bundle
+        # validation = validate_string(bundle)
+        # if not validation.is_valid:
+        # raise ValueError(&#39;The bundle is not a valid STIX2 JSON&#39;)
+
+        # Prepare the message
+        # if self.current_work_id is None:
+        #    raise ValueError(&#39;The job id must be specified&#39;)
+        message = {
+            &#34;job_id&#34;: job_id,
+            &#34;entities_types&#34;: entities_types,
+            &#34;update&#34;: update,
+            &#34;content&#34;: base64.b64encode(bundle.encode(&#34;utf-8&#34;)).decode(&#34;utf-8&#34;),
+        }
+
+        # Send the message
+        try:
+            routing_key = &#34;push_routing_&#34; + self.connector_id
+            channel.basic_publish(
+                self.config[&#34;push_exchange&#34;], routing_key, json.dumps(message)
+            )
+            logging.info(&#34;Bundle has been sent&#34;)
+        except (UnroutableError, NackError) as e:
+            logging.error(&#34;Unable to send bundle, retry...&#34;, e)
+            self._send_bundle(bundle, entities_types)
+
+    def split_stix2_bundle(self, bundle):
+        self.cache_index = {}
+        self.cache_added = []
+        try:
+            bundle_data = json.loads(bundle)
+        except:
+            raise Exception(&#34;File data is not a valid JSON&#34;)
+
+        # validation = validate_parsed_json(bundle_data)
+        # if not validation.is_valid:
+        #     raise ValueError(&#39;The bundle is not a valid STIX2 JSON:&#39; + bundle)
+
+        # Index all objects by id
+        for item in bundle_data[&#34;objects&#34;]:
+            self.cache_index[item[&#34;id&#34;]] = item
+
+        bundles = []
+        # Reports must be handled because of object_refs
+        for item in bundle_data[&#34;objects&#34;]:
+            if item[&#34;type&#34;] == &#34;report&#34;:
+                items_to_send = self.stix2_deduplicate_objects(
+                    self.stix2_get_report_objects(item)
+                )
+                for item_to_send in items_to_send:
+                    self.cache_added.append(item_to_send[&#34;id&#34;])
+                bundles.append(self.stix2_create_bundle(items_to_send))
+
+        # Relationships not added in previous reports
+        for item in bundle_data[&#34;objects&#34;]:
+            if item[&#34;type&#34;] == &#34;relationship&#34; and item[&#34;id&#34;] not in self.cache_added:
+                items_to_send = self.stix2_deduplicate_objects(
+                    self.stix2_get_relationship_objects(item)
+                )
+                for item_to_send in items_to_send:
+                    self.cache_added.append(item_to_send[&#34;id&#34;])
+                bundles.append(self.stix2_create_bundle(items_to_send))
+
+        # Entities not added in previous reports and relationships
+        for item in bundle_data[&#34;objects&#34;]:
+            if item[&#34;type&#34;] != &#34;relationship&#34; and item[&#34;id&#34;] not in self.cache_added:
+                items_to_send = self.stix2_deduplicate_objects(
+                    self.stix2_get_entity_objects(item)
+                )
+                for item_to_send in items_to_send:
+                    self.cache_added.append(item_to_send[&#34;id&#34;])
+                bundles.append(self.stix2_create_bundle(items_to_send))
+
+        return bundles
+
+    def stix2_get_embedded_objects(self, item):
+        # Marking definitions
+        object_marking_refs = []
+        if &#34;object_marking_refs&#34; in item:
+            for object_marking_ref in item[&#34;object_marking_refs&#34;]:
+                if object_marking_ref in self.cache_index:
+                    object_marking_refs.append(self.cache_index[object_marking_ref])
+        # Created by ref
+        created_by_ref = None
+        if &#34;created_by_ref&#34; in item and item[&#34;created_by_ref&#34;] in self.cache_index:
+            created_by_ref = self.cache_index[item[&#34;created_by_ref&#34;]]
+
+        return {
+            &#34;object_marking_refs&#34;: object_marking_refs,
+            &#34;created_by_ref&#34;: created_by_ref,
+        }
+
+    def stix2_get_entity_objects(self, entity):
+        items = [entity]
+        # Get embedded objects
+        embedded_objects = self.stix2_get_embedded_objects(entity)
+        # Add created by ref
+        if embedded_objects[&#34;created_by_ref&#34;] is not None:
+            items.append(embedded_objects[&#34;created_by_ref&#34;])
+        # Add marking definitions
+        if len(embedded_objects[&#34;object_marking_refs&#34;]) &gt; 0:
+            items = items + embedded_objects[&#34;object_marking_refs&#34;]
+
+        return items
+
+    def stix2_get_relationship_objects(self, relationship):
+        items = [relationship]
+        # Get source ref
+        if relationship[&#34;source_ref&#34;] in self.cache_index:
+            items.append(self.cache_index[relationship[&#34;source_ref&#34;]])
+
+        # Get target ref
+        if relationship[&#34;target_ref&#34;] in self.cache_index:
+            items.append(self.cache_index[relationship[&#34;target_ref&#34;]])
+
+        # Get embedded objects
+        embedded_objects = self.stix2_get_embedded_objects(relationship)
+        # Add created by ref
+        if embedded_objects[&#34;created_by_ref&#34;] is not None:
+            items.append(embedded_objects[&#34;created_by_ref&#34;])
+        # Add marking definitions
+        if len(embedded_objects[&#34;object_marking_refs&#34;]) &gt; 0:
+            items = items + embedded_objects[&#34;object_marking_refs&#34;]
+
+        return items
+
+    def stix2_get_report_objects(self, report):
+        items = [report]
+        # Add all object refs
+        for object_ref in report[&#34;object_refs&#34;]:
+            items.append(self.cache_index[object_ref])
+        for item in items:
+            if item[&#34;type&#34;] == &#34;relationship&#34;:
+                items = items + self.stix2_get_relationship_objects(item)
+            else:
+                items = items + self.stix2_get_entity_objects(item)
+        return items
+
+    @staticmethod
+    def stix2_deduplicate_objects(items):
+        ids = []
+        final_items = []
+        for item in items:
+            if item[&#34;id&#34;] not in ids:
+                final_items.append(item)
+                ids.append(item[&#34;id&#34;])
+        return final_items
+
+    @staticmethod
+    def stix2_create_bundle(items):
+        bundle = {
+            &#34;type&#34;: &#34;bundle&#34;,
+            &#34;id&#34;: &#34;bundle--&#34; + str(uuid.uuid4()),
+            &#34;spec_version&#34;: &#34;2.0&#34;,
+            &#34;objects&#34;: items,
+        }
+        return json.dumps(bundle)
+
+    @staticmethod
+    def check_max_tlp(tlp, max_tlp):
+        allowed_tlps = [&#34;TLP:WHITE&#34;]
+        if max_tlp == &#34;TLP:RED&#34;:
+            allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;, &#34;TLP:AMBER&#34;, &#34;TLP:RED&#34;]
+        elif max_tlp == &#34;TLP:AMBER&#34;:
+            allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;, &#34;TLP:AMBER&#34;]
+        elif max_tlp == &#34;TLP:GREEN&#34;:
+            allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;]
+
+        return tlp in allowed_tlps</code></pre>
+</details>
+<h3>Static methods</h3>
+<dl>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.check_max_tlp"><code class="name flex">
+<span>def <span class="ident">check_max_tlp</span></span>(<span>tlp, max_tlp)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def check_max_tlp(tlp, max_tlp):
+    allowed_tlps = [&#34;TLP:WHITE&#34;]
+    if max_tlp == &#34;TLP:RED&#34;:
+        allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;, &#34;TLP:AMBER&#34;, &#34;TLP:RED&#34;]
+    elif max_tlp == &#34;TLP:AMBER&#34;:
+        allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;, &#34;TLP:AMBER&#34;]
+    elif max_tlp == &#34;TLP:GREEN&#34;:
+        allowed_tlps = [&#34;TLP:WHITE&#34;, &#34;TLP:GREEN&#34;]
+
+    return tlp in allowed_tlps</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_create_bundle"><code class="name flex">
+<span>def <span class="ident">stix2_create_bundle</span></span>(<span>items)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def stix2_create_bundle(items):
+    bundle = {
+        &#34;type&#34;: &#34;bundle&#34;,
+        &#34;id&#34;: &#34;bundle--&#34; + str(uuid.uuid4()),
+        &#34;spec_version&#34;: &#34;2.0&#34;,
+        &#34;objects&#34;: items,
+    }
+    return json.dumps(bundle)</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_deduplicate_objects"><code class="name flex">
+<span>def <span class="ident">stix2_deduplicate_objects</span></span>(<span>items)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def stix2_deduplicate_objects(items):
+    ids = []
+    final_items = []
+    for item in items:
+        if item[&#34;id&#34;] not in ids:
+            final_items.append(item)
+            ids.append(item[&#34;id&#34;])
+    return final_items</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.date_now"><code class="name flex">
+<span>def <span class="ident">date_now</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def date_now(self):
+    return (
+        datetime.datetime.utcnow()
+        .replace(microsecond=0, tzinfo=datetime.timezone.utc)
+        .isoformat()
+    )</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.get_connector"><code class="name flex">
+<span>def <span class="ident">get_connector</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_connector(self):
+    return self.connector</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.get_state"><code class="name flex">
+<span>def <span class="ident">get_state</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_state(self):
+    try:
+        return (
+            None
+            if self.connector_state is None
+            else json.loads(self.connector_state)
+        )
+    except:
+        return None</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.listen"><code class="name flex">
+<span>def <span class="ident">listen</span></span>(<span>self, message_callback: Callable[[Dict], List[str]]) -> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def listen(self, message_callback: Callable[[Dict], List[str]]) -&gt; None:
+    listen_queue = ListenQueue(self, self.config, message_callback)
+    listen_queue.start()</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.log_error"><code class="name flex">
+<span>def <span class="ident">log_error</span></span>(<span>self, msg)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_error(self, msg):
+    logging.error(msg)</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.log_info"><code class="name flex">
+<span>def <span class="ident">log_info</span></span>(<span>self, msg)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def log_info(self, msg):
+    logging.info(msg)</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.send_stix2_bundle"><code class="name flex">
+<span>def <span class="ident">send_stix2_bundle</span></span>(<span>self, bundle, entities_types=None, update=False, split=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def send_stix2_bundle(self, bundle, entities_types=None, update=False, split=True):
+    if entities_types is None:
+        entities_types = []
+    if split:
+        bundles = self.split_stix2_bundle(bundle)
+        if len(bundles) == 0:
+            raise ValueError(&#34;Nothing to import&#34;)
+        pika_connection = pika.BlockingConnection(
+            pika.URLParameters(self.config[&#34;uri&#34;])
+        )
+        channel = pika_connection.channel()
+        for bundle in bundles:
+            self._send_bundle(channel, bundle, entities_types, update)
+        channel.close()
+        return bundles
+    else:
+        pika_connection = pika.BlockingConnection(
+            pika.URLParameters(self.config[&#34;uri&#34;])
+        )
+        channel = pika_connection.channel()
+        self._send_bundle(channel, bundle, entities_types, update)
+        channel.close()
+        return [bundle]</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.set_state"><code class="name flex">
+<span>def <span class="ident">set_state</span></span>(<span>self, state) -> NoneType</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_state(self, state) -&gt; None:
+    self.connector_state = json.dumps(state)</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.split_stix2_bundle"><code class="name flex">
+<span>def <span class="ident">split_stix2_bundle</span></span>(<span>self, bundle)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def split_stix2_bundle(self, bundle):
+    self.cache_index = {}
+    self.cache_added = []
+    try:
+        bundle_data = json.loads(bundle)
+    except:
+        raise Exception(&#34;File data is not a valid JSON&#34;)
+
+    # validation = validate_parsed_json(bundle_data)
+    # if not validation.is_valid:
+    #     raise ValueError(&#39;The bundle is not a valid STIX2 JSON:&#39; + bundle)
+
+    # Index all objects by id
+    for item in bundle_data[&#34;objects&#34;]:
+        self.cache_index[item[&#34;id&#34;]] = item
+
+    bundles = []
+    # Reports must be handled because of object_refs
+    for item in bundle_data[&#34;objects&#34;]:
+        if item[&#34;type&#34;] == &#34;report&#34;:
+            items_to_send = self.stix2_deduplicate_objects(
+                self.stix2_get_report_objects(item)
+            )
+            for item_to_send in items_to_send:
+                self.cache_added.append(item_to_send[&#34;id&#34;])
+            bundles.append(self.stix2_create_bundle(items_to_send))
+
+    # Relationships not added in previous reports
+    for item in bundle_data[&#34;objects&#34;]:
+        if item[&#34;type&#34;] == &#34;relationship&#34; and item[&#34;id&#34;] not in self.cache_added:
+            items_to_send = self.stix2_deduplicate_objects(
+                self.stix2_get_relationship_objects(item)
+            )
+            for item_to_send in items_to_send:
+                self.cache_added.append(item_to_send[&#34;id&#34;])
+            bundles.append(self.stix2_create_bundle(items_to_send))
+
+    # Entities not added in previous reports and relationships
+    for item in bundle_data[&#34;objects&#34;]:
+        if item[&#34;type&#34;] != &#34;relationship&#34; and item[&#34;id&#34;] not in self.cache_added:
+            items_to_send = self.stix2_deduplicate_objects(
+                self.stix2_get_entity_objects(item)
+            )
+            for item_to_send in items_to_send:
+                self.cache_added.append(item_to_send[&#34;id&#34;])
+            bundles.append(self.stix2_create_bundle(items_to_send))
+
+    return bundles</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_embedded_objects"><code class="name flex">
+<span>def <span class="ident">stix2_get_embedded_objects</span></span>(<span>self, item)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stix2_get_embedded_objects(self, item):
+    # Marking definitions
+    object_marking_refs = []
+    if &#34;object_marking_refs&#34; in item:
+        for object_marking_ref in item[&#34;object_marking_refs&#34;]:
+            if object_marking_ref in self.cache_index:
+                object_marking_refs.append(self.cache_index[object_marking_ref])
+    # Created by ref
+    created_by_ref = None
+    if &#34;created_by_ref&#34; in item and item[&#34;created_by_ref&#34;] in self.cache_index:
+        created_by_ref = self.cache_index[item[&#34;created_by_ref&#34;]]
+
+    return {
+        &#34;object_marking_refs&#34;: object_marking_refs,
+        &#34;created_by_ref&#34;: created_by_ref,
+    }</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_entity_objects"><code class="name flex">
+<span>def <span class="ident">stix2_get_entity_objects</span></span>(<span>self, entity)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stix2_get_entity_objects(self, entity):
+    items = [entity]
+    # Get embedded objects
+    embedded_objects = self.stix2_get_embedded_objects(entity)
+    # Add created by ref
+    if embedded_objects[&#34;created_by_ref&#34;] is not None:
+        items.append(embedded_objects[&#34;created_by_ref&#34;])
+    # Add marking definitions
+    if len(embedded_objects[&#34;object_marking_refs&#34;]) &gt; 0:
+        items = items + embedded_objects[&#34;object_marking_refs&#34;]
+
+    return items</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_relationship_objects"><code class="name flex">
+<span>def <span class="ident">stix2_get_relationship_objects</span></span>(<span>self, relationship)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stix2_get_relationship_objects(self, relationship):
+    items = [relationship]
+    # Get source ref
+    if relationship[&#34;source_ref&#34;] in self.cache_index:
+        items.append(self.cache_index[relationship[&#34;source_ref&#34;]])
+
+    # Get target ref
+    if relationship[&#34;target_ref&#34;] in self.cache_index:
+        items.append(self.cache_index[relationship[&#34;target_ref&#34;]])
+
+    # Get embedded objects
+    embedded_objects = self.stix2_get_embedded_objects(relationship)
+    # Add created by ref
+    if embedded_objects[&#34;created_by_ref&#34;] is not None:
+        items.append(embedded_objects[&#34;created_by_ref&#34;])
+    # Add marking definitions
+    if len(embedded_objects[&#34;object_marking_refs&#34;]) &gt; 0:
+        items = items + embedded_objects[&#34;object_marking_refs&#34;]
+
+    return items</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_report_objects"><code class="name flex">
+<span>def <span class="ident">stix2_get_report_objects</span></span>(<span>self, report)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stix2_get_report_objects(self, report):
+    items = [report]
+    # Add all object refs
+    for object_ref in report[&#34;object_refs&#34;]:
+        items.append(self.cache_index[object_ref])
+    for item in items:
+        if item[&#34;type&#34;] == &#34;relationship&#34;:
+            items = items + self.stix2_get_relationship_objects(item)
+        else:
+            items = items + self.stix2_get_entity_objects(item)
+    return items</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.PingAlive"><code class="flex name class">
+<span>class <span class="ident">PingAlive</span></span>
+<span>(</span><span>connector_id, api, get_state, set_state)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A class that represents a thread of control.</p>
+<p>This class can be safely subclassed in a limited fashion. There are two ways
+to specify the activity: by passing a callable object to the constructor, or
+by overriding the run() method in a subclass.</p>
+<p>This constructor should always be called with keyword arguments. Arguments are:</p>
+<p><em>group</em> should be None; reserved for future extension when a ThreadGroup
+class is implemented.</p>
+<p><em>target</em> is the callable object to be invoked by the run()
+method. Defaults to None, meaning nothing is called.</p>
+<p><em>name</em> is the thread name. By default, a unique name is constructed of
+the form "Thread-N" where N is a small decimal number.</p>
+<p><em>args</em> is the argument tuple for the target invocation. Defaults to ().</p>
+<p><em>kwargs</em> is a dictionary of keyword arguments for the target
+invocation. Defaults to {}.</p>
+<p>If a subclass overrides the constructor, it must make sure to invoke
+the base class constructor (Thread.<strong>init</strong>()) before doing anything
+else to the thread.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PingAlive(threading.Thread):
+    def __init__(self, connector_id, api, get_state, set_state):
+        threading.Thread.__init__(self)
+        self.connector_id = connector_id
+        self.in_error = False
+        self.api = api
+        self.get_state = get_state
+        self.set_state = set_state
+
+    def ping(self):
+        while True:
+            try:
+                initial_state = self.get_state()
+                result = self.api.connector.ping(self.connector_id, initial_state)
+                remote_state = (
+                    json.loads(result[&#34;connector_state&#34;])
+                    if len(result[&#34;connector_state&#34;]) &gt; 0
+                    else None
+                )
+                if initial_state != remote_state:
+                    self.set_state(result[&#34;connector_state&#34;])
+                    logging.info(
+                        &#39;Connector state has been remotely reset to: &#34;&#39;
+                        + self.get_state()
+                        + &#39;&#34;&#39;
+                    )
+                if self.in_error:
+                    self.in_error = False
+                    logging.error(&#34;API Ping back to normal&#34;)
+            except Exception:
+                self.in_error = True
+                logging.error(&#34;Error pinging the API&#34;)
+            time.sleep(40)
+
+    def run(self):
+        logging.info(&#34;Starting ping alive thread&#34;)
+        self.ping()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>threading.Thread</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pycti.connector.opencti_connector_helper.PingAlive.ping"><code class="name flex">
+<span>def <span class="ident">ping</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ping(self):
+    while True:
+        try:
+            initial_state = self.get_state()
+            result = self.api.connector.ping(self.connector_id, initial_state)
+            remote_state = (
+                json.loads(result[&#34;connector_state&#34;])
+                if len(result[&#34;connector_state&#34;]) &gt; 0
+                else None
+            )
+            if initial_state != remote_state:
+                self.set_state(result[&#34;connector_state&#34;])
+                logging.info(
+                    &#39;Connector state has been remotely reset to: &#34;&#39;
+                    + self.get_state()
+                    + &#39;&#34;&#39;
+                )
+            if self.in_error:
+                self.in_error = False
+                logging.error(&#34;API Ping back to normal&#34;)
+        except Exception:
+            self.in_error = True
+            logging.error(&#34;Error pinging the API&#34;)
+        time.sleep(40)</code></pre>
+</details>
+</dd>
+<dt id="pycti.connector.opencti_connector_helper.PingAlive.run"><code class="name flex">
+<span>def <span class="ident">run</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Method representing the thread's activity.</p>
+<p>You may override this method in a subclass. The standard run() method
+invokes the callable object passed to the object's constructor as the
+target argument, if any, with sequential and keyword arguments taken
+from the args and kwargs arguments, respectively.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run(self):
+    logging.info(&#34;Starting ping alive thread&#34;)
+    self.ping()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pycti.connector" href="index.html">pycti.connector</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pycti.connector.opencti_connector_helper.get_config_variable" href="#pycti.connector.opencti_connector_helper.get_config_variable">get_config_variable</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pycti.connector.opencti_connector_helper.ListenQueue" href="#pycti.connector.opencti_connector_helper.ListenQueue">ListenQueue</a></code></h4>
+<ul class="">
+<li><code><a title="pycti.connector.opencti_connector_helper.ListenQueue.run" href="#pycti.connector.opencti_connector_helper.ListenQueue.run">run</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper">OpenCTIConnectorHelper</a></code></h4>
+<ul class="">
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.check_max_tlp" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.check_max_tlp">check_max_tlp</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.date_now" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.date_now">date_now</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.get_connector" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.get_connector">get_connector</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.get_state" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.get_state">get_state</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.listen" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.listen">listen</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.log_error" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.log_error">log_error</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.log_info" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.log_info">log_info</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.send_stix2_bundle" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.send_stix2_bundle">send_stix2_bundle</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.set_state" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.set_state">set_state</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.split_stix2_bundle" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.split_stix2_bundle">split_stix2_bundle</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_create_bundle" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_create_bundle">stix2_create_bundle</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_deduplicate_objects" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_deduplicate_objects">stix2_deduplicate_objects</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_embedded_objects" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_embedded_objects">stix2_get_embedded_objects</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_entity_objects" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_entity_objects">stix2_get_entity_objects</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_relationship_objects" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_relationship_objects">stix2_get_relationship_objects</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_report_objects" href="#pycti.connector.opencti_connector_helper.OpenCTIConnectorHelper.stix2_get_report_objects">stix2_get_report_objects</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pycti.connector.opencti_connector_helper.PingAlive" href="#pycti.connector.opencti_connector_helper.PingAlive">PingAlive</a></code></h4>
+<ul class="">
+<li><code><a title="pycti.connector.opencti_connector_helper.PingAlive.ping" href="#pycti.connector.opencti_connector_helper.PingAlive.ping">ping</a></code></li>
+<li><code><a title="pycti.connector.opencti_connector_helper.PingAlive.run" href="#pycti.connector.opencti_connector_helper.PingAlive.run">run</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

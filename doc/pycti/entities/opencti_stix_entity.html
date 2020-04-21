@@ -1,0 +1,2375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>pycti.entities.opencti_stix_entity API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pycti.entities.opencti_stix_entity</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># coding: utf-8
+
+
+class StixEntity:
+    def __init__(self, opencti):
+        self.opencti = opencti
+        self.properties = &#34;&#34;&#34;
+            id
+            stix_id_key
+            entity_type
+            parent_types
+            name
+            description
+            created_at
+            updated_at
+            createdByRef {
+                node {
+                    id
+                    entity_type
+                    stix_id_key
+                    stix_label
+                    name
+                    alias
+                    description
+                    created
+                    modified
+                    ... on Organization {
+                        organization_class
+                    }
+                }
+                relation {
+                    id
+                }
+            }            
+            markingDefinitions {
+                edges {
+                    node {
+                        id
+                        entity_type
+                        stix_id_key
+                        definition_type
+                        definition
+                        level
+                        color
+                        created
+                        modified
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }
+            tags {
+                edges {
+                    node {
+                        id
+                        tag_type
+                        value
+                        color
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }
+            externalReferences {
+                edges {
+                    node {
+                        id
+                        entity_type
+                        stix_id_key
+                        source_name
+                        description
+                        url
+                        hash
+                        external_id
+                        created
+                        modified
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }
+            ... on AttackPattern {
+                platform
+                required_permission
+                external_id
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }
+            ... on ThreatActor {
+                goal
+                sophistication
+                resource_level
+                primary_motivation
+                secondary_motivation
+                personal_motivation
+            }
+            ... on IntrusionSet {
+                first_seen
+                last_seen
+                goal
+                sophistication
+                resource_level
+                primary_motivation
+                secondary_motivation
+            }
+            ... on Campaign {
+                objective
+                first_seen
+                last_seen
+            }
+            ... on Incident {
+                objective
+                first_seen
+                last_seen
+            }
+            ... on Organization {
+                organization_class
+            }
+            ... on Malware {
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }                
+            }
+            ... on Tool {
+                tool_version
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }
+            ... on Vulnerability {
+                base_score
+                base_severity
+                attack_vector
+                integrity_impact
+                availability_impact
+            }            
+            ... on Organization {
+                organization_class
+            }
+            ... on Indicator {
+                indicator_pattern
+                pattern_type
+                observableRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                            entity_type
+                            observable_value
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }            
+            ... on Report {
+                report_class
+                published
+                object_status
+                source_confidence_level
+                objectRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                            entity_type
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+                observableRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                            entity_type
+                            observable_value
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+                relationRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }            
+            ... on StixRelation {
+                first_seen
+                last_seen
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }                
+            } 
+        &#34;&#34;&#34;
+
+    &#34;&#34;&#34;
+        Read a Stix-Entity object
+
+        :param id: the id of the Stix-Entity
+        :return Stix-Entity object
+    &#34;&#34;&#34;
+
+    def read(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        custom_attributes = kwargs.get(&#34;customAttributes&#34;, None)
+        if id is not None:
+            self.opencti.log(&#34;info&#34;, &#34;Reading Stix-Entity {&#34; + id + &#34;}.&#34;)
+            query = (
+                &#34;&#34;&#34;
+                query StixEntity($id: String!) {
+                    stixEntity(id: $id) {
+                        &#34;&#34;&#34;
+                + (
+                    custom_attributes
+                    if custom_attributes is not None
+                    else self.properties
+                )
+                + &#34;&#34;&#34;
+                    }
+                }
+             &#34;&#34;&#34;
+            )
+            result = self.opencti.query(query, {&#34;id&#34;: id})
+            return self.opencti.process_multiple_fields(result[&#34;data&#34;][&#34;stixEntity&#34;])
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id&#34;)
+            return None
+
+    &#34;&#34;&#34;
+        Update the Identity author of a Stix-Entity object (created_by_ref)
+
+        :param id: the id of the Stix-Entity
+        :param identity_id: the id of the Identity
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def update_created_by_ref(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        identity_id = kwargs.get(&#34;identity_id&#34;, None)
+        if id is not None and identity_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    createdByRef {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            stix_label
+                            name
+                            alias
+                            description
+                            created
+                            modified
+                            ... on Organization {
+                                organization_class
+                            }
+                        }
+                        relation {
+                            id
+                        }
+                    }    
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot update created_by_ref, entity not found&#34;
+                )
+                return False
+            current_identity_id = None
+            current_relation_id = None
+            if stix_entity[&#34;createdByRef&#34;] is not None:
+                current_identity_id = stix_entity[&#34;createdByRef&#34;][&#34;id&#34;]
+                current_relation_id = stix_entity[&#34;createdByRef&#34;][&#34;remote_relation_id&#34;]
+            # Current identity is the same
+            if current_identity_id == identity_id:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Updating author of Stix-Entity {&#34;
+                    + id
+                    + &#34;} with Identity {&#34;
+                    + identity_id
+                    + &#34;}&#34;,
+                )
+                # Current identity is different, delete the old relation
+                if current_relation_id is not None:
+                    query = &#34;&#34;&#34;
+                        mutation StixEntityEdit($id: ID!, $relationId: ID!) {
+                            stixEntityEdit(id: $id) {
+                                relationDelete(relationId: $relationId) {
+                                    id
+                                }
+                            }
+                        }
+                    &#34;&#34;&#34;
+                    self.opencti.query(
+                        query, {&#34;id&#34;: id, &#34;relationId&#34;: current_relation_id}
+                    )
+                # Add the new relation
+                query = &#34;&#34;&#34;
+                   mutation StixEntityEdit($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                variables = {
+                    &#34;id&#34;: id,
+                    &#34;input&#34;: {
+                        &#34;fromRole&#34;: &#34;so&#34;,
+                        &#34;toId&#34;: identity_id,
+                        &#34;toRole&#34;: &#34;creator&#34;,
+                        &#34;through&#34;: &#34;created_by_ref&#34;,
+                    },
+                }
+                self.opencti.query(query, variables)
+
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and identity_id&#34;)
+            return False
+
+    &#34;&#34;&#34;
+        Add a Marking-Definition object to Stix-Entity object (object_marking_refs)
+
+        :param id: the id of the Stix-Entity
+        :param marking_definition_id: the id of the Marking-Definition
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_marking_definition(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        marking_definition_id = kwargs.get(&#34;marking_definition_id&#34;, None)
+        if id is not None and marking_definition_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    markingDefinitions {
+                        edges {
+                            node {
+                                id
+                                entity_type
+                                stix_id_key
+                                definition_type
+                                definition
+                                level
+                                color
+                                created
+                                modified
+                            }
+                            relation {
+                                id
+                            }
+                        }
+                    }
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot add Marking-Definition, entity not found&#34;
+                )
+                return False
+            if marking_definition_id in stix_entity[&#34;markingDefinitionsIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Adding Marking-Definition {&#34;
+                    + marking_definition_id
+                    + &#34;} to Stix-Entity {&#34;
+                    + id
+                    + &#34;}&#34;,
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;so&#34;,
+                            &#34;toId&#34;: marking_definition_id,
+                            &#34;toRole&#34;: &#34;marking&#34;,
+                            &#34;through&#34;: &#34;object_marking_refs&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Missing parameters: id and marking_definition_id&#34;
+            )
+            return False
+
+    &#34;&#34;&#34;
+        Add a Tag object to Stix-Entity object (tagging)
+
+        :param id: the id of the Stix-Entity
+        :param tag_id: the id of the Tag
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_tag(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        tag_id = kwargs.get(&#34;tag_id&#34;, None)
+        if id is not None and tag_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    tags {
+                        edges {
+                            node {
+                                id
+                                tag_type
+                                value
+                                color
+                            }
+                            relation {
+                                id
+                            }
+                        }
+                    }
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(&#34;error&#34;, &#34;Cannot add Tag, entity not found&#34;)
+                return False
+            if tag_id in stix_entity[&#34;tagsIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;, &#34;Adding Tag {&#34; + tag_id + &#34;} to Stix-Entity {&#34; + id + &#34;}&#34;
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;so&#34;,
+                            &#34;toId&#34;: tag_id,
+                            &#34;toRole&#34;: &#34;tagging&#34;,
+                            &#34;through&#34;: &#34;tagged&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and tag_id&#34;)
+            return False
+
+    &#34;&#34;&#34;
+        Add a External-Reference object to Stix-Entity object (object_marking_refs)
+
+        :param id: the id of the Stix-Entity
+        :param marking_definition_id: the id of the Marking-Definition
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_external_reference(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        external_reference_id = kwargs.get(&#34;external_reference_id&#34;, None)
+        if id is not None and external_reference_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    externalReferences {
+                        edges {
+                            node {
+                                id
+                                entity_type
+                                stix_id_key
+                                source_name
+                                description
+                                url
+                                hash
+                                external_id
+                                created
+                                modified
+                            }
+                            relation {
+                                id
+                            }
+                        }
+                    }
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot add External-Reference, entity not found&#34;
+                )
+                return False
+            if external_reference_id in stix_entity[&#34;externalReferencesIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Adding External-Reference {&#34;
+                    + external_reference_id
+                    + &#34;} to Stix-Entity {&#34;
+                    + id
+                    + &#34;}&#34;,
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;so&#34;,
+                            &#34;toId&#34;: external_reference_id,
+                            &#34;toRole&#34;: &#34;external_reference&#34;,
+                            &#34;through&#34;: &#34;external_references&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Missing parameters: id and external_reference_id&#34;
+            )
+            return False
+
+    &#34;&#34;&#34;
+        Add a Kill-Chain-Phase object to Stix-Entity object (kill_chain_phases)
+
+        :param id: the id of the Stix-Entity
+        :param kill_chain_phase_id: the id of the Kill-Chain-Phase
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_kill_chain_phase(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        kill_chain_phase_id = kwargs.get(&#34;kill_chain_phase_id&#34;, None)
+        if id is not None and kill_chain_phase_id is not None:
+            if stix_entity is None:
+                stix_entity = self.read(id=id)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot add Kill-Chain-Phase, entity not found&#34;
+                )
+                return False
+            if kill_chain_phase_id in stix_entity[&#34;killChainPhasesIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Adding Kill-Chain-Phase {&#34;
+                    + kill_chain_phase_id
+                    + &#34;} to Stix-Entity {&#34;
+                    + id
+                    + &#34;}&#34;,
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;phase_belonging&#34;,
+                            &#34;toId&#34;: kill_chain_phase_id,
+                            &#34;toRole&#34;: &#34;kill_chain_phase&#34;,
+                            &#34;through&#34;: &#34;kill_chain_phases&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and kill_chain_phase_id&#34;)
+            return False
+
+    &#34;&#34;&#34;
+        Get the reports about a Stix-Entity object
+
+        :param id: the id of the Stix-Entity
+        :return Stix-Entity object
+    &#34;&#34;&#34;
+
+    def reports(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        if id is not None:
+            self.opencti.log(&#34;info&#34;, &#34;Getting reports of the Stix-Entity {&#34; + id + &#34;}.&#34;)
+            query = &#34;&#34;&#34;
+                query StixEntity($id: String!) {
+                    stixEntity(id: $id) {
+                        reports {
+                            edges {
+                                node {
+                                    id
+                                    stix_id_key
+                                    entity_type
+                                    stix_label
+                                    name
+                                    alias
+                                    description
+                                    report_class
+                                    published
+                                    object_status
+                                    source_confidence_level
+                                    graph_data
+                                    created
+                                    modified
+                                    created_at
+                                    updated_at
+                                    createdByRef {
+                                        node {
+                                            id
+                                            entity_type
+                                            stix_id_key
+                                            stix_label
+                                            name
+                                            alias
+                                            description
+                                            created
+                                            modified
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                    markingDefinitions {
+                                        edges {
+                                            node {
+                                                id
+                                                entity_type
+                                                stix_id_key
+                                                definition_type
+                                                definition
+                                                level
+                                                color
+                                                created
+                                                modified
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    tags {
+                                        edges {
+                                            node {
+                                                id
+                                                tag_type
+                                                value
+                                                color
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }            
+                                    externalReferences {
+                                        edges {
+                                            node {
+                                                id
+                                                entity_type
+                                                stix_id_key
+                                                source_name
+                                                description
+                                                url
+                                                hash
+                                                external_id
+                                                created
+                                                modified
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    objectRefs {
+                                        edges {
+                                            node {
+                                                id
+                                                stix_id_key
+                                                entity_type
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    observableRefs {
+                                        edges {
+                                            node {
+                                                id
+                                                stix_id_key
+                                                entity_type
+                                                observable_value
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    relationRefs {
+                                        edges {
+                                            node {
+                                                id
+                                                stix_id_key
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                }
+                                relation {
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+             &#34;&#34;&#34;
+            result = self.opencti.query(query, {&#34;id&#34;: id})
+            processed_result = self.opencti.process_multiple_fields(
+                result[&#34;data&#34;][&#34;stixEntity&#34;]
+            )
+            return processed_result[&#34;reports&#34;]
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id&#34;)
+            return None</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity"><code class="flex name class">
+<span>class <span class="ident">StixEntity</span></span>
+<span>(</span><span>opencti)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class StixEntity:
+    def __init__(self, opencti):
+        self.opencti = opencti
+        self.properties = &#34;&#34;&#34;
+            id
+            stix_id_key
+            entity_type
+            parent_types
+            name
+            description
+            created_at
+            updated_at
+            createdByRef {
+                node {
+                    id
+                    entity_type
+                    stix_id_key
+                    stix_label
+                    name
+                    alias
+                    description
+                    created
+                    modified
+                    ... on Organization {
+                        organization_class
+                    }
+                }
+                relation {
+                    id
+                }
+            }            
+            markingDefinitions {
+                edges {
+                    node {
+                        id
+                        entity_type
+                        stix_id_key
+                        definition_type
+                        definition
+                        level
+                        color
+                        created
+                        modified
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }
+            tags {
+                edges {
+                    node {
+                        id
+                        tag_type
+                        value
+                        color
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }
+            externalReferences {
+                edges {
+                    node {
+                        id
+                        entity_type
+                        stix_id_key
+                        source_name
+                        description
+                        url
+                        hash
+                        external_id
+                        created
+                        modified
+                    }
+                    relation {
+                        id
+                    }
+                }
+            }
+            ... on AttackPattern {
+                platform
+                required_permission
+                external_id
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }
+            ... on ThreatActor {
+                goal
+                sophistication
+                resource_level
+                primary_motivation
+                secondary_motivation
+                personal_motivation
+            }
+            ... on IntrusionSet {
+                first_seen
+                last_seen
+                goal
+                sophistication
+                resource_level
+                primary_motivation
+                secondary_motivation
+            }
+            ... on Campaign {
+                objective
+                first_seen
+                last_seen
+            }
+            ... on Incident {
+                objective
+                first_seen
+                last_seen
+            }
+            ... on Organization {
+                organization_class
+            }
+            ... on Malware {
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }                
+            }
+            ... on Tool {
+                tool_version
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }
+            ... on Vulnerability {
+                base_score
+                base_severity
+                attack_vector
+                integrity_impact
+                availability_impact
+            }            
+            ... on Organization {
+                organization_class
+            }
+            ... on Indicator {
+                indicator_pattern
+                pattern_type
+                observableRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                            entity_type
+                            observable_value
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }            
+            ... on Report {
+                report_class
+                published
+                object_status
+                source_confidence_level
+                objectRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                            entity_type
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+                observableRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                            entity_type
+                            observable_value
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+                relationRefs {
+                    edges {
+                        node {
+                            id
+                            stix_id_key
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            }            
+            ... on StixRelation {
+                first_seen
+                last_seen
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            kill_chain_name
+                            phase_name
+                            phase_order
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }                
+            } 
+        &#34;&#34;&#34;
+
+    &#34;&#34;&#34;
+        Read a Stix-Entity object
+
+        :param id: the id of the Stix-Entity
+        :return Stix-Entity object
+    &#34;&#34;&#34;
+
+    def read(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        custom_attributes = kwargs.get(&#34;customAttributes&#34;, None)
+        if id is not None:
+            self.opencti.log(&#34;info&#34;, &#34;Reading Stix-Entity {&#34; + id + &#34;}.&#34;)
+            query = (
+                &#34;&#34;&#34;
+                query StixEntity($id: String!) {
+                    stixEntity(id: $id) {
+                        &#34;&#34;&#34;
+                + (
+                    custom_attributes
+                    if custom_attributes is not None
+                    else self.properties
+                )
+                + &#34;&#34;&#34;
+                    }
+                }
+             &#34;&#34;&#34;
+            )
+            result = self.opencti.query(query, {&#34;id&#34;: id})
+            return self.opencti.process_multiple_fields(result[&#34;data&#34;][&#34;stixEntity&#34;])
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id&#34;)
+            return None
+
+    &#34;&#34;&#34;
+        Update the Identity author of a Stix-Entity object (created_by_ref)
+
+        :param id: the id of the Stix-Entity
+        :param identity_id: the id of the Identity
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def update_created_by_ref(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        identity_id = kwargs.get(&#34;identity_id&#34;, None)
+        if id is not None and identity_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    createdByRef {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            stix_label
+                            name
+                            alias
+                            description
+                            created
+                            modified
+                            ... on Organization {
+                                organization_class
+                            }
+                        }
+                        relation {
+                            id
+                        }
+                    }    
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot update created_by_ref, entity not found&#34;
+                )
+                return False
+            current_identity_id = None
+            current_relation_id = None
+            if stix_entity[&#34;createdByRef&#34;] is not None:
+                current_identity_id = stix_entity[&#34;createdByRef&#34;][&#34;id&#34;]
+                current_relation_id = stix_entity[&#34;createdByRef&#34;][&#34;remote_relation_id&#34;]
+            # Current identity is the same
+            if current_identity_id == identity_id:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Updating author of Stix-Entity {&#34;
+                    + id
+                    + &#34;} with Identity {&#34;
+                    + identity_id
+                    + &#34;}&#34;,
+                )
+                # Current identity is different, delete the old relation
+                if current_relation_id is not None:
+                    query = &#34;&#34;&#34;
+                        mutation StixEntityEdit($id: ID!, $relationId: ID!) {
+                            stixEntityEdit(id: $id) {
+                                relationDelete(relationId: $relationId) {
+                                    id
+                                }
+                            }
+                        }
+                    &#34;&#34;&#34;
+                    self.opencti.query(
+                        query, {&#34;id&#34;: id, &#34;relationId&#34;: current_relation_id}
+                    )
+                # Add the new relation
+                query = &#34;&#34;&#34;
+                   mutation StixEntityEdit($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                variables = {
+                    &#34;id&#34;: id,
+                    &#34;input&#34;: {
+                        &#34;fromRole&#34;: &#34;so&#34;,
+                        &#34;toId&#34;: identity_id,
+                        &#34;toRole&#34;: &#34;creator&#34;,
+                        &#34;through&#34;: &#34;created_by_ref&#34;,
+                    },
+                }
+                self.opencti.query(query, variables)
+
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and identity_id&#34;)
+            return False
+
+    &#34;&#34;&#34;
+        Add a Marking-Definition object to Stix-Entity object (object_marking_refs)
+
+        :param id: the id of the Stix-Entity
+        :param marking_definition_id: the id of the Marking-Definition
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_marking_definition(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        marking_definition_id = kwargs.get(&#34;marking_definition_id&#34;, None)
+        if id is not None and marking_definition_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    markingDefinitions {
+                        edges {
+                            node {
+                                id
+                                entity_type
+                                stix_id_key
+                                definition_type
+                                definition
+                                level
+                                color
+                                created
+                                modified
+                            }
+                            relation {
+                                id
+                            }
+                        }
+                    }
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot add Marking-Definition, entity not found&#34;
+                )
+                return False
+            if marking_definition_id in stix_entity[&#34;markingDefinitionsIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Adding Marking-Definition {&#34;
+                    + marking_definition_id
+                    + &#34;} to Stix-Entity {&#34;
+                    + id
+                    + &#34;}&#34;,
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;so&#34;,
+                            &#34;toId&#34;: marking_definition_id,
+                            &#34;toRole&#34;: &#34;marking&#34;,
+                            &#34;through&#34;: &#34;object_marking_refs&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Missing parameters: id and marking_definition_id&#34;
+            )
+            return False
+
+    &#34;&#34;&#34;
+        Add a Tag object to Stix-Entity object (tagging)
+
+        :param id: the id of the Stix-Entity
+        :param tag_id: the id of the Tag
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_tag(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        tag_id = kwargs.get(&#34;tag_id&#34;, None)
+        if id is not None and tag_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    tags {
+                        edges {
+                            node {
+                                id
+                                tag_type
+                                value
+                                color
+                            }
+                            relation {
+                                id
+                            }
+                        }
+                    }
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(&#34;error&#34;, &#34;Cannot add Tag, entity not found&#34;)
+                return False
+            if tag_id in stix_entity[&#34;tagsIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;, &#34;Adding Tag {&#34; + tag_id + &#34;} to Stix-Entity {&#34; + id + &#34;}&#34;
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;so&#34;,
+                            &#34;toId&#34;: tag_id,
+                            &#34;toRole&#34;: &#34;tagging&#34;,
+                            &#34;through&#34;: &#34;tagged&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and tag_id&#34;)
+            return False
+
+    &#34;&#34;&#34;
+        Add a External-Reference object to Stix-Entity object (object_marking_refs)
+
+        :param id: the id of the Stix-Entity
+        :param marking_definition_id: the id of the Marking-Definition
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_external_reference(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        external_reference_id = kwargs.get(&#34;external_reference_id&#34;, None)
+        if id is not None and external_reference_id is not None:
+            if stix_entity is None:
+                custom_attributes = &#34;&#34;&#34;
+                    id
+                    externalReferences {
+                        edges {
+                            node {
+                                id
+                                entity_type
+                                stix_id_key
+                                source_name
+                                description
+                                url
+                                hash
+                                external_id
+                                created
+                                modified
+                            }
+                            relation {
+                                id
+                            }
+                        }
+                    }
+                &#34;&#34;&#34;
+                stix_entity = self.read(id=id, customAttributes=custom_attributes)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot add External-Reference, entity not found&#34;
+                )
+                return False
+            if external_reference_id in stix_entity[&#34;externalReferencesIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Adding External-Reference {&#34;
+                    + external_reference_id
+                    + &#34;} to Stix-Entity {&#34;
+                    + id
+                    + &#34;}&#34;,
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;so&#34;,
+                            &#34;toId&#34;: external_reference_id,
+                            &#34;toRole&#34;: &#34;external_reference&#34;,
+                            &#34;through&#34;: &#34;external_references&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Missing parameters: id and external_reference_id&#34;
+            )
+            return False
+
+    &#34;&#34;&#34;
+        Add a Kill-Chain-Phase object to Stix-Entity object (kill_chain_phases)
+
+        :param id: the id of the Stix-Entity
+        :param kill_chain_phase_id: the id of the Kill-Chain-Phase
+        :return Boolean
+    &#34;&#34;&#34;
+
+    def add_kill_chain_phase(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        stix_entity = kwargs.get(&#34;entity&#34;, None)
+        kill_chain_phase_id = kwargs.get(&#34;kill_chain_phase_id&#34;, None)
+        if id is not None and kill_chain_phase_id is not None:
+            if stix_entity is None:
+                stix_entity = self.read(id=id)
+            if stix_entity is None:
+                self.opencti.log(
+                    &#34;error&#34;, &#34;Cannot add Kill-Chain-Phase, entity not found&#34;
+                )
+                return False
+            if kill_chain_phase_id in stix_entity[&#34;killChainPhasesIds&#34;]:
+                return True
+            else:
+                self.opencti.log(
+                    &#34;info&#34;,
+                    &#34;Adding Kill-Chain-Phase {&#34;
+                    + kill_chain_phase_id
+                    + &#34;} to Stix-Entity {&#34;
+                    + id
+                    + &#34;}&#34;,
+                )
+                query = &#34;&#34;&#34;
+                   mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                       stixEntityEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query,
+                    {
+                        &#34;id&#34;: id,
+                        &#34;input&#34;: {
+                            &#34;fromRole&#34;: &#34;phase_belonging&#34;,
+                            &#34;toId&#34;: kill_chain_phase_id,
+                            &#34;toRole&#34;: &#34;kill_chain_phase&#34;,
+                            &#34;through&#34;: &#34;kill_chain_phases&#34;,
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and kill_chain_phase_id&#34;)
+            return False
+
+    &#34;&#34;&#34;
+        Get the reports about a Stix-Entity object
+
+        :param id: the id of the Stix-Entity
+        :return Stix-Entity object
+    &#34;&#34;&#34;
+
+    def reports(self, **kwargs):
+        id = kwargs.get(&#34;id&#34;, None)
+        if id is not None:
+            self.opencti.log(&#34;info&#34;, &#34;Getting reports of the Stix-Entity {&#34; + id + &#34;}.&#34;)
+            query = &#34;&#34;&#34;
+                query StixEntity($id: String!) {
+                    stixEntity(id: $id) {
+                        reports {
+                            edges {
+                                node {
+                                    id
+                                    stix_id_key
+                                    entity_type
+                                    stix_label
+                                    name
+                                    alias
+                                    description
+                                    report_class
+                                    published
+                                    object_status
+                                    source_confidence_level
+                                    graph_data
+                                    created
+                                    modified
+                                    created_at
+                                    updated_at
+                                    createdByRef {
+                                        node {
+                                            id
+                                            entity_type
+                                            stix_id_key
+                                            stix_label
+                                            name
+                                            alias
+                                            description
+                                            created
+                                            modified
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                    markingDefinitions {
+                                        edges {
+                                            node {
+                                                id
+                                                entity_type
+                                                stix_id_key
+                                                definition_type
+                                                definition
+                                                level
+                                                color
+                                                created
+                                                modified
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    tags {
+                                        edges {
+                                            node {
+                                                id
+                                                tag_type
+                                                value
+                                                color
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }            
+                                    externalReferences {
+                                        edges {
+                                            node {
+                                                id
+                                                entity_type
+                                                stix_id_key
+                                                source_name
+                                                description
+                                                url
+                                                hash
+                                                external_id
+                                                created
+                                                modified
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    objectRefs {
+                                        edges {
+                                            node {
+                                                id
+                                                stix_id_key
+                                                entity_type
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    observableRefs {
+                                        edges {
+                                            node {
+                                                id
+                                                stix_id_key
+                                                entity_type
+                                                observable_value
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                    relationRefs {
+                                        edges {
+                                            node {
+                                                id
+                                                stix_id_key
+                                            }
+                                            relation {
+                                                id
+                                            }
+                                        }
+                                    }
+                                }
+                                relation {
+                                    id
+                                }
+                            }
+                        }
+                    }
+                }
+             &#34;&#34;&#34;
+            result = self.opencti.query(query, {&#34;id&#34;: id})
+            processed_result = self.opencti.process_multiple_fields(
+                result[&#34;data&#34;][&#34;stixEntity&#34;]
+            )
+            return processed_result[&#34;reports&#34;]
+        else:
+            self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id&#34;)
+            return None</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity.add_external_reference"><code class="name flex">
+<span>def <span class="ident">add_external_reference</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_external_reference(self, **kwargs):
+    id = kwargs.get(&#34;id&#34;, None)
+    stix_entity = kwargs.get(&#34;entity&#34;, None)
+    external_reference_id = kwargs.get(&#34;external_reference_id&#34;, None)
+    if id is not None and external_reference_id is not None:
+        if stix_entity is None:
+            custom_attributes = &#34;&#34;&#34;
+                id
+                externalReferences {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            source_name
+                            description
+                            url
+                            hash
+                            external_id
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            &#34;&#34;&#34;
+            stix_entity = self.read(id=id, customAttributes=custom_attributes)
+        if stix_entity is None:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Cannot add External-Reference, entity not found&#34;
+            )
+            return False
+        if external_reference_id in stix_entity[&#34;externalReferencesIds&#34;]:
+            return True
+        else:
+            self.opencti.log(
+                &#34;info&#34;,
+                &#34;Adding External-Reference {&#34;
+                + external_reference_id
+                + &#34;} to Stix-Entity {&#34;
+                + id
+                + &#34;}&#34;,
+            )
+            query = &#34;&#34;&#34;
+               mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                   stixEntityEdit(id: $id) {
+                        relationAdd(input: $input) {
+                            id
+                        }
+                   }
+               }
+            &#34;&#34;&#34;
+            self.opencti.query(
+                query,
+                {
+                    &#34;id&#34;: id,
+                    &#34;input&#34;: {
+                        &#34;fromRole&#34;: &#34;so&#34;,
+                        &#34;toId&#34;: external_reference_id,
+                        &#34;toRole&#34;: &#34;external_reference&#34;,
+                        &#34;through&#34;: &#34;external_references&#34;,
+                    },
+                },
+            )
+            return True
+    else:
+        self.opencti.log(
+            &#34;error&#34;, &#34;Missing parameters: id and external_reference_id&#34;
+        )
+        return False</code></pre>
+</details>
+</dd>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity.add_kill_chain_phase"><code class="name flex">
+<span>def <span class="ident">add_kill_chain_phase</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_kill_chain_phase(self, **kwargs):
+    id = kwargs.get(&#34;id&#34;, None)
+    stix_entity = kwargs.get(&#34;entity&#34;, None)
+    kill_chain_phase_id = kwargs.get(&#34;kill_chain_phase_id&#34;, None)
+    if id is not None and kill_chain_phase_id is not None:
+        if stix_entity is None:
+            stix_entity = self.read(id=id)
+        if stix_entity is None:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Cannot add Kill-Chain-Phase, entity not found&#34;
+            )
+            return False
+        if kill_chain_phase_id in stix_entity[&#34;killChainPhasesIds&#34;]:
+            return True
+        else:
+            self.opencti.log(
+                &#34;info&#34;,
+                &#34;Adding Kill-Chain-Phase {&#34;
+                + kill_chain_phase_id
+                + &#34;} to Stix-Entity {&#34;
+                + id
+                + &#34;}&#34;,
+            )
+            query = &#34;&#34;&#34;
+               mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                   stixEntityEdit(id: $id) {
+                        relationAdd(input: $input) {
+                            id
+                        }
+                   }
+               }
+            &#34;&#34;&#34;
+            self.opencti.query(
+                query,
+                {
+                    &#34;id&#34;: id,
+                    &#34;input&#34;: {
+                        &#34;fromRole&#34;: &#34;phase_belonging&#34;,
+                        &#34;toId&#34;: kill_chain_phase_id,
+                        &#34;toRole&#34;: &#34;kill_chain_phase&#34;,
+                        &#34;through&#34;: &#34;kill_chain_phases&#34;,
+                    },
+                },
+            )
+            return True
+    else:
+        self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and kill_chain_phase_id&#34;)
+        return False</code></pre>
+</details>
+</dd>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity.add_marking_definition"><code class="name flex">
+<span>def <span class="ident">add_marking_definition</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_marking_definition(self, **kwargs):
+    id = kwargs.get(&#34;id&#34;, None)
+    stix_entity = kwargs.get(&#34;entity&#34;, None)
+    marking_definition_id = kwargs.get(&#34;marking_definition_id&#34;, None)
+    if id is not None and marking_definition_id is not None:
+        if stix_entity is None:
+            custom_attributes = &#34;&#34;&#34;
+                id
+                markingDefinitions {
+                    edges {
+                        node {
+                            id
+                            entity_type
+                            stix_id_key
+                            definition_type
+                            definition
+                            level
+                            color
+                            created
+                            modified
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            &#34;&#34;&#34;
+            stix_entity = self.read(id=id, customAttributes=custom_attributes)
+        if stix_entity is None:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Cannot add Marking-Definition, entity not found&#34;
+            )
+            return False
+        if marking_definition_id in stix_entity[&#34;markingDefinitionsIds&#34;]:
+            return True
+        else:
+            self.opencti.log(
+                &#34;info&#34;,
+                &#34;Adding Marking-Definition {&#34;
+                + marking_definition_id
+                + &#34;} to Stix-Entity {&#34;
+                + id
+                + &#34;}&#34;,
+            )
+            query = &#34;&#34;&#34;
+               mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                   stixEntityEdit(id: $id) {
+                        relationAdd(input: $input) {
+                            id
+                        }
+                   }
+               }
+            &#34;&#34;&#34;
+            self.opencti.query(
+                query,
+                {
+                    &#34;id&#34;: id,
+                    &#34;input&#34;: {
+                        &#34;fromRole&#34;: &#34;so&#34;,
+                        &#34;toId&#34;: marking_definition_id,
+                        &#34;toRole&#34;: &#34;marking&#34;,
+                        &#34;through&#34;: &#34;object_marking_refs&#34;,
+                    },
+                },
+            )
+            return True
+    else:
+        self.opencti.log(
+            &#34;error&#34;, &#34;Missing parameters: id and marking_definition_id&#34;
+        )
+        return False</code></pre>
+</details>
+</dd>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity.add_tag"><code class="name flex">
+<span>def <span class="ident">add_tag</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_tag(self, **kwargs):
+    id = kwargs.get(&#34;id&#34;, None)
+    stix_entity = kwargs.get(&#34;entity&#34;, None)
+    tag_id = kwargs.get(&#34;tag_id&#34;, None)
+    if id is not None and tag_id is not None:
+        if stix_entity is None:
+            custom_attributes = &#34;&#34;&#34;
+                id
+                tags {
+                    edges {
+                        node {
+                            id
+                            tag_type
+                            value
+                            color
+                        }
+                        relation {
+                            id
+                        }
+                    }
+                }
+            &#34;&#34;&#34;
+            stix_entity = self.read(id=id, customAttributes=custom_attributes)
+        if stix_entity is None:
+            self.opencti.log(&#34;error&#34;, &#34;Cannot add Tag, entity not found&#34;)
+            return False
+        if tag_id in stix_entity[&#34;tagsIds&#34;]:
+            return True
+        else:
+            self.opencti.log(
+                &#34;info&#34;, &#34;Adding Tag {&#34; + tag_id + &#34;} to Stix-Entity {&#34; + id + &#34;}&#34;
+            )
+            query = &#34;&#34;&#34;
+               mutation StixEntityAddRelation($id: ID!, $input: RelationAddInput) {
+                   stixEntityEdit(id: $id) {
+                        relationAdd(input: $input) {
+                            id
+                        }
+                   }
+               }
+            &#34;&#34;&#34;
+            self.opencti.query(
+                query,
+                {
+                    &#34;id&#34;: id,
+                    &#34;input&#34;: {
+                        &#34;fromRole&#34;: &#34;so&#34;,
+                        &#34;toId&#34;: tag_id,
+                        &#34;toRole&#34;: &#34;tagging&#34;,
+                        &#34;through&#34;: &#34;tagged&#34;,
+                    },
+                },
+            )
+            return True
+    else:
+        self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and tag_id&#34;)
+        return False</code></pre>
+</details>
+</dd>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity.read"><code class="name flex">
+<span>def <span class="ident">read</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def read(self, **kwargs):
+    id = kwargs.get(&#34;id&#34;, None)
+    custom_attributes = kwargs.get(&#34;customAttributes&#34;, None)
+    if id is not None:
+        self.opencti.log(&#34;info&#34;, &#34;Reading Stix-Entity {&#34; + id + &#34;}.&#34;)
+        query = (
+            &#34;&#34;&#34;
+            query StixEntity($id: String!) {
+                stixEntity(id: $id) {
+                    &#34;&#34;&#34;
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self.properties
+            )
+            + &#34;&#34;&#34;
+                }
+            }
+         &#34;&#34;&#34;
+        )
+        result = self.opencti.query(query, {&#34;id&#34;: id})
+        return self.opencti.process_multiple_fields(result[&#34;data&#34;][&#34;stixEntity&#34;])
+    else:
+        self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id&#34;)
+        return None</code></pre>
+</details>
+</dd>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity.reports"><code class="name flex">
+<span>def <span class="ident">reports</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reports(self, **kwargs):
+    id = kwargs.get(&#34;id&#34;, None)
+    if id is not None:
+        self.opencti.log(&#34;info&#34;, &#34;Getting reports of the Stix-Entity {&#34; + id + &#34;}.&#34;)
+        query = &#34;&#34;&#34;
+            query StixEntity($id: String!) {
+                stixEntity(id: $id) {
+                    reports {
+                        edges {
+                            node {
+                                id
+                                stix_id_key
+                                entity_type
+                                stix_label
+                                name
+                                alias
+                                description
+                                report_class
+                                published
+                                object_status
+                                source_confidence_level
+                                graph_data
+                                created
+                                modified
+                                created_at
+                                updated_at
+                                createdByRef {
+                                    node {
+                                        id
+                                        entity_type
+                                        stix_id_key
+                                        stix_label
+                                        name
+                                        alias
+                                        description
+                                        created
+                                        modified
+                                    }
+                                    relation {
+                                        id
+                                    }
+                                }
+                                markingDefinitions {
+                                    edges {
+                                        node {
+                                            id
+                                            entity_type
+                                            stix_id_key
+                                            definition_type
+                                            definition
+                                            level
+                                            color
+                                            created
+                                            modified
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                }
+                                tags {
+                                    edges {
+                                        node {
+                                            id
+                                            tag_type
+                                            value
+                                            color
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                }            
+                                externalReferences {
+                                    edges {
+                                        node {
+                                            id
+                                            entity_type
+                                            stix_id_key
+                                            source_name
+                                            description
+                                            url
+                                            hash
+                                            external_id
+                                            created
+                                            modified
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                }
+                                objectRefs {
+                                    edges {
+                                        node {
+                                            id
+                                            stix_id_key
+                                            entity_type
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                }
+                                observableRefs {
+                                    edges {
+                                        node {
+                                            id
+                                            stix_id_key
+                                            entity_type
+                                            observable_value
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                }
+                                relationRefs {
+                                    edges {
+                                        node {
+                                            id
+                                            stix_id_key
+                                        }
+                                        relation {
+                                            id
+                                        }
+                                    }
+                                }
+                            }
+                            relation {
+                                id
+                            }
+                        }
+                    }
+                }
+            }
+         &#34;&#34;&#34;
+        result = self.opencti.query(query, {&#34;id&#34;: id})
+        processed_result = self.opencti.process_multiple_fields(
+            result[&#34;data&#34;][&#34;stixEntity&#34;]
+        )
+        return processed_result[&#34;reports&#34;]
+    else:
+        self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id&#34;)
+        return None</code></pre>
+</details>
+</dd>
+<dt id="pycti.entities.opencti_stix_entity.StixEntity.update_created_by_ref"><code class="name flex">
+<span>def <span class="ident">update_created_by_ref</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_created_by_ref(self, **kwargs):
+    id = kwargs.get(&#34;id&#34;, None)
+    stix_entity = kwargs.get(&#34;entity&#34;, None)
+    identity_id = kwargs.get(&#34;identity_id&#34;, None)
+    if id is not None and identity_id is not None:
+        if stix_entity is None:
+            custom_attributes = &#34;&#34;&#34;
+                id
+                createdByRef {
+                    node {
+                        id
+                        entity_type
+                        stix_id_key
+                        stix_label
+                        name
+                        alias
+                        description
+                        created
+                        modified
+                        ... on Organization {
+                            organization_class
+                        }
+                    }
+                    relation {
+                        id
+                    }
+                }    
+            &#34;&#34;&#34;
+            stix_entity = self.read(id=id, customAttributes=custom_attributes)
+        if stix_entity is None:
+            self.opencti.log(
+                &#34;error&#34;, &#34;Cannot update created_by_ref, entity not found&#34;
+            )
+            return False
+        current_identity_id = None
+        current_relation_id = None
+        if stix_entity[&#34;createdByRef&#34;] is not None:
+            current_identity_id = stix_entity[&#34;createdByRef&#34;][&#34;id&#34;]
+            current_relation_id = stix_entity[&#34;createdByRef&#34;][&#34;remote_relation_id&#34;]
+        # Current identity is the same
+        if current_identity_id == identity_id:
+            return True
+        else:
+            self.opencti.log(
+                &#34;info&#34;,
+                &#34;Updating author of Stix-Entity {&#34;
+                + id
+                + &#34;} with Identity {&#34;
+                + identity_id
+                + &#34;}&#34;,
+            )
+            # Current identity is different, delete the old relation
+            if current_relation_id is not None:
+                query = &#34;&#34;&#34;
+                    mutation StixEntityEdit($id: ID!, $relationId: ID!) {
+                        stixEntityEdit(id: $id) {
+                            relationDelete(relationId: $relationId) {
+                                id
+                            }
+                        }
+                    }
+                &#34;&#34;&#34;
+                self.opencti.query(
+                    query, {&#34;id&#34;: id, &#34;relationId&#34;: current_relation_id}
+                )
+            # Add the new relation
+            query = &#34;&#34;&#34;
+               mutation StixEntityEdit($id: ID!, $input: RelationAddInput) {
+                   stixEntityEdit(id: $id) {
+                        relationAdd(input: $input) {
+                            id
+                        }
+                   }
+               }
+            &#34;&#34;&#34;
+            variables = {
+                &#34;id&#34;: id,
+                &#34;input&#34;: {
+                    &#34;fromRole&#34;: &#34;so&#34;,
+                    &#34;toId&#34;: identity_id,
+                    &#34;toRole&#34;: &#34;creator&#34;,
+                    &#34;through&#34;: &#34;created_by_ref&#34;,
+                },
+            }
+            self.opencti.query(query, variables)
+
+    else:
+        self.opencti.log(&#34;error&#34;, &#34;Missing parameters: id and identity_id&#34;)
+        return False</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pycti.entities" href="index.html">pycti.entities</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pycti.entities.opencti_stix_entity.StixEntity" href="#pycti.entities.opencti_stix_entity.StixEntity">StixEntity</a></code></h4>
+<ul class="">
+<li><code><a title="pycti.entities.opencti_stix_entity.StixEntity.add_external_reference" href="#pycti.entities.opencti_stix_entity.StixEntity.add_external_reference">add_external_reference</a></code></li>
+<li><code><a title="pycti.entities.opencti_stix_entity.StixEntity.add_kill_chain_phase" href="#pycti.entities.opencti_stix_entity.StixEntity.add_kill_chain_phase">add_kill_chain_phase</a></code></li>
+<li><code><a title="pycti.entities.opencti_stix_entity.StixEntity.add_marking_definition" href="#pycti.entities.opencti_stix_entity.StixEntity.add_marking_definition">add_marking_definition</a></code></li>
+<li><code><a title="pycti.entities.opencti_stix_entity.StixEntity.add_tag" href="#pycti.entities.opencti_stix_entity.StixEntity.add_tag">add_tag</a></code></li>
+<li><code><a title="pycti.entities.opencti_stix_entity.StixEntity.read" href="#pycti.entities.opencti_stix_entity.StixEntity.read">read</a></code></li>
+<li><code><a title="pycti.entities.opencti_stix_entity.StixEntity.reports" href="#pycti.entities.opencti_stix_entity.StixEntity.reports">reports</a></code></li>
+<li><code><a title="pycti.entities.opencti_stix_entity.StixEntity.update_created_by_ref" href="#pycti.entities.opencti_stix_entity.StixEntity.update_created_by_ref">update_created_by_ref</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

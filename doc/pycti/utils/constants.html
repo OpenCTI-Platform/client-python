@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>pycti.utils.constants API documentation</title>
+<meta name="description" content="These are the custom STIX properties and observation types used internally by OpenCTI." />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pycti.utils.constants</code></h1>
+</header>
+<section id="section-intro">
+<p>These are the custom STIX properties and observation types used internally by OpenCTI.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;These are the custom STIX properties and observation types used internally by OpenCTI.
+
+&#34;&#34;&#34;
+from enum import Enum
+
+
+class ObservableTypes(Enum):
+    &#34;&#34;&#34;These are the possible values for OpenCTI&#39;s observable types.
+    Use in conjuction with the STIX custom property &#39;x_opencti_observable_type&#39;.
+    ref: https://github.com/OpenCTI-Platform/opencti/blob/8854c2576dc17da9da54e54b116779bd2131617c/opencti-front/src/private/components/report/ReportAddObservable.js
+    NOTE: should this be a mapping between the stix2 SDO objects (i.e. stix2/v20/sdo.py)?
+    &#34;&#34;&#34;
+
+    AUTONOMOUS_SYSTEM = &#34;Autonomous-System&#34;
+    DOMAIN = &#34;Domain&#34;
+    EMAIL_ADDR = &#34;Email-Address&#34;
+    EMAIL_SUBJECT = &#34;Email-Subject&#34;
+    DIRECTORY = &#34;Directory&#34;
+    FILE_NAME = &#34;File-Name&#34;
+    FILE_PATH = &#34;File-Path&#34;
+    FILE_HASH_MD5 = &#34;File-MD5&#34;
+    FILE_HASH_SHA1 = &#34;File-SHA1&#34;
+    FILE_HASH_SHA256 = &#34;File-SHA256&#34;
+    IPV4_ADDR = &#34;IPv4-Addr&#34;
+    IPV6_ADDR = &#34;IPv6-Addr&#34;
+    MAC_ADDR = &#34;Mac-Addr&#34;
+    MUTEX = &#34;Mutex&#34;
+    PDB_PATH = &#34;PDB-Path&#34;
+    REGISTRY_KEY = &#34;Registry-Key&#34;
+    REGISTRY_VALUE = &#34;Registry-Key-Value&#34;
+    URL = &#34;URL&#34;
+    WIN_SERVICE_NAME = &#34;Windows-Service-Name&#34;
+    WIN_SERVICE_DISPLAY = &#34;Windows-Service-Display-Name&#34;
+    WIN_SCHEDULED_TASK = &#34;Windows-Scheduled-Task&#34;
+    X509_CERT_ISSUER = &#34;X509-Certificate-Issuer&#34;
+    X509_CERT_SN = &#34;X509-Certificate-Serial-Number&#34;
+
+    @classmethod
+    def has_value(cls, value):
+        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
+        return value in lower_attr
+
+
+class IdentityTypes(Enum):
+    SECTOR = &#34;Sector&#34;
+    REGION = &#34;Region&#34;
+    COUNTRY = &#34;Country&#34;
+    CITY = &#34;City&#34;
+    ORGANIZATION = &#34;Organization&#34;
+    USER = &#34;User&#34;
+
+    @classmethod
+    def has_value(cls, value):
+        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
+        return value in lower_attr
+
+
+class StixObservableRelationTypes(Enum):
+    LINKED = &#34;linked&#34;
+    RESOLVES = &#34;resolves&#34;
+    BELONGS = &#34;belongs&#34;
+    CONTAINS = &#34;contains&#34;
+    CORRESPONDS = &#34;corresponds&#34;
+
+    @classmethod
+    def has_value(cls, value):
+        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
+        return value in lower_attr
+
+
+class CustomProperties:
+    &#34;&#34;&#34;These are the custom properies used by OpenCTI.
+
+    &#34;&#34;&#34;
+
+    # internal id used by OpenCTI - this will be auto generated
+    ID = &#34;x_opencti_id&#34;
+
+    # List of files
+    FILES = &#34;x_opencti_files&#34;
+
+    # This should be set on all reports to one of the following values:
+    #  &#34;external&#34;
+    #  &#34;internal&#34;
+    REPORT_CLASS = &#34;x_opencti_report_class&#34;
+
+    # use with observed_data and indicators
+    INDICATOR_PATTERN = &#34;x_opencti_indicator_pattern&#34;
+    PATTERN_TYPE = &#34;x_opencti_pattern_type&#34;
+    OBSERVABLE_TYPE = &#34;x_opencti_observable_type&#34;
+    OBSERVABLE_VALUE = &#34;x_opencti_observable_value&#34;
+    CREATE_OBSERVABLES = &#34;x_opencti_observables_create&#34;
+    CREATE_INDICATOR = &#34;x_opencti_indicator_create&#34;
+
+    # custom created and modified dates
+    # use with STIX &#34;kill chain&#34; and &#34;external reference&#34; objects
+    CREATED = &#34;x_opencti_created&#34;
+    MODIFIED = &#34;x_opencti_modified&#34;
+
+    # use with attack pattern
+    EXTERNAL_ID = &#34;x_opencti_external_id&#34;
+
+    # use with vulnerability
+    BASE_SCORE = &#34;x_opencti_base_score&#34;
+    BASE_SEVERITY = &#34;x_opencti_base_severity&#34;
+    ATTACK_VECTOR = &#34;x_opencti_attack_vector&#34;
+    INTEGRITY_IMPACT = &#34;x_opencti_integrity_impact&#34;
+    AVAILABILITY_IMPACT = &#34;x_opencti_availability_impact&#34;
+
+    # use with intrusion-set, campaign, relation
+    FIRST_SEEN = &#34;x_opencti_first_seen&#34;
+    LAST_SEEN = &#34;x_opencti_last_seen&#34;
+
+    # use with marking definitions
+    COLOR = &#34;x_opencti_color&#34;
+    LEVEL = &#34;x_opencti_level&#34;  # should be an integer
+
+    # use with kill chain
+    PHASE_ORDER = &#34;x_opencti_phase_order&#34;
+
+    # use with relation
+    WEIGHT = &#34;x_opencti_weight&#34;
+    SCORE = &#34;x_opencti_score&#34;
+    ROLE_PLAYED = &#34;x_opencti_role_played&#34;
+    EXPIRATION = &#34;x_opencti_expiration&#34;
+    SOURCE_REF = &#34;x_opencti_source_ref&#34;
+    TARGET_REF = &#34;x_opencti_target_ref&#34;
+    IGNORE_DATES = &#34;x_opencti_ignore_dates&#34;
+
+    # generic property - applies to most SDOs
+    ALIASES = &#34;x_opencti_aliases&#34;
+
+    # applies to STIX Identity
+    ORG_CLASS = &#34;x_opencti_organization_class&#34;
+    IDENTITY_TYPE = (
+        &#34;x_opencti_identity_type&#34;  # this overrides the stix &#39;identity_class&#39; property!
+    )
+    TAG_TYPE = &#34;x_opencti_tags&#34;
+
+    # applies to STIX report
+    OBJECT_STATUS = &#34;x_opencti_object_status&#34;
+    SRC_CONF_LEVEL = &#34;x_opencti_source_confidence_level&#34;
+    GRAPH_DATA = &#34;x_opencti_graph_data&#34;
+
+    # applies to STIX note
+    NAME = &#34;x_opencti_name&#34;</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pycti.utils.constants.CustomProperties"><code class="flex name class">
+<span>class <span class="ident">CustomProperties</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>These are the custom properies used by OpenCTI.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CustomProperties:
+    &#34;&#34;&#34;These are the custom properies used by OpenCTI.
+
+    &#34;&#34;&#34;
+
+    # internal id used by OpenCTI - this will be auto generated
+    ID = &#34;x_opencti_id&#34;
+
+    # List of files
+    FILES = &#34;x_opencti_files&#34;
+
+    # This should be set on all reports to one of the following values:
+    #  &#34;external&#34;
+    #  &#34;internal&#34;
+    REPORT_CLASS = &#34;x_opencti_report_class&#34;
+
+    # use with observed_data and indicators
+    INDICATOR_PATTERN = &#34;x_opencti_indicator_pattern&#34;
+    PATTERN_TYPE = &#34;x_opencti_pattern_type&#34;
+    OBSERVABLE_TYPE = &#34;x_opencti_observable_type&#34;
+    OBSERVABLE_VALUE = &#34;x_opencti_observable_value&#34;
+    CREATE_OBSERVABLES = &#34;x_opencti_observables_create&#34;
+    CREATE_INDICATOR = &#34;x_opencti_indicator_create&#34;
+
+    # custom created and modified dates
+    # use with STIX &#34;kill chain&#34; and &#34;external reference&#34; objects
+    CREATED = &#34;x_opencti_created&#34;
+    MODIFIED = &#34;x_opencti_modified&#34;
+
+    # use with attack pattern
+    EXTERNAL_ID = &#34;x_opencti_external_id&#34;
+
+    # use with vulnerability
+    BASE_SCORE = &#34;x_opencti_base_score&#34;
+    BASE_SEVERITY = &#34;x_opencti_base_severity&#34;
+    ATTACK_VECTOR = &#34;x_opencti_attack_vector&#34;
+    INTEGRITY_IMPACT = &#34;x_opencti_integrity_impact&#34;
+    AVAILABILITY_IMPACT = &#34;x_opencti_availability_impact&#34;
+
+    # use with intrusion-set, campaign, relation
+    FIRST_SEEN = &#34;x_opencti_first_seen&#34;
+    LAST_SEEN = &#34;x_opencti_last_seen&#34;
+
+    # use with marking definitions
+    COLOR = &#34;x_opencti_color&#34;
+    LEVEL = &#34;x_opencti_level&#34;  # should be an integer
+
+    # use with kill chain
+    PHASE_ORDER = &#34;x_opencti_phase_order&#34;
+
+    # use with relation
+    WEIGHT = &#34;x_opencti_weight&#34;
+    SCORE = &#34;x_opencti_score&#34;
+    ROLE_PLAYED = &#34;x_opencti_role_played&#34;
+    EXPIRATION = &#34;x_opencti_expiration&#34;
+    SOURCE_REF = &#34;x_opencti_source_ref&#34;
+    TARGET_REF = &#34;x_opencti_target_ref&#34;
+    IGNORE_DATES = &#34;x_opencti_ignore_dates&#34;
+
+    # generic property - applies to most SDOs
+    ALIASES = &#34;x_opencti_aliases&#34;
+
+    # applies to STIX Identity
+    ORG_CLASS = &#34;x_opencti_organization_class&#34;
+    IDENTITY_TYPE = (
+        &#34;x_opencti_identity_type&#34;  # this overrides the stix &#39;identity_class&#39; property!
+    )
+    TAG_TYPE = &#34;x_opencti_tags&#34;
+
+    # applies to STIX report
+    OBJECT_STATUS = &#34;x_opencti_object_status&#34;
+    SRC_CONF_LEVEL = &#34;x_opencti_source_confidence_level&#34;
+    GRAPH_DATA = &#34;x_opencti_graph_data&#34;
+
+    # applies to STIX note
+    NAME = &#34;x_opencti_name&#34;</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="pycti.utils.constants.CustomProperties.ALIASES"><code class="name">var <span class="ident">ALIASES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.ATTACK_VECTOR"><code class="name">var <span class="ident">ATTACK_VECTOR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.AVAILABILITY_IMPACT"><code class="name">var <span class="ident">AVAILABILITY_IMPACT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.BASE_SCORE"><code class="name">var <span class="ident">BASE_SCORE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.BASE_SEVERITY"><code class="name">var <span class="ident">BASE_SEVERITY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.COLOR"><code class="name">var <span class="ident">COLOR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.CREATED"><code class="name">var <span class="ident">CREATED</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.CREATE_INDICATOR"><code class="name">var <span class="ident">CREATE_INDICATOR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.CREATE_OBSERVABLES"><code class="name">var <span class="ident">CREATE_OBSERVABLES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.EXPIRATION"><code class="name">var <span class="ident">EXPIRATION</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.EXTERNAL_ID"><code class="name">var <span class="ident">EXTERNAL_ID</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.FILES"><code class="name">var <span class="ident">FILES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.FIRST_SEEN"><code class="name">var <span class="ident">FIRST_SEEN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.GRAPH_DATA"><code class="name">var <span class="ident">GRAPH_DATA</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.ID"><code class="name">var <span class="ident">ID</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.IDENTITY_TYPE"><code class="name">var <span class="ident">IDENTITY_TYPE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.IGNORE_DATES"><code class="name">var <span class="ident">IGNORE_DATES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.INDICATOR_PATTERN"><code class="name">var <span class="ident">INDICATOR_PATTERN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.INTEGRITY_IMPACT"><code class="name">var <span class="ident">INTEGRITY_IMPACT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.LAST_SEEN"><code class="name">var <span class="ident">LAST_SEEN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.LEVEL"><code class="name">var <span class="ident">LEVEL</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.MODIFIED"><code class="name">var <span class="ident">MODIFIED</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.NAME"><code class="name">var <span class="ident">NAME</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.OBJECT_STATUS"><code class="name">var <span class="ident">OBJECT_STATUS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.OBSERVABLE_TYPE"><code class="name">var <span class="ident">OBSERVABLE_TYPE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.OBSERVABLE_VALUE"><code class="name">var <span class="ident">OBSERVABLE_VALUE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.ORG_CLASS"><code class="name">var <span class="ident">ORG_CLASS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.PATTERN_TYPE"><code class="name">var <span class="ident">PATTERN_TYPE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.PHASE_ORDER"><code class="name">var <span class="ident">PHASE_ORDER</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.REPORT_CLASS"><code class="name">var <span class="ident">REPORT_CLASS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.ROLE_PLAYED"><code class="name">var <span class="ident">ROLE_PLAYED</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.SCORE"><code class="name">var <span class="ident">SCORE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.SOURCE_REF"><code class="name">var <span class="ident">SOURCE_REF</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.SRC_CONF_LEVEL"><code class="name">var <span class="ident">SRC_CONF_LEVEL</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.TAG_TYPE"><code class="name">var <span class="ident">TAG_TYPE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.TARGET_REF"><code class="name">var <span class="ident">TARGET_REF</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.CustomProperties.WEIGHT"><code class="name">var <span class="ident">WEIGHT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="pycti.utils.constants.IdentityTypes"><code class="flex name class">
+<span>class <span class="ident">IdentityTypes</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IdentityTypes(Enum):
+    SECTOR = &#34;Sector&#34;
+    REGION = &#34;Region&#34;
+    COUNTRY = &#34;Country&#34;
+    CITY = &#34;City&#34;
+    ORGANIZATION = &#34;Organization&#34;
+    USER = &#34;User&#34;
+
+    @classmethod
+    def has_value(cls, value):
+        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
+        return value in lower_attr</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="pycti.utils.constants.IdentityTypes.CITY"><code class="name">var <span class="ident">CITY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.IdentityTypes.COUNTRY"><code class="name">var <span class="ident">COUNTRY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.IdentityTypes.ORGANIZATION"><code class="name">var <span class="ident">ORGANIZATION</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.IdentityTypes.REGION"><code class="name">var <span class="ident">REGION</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.IdentityTypes.SECTOR"><code class="name">var <span class="ident">SECTOR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.IdentityTypes.USER"><code class="name">var <span class="ident">USER</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes"><code class="flex name class">
+<span>class <span class="ident">ObservableTypes</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>These are the possible values for OpenCTI's observable types.
+Use in conjuction with the STIX custom property 'x_opencti_observable_type'.
+ref: <a href="https://github.com/OpenCTI-Platform/opencti/blob/8854c2576dc17da9da54e54b116779bd2131617c/opencti-front/src/private/components/report/ReportAddObservable.js">https://github.com/OpenCTI-Platform/opencti/blob/8854c2576dc17da9da54e54b116779bd2131617c/opencti-front/src/private/components/report/ReportAddObservable.js</a>
+NOTE: should this be a mapping between the stix2 SDO objects (i.e. stix2/v20/sdo.py)?</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ObservableTypes(Enum):
+    &#34;&#34;&#34;These are the possible values for OpenCTI&#39;s observable types.
+    Use in conjuction with the STIX custom property &#39;x_opencti_observable_type&#39;.
+    ref: https://github.com/OpenCTI-Platform/opencti/blob/8854c2576dc17da9da54e54b116779bd2131617c/opencti-front/src/private/components/report/ReportAddObservable.js
+    NOTE: should this be a mapping between the stix2 SDO objects (i.e. stix2/v20/sdo.py)?
+    &#34;&#34;&#34;
+
+    AUTONOMOUS_SYSTEM = &#34;Autonomous-System&#34;
+    DOMAIN = &#34;Domain&#34;
+    EMAIL_ADDR = &#34;Email-Address&#34;
+    EMAIL_SUBJECT = &#34;Email-Subject&#34;
+    DIRECTORY = &#34;Directory&#34;
+    FILE_NAME = &#34;File-Name&#34;
+    FILE_PATH = &#34;File-Path&#34;
+    FILE_HASH_MD5 = &#34;File-MD5&#34;
+    FILE_HASH_SHA1 = &#34;File-SHA1&#34;
+    FILE_HASH_SHA256 = &#34;File-SHA256&#34;
+    IPV4_ADDR = &#34;IPv4-Addr&#34;
+    IPV6_ADDR = &#34;IPv6-Addr&#34;
+    MAC_ADDR = &#34;Mac-Addr&#34;
+    MUTEX = &#34;Mutex&#34;
+    PDB_PATH = &#34;PDB-Path&#34;
+    REGISTRY_KEY = &#34;Registry-Key&#34;
+    REGISTRY_VALUE = &#34;Registry-Key-Value&#34;
+    URL = &#34;URL&#34;
+    WIN_SERVICE_NAME = &#34;Windows-Service-Name&#34;
+    WIN_SERVICE_DISPLAY = &#34;Windows-Service-Display-Name&#34;
+    WIN_SCHEDULED_TASK = &#34;Windows-Scheduled-Task&#34;
+    X509_CERT_ISSUER = &#34;X509-Certificate-Issuer&#34;
+    X509_CERT_SN = &#34;X509-Certificate-Serial-Number&#34;
+
+    @classmethod
+    def has_value(cls, value):
+        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
+        return value in lower_attr</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="pycti.utils.constants.ObservableTypes.AUTONOMOUS_SYSTEM"><code class="name">var <span class="ident">AUTONOMOUS_SYSTEM</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.DIRECTORY"><code class="name">var <span class="ident">DIRECTORY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.DOMAIN"><code class="name">var <span class="ident">DOMAIN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.EMAIL_ADDR"><code class="name">var <span class="ident">EMAIL_ADDR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.EMAIL_SUBJECT"><code class="name">var <span class="ident">EMAIL_SUBJECT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.FILE_HASH_MD5"><code class="name">var <span class="ident">FILE_HASH_MD5</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.FILE_HASH_SHA1"><code class="name">var <span class="ident">FILE_HASH_SHA1</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.FILE_HASH_SHA256"><code class="name">var <span class="ident">FILE_HASH_SHA256</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.FILE_NAME"><code class="name">var <span class="ident">FILE_NAME</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.FILE_PATH"><code class="name">var <span class="ident">FILE_PATH</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.IPV4_ADDR"><code class="name">var <span class="ident">IPV4_ADDR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.IPV6_ADDR"><code class="name">var <span class="ident">IPV6_ADDR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.MAC_ADDR"><code class="name">var <span class="ident">MAC_ADDR</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.MUTEX"><code class="name">var <span class="ident">MUTEX</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.PDB_PATH"><code class="name">var <span class="ident">PDB_PATH</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.REGISTRY_KEY"><code class="name">var <span class="ident">REGISTRY_KEY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.REGISTRY_VALUE"><code class="name">var <span class="ident">REGISTRY_VALUE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.URL"><code class="name">var <span class="ident">URL</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.WIN_SCHEDULED_TASK"><code class="name">var <span class="ident">WIN_SCHEDULED_TASK</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.WIN_SERVICE_DISPLAY"><code class="name">var <span class="ident">WIN_SERVICE_DISPLAY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.WIN_SERVICE_NAME"><code class="name">var <span class="ident">WIN_SERVICE_NAME</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.X509_CERT_ISSUER"><code class="name">var <span class="ident">X509_CERT_ISSUER</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.ObservableTypes.X509_CERT_SN"><code class="name">var <span class="ident">X509_CERT_SN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="pycti.utils.constants.StixObservableRelationTypes"><code class="flex name class">
+<span>class <span class="ident">StixObservableRelationTypes</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class StixObservableRelationTypes(Enum):
+    LINKED = &#34;linked&#34;
+    RESOLVES = &#34;resolves&#34;
+    BELONGS = &#34;belongs&#34;
+    CONTAINS = &#34;contains&#34;
+    CORRESPONDS = &#34;corresponds&#34;
+
+    @classmethod
+    def has_value(cls, value):
+        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
+        return value in lower_attr</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="pycti.utils.constants.StixObservableRelationTypes.BELONGS"><code class="name">var <span class="ident">BELONGS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.StixObservableRelationTypes.CONTAINS"><code class="name">var <span class="ident">CONTAINS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.StixObservableRelationTypes.CORRESPONDS"><code class="name">var <span class="ident">CORRESPONDS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.StixObservableRelationTypes.LINKED"><code class="name">var <span class="ident">LINKED</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="pycti.utils.constants.StixObservableRelationTypes.RESOLVES"><code class="name">var <span class="ident">RESOLVES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pycti.utils" href="index.html">pycti.utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pycti.utils.constants.CustomProperties" href="#pycti.utils.constants.CustomProperties">CustomProperties</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pycti.utils.constants.CustomProperties.ALIASES" href="#pycti.utils.constants.CustomProperties.ALIASES">ALIASES</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.ATTACK_VECTOR" href="#pycti.utils.constants.CustomProperties.ATTACK_VECTOR">ATTACK_VECTOR</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.AVAILABILITY_IMPACT" href="#pycti.utils.constants.CustomProperties.AVAILABILITY_IMPACT">AVAILABILITY_IMPACT</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.BASE_SCORE" href="#pycti.utils.constants.CustomProperties.BASE_SCORE">BASE_SCORE</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.BASE_SEVERITY" href="#pycti.utils.constants.CustomProperties.BASE_SEVERITY">BASE_SEVERITY</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.COLOR" href="#pycti.utils.constants.CustomProperties.COLOR">COLOR</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.CREATED" href="#pycti.utils.constants.CustomProperties.CREATED">CREATED</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.CREATE_INDICATOR" href="#pycti.utils.constants.CustomProperties.CREATE_INDICATOR">CREATE_INDICATOR</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.CREATE_OBSERVABLES" href="#pycti.utils.constants.CustomProperties.CREATE_OBSERVABLES">CREATE_OBSERVABLES</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.EXPIRATION" href="#pycti.utils.constants.CustomProperties.EXPIRATION">EXPIRATION</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.EXTERNAL_ID" href="#pycti.utils.constants.CustomProperties.EXTERNAL_ID">EXTERNAL_ID</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.FILES" href="#pycti.utils.constants.CustomProperties.FILES">FILES</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.FIRST_SEEN" href="#pycti.utils.constants.CustomProperties.FIRST_SEEN">FIRST_SEEN</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.GRAPH_DATA" href="#pycti.utils.constants.CustomProperties.GRAPH_DATA">GRAPH_DATA</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.ID" href="#pycti.utils.constants.CustomProperties.ID">ID</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.IDENTITY_TYPE" href="#pycti.utils.constants.CustomProperties.IDENTITY_TYPE">IDENTITY_TYPE</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.IGNORE_DATES" href="#pycti.utils.constants.CustomProperties.IGNORE_DATES">IGNORE_DATES</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.INDICATOR_PATTERN" href="#pycti.utils.constants.CustomProperties.INDICATOR_PATTERN">INDICATOR_PATTERN</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.INTEGRITY_IMPACT" href="#pycti.utils.constants.CustomProperties.INTEGRITY_IMPACT">INTEGRITY_IMPACT</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.LAST_SEEN" href="#pycti.utils.constants.CustomProperties.LAST_SEEN">LAST_SEEN</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.LEVEL" href="#pycti.utils.constants.CustomProperties.LEVEL">LEVEL</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.MODIFIED" href="#pycti.utils.constants.CustomProperties.MODIFIED">MODIFIED</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.NAME" href="#pycti.utils.constants.CustomProperties.NAME">NAME</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.OBJECT_STATUS" href="#pycti.utils.constants.CustomProperties.OBJECT_STATUS">OBJECT_STATUS</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.OBSERVABLE_TYPE" href="#pycti.utils.constants.CustomProperties.OBSERVABLE_TYPE">OBSERVABLE_TYPE</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.OBSERVABLE_VALUE" href="#pycti.utils.constants.CustomProperties.OBSERVABLE_VALUE">OBSERVABLE_VALUE</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.ORG_CLASS" href="#pycti.utils.constants.CustomProperties.ORG_CLASS">ORG_CLASS</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.PATTERN_TYPE" href="#pycti.utils.constants.CustomProperties.PATTERN_TYPE">PATTERN_TYPE</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.PHASE_ORDER" href="#pycti.utils.constants.CustomProperties.PHASE_ORDER">PHASE_ORDER</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.REPORT_CLASS" href="#pycti.utils.constants.CustomProperties.REPORT_CLASS">REPORT_CLASS</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.ROLE_PLAYED" href="#pycti.utils.constants.CustomProperties.ROLE_PLAYED">ROLE_PLAYED</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.SCORE" href="#pycti.utils.constants.CustomProperties.SCORE">SCORE</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.SOURCE_REF" href="#pycti.utils.constants.CustomProperties.SOURCE_REF">SOURCE_REF</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.SRC_CONF_LEVEL" href="#pycti.utils.constants.CustomProperties.SRC_CONF_LEVEL">SRC_CONF_LEVEL</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.TAG_TYPE" href="#pycti.utils.constants.CustomProperties.TAG_TYPE">TAG_TYPE</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.TARGET_REF" href="#pycti.utils.constants.CustomProperties.TARGET_REF">TARGET_REF</a></code></li>
+<li><code><a title="pycti.utils.constants.CustomProperties.WEIGHT" href="#pycti.utils.constants.CustomProperties.WEIGHT">WEIGHT</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pycti.utils.constants.IdentityTypes" href="#pycti.utils.constants.IdentityTypes">IdentityTypes</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pycti.utils.constants.IdentityTypes.CITY" href="#pycti.utils.constants.IdentityTypes.CITY">CITY</a></code></li>
+<li><code><a title="pycti.utils.constants.IdentityTypes.COUNTRY" href="#pycti.utils.constants.IdentityTypes.COUNTRY">COUNTRY</a></code></li>
+<li><code><a title="pycti.utils.constants.IdentityTypes.ORGANIZATION" href="#pycti.utils.constants.IdentityTypes.ORGANIZATION">ORGANIZATION</a></code></li>
+<li><code><a title="pycti.utils.constants.IdentityTypes.REGION" href="#pycti.utils.constants.IdentityTypes.REGION">REGION</a></code></li>
+<li><code><a title="pycti.utils.constants.IdentityTypes.SECTOR" href="#pycti.utils.constants.IdentityTypes.SECTOR">SECTOR</a></code></li>
+<li><code><a title="pycti.utils.constants.IdentityTypes.USER" href="#pycti.utils.constants.IdentityTypes.USER">USER</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pycti.utils.constants.ObservableTypes" href="#pycti.utils.constants.ObservableTypes">ObservableTypes</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pycti.utils.constants.ObservableTypes.AUTONOMOUS_SYSTEM" href="#pycti.utils.constants.ObservableTypes.AUTONOMOUS_SYSTEM">AUTONOMOUS_SYSTEM</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.DIRECTORY" href="#pycti.utils.constants.ObservableTypes.DIRECTORY">DIRECTORY</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.DOMAIN" href="#pycti.utils.constants.ObservableTypes.DOMAIN">DOMAIN</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.EMAIL_ADDR" href="#pycti.utils.constants.ObservableTypes.EMAIL_ADDR">EMAIL_ADDR</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.EMAIL_SUBJECT" href="#pycti.utils.constants.ObservableTypes.EMAIL_SUBJECT">EMAIL_SUBJECT</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.FILE_HASH_MD5" href="#pycti.utils.constants.ObservableTypes.FILE_HASH_MD5">FILE_HASH_MD5</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.FILE_HASH_SHA1" href="#pycti.utils.constants.ObservableTypes.FILE_HASH_SHA1">FILE_HASH_SHA1</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.FILE_HASH_SHA256" href="#pycti.utils.constants.ObservableTypes.FILE_HASH_SHA256">FILE_HASH_SHA256</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.FILE_NAME" href="#pycti.utils.constants.ObservableTypes.FILE_NAME">FILE_NAME</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.FILE_PATH" href="#pycti.utils.constants.ObservableTypes.FILE_PATH">FILE_PATH</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.IPV4_ADDR" href="#pycti.utils.constants.ObservableTypes.IPV4_ADDR">IPV4_ADDR</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.IPV6_ADDR" href="#pycti.utils.constants.ObservableTypes.IPV6_ADDR">IPV6_ADDR</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.MAC_ADDR" href="#pycti.utils.constants.ObservableTypes.MAC_ADDR">MAC_ADDR</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.MUTEX" href="#pycti.utils.constants.ObservableTypes.MUTEX">MUTEX</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.PDB_PATH" href="#pycti.utils.constants.ObservableTypes.PDB_PATH">PDB_PATH</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.REGISTRY_KEY" href="#pycti.utils.constants.ObservableTypes.REGISTRY_KEY">REGISTRY_KEY</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.REGISTRY_VALUE" href="#pycti.utils.constants.ObservableTypes.REGISTRY_VALUE">REGISTRY_VALUE</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.URL" href="#pycti.utils.constants.ObservableTypes.URL">URL</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.WIN_SCHEDULED_TASK" href="#pycti.utils.constants.ObservableTypes.WIN_SCHEDULED_TASK">WIN_SCHEDULED_TASK</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.WIN_SERVICE_DISPLAY" href="#pycti.utils.constants.ObservableTypes.WIN_SERVICE_DISPLAY">WIN_SERVICE_DISPLAY</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.WIN_SERVICE_NAME" href="#pycti.utils.constants.ObservableTypes.WIN_SERVICE_NAME">WIN_SERVICE_NAME</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.X509_CERT_ISSUER" href="#pycti.utils.constants.ObservableTypes.X509_CERT_ISSUER">X509_CERT_ISSUER</a></code></li>
+<li><code><a title="pycti.utils.constants.ObservableTypes.X509_CERT_SN" href="#pycti.utils.constants.ObservableTypes.X509_CERT_SN">X509_CERT_SN</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pycti.utils.constants.StixObservableRelationTypes" href="#pycti.utils.constants.StixObservableRelationTypes">StixObservableRelationTypes</a></code></h4>
+<ul class="">
+<li><code><a title="pycti.utils.constants.StixObservableRelationTypes.BELONGS" href="#pycti.utils.constants.StixObservableRelationTypes.BELONGS">BELONGS</a></code></li>
+<li><code><a title="pycti.utils.constants.StixObservableRelationTypes.CONTAINS" href="#pycti.utils.constants.StixObservableRelationTypes.CONTAINS">CONTAINS</a></code></li>
+<li><code><a title="pycti.utils.constants.StixObservableRelationTypes.CORRESPONDS" href="#pycti.utils.constants.StixObservableRelationTypes.CORRESPONDS">CORRESPONDS</a></code></li>
+<li><code><a title="pycti.utils.constants.StixObservableRelationTypes.LINKED" href="#pycti.utils.constants.StixObservableRelationTypes.LINKED">LINKED</a></code></li>
+<li><code><a title="pycti.utils.constants.StixObservableRelationTypes.RESOLVES" href="#pycti.utils.constants.StixObservableRelationTypes.RESOLVES">RESOLVES</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

@@ -22,6 +22,8 @@ class VerifyVersionCommand(install):
             )
             sys.exit(info)
 
+class GenerateApiDoc():
+
 
 setup(
     name="pycti",
@@ -62,5 +64,5 @@ setup(
         "python-magic-bin==0.4.14;sys.platform=='win32'",
     ],
     cmdclass={"verify": VerifyVersionCommand},
-    extras_require={"dev": ["black", "wheel"]},  # Optional
+    extras_require={"dev": ["black", "wheel", "pdoc3"]},  # Optional
 )
