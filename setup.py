@@ -22,8 +22,6 @@ class VerifyVersionCommand(install):
             )
             sys.exit(info)
 
-class GenerateApiDoc():
-
 
 setup(
     name="pycti",
