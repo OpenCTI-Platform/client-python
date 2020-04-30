@@ -351,6 +351,7 @@ class Indicator:
                     entity_type
                     name
                     description
+                    score
                     ... on Indicator {
                         observableRefs {
                             edges {
