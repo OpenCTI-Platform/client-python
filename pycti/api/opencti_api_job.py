@@ -2,6 +2,9 @@ import logging
 
 
 class OpenCTIApiJob:
+    """OpenCTIApiJob
+    """
+
     def __init__(self, api):
         self.api = api
 
