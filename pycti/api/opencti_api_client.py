@@ -241,7 +241,7 @@ class OpenCTIApiClient:
                 verify=self.ssl_verify,
             )
         # Build response
-        if r.status_code == requests.codes.ok:
+        if r.status_code == 200:
             result = r.json()
             if "errors" in result:
                 logging.error(result["errors"][0]["message"])
@@ -301,7 +301,7 @@ class OpenCTIApiClient:
     def get_logs_worker_config(self):
         """get the logsWorkerConfig
 
-        returns: the logsWorkerConfig
+        return: the logsWorkerConfig
         rtype: dict
         """
 
