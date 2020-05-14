@@ -29,7 +29,7 @@ master_doc = "index"
 
 autoapi_modules = {"pycti": {"prune": True}}
 
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # -- General configuration ---------------------------------------------------
 
