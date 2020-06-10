@@ -80,9 +80,9 @@ class StixSplitter:
 
         bundles = []
         for entity in self.entities:
-            bundles.append(self.stix2_create_bundle(entity))
+            bundles.append(self.stix2_create_bundle([entity]))
         for relationship in self.relationships:
-            bundles.append(self.stix2_create_bundle(relationship))
+            bundles.append(self.stix2_create_bundle([relationship]))
         return bundles
 
     # @deprecated
@@ -195,7 +195,7 @@ class StixSplitter:
             "spec_version": "2.0",
             "objects": items,
         }
-        return bundle
+        return json.dumps(bundle)
 
     def stix2_get_relationship_objects(self, relationship) -> list:
         """get a list of relations for a stix2 relationship object

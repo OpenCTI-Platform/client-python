@@ -15,7 +15,7 @@ from utils.splix_splitter import StixSplitter
 
 
 def get_config_variable(
-    env_var: str, yaml_path: List, config: Dict = {}, isNumber: Optional[bool] = False
+    env_var: str, yaml_path: list, config: Dict = {}, isNumber: Optional[bool] = False
 ) -> Union[bool, int, None, str]:
     """[summary]
 
@@ -366,7 +366,12 @@ class OpenCTIConnectorHelper:
         try:
             routing_key = "push_routing_" + self.connector_id
             channel.basic_publish(
-                self.config["push_exchange"], routing_key, json.dumps(message)
+                exchange=self.config["push_exchange"],
+                routing_key=routing_key,
+                body=json.dumps(message),
+                properties=pika.BasicProperties(
+                    delivery_mode=2,  # make message persistent
+                ),
             )
             logging.info("Bundle has been sent")
         except (UnroutableError, NackError) as e:
@@ -382,7 +387,7 @@ class OpenCTIConnectorHelper:
         :param max_tlp: the highest allowed TLP level
         :type max_tlp: str
         :return: list of allowed TLP levels
-        :rtype: list
+        :rtype: bool
         """
 
         allowed_tlps = ["TLP:WHITE"]

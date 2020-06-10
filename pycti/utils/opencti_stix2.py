@@ -270,9 +270,13 @@ class OpenCTIStix2:
         kill_chain_phases_ids = []
         if "kill_chain_phases" in stix_object:
             for kill_chain_phase in stix_object["kill_chain_phases"]:
-                if kill_chain_phase["phase_name"] in self.mapping_cache:
+                if (
+                    kill_chain_phase["kill_chain_name"] + kill_chain_phase["phase_name"]
+                    in self.mapping_cache
+                ):
                     kill_chain_phase = self.mapping_cache[
-                        kill_chain_phase["phase_name"]
+                        kill_chain_phase["kill_chain_name"]
+                        + kill_chain_phase["phase_name"]
                     ]
                 else:
                     kill_chain_phase = self.opencti.kill_chain_phase.create(
@@ -294,7 +298,10 @@ class OpenCTIStix2:
                         if CustomProperties.MODIFIED in kill_chain_phase
                         else None,
                     )
-                    self.mapping_cache[kill_chain_phase["phase_name"]] = {
+                    self.mapping_cache[
+                        kill_chain_phase["kill_chain_name"]
+                        + kill_chain_phase["phase_name"]
+                    ] = {
                         "id": kill_chain_phase["id"],
                         "type": kill_chain_phase["entity_type"],
                     }
@@ -1270,6 +1277,7 @@ class OpenCTIStix2:
         order_by=None,
         order_mode=None,
         max_marking_definition=None,
+        types=None,
     ):
         max_marking_definition_entity = (
             self.opencti.marking_definition.read(id=max_marking_definition)
@@ -1305,6 +1313,7 @@ class OpenCTIStix2:
             "note": self.opencti.note.list,
             "opinion": self.opencti.opinion.list,
             "indicator": self.opencti.indicator.list,
+            "stix-observable": self.opencti.stix_observable.list,
         }
         do_list = lister.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1314,6 +1323,7 @@ class OpenCTIStix2:
             filters=filters,
             orderBy=order_by,
             orderMode=order_mode,
+            types=types,
             getAll=True,
         )
 
@@ -1334,6 +1344,7 @@ class OpenCTIStix2:
                 "note": self.opencti.note.to_stix2,
                 "opinion": self.opencti.opinion.to_stix2,
                 "indicator": self.opencti.indicator.to_stix2,
+                "stix-observable": self.opencti.stix_observable.to_stix2,
             }
             do_export = exporter.get(
                 entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1703,45 +1714,9 @@ class OpenCTIStix2:
             else None,
         )
 
-    # TODO move in Identity
     def create_identity(self, stix_object, extras, update=False):
-        if CustomProperties.IDENTITY_TYPE in stix_object:
-            type = stix_object[CustomProperties.IDENTITY_TYPE].capitalize()
-        else:
-            if stix_object["identity_class"] == "individual":
-                type = "User"
-            elif stix_object["identity_class"] == "organization":
-                type = "Organization"
-            elif stix_object["identity_class"] == "group":
-                type = "Organization"
-            elif stix_object["identity_class"] == "class":
-                type = "Sector"
-            else:
-                return None
-        return self.opencti.identity.create(
-            type=type,
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            alias=self.pick_aliases(stix_object),
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
-            markingDefinitions=extras["marking_definitions_ids"]
-            if "marking_definitions_ids" in extras
-            else [],
-            tags=extras["tags_ids"] if "tags_ids" in extras else [],
-            organization_class=stix_object[CustomProperties.ORG_CLASS]
-            if CustomProperties.ORG_CLASS in stix_object
-            else None,
-            update=update,
+        return self.opencti.identity.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
     # TODO move in ThreatActor
@@ -1822,7 +1797,7 @@ class OpenCTIStix2:
             else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
-            else [],
+            else None,
             tags=extras["tags_ids"] if "tags_ids" in extras else [],
             update=update,
         )
@@ -1853,7 +1828,7 @@ class OpenCTIStix2:
             else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
-            else [],
+            else None,
             tags=extras["tags_ids"] if "tags_ids" in extras else [],
             uodate=update,
         )
@@ -1882,7 +1857,7 @@ class OpenCTIStix2:
             else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
-            else [],
+            else None,
             tags=extras["tags_ids"] if "tags_ids" in extras else [],
             update=update,
         )
@@ -1907,39 +1882,17 @@ class OpenCTIStix2:
             else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
-            else [],
+            else None,
             killChainPhases=extras["kill_chain_phases_ids"]
             if "kill_chain_phases_ids" in extras
-            else [],
+            else None,
             tags=extras["tags_ids"] if "tags_ids" in extras else [],
             update=update,
         )
 
-    # TODO move in Tool
     def create_tool(self, stix_object, extras, update=False):
-        return self.opencti.tool.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            alias=self.pick_aliases(stix_object),
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
-            markingDefinitions=extras["marking_definitions_ids"]
-            if "marking_definitions_ids" in extras
-            else [],
-            killChainPhases=extras["kill_chain_phases_ids"]
-            if "kill_chain_phases_ids" in extras
-            else [],
-            tags=extras["tags_ids"] if "tags_ids" in extras else [],
-            update=update,
+        return self.opencti.tool.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
     # TODO move in Vulnerability
@@ -1976,7 +1929,7 @@ class OpenCTIStix2:
             else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
-            else [],
+            else None,
             tags=extras["tags_ids"] if "tags_ids" in extras else [],
             update=update,
         )
@@ -2005,7 +1958,7 @@ class OpenCTIStix2:
             else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
-            else [],
+            else None,
             tags=extras["tags_ids"] if "tags_ids" in extras else [],
             update=update,
         )

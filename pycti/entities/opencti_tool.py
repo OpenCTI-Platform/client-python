@@ -298,7 +298,7 @@ class Tool:
                     object_result["name"] = name
                 # description
                 if (
-                    description is not None
+                    self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
                     self.opencti.stix_domain_entity.update_field(
@@ -306,7 +306,7 @@ class Tool:
                     )
                     object_result["description"] = description
                 # alias
-                if alias is not None and object_result["alias"] != alias:
+                if self.opencti.not_empty(alias) and object_result["alias"] != alias:
                     if "alias" in object_result:
                         new_aliases = object_result["alias"] + list(
                             set(alias) - set(object_result["alias"])
@@ -331,6 +331,47 @@ class Tool:
                 markingDefinitions=marking_definitions,
                 tags=tags,
             )
+
+    """
+        Import an Tool object from a STIX2 object
+
+        :param stixObject: the Stix-Object Tool
+        :return Tool object
+    """
+
+    def import_from_stix2(self, **kwargs):
+        stix_object = kwargs.get("stixObject", None)
+        extras = kwargs.get("extras", {})
+        update = kwargs.get("update", False)
+        if stix_object is not None:
+            return self.opencti.tool.create(
+                name=stix_object["name"],
+                description=self.opencti.stix2.convert_markdown(
+                    stix_object["description"]
+                )
+                if "description" in stix_object
+                else "",
+                alias=self.opencti.stix2.pick_aliases(stix_object),
+                id=stix_object[CustomProperties.ID]
+                if CustomProperties.ID in stix_object
+                else None,
+                stix_id_key=stix_object["id"] if "id" in stix_object else None,
+                created=stix_object["created"] if "created" in stix_object else None,
+                modified=stix_object["modified"] if "modified" in stix_object else None,
+                createdByRef=extras["created_by_ref_id"]
+                if "created_by_ref_id" in extras
+                else None,
+                markingDefinitions=extras["marking_definitions_ids"]
+                if "marking_definitions_ids" in extras
+                else None,
+                killChainPhases=extras["kill_chain_phases_ids"]
+                if "kill_chain_phases_ids" in extras
+                else None,
+                tags=extras["tags_ids"] if "tags_ids" in extras else [],
+                update=update,
+            )
+        else:
+            self.opencti.log("error", "[opencti_tool] Missing parameters: stixObject")
 
     """
         Export an Tool object in STIX2
