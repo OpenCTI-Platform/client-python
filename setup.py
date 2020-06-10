@@ -63,7 +63,7 @@ setup(
     ],
     cmdclass={"verify": VerifyVersionCommand},
     extras_require={
-        "dev": ["black", "wheel",],
+        "dev": ["black", "wheel", "pytest", "pytest-cov"],
         "doc": ["autoapi", "sphinx_rtd_theme", "sphinx-autodoc-typehints"],
     },  # Optional
 )
