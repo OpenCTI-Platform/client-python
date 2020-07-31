@@ -258,7 +258,7 @@ class Report:
         :return Boolean
     """
 
-    def contains_stix_entity(self, **kwargs):
+    def contains_opencti_stix_object_or_stix_relationship(self, **kwargs):
         id = kwargs.get("id", None)
         entity_id = kwargs.get("entity_id", None)
         if id is not None and entity_id is not None:
@@ -305,14 +305,14 @@ class Report:
                 + "}",
             )
             query = """
-                query ReportContainsStixObservable($id: String!, $objectId: String!) {
-                    reportContainsStixObservable(id: $id, objectId: $objectId)
+                query ReportContainsStixCyberObservable($id: String!, $objectId: String!) {
+                    reportContainsStixCyberObservable(id: $id, objectId: $objectId)
                 }
             """
             result = self.opencti.query(
                 query, {"id": id, "objectId": stix_observable_id}
             )
-            return result["data"]["reportContainsStixObservable"]
+            return result["data"]["reportContainsStixCyberObservable"]
         else:
             self.opencti.log(
                 "error",
@@ -477,7 +477,7 @@ class Report:
                     )
                     object_result["description"] = description
             if external_reference_id is not None:
-                self.opencti.stix_entity.add_external_reference(
+                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
                     id=object_result["id"], external_reference_id=external_reference_id,
                 )
             return object_result
@@ -499,7 +499,7 @@ class Report:
                 objectLabel=object_label,
             )
             if external_reference_id is not None:
-                self.opencti.stix_entity.add_external_reference(
+                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
                     id=report["id"], external_reference_id=external_reference_id,
                 )
             return report
@@ -512,11 +512,13 @@ class Report:
         :return Boolean
     """
 
-    def add_stix_entity(self, **kwargs):
+    def add_opencti_stix_object_or_stix_relationship(self, **kwargs):
         id = kwargs.get("id", None)
         entity_id = kwargs.get("entity_id", None)
         if id is not None and entity_id is not None:
-            if self.contains_stix_entity(id=id, entity_id=entity_id):
+            if self.contains_opencti_stix_object_or_stix_relationship(
+                id=id, entity_id=entity_id
+            ):
                 return True
             self.opencti.log(
                 "info", "Adding Stix-Entity {" + entity_id + "} to Report {" + id + "}",
@@ -645,10 +647,10 @@ class Report:
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
                 else None,
-                markingDefinitions=extras["marking_definitions_ids"]
-                if "marking_definitions_ids" in extras
+                markingDefinitions=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
                 else None,
-                tags=extras["tags_ids"] if "tags_ids" in extras else [],
+                tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
                 update=update,
             )
         else:

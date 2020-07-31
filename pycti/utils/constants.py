@@ -62,7 +62,7 @@ class IdentityTypes(Enum):
         return value in lower_attr
 
 
-class StixObservableRelationTypes(Enum):
+class StixCyberObservableRelationTypes(Enum):
     LINKED = "linked"
     RESOLVES = "resolves"
     BELONGS = "belongs"

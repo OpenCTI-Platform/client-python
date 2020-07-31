@@ -230,6 +230,14 @@ class MarkingDefinition:
                 definition = (
                     definition_type + ":" + stix_object["definition"]["tlp"].upper()
                 )
+
+            # TODO: Compatibility with 3.X to be REMOVED
+            stix_object["x_opencti_order"] = (
+                stix_object["x_opencti_level"]
+                if "x_opencti_level" in stix_object
+                else 0
+            )
+
             return self.opencti.marking_definition.create(
                 stix_id=stix_object["id"],
                 created=stix_object["created"] if "created" in stix_object else None,

@@ -259,7 +259,7 @@ class Opinion:
         :return Boolean
     """
 
-    def contains_stix_entity(self, **kwargs):
+    def contains_opencti_stix_object_or_stix_relationship(self, **kwargs):
         id = kwargs.get("id", None)
         entity_id = kwargs.get("entity_id", None)
         if id is not None and entity_id is not None:
@@ -306,14 +306,14 @@ class Opinion:
                 + "}",
             )
             query = """
-                query OpinionContainsStixObservable($id: String!, $objectId: String!) {
-                    opinionContainsStixObservable(id: $id, objectId: $objectId)
+                query OpinionContainsStixCyberObservable($id: String!, $objectId: String!) {
+                    opinionContainsStixCyberObservable(id: $id, objectId: $objectId)
                 }
             """
             result = self.opencti.query(
                 query, {"id": id, "objectId": stix_observable_id}
             )
-            return result["data"]["opinionContainsStixObservable"]
+            return result["data"]["opinionContainsStixCyberObservable"]
         else:
             self.opencti.log(
                 "error",
@@ -473,7 +473,7 @@ class Opinion:
                     )
                     object_result["explanation"] = explanation
             if external_reference_id is not None:
-                self.opencti.stix_entity.add_external_reference(
+                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
                     id=object_result["id"], external_reference_id=external_reference_id,
                 )
             return object_result
@@ -491,7 +491,7 @@ class Opinion:
                 objectMarking=object_marking,
             )
             if external_reference_id is not None:
-                self.opencti.stix_entity.add_external_reference(
+                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
                     id=opinion["id"], external_reference_id=external_reference_id,
                 )
             return opinion
@@ -504,11 +504,13 @@ class Opinion:
         :return Boolean
     """
 
-    def add_stix_entity(self, **kwargs):
+    def add_opencti_stix_object_or_stix_relationship(self, **kwargs):
         id = kwargs.get("id", None)
         entity_id = kwargs.get("entity_id", None)
         if id is not None and entity_id is not None:
-            if self.contains_stix_entity(id=id, entity_id=entity_id):
+            if self.contains_opencti_stix_object_or_stix_relationship(
+                id=id, entity_id=entity_id
+            ):
                 return True
             self.opencti.log(
                 "info",
@@ -631,8 +633,8 @@ class Opinion:
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
                 else None,
-                markingDefinitions=extras["marking_definitions_ids"]
-                if "marking_definitions_ids" in extras
+                markingDefinitions=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
                 else [],
                 update=update,
             )

@@ -5,7 +5,7 @@ from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
-class StixObservable:
+class StixCyberObservable:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -108,14 +108,14 @@ class StixObservable:
         """
 
     """
-        List StixObservable objects
+        List StixCyberObservable objects
 
         :param types: the array of types
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row
-        :return List of StixObservable objects
+        :return List of StixCyberObservable objects
     """
 
     def list(self, **kwargs):
@@ -133,12 +133,13 @@ class StixObservable:
             first = 500
 
         self.opencti.log(
-            "info", "Listing StixObservables with filters " + json.dumps(filters) + "."
+            "info",
+            "Listing StixCyberObservables with filters " + json.dumps(filters) + ".",
         )
         query = (
             """
-            query StixObservables($types: [String], $filters: [StixObservablesFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixObservablesOrdering, $orderMode: OrderingMode) {
-                stixObservables(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query StixCyberObservables($types: [String], $filters: [StixCyberObservablesFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixCyberObservablesOrdering, $orderMode: OrderingMode) {
+                StixCyberObservables(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -172,11 +173,11 @@ class StixObservable:
 
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["stixObservables"])
+            data = self.opencti.process_multiple(result["data"]["StixCyberObservables"])
             final_data = final_data + data
-            while result["data"]["stixObservables"]["pageInfo"]["hasNextPage"]:
-                after = result["data"]["stixObservables"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing StixObservables after " + after)
+            while result["data"]["StixCyberObservables"]["pageInfo"]["hasNextPage"]:
+                after = result["data"]["StixCyberObservables"]["pageInfo"]["endCursor"]
+                self.opencti.log("info", "Listing StixCyberObservables after " + after)
                 result = self.opencti.query(
                     query,
                     {
@@ -189,20 +190,22 @@ class StixObservable:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["stixObservables"])
+                data = self.opencti.process_multiple(
+                    result["data"]["StixCyberObservables"]
+                )
                 final_data = final_data + data
             return final_data
         else:
             return self.opencti.process_multiple(
-                result["data"]["stixObservables"], with_pagination
+                result["data"]["StixCyberObservables"], with_pagination
             )
 
     """
-        Read a StixObservable object
+        Read a StixCyberObservable object
 
-        :param id: the id of the StixObservable
+        :param id: the id of the StixCyberObservable
         :param filters: the filters to apply if no id provided
-        :return StixObservable object
+        :return StixCyberObservable object
     """
 
     def read(self, **kwargs):
@@ -210,11 +213,11 @@ class StixObservable:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading StixObservable {" + id + "}.")
+            self.opencti.log("info", "Reading StixCyberObservable {" + id + "}.")
             query = (
                 """
-                query StixObservable($id: String!) {
-                    stixObservable(id: $id) {
+                query StixCyberObservable($id: String!) {
+                    StixCyberObservable(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -228,7 +231,7 @@ class StixObservable:
             )
             result = self.opencti.query(query, {"id": id})
             return self.opencti.process_multiple_fields(
-                result["data"]["stixObservable"]
+                result["data"]["StixCyberObservable"]
             )
         elif filters is not None:
             result = self.list(filters=filters, customAttributes=custom_attributes)
@@ -238,7 +241,8 @@ class StixObservable:
                 return None
         else:
             self.opencti.log(
-                "error", "[opencti_stix_observable] Missing parameters: id or filters"
+                "error",
+                "[opencti_stix_cyber_observable] Missing parameters: id or filters",
             )
             return None
 
@@ -270,8 +274,8 @@ class StixObservable:
                 + ".",
             )
             query = """
-                mutation StixObservableAdd($input: StixObservableAddInput) {
-                    stixObservableAdd(input: $input) {
+                mutation StixCyberObservableAdd($input: StixCyberObservableAddInput) {
+                    StixCyberObservableAdd(input: $input) {
                         id
                         stix_id
                         entity_type
@@ -296,7 +300,7 @@ class StixObservable:
                 },
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["stixObservableAdd"]
+                result["data"]["StixCyberObservableAdd"]
             )
         else:
             self.opencti.log("error", "Missing parameters: type and observable_value")
@@ -375,8 +379,8 @@ class StixObservable:
                 "info", "Updating Stix-Observable {" + id + "} field {" + key + "}."
             )
             query = """
-                mutation StixObservableEdit($id: ID!, $input: EditInput!) {
-                    stixObservableEdit(id: $id) {
+                mutation StixCyberObservableEdit($id: ID!, $input: EditInput!) {
+                    StixCyberObservableEdit(id: $id) {
                         fieldPatch(input: $input) {
                             id
                         }
@@ -387,12 +391,12 @@ class StixObservable:
                 query, {"id": id, "input": {"key": key, "value": value}}
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["stixObservableEdit"]["fieldPatch"]
+                result["data"]["StixCyberObservableEdit"]["fieldPatch"]
             )
         else:
             self.opencti.log(
                 "error",
-                "[opencti_stix_observable_update_field] Missing parameters: id and key and value",
+                "[opencti_stix_cyber_observable_update_field] Missing parameters: id and key and value",
             )
             return None
 
@@ -408,8 +412,8 @@ class StixObservable:
         if id is not None:
             self.opencti.log("info", "Deleting Stix-Observable {" + id + "}.")
             query = """
-                 mutation StixObservableEdit($id: ID!) {
-                     stixObservableEdit(id: $id) {
+                 mutation StixCyberObservableEdit($id: ID!) {
+                     StixCyberObservableEdit(id: $id) {
                          delete
                      }
                  }
@@ -417,7 +421,7 @@ class StixObservable:
             self.opencti.query(query, {"id": id})
         else:
             self.opencti.log(
-                "error", "[opencti_stix_observable_delete] Missing parameters: id"
+                "error", "[opencti_stix_cyber_observable_delete] Missing parameters: id"
             )
             return None
 
@@ -431,10 +435,10 @@ class StixObservable:
 
     def update_created_by(self, **kwargs):
         id = kwargs.get("id", None)
-        stix_entity = kwargs.get("entity", None)
+        opencti_stix_object_or_stix_relationship = kwargs.get("entity", None)
         identity_id = kwargs.get("identity_id", None)
         if id is not None and identity_id is not None:
-            if stix_entity is None:
+            if opencti_stix_object_or_stix_relationship is None:
                 custom_attributes = """
                     id
                     createdBy {
@@ -457,15 +461,21 @@ class StixObservable:
                         }
                     }    
                 """
-                stix_entity = self.read(id=id, customAttributes=custom_attributes)
-            if stix_entity is None:
+                opencti_stix_object_or_stix_relationship = self.read(
+                    id=id, customAttributes=custom_attributes
+                )
+            if opencti_stix_object_or_stix_relationship is None:
                 self.opencti.log("error", "Cannot update created_by, entity not found")
                 return False
             current_identity_id = None
             current_relation_id = None
-            if stix_entity["createdBy"] is not None:
-                current_identity_id = stix_entity["createdBy"]["id"]
-                current_relation_id = stix_entity["createdBy"]["remote_relation_id"]
+            if opencti_stix_object_or_stix_relationship["createdBy"] is not None:
+                current_identity_id = opencti_stix_object_or_stix_relationship[
+                    "createdBy"
+                ]["id"]
+                current_relation_id = opencti_stix_object_or_stix_relationship[
+                    "createdBy"
+                ]["remote_relation_id"]
             # Current identity is the same
             if current_identity_id == identity_id:
                 return True
@@ -481,8 +491,8 @@ class StixObservable:
                 # Current identity is different, delete the old relation
                 if current_relation_id is not None:
                     query = """
-                        mutation StixObservableEdit($id: ID!, $relationId: ID!) {
-                            stixObservableEdit(id: $id) {
+                        mutation StixCyberObservableEdit($id: ID!, $relationId: ID!) {
+                            StixCyberObservableEdit(id: $id) {
                                 relationDelete(relationId: $relationId) {
                                     id
                                 }
@@ -494,8 +504,8 @@ class StixObservable:
                     )
                 # Add the new relation
                 query = """
-                   mutation StixObservableEdit($id: ID!, $input: RelationAddInput) {
-                       stixObservableEdit(id: $id) {
+                   mutation StixCyberObservableEdit($id: ID!, $input: RelationAddInput) {
+                       StixCyberObservableEdit(id: $id) {
                             relationAdd(input: $input) {
                                 id
                             }

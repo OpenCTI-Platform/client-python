@@ -14,12 +14,14 @@ from .entities.opencti_tag import Tag
 from .entities.opencti_marking_definition import MarkingDefinition
 from .entities.opencti_external_reference import ExternalReference
 from .entities.opencti_kill_chain_phase import KillChainPhase
-from .entities.opencti_stix_entity import StixEntity
+from .entities.opencti_stix_object_or_stix_relationship import (
+    StixObjectOrStixRelationship,
+)
 from .entities.opencti_stix_domain_object import StixDomainObject
-from .entities.opencti_stix_observable import StixObservable
+from .entities.opencti_stix_cyber_observable import StixCyberObservable
 from .entities.opencti_stix_relation import StixRelation
 from .entities.opencti_stix_sighting import StixSighting
-from .entities.opencti_stix_observable_relation import StixObservableRelation
+from .entities.opencti_stix_cyber_observable_relation import StixCyberObservableRelation
 from .entities.opencti_identity import Identity
 from .entities.opencti_threat_actor import ThreatActor
 from .entities.opencti_intrusion_set import IntrusionSet
@@ -51,12 +53,12 @@ __all__ = [
     "MarkingDefinition",
     "ExternalReference",
     "KillChainPhase",
-    "StixEntity",
+    "StixObjectOrStixRelationship",
     "StixDomainObject",
-    "StixObservable",
+    "StixCyberObservable",
     "StixRelation",
     "StixSighting",
-    "StixObservableRelation",
+    "StixCyberObservableRelation",
     "Identity",
     "ThreatActor",
     "IntrusionSet",

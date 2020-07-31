@@ -4,7 +4,7 @@ import dateutil.parser
 import datetime
 
 
-class StixObservableRelation:
+class StixCyberObservableRelation:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -137,8 +137,8 @@ class StixObservableRelation:
         )
         query = (
             """
-            query StixObservableRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationType: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID, $orderBy: StixObservableRelationsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
-                stixObservableRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationType: $relationType, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
+            query StixCyberObservableRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationType: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID, $orderBy: StixCyberObservableRelationsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
+                StixCyberObservableRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationType: $relationType, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
                     edges {
                         node {
                             """
@@ -179,7 +179,7 @@ class StixObservableRelation:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["stixObservableRelations"], with_pagination
+            result["data"]["StixCyberObservableRelations"], with_pagination
         )
 
     """
@@ -213,8 +213,8 @@ class StixObservableRelation:
             self.opencti.log("info", "Reading stix_observable_relation {" + id + "}.")
             query = (
                 """
-                query StixObservableRelation($id: String!) {
-                    stixObservableRelation(id: $id) {
+                query StixCyberObservableRelation($id: String!) {
+                    StixCyberObservableRelation(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -228,7 +228,7 @@ class StixObservableRelation:
             )
             result = self.opencti.query(query, {"id": id})
             return self.opencti.process_multiple_fields(
-                result["data"]["stixObservableRelation"]
+                result["data"]["StixCyberObservableRelation"]
             )
         else:
             result = self.list(
@@ -284,8 +284,8 @@ class StixObservableRelation:
             + "}.",
         )
         query = """
-                mutation StixObservableRelationAdd($input: StixObservableRelationAddInput!) {
-                    stixObservableRelationAdd(input: $input) {
+                mutation StixCyberObservableRelationAdd($input: StixCyberObservableRelationAddInput!) {
+                    StixCyberObservableRelationAdd(input: $input) {
                         id
                         stix_id
                         entity_type
@@ -317,7 +317,7 @@ class StixObservableRelation:
             },
         )
         return self.opencti.process_multiple_fields(
-            result["data"]["stixObservableRelationAdd"]
+            result["data"]["StixCyberObservableRelationAdd"]
         )
 
     """
@@ -496,8 +496,8 @@ class StixObservableRelation:
             )
             query = (
                 """
-                mutation StixObservableRelationEdit($id: ID!, $input: EditInput!) {
-                    stixObservableRelationEdit(id: $id) {
+                mutation StixCyberObservableRelationEdit($id: ID!, $input: EditInput!) {
+                    StixCyberObservableRelationEdit(id: $id) {
                         fieldPatch(input: $input) {
                             """
                 + self.properties
@@ -511,7 +511,7 @@ class StixObservableRelation:
                 query, {"id": id, "input": {"key": key, "value": value}}
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["stixObservableRelationEdit"]["fieldPatch"]
+                result["data"]["StixCyberObservableRelationEdit"]["fieldPatch"]
             )
         else:
             self.opencti.log("error", "Missing parameters: id and key and value")

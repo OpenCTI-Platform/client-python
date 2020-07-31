@@ -159,7 +159,7 @@ object_refs.extend([ttp3["id"], ttp3_relation["id"]])
 
 # Add all element to the report
 for object_ref in object_refs:
-    opencti_api_client.report.add_stix_entity(
+    opencti_api_client.report.add_opencti_stix_object_or_stix_relationship(
         id=report["id"], report=report, entity_id=object_ref
     )
 for observable_ref in observable_refs:

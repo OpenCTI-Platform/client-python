@@ -90,6 +90,20 @@ class StixDomainObject:
                 x_mitre_permissions_required
                 x_mitre_detection
                 x_mitre_id
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            standard_id                            
+                            entity_type
+                            kill_chain_name
+                            phase_name
+                            x_opencti_order
+                            created
+                            modified
+                        }
+                    }
+                }
             }
             ... on Campaign {
                 name
@@ -466,6 +480,7 @@ class StixDomainObject:
         if stix_id is not None:
             object_result = self.read(id=stix_id, customAttributes=custom_attributes)
         if object_result is None and name is not None:
+            # TODO: Change this logic and move it to the API.
             object_result = self.read(
                 types=types,
                 filters=[{"key": "name", "values": [name]}],

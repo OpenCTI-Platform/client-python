@@ -617,10 +617,10 @@ class Indicator:
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
                 else None,
-                markingDefinitions=extras["marking_definitions_ids"]
-                if "marking_definitions_ids" in extras
+                markingDefinitions=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
                 else None,
-                tags=extras["tags_ids"] if "tags_ids" in extras else [],
+                tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
                 else None,

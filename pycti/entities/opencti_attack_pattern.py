@@ -11,92 +11,53 @@ class AttackPattern:
         self.properties = """
             id
             standard_id
-            stix_label
             entity_type
             parent_types
-            stix_ids
             spec_version
             created_at
             updated_at
             createdBy {
-              ... on Identity {
-                
-              }
-            }
-            description
-            confidence
-            graph_data
-            platform
-            required_permission
-            external_id
-            created
-            modified
-            created_at
-            updated_at
-            killChainPhases {
-                edges {
-                    node {
-                        id
-                        entity_type
-                        stix_id
-                        kill_chain_name
-                        phase_name
-                        phase_order
-                        created
-                        modified
-                    }
-                    relation {
-                        id
-                    }
-                }
-            }
-            createdBy {
-                node {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        x_opencti_organization_type
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
                 }
-            }            
-            markingDefinitions {
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
+                }
+            }
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                        id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            tags {
+            objectLabel {
                 edges {
                     node {
                         id
-                        tag_type
                         value
                         color
-                    }
-                    relation {
-                        id
                     }
                 }
             }
@@ -104,8 +65,8 @@ class AttackPattern:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         source_name
                         description
                         url
@@ -114,8 +75,30 @@ class AttackPattern:
                         created
                         modified
                     }
-                    relation {
+                }
+            }
+            revoked
+            confidence
+            created
+            modified
+            name
+            description
+            aliases
+            x_mitre_platforms
+            x_mitre_permissions_required
+            x_mitre_detection
+            x_mitre_id
+            killChainPhases {
+                edges {
+                    node {
                         id
+                        standard_id                            
+                        entity_type
+                        kill_chain_name
+                        phase_name
+                        x_opencti_order
+                        created
+                        modified
                     }
                 }
             }        
@@ -257,20 +240,22 @@ class AttackPattern:
     """
 
     def create_raw(self, **kwargs):
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        aliases = kwargs.get("aliases", None)
-        platform = kwargs.get("platform", None)
-        required_permission = kwargs.get("required_permission", None)
-        external_id = kwargs.get("external_id", None)
-        confidence = kwargs.get("confidence", 50)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        name = kwargs.get("name", None)
+        description = kwargs.get("description", "")
+        aliases = kwargs.get("aliases", None)
+        x_mitre_platforms = kwargs.get("x_mitre_platforms", None)
+        x_mitre_permissions_required = kwargs.get("x_mitre_permissions_required", None)
+        x_mitre_detection = kwargs.get("x_mitre_detection", None)
+        x_mitre_id = kwargs.get("x_mitre_id", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
 
         if name is not None and description is not None:
@@ -279,7 +264,7 @@ class AttackPattern:
                 mutation AttackPatternAdd($input: AttackPatternAddInput) {
                     attackPatternAdd(input: $input) {
                         id
-                        stix_id
+                        standard_id
                         entity_type
                         parent_types
                     }
@@ -289,20 +274,22 @@ class AttackPattern:
                 query,
                 {
                     "input": {
+                        "stix_id": stix_id,
+                        "createdBy": created_by,
+                        "objectMarking": object_marking,
+                        "objectLabel": object_label,
+                        "revoked": revoked,
+                        "confidence": confidence,
+                        "lang": lang,
+                        "created": created,
+                        "modified": modified,
                         "name": name,
                         "description": description,
                         "aliases": aliases,
-                        "platform": platform,
-                        "required_permission": required_permission,
-                        "external_id": external_id,
-                        "confidence": confidence,
-                        "internal_id_key": id,
-                        "stix_id": stix_id,
-                        "created": created,
-                        "modified": modified,
-                        "createdBy": created_by,
-                        "objectMarking": objectMarking,
-                        "tags": tags,
+                        "x_mitre_platforms": x_mitre_platforms,
+                        "x_mitre_permissions_required": x_mitre_permissions_required,
+                        "x_mitre_detection": x_mitre_detection,
+                        "x_mitre_id": x_mitre_id,
                         "killChainPhases": kill_chain_phases,
                     }
                 },
@@ -324,55 +311,63 @@ class AttackPattern:
     """
 
     def create(self, **kwargs):
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        aliases = kwargs.get("aliases", None)
-        platform = kwargs.get("platform", None)
-        required_permission = kwargs.get("required_permission", None)
-        external_id = kwargs.get("external_id", None)
-        confidence = kwargs.get("confidence", 50)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        name = kwargs.get("name", None)
+        description = kwargs.get("description", "")
+        aliases = kwargs.get("aliases", None)
+        x_mitre_platforms = kwargs.get("x_mitre_platforms", None)
+        x_mitre_permissions_required = kwargs.get("x_mitre_permissions_required", None)
+        x_mitre_detection = kwargs.get("x_mitre_detection", None)
+        x_mitre_id = kwargs.get("x_mitre_id", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
+            standard_id
             entity_type
-            name
-            description 
-            alias
-            confidence
+            parent_types
             createdBy {
-                node {
+                ... on Identity {
                     id
                 }
             }
-            ... on AttackPattern {
-                 killChainPhases {
-                    edges {
-                        node {
-                            id
-                            kill_chain_name
-                            phase_name
-                        }
+            name
+            description
+            aliases
+            x_mitre_platforms
+            x_mitre_permissions_required
+            x_mitre_detection
+            x_mitre_id
+            killChainPhases {
+                edges {
+                    node {
+                        id
+                        standard_id                            
+                        entity_type
+                        kill_chain_name
+                        phase_name
+                        x_opencti_order
+                        created
+                        modified
                     }
                 }
-                platform
-                required_permission
-                external_id       
             }
         """
+        print(description)
         object_result = None
         if stix_id is not None:
             object_result = self.read(id=stix_id, customAttributes=custom_attributes)
-        if object_result is None and external_id is not None:
+        if object_result is None and x_mitre_id is not None:
             object_result = self.read(
-                filters=[{"key": "external_id", "values": [external_id]}]
+                filters=[{"key": "x_mitre_id", "values": [x_mitre_id]}]
             )
         if object_result is None and name is not None:
             object_result = self.read(
@@ -381,7 +376,7 @@ class AttackPattern:
             )
             if object_result is None:
                 object_result = self.read(
-                    filters=[{"key": "alias", "values": [name]}],
+                    filters=[{"key": "aliases", "values": [name]}],
                     customAttributes=custom_attributes,
                 )
             if object_result is not None:
@@ -398,7 +393,6 @@ class AttackPattern:
                                 is_kill_chain_phase_match = True
                     if not is_kill_chain_phase_match:
                         object_result = None
-
         if object_result is not None:
             if update or object_result["createdById"] == created_by:
                 # name
@@ -416,49 +410,55 @@ class AttackPattern:
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
-                # alias
-                if self.opencti.not_empty(alias) and object_result["alias"] != alias:
-                    if "alias" in object_result:
-                        new_aliases = object_result["alias"] + list(
-                            set(alias) - set(object_result["alias"])
+                # aliases
+                if (
+                    self.opencti.not_empty(aliases)
+                    and object_result["aliases"] != aliases
+                ):
+                    if "aliases" in object_result:
+                        new_aliases = object_result["aliases"] + list(
+                            set(aliases) - set(object_result["aliases"])
                         )
                     else:
-                        new_aliases = alias
+                        new_aliases = aliases
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="alias", value=new_aliases
+                        id=object_result["id"], key="aliases", value=new_aliases
                     )
-                    object_result["alias"] = new_aliases
-                # platform
+                    object_result["aliases"] = new_aliases
+                # x_mitre_platforms
                 if (
-                    self.opencti.not_empty(platform)
-                    and object_result["platform"] != platform
-                ):
-                    self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="platform", value=platform
-                    )
-                    object_result["platform"] = platform
-                # required_permission
-                if (
-                    self.opencti.not_empty(required_permission)
-                    and object_result["required_permission"] != required_permission
+                    self.opencti.not_empty(x_mitre_platforms)
+                    and object_result["x_mitre_platforms"] != x_mitre_platforms
                 ):
                     self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
-                        key="required_permission",
-                        value=required_permission,
+                        key="x_mitre_platforms",
+                        value=x_mitre_platforms,
                     )
-                    object_result["required_permission"] = required_permission
-                # external_id
+                    object_result["x_mitre_platforms"] = x_mitre_platforms
+                # x_mitre_permissions_required
                 if (
-                    self.opencti.not_empty(external_id)
-                    and object_result["external_id"] != external_id
+                    self.opencti.not_empty(x_mitre_permissions_required)
+                    and object_result["x_mitre_permissions_required"]
+                    != x_mitre_permissions_required
                 ):
                     self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
-                        key="external_id",
-                        value=str(external_id),
+                        key="x_mitre_permissions_required",
+                        value=x_mitre_permissions_required,
                     )
-                    object_result["external_id"] = external_id
+                    object_result[
+                        "x_mitre_permissions_required"
+                    ] = x_mitre_permissions_required
+                # x_mitre_id
+                if (
+                    self.opencti.not_empty(x_mitre_id)
+                    and object_result["x_mitre_id"] != x_mitre_id
+                ):
+                    self.opencti.stix_domain_object.update_field(
+                        id=object_result["id"], key="x_mitre_id", value=str(x_mitre_id),
+                    )
+                    object_result["x_mitre_id"] = x_mitre_id
                 # confidence
                 if (
                     self.opencti.not_empty(confidence)
@@ -471,21 +471,23 @@ class AttackPattern:
             return object_result
         else:
             return self.create_raw(
-                name=name,
-                description=description,
-                aliases=aliases,
-                platform=platform,
-                required_permission=required_permission,
-                external_id=external_id,
-                confidence=confidence,
-                id=id,
                 stix_id=stix_id,
-                created=created,
-                modified=modified,
                 createdBy=created_by,
                 objectMarking=object_marking,
                 objectLabel=object_label,
-                killChainPhases=kill_chain_phases,
+                revoked=revoked,
+                confidence=confidence,
+                lang=lang,
+                created=created,
+                modified=modified,
+                name=name,
+                description=description,
+                aliases=aliases,
+                x_mitre_platforms=x_mitre_platforms,
+                x_mitre_permissions_required=x_mitre_permissions_required,
+                x_mitre_detection=x_mitre_detection,
+                x_mitre_id=x_mitre_id,
+                kill_chain_phases=kill_chain_phases,
             )
 
     """
@@ -501,9 +503,9 @@ class AttackPattern:
         update = kwargs.get("update", False)
         if stix_object is not None:
             # Extract external ID
-            external_id = None
-            if CustomProperties.EXTERNAL_ID in stix_object:
-                external_id = stix_object[CustomProperties.EXTERNAL_ID]
+            x_mitre_id = None
+            if "x_mitre_id" in stix_object:
+                x_mitre_id = stix_object["x_mitre_id"]
             if "external_references" in stix_object:
                 for external_reference in stix_object["external_references"]:
                     if (
@@ -512,40 +514,44 @@ class AttackPattern:
                         or external_reference["source_name"] == "mitre-mobile-attack"
                         or external_reference["source_name"] == "amitt-attack"
                     ):
-                        external_id = external_reference["external_id"]
+                        x_mitre_id = external_reference["external_id"]
             return self.create(
+                stix_id=stix_object["id"],
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
+                else None,
+                objectMarking=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
+                else None,
+                objectLabel=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
+                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
+                confidence=stix_object["confidence"]
+                if "confidence" in stix_object
+                else None,
+                lang=stix_object["lang"] if "lang" in stix_object else None,
+                created=stix_object["created"] if "created" in stix_object else None,
+                modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
                 description=self.opencti.stix2.convert_markdown(
                     stix_object["description"]
                 )
                 if "description" in stix_object
                 else "",
-                alias=self.opencti.stix2.pick_aliases(stix_object),
-                platform=stix_object["x_mitre_platforms"]
+                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                x_mitre_platforms=stix_object["x_mitre_platforms"]
                 if "x_mitre_platforms" in stix_object
                 else stix_object["x_amitt_platforms"]
                 if "x_amitt_platforms" in stix_object
                 else None,
-                required_permission=stix_object["x_mitre_permissions_required"]
+                x_mitre_permissions_required=stix_object["x_mitre_permissions_required"]
                 if "x_mitre_permissions_required" in stix_object
                 else None,
-                external_id=external_id,
-                confidence=stix_object["confidence"]
-                if "confidence" in stix_object
+                x_mitre_detection=stix_object["x_mitre_detection"]
+                if "x_mitre_detection" in stix_object
                 else None,
-                id=stix_object[CustomProperties.ID]
-                if CustomProperties.ID in stix_object
-                else None,
-                stix_id=stix_object["id"] if "id" in stix_object else None,
-                created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                markingDefinitions=extras["marking_definitions_ids"]
-                if "marking_definitions_ids" in extras
-                else None,
-                tags=extras["tags_ids"] if "tags_ids" in extras else [],
+                x_mitre_id=x_mitre_id,
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
                 else None,
@@ -576,9 +582,7 @@ class AttackPattern:
             attack_pattern = dict()
             attack_pattern["id"] = entity["stix_id"]
             attack_pattern["type"] = "attack-pattern"
-            attack_pattern["spec_version"] = SPEC_VERSION
-            if self.opencti.not_empty(entity["external_id"]):
-                attack_pattern[CustomProperties.EXTERNAL_ID] = entity["external_id"]
+            attack_pattern["spec_version"] = entity["spec_version"]
             attack_pattern["name"] = entity["name"]
             if self.opencti.not_empty(entity["stix_label"]):
                 attack_pattern["labels"] = entity["stix_label"]
@@ -598,6 +602,8 @@ class AttackPattern:
                 attack_pattern["x_mitre_permissions_required"] = entity[
                     "required_permission"
                 ]
+            if self.opencti.not_empty(entity["external_id"]):
+                attack_pattern[CustomProperties.EXTERNAL_ID] = entity["external_id"]
             if self.opencti.not_empty(entity["alias"]):
                 attack_pattern[CustomProperties.ALIASES] = entity["alias"]
             attack_pattern[CustomProperties.ID] = entity["id"]

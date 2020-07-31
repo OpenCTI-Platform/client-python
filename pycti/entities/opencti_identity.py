@@ -329,7 +329,6 @@ class Identity:
             standard_id
             entity_type
             parent_types
-            spec_version
             ... on Identity {
                 name
                 description 

@@ -593,9 +593,9 @@ class StixRelation:
         id = kwargs.get("id", None)
         kill_chain_phase_id = kwargs.get("kill_chain_phase_id", None)
         if id is not None and kill_chain_phase_id is not None:
-            stix_entity = self.read(id=id)
+            opencti_stix_object_or_stix_relationship = self.read(id=id)
             kill_chain_phases_ids = []
-            for marking in stix_entity["killChainPhases"]:
+            for marking in opencti_stix_object_or_stix_relationship["killChainPhases"]:
                 kill_chain_phases_ids.append(marking["id"])
             if kill_chain_phase_id in kill_chain_phases_ids:
                 return True
