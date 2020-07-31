@@ -10,66 +10,54 @@ class CourseOfAction:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id
-            stix_label
+            standard_id
             entity_type
             parent_types
-            name
-            alias
-            description
-            confidence
-            graph_data
-            created
-            modified            
+            spec_version
             created_at
             updated_at
             createdBy {
-                node {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        x_opencti_organization_type
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
                 }
-            }            
-            markingDefinitions {
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
+                }
+            }
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                        id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            labels {
+            objectLabel {
                 edges {
                     node {
                         id
-                        label_type
                         value
                         color
-                    }
-                    relation {
-                        id
                     }
                 }
             }
@@ -77,8 +65,8 @@ class CourseOfAction:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         source_name
                         description
                         url
@@ -87,11 +75,15 @@ class CourseOfAction:
                         created
                         modified
                     }
-                    relation {
-                        id
-                    }
                 }
-            }         
+            }
+            revoked
+            confidence
+            created
+            modified
+            name
+            description
+            x_opencti_aliases
         """
 
     """
@@ -211,16 +203,19 @@ class CourseOfAction:
     """
 
     def create_raw(self, **kwargs):
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        aliases = kwargs.get("aliases", None)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        name = kwargs.get("name", None)
+        description = kwargs.get("description", "")
+        x_opencti_aliases = kwargs.get("x_opencti_aliases", None)
 
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Course Of Action {" + name + "}.")
@@ -228,7 +223,7 @@ class CourseOfAction:
                 mutation CourseOfActionAdd($input: CourseOfActionAddInput) {
                     courseOfActionAdd(input: $input) {
                         id
-                        stix_id
+                        standard_id
                         entity_type
                         parent_types
                     }
@@ -238,16 +233,19 @@ class CourseOfAction:
                 query,
                 {
                     "input": {
-                        "name": name,
-                        "description": description,
-                        "aliases": aliases,
-                        "internal_id_key": id,
                         "stix_id": stix_id,
+                        "createdBy": created_by,
+                        "objectMarking": object_marking,
+                        "objectLabel": object_label,
+                        "externalReferences": external_references,
+                        "revoked": revoked,
+                        "confidence": confidence,
+                        "lang": lang,
                         "created": created,
                         "modified": modified,
-                        "createdBy": created_by,
-                        "objectMarking": objectMarking,
-                        "labels": labels,
+                        "name": name,
+                        "description": description,
+                        "x_opencti_aliases": x_opencti_aliases,
                     }
                 },
             )
@@ -268,28 +266,35 @@ class CourseOfAction:
     """
 
     def create(self, **kwargs):
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        aliases = kwargs.get("aliases", None)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        name = kwargs.get("name", None)
+        description = kwargs.get("description", "")
+        x_opencti_aliases = kwargs.get("x_opencti_aliases", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
+            standard_id
             entity_type
-            name
-            description 
-            alias
+            parent_types
             createdBy {
-                node {
+                ... on Identity {
                     id
                 }
-            }            
+            }
+            ... on CourseOfAction {
+                name
+                description
+                x_opencti_aliases
+            } 
         """
         object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
             types=["Course-Of-Action"],
@@ -315,30 +320,86 @@ class CourseOfAction:
                     )
                     object_result["description"] = description
                 # alias
-                if self.opencti.not_empty(alias) and object_result["alias"] != alias:
-                    if "alias" in object_result:
-                        new_aliases = object_result["alias"] + list(
-                            set(alias) - set(object_result["alias"])
+                if (
+                    self.opencti.not_empty(x_opencti_aliases)
+                    and object_result["x_opencti_aliases"] != x_opencti_aliases
+                ):
+                    if "x_opencti_aliases" in object_result:
+                        new_aliases = object_result["x_opencti_aliases"] + list(
+                            set(x_opencti_aliases)
+                            - set(object_result["x_opencti_aliases"])
                         )
                     else:
-                        new_aliases = alias
+                        new_aliases = x_opencti_aliases
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="alias", value=new_aliases
+                        id=object_result["id"],
+                        key="x_opencti_aliases",
+                        value=new_aliases,
                     )
-                    object_result["alias"] = new_aliases
+                    object_result["x_opencti_aliases"] = new_aliases
             return object_result
         else:
             return self.create_raw(
-                name=name,
-                description=description,
-                aliases=aliases,
-                id=id,
                 stix_id=stix_id,
-                created=created,
-                modified=modified,
                 createdBy=created_by,
                 objectMarking=object_marking,
                 objectLabel=object_label,
+                externalReferences=external_references,
+                revoked=revoked,
+                confidence=confidence,
+                lang=lang,
+                created=created,
+                modified=modified,
+                name=name,
+                description=description,
+                x_opencti_aliases=x_opencti_aliases,
+            )
+
+    """
+        Import an Course-Of-Action object from a STIX2 object
+
+        :param stixObject: the Stix-Object Course-Of-Action
+        :return Course-Of-Action object
+    """
+
+    def import_from_stix2(self, **kwargs):
+        stix_object = kwargs.get("stixObject", None)
+        extras = kwargs.get("extras", {})
+        update = kwargs.get("update", False)
+        if stix_object is not None:
+            return self.create(
+                stix_id=stix_object["id"],
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
+                else None,
+                objectMarking=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
+                else None,
+                objectLabel=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
+                else [],
+                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
+                confidence=stix_object["confidence"]
+                if "confidence" in stix_object
+                else None,
+                lang=stix_object["lang"] if "lang" in stix_object else None,
+                created=stix_object["created"] if "created" in stix_object else None,
+                modified=stix_object["modified"] if "modified" in stix_object else None,
+                name=stix_object["name"],
+                description=self.opencti.stix2.convert_markdown(
+                    stix_object["description"]
+                )
+                if "description" in stix_object
+                else "",
+                x_opencti_aliases=self.opencti.stix2.pick_aliases(stix_object),
+                update=update,
+            )
+        else:
+            self.opencti.log(
+                "error", "[opencti_course_of_action] Missing parameters: stixObject"
             )
 
     """
@@ -361,7 +422,7 @@ class CourseOfAction:
             course_of_action = dict()
             course_of_action["id"] = entity["stix_id"]
             course_of_action["type"] = "course-of-action"
-            course_of_action["spec_version"] = SPEC_VERSION
+            course_of_action["spec_version"] = entity["spec_version"]
             course_of_action["name"] = entity["name"]
             if self.opencti.not_empty(entity["stix_label"]):
                 course_of_action["labels"] = entity["stix_label"]

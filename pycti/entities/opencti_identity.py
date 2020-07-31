@@ -217,6 +217,7 @@ class Identity:
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
         revoked = kwargs.get("revoked", None)
         confidence = kwargs.get("confidence", None)
         lang = kwargs.get("lang", None)
@@ -237,6 +238,7 @@ class Identity:
                 "createdBy": created_by,
                 "objectMarking": object_marking,
                 "objectLabel": object_label,
+                "externalReferences": external_references,
                 "revoked": revoked,
                 "confidence": confidence,
                 "lang": lang,
@@ -310,6 +312,7 @@ class Identity:
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
         revoked = kwargs.get("revoked", False)
         confidence = kwargs.get("confidence", 0)
         lang = kwargs.get("lang", None)
@@ -433,6 +436,7 @@ class Identity:
                 createdBy=created_by,
                 objectMarking=object_marking,
                 objectLabel=object_label,
+                externalReferences=external_references,
                 revoked=revoked,
                 confidence=confidence,
                 lang=lang,
@@ -477,6 +481,9 @@ class Identity:
                 else [],
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
                 else [],
                 revoked=stix_object["revoked"] if "revoked" in stix_object else None,
                 confidence=stix_object["confidence"]

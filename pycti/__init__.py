@@ -10,7 +10,7 @@ from .connector.opencti_connector_helper import (
     get_config_variable,
 )
 
-from .entities.opencti_tag import Tag
+from .entities.opencti_label import Label
 from .entities.opencti_marking_definition import MarkingDefinition
 from .entities.opencti_external_reference import ExternalReference
 from .entities.opencti_kill_chain_phase import KillChainPhase
@@ -23,10 +23,12 @@ from .entities.opencti_stix_relation import StixRelation
 from .entities.opencti_stix_sighting import StixSighting
 from .entities.opencti_stix_cyber_observable_relation import StixCyberObservableRelation
 from .entities.opencti_identity import Identity
+from .entities.opencti_location import Location
 from .entities.opencti_threat_actor import ThreatActor
 from .entities.opencti_intrusion_set import IntrusionSet
+from .entities.opencti_infrastructure import Infrastructure
 from .entities.opencti_campaign import Campaign
-from .entities.opencti_incident import Incident
+from .entities.opencti_x_opencti_incident import XOpenctiIncident
 from .entities.opencti_malware import Malware
 from .entities.opencti_tool import Tool
 from .entities.opencti_vulnerability import Vulnerability
@@ -34,11 +36,12 @@ from .entities.opencti_attack_pattern import AttackPattern
 from .entities.opencti_course_of_action import CourseOfAction
 from .entities.opencti_report import Report
 from .entities.opencti_note import Note
+from .entities.opencti_observed_data import ObservedData
 from .entities.opencti_opinion import Opinion
 from .entities.opencti_indicator import Indicator
 
 from .utils.opencti_stix2 import OpenCTIStix2
-from .utils.constants import ObservableTypes
+from .utils.constants import StixCyberObservableTypes
 from .utils.constants import CustomProperties
 
 __all__ = [
@@ -49,7 +52,7 @@ __all__ = [
     "OpenCTIConnector",
     "OpenCTIConnectorHelper",
     "get_config_variable",
-    "Tag",
+    "Label",
     "MarkingDefinition",
     "ExternalReference",
     "KillChainPhase",
@@ -60,10 +63,12 @@ __all__ = [
     "StixSighting",
     "StixCyberObservableRelation",
     "Identity",
+    "Location",
     "ThreatActor",
     "IntrusionSet",
+    "Infrastructure",
     "Campaign",
-    "Incident",
+    "XOpenctiIncident",
     "Malware",
     "Tool",
     "Vulnerability",
@@ -71,9 +76,10 @@ __all__ = [
     "CourseOfAction",
     "Report",
     "Note",
+    "ObservedData",
     "Opinion",
     "Indicator",
     "OpenCTIStix2",
-    "ObservableTypes",
+    "StixCyberObservableTypes",
     "CustomProperties",
 ]

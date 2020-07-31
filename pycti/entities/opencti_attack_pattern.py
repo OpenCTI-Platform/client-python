@@ -244,6 +244,7 @@ class AttackPattern:
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
         revoked = kwargs.get("revoked", None)
         confidence = kwargs.get("confidence", None)
         lang = kwargs.get("lang", None)
@@ -278,6 +279,7 @@ class AttackPattern:
                         "createdBy": created_by,
                         "objectMarking": object_marking,
                         "objectLabel": object_label,
+                        "externalReferences": external_references,
                         "revoked": revoked,
                         "confidence": confidence,
                         "lang": lang,
@@ -315,6 +317,7 @@ class AttackPattern:
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
         revoked = kwargs.get("revoked", None)
         confidence = kwargs.get("confidence", None)
         lang = kwargs.get("lang", None)
@@ -366,7 +369,9 @@ class AttackPattern:
             object_result = self.read(id=stix_id, customAttributes=custom_attributes)
         if object_result is None and x_mitre_id is not None:
             object_result = self.read(
-                filters=[{"key": "x_mitre_id", "values": [x_mitre_id]}]
+                filters=[
+                    {"key": "x_mitre_id", "values": [x_mitre_id], "operator": "match"}
+                ]
             )
         if object_result is None and name is not None:
             object_result = self.read(
@@ -378,19 +383,10 @@ class AttackPattern:
                     filters=[{"key": "aliases", "values": [name]}],
                     customAttributes=custom_attributes,
                 )
+            # If x_mitre_id mismatch, no duplicate
             if object_result is not None:
-                # Check kill chain phase
-                if (
-                    kill_chain_phases is not None
-                    and "killChainPhasesIds" in object_result
-                    and len(object_result["killChainPhasesIds"]) > 0
-                ):
-                    is_kill_chain_phase_match = False
-                    for kill_chain_phase in kill_chain_phases:
-                        for kill_chain_phase_id in object_result["killChainPhasesIds"]:
-                            if kill_chain_phase_id == kill_chain_phase:
-                                is_kill_chain_phase_match = True
-                    if not is_kill_chain_phase_match:
+                if object_result["x_mitre_id"] is not None and x_mitre_id is not None:
+                    if object_result["x_mitre_id"] != x_mitre_id:
                         object_result = None
         if object_result is not None:
             if update or object_result["createdById"] == created_by:
@@ -474,6 +470,7 @@ class AttackPattern:
                 createdBy=created_by,
                 objectMarking=object_marking,
                 objectLabel=object_label,
+                externalReferences=external_references,
                 revoked=revoked,
                 confidence=confidence,
                 lang=lang,
@@ -524,6 +521,9 @@ class AttackPattern:
                 else None,
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
                 else [],
                 revoked=stix_object["revoked"] if "revoked" in stix_object else None,
                 confidence=stix_object["confidence"]

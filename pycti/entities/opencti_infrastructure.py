@@ -5,7 +5,12 @@ from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
-class Campaign:
+class Infrastructure:
+    """Main Infrastructure class for OpenCTI
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -83,23 +88,42 @@ class Campaign:
             modified
             name
             description
-            aliases
+            infrastructure_types
             first_seen
             last_seen
-            objective
+            killChainPhases {
+                edges {
+                    node {
+                        id
+                        standard_id                            
+                        entity_type
+                        kill_chain_name
+                        phase_name
+                        x_opencti_order
+                        created
+                        modified
+                    }
+                }
+            }
         """
 
-    """
-        List Campaign objects
-
-        :param filters: the filters to apply
-        :param search: the search keyword
-        :param first: return the first n rows from the after ID (or the beginning if not set)
-        :param after: ID of the first row for pagination
-        :return List of Campaign objects
-    """
-
     def list(self, **kwargs):
+        """List Infrastructure objects
+
+        The list method accepts the following \**kwargs:
+
+        :param list filters: (optional) the filters to apply
+        :param str search: (optional) a search keyword to apply for the listing
+        :param int first: (optional) return the first n rows from the `after` ID
+                            or the beginning if not set
+        :param str after: (optional) OpenCTI object ID of the first row for pagination
+        :param str orderBy: (optional) the field to order the response on
+        :param bool orderMode: (optional) either "`asc`" or "`desc`"
+        :param list customAttributes: (optional) list of attributes keys to return
+        :param bool getAll: (optional) switch to return all entries (be careful to use this without any other filters)
+        :param bool withPagination: (optional) switch to use pagination
+        """
+
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         first = kwargs.get("first", 500)
@@ -113,12 +137,12 @@ class Campaign:
             first = 500
 
         self.opencti.log(
-            "info", "Listing Campaigns with filters " + json.dumps(filters) + "."
+            "info", "Listing Infrastructures with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Campaigns($filters: [CampaignsFiltering], $search: String, $first: Int, $after: ID, $orderBy: CampaignsOrdering, $orderMode: OrderingMode) {
-                campaigns(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query Infrastructures($filters: [InfrastructuresFiltering], $search: String, $first: Int, $after: ID, $orderBy: InfrastructuresOrdering, $orderMode: OrderingMode) {
+                infrastructures(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -148,28 +172,56 @@ class Campaign:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
-            result["data"]["campaigns"], with_pagination
-        )
 
-    """
-        Read a Campaign object
-        
-        :param id: the id of the Campaign
-        :param filters: the filters to apply if no id provided
-        :return Campaign object
-    """
+        if get_all:
+            final_data = []
+            data = self.opencti.process_multiple(result["data"]["infrastructures"])
+            final_data = final_data + data
+            while result["data"]["infrastructures"]["pageInfo"]["hasNextPage"]:
+                after = result["data"]["infrastructures"]["pageInfo"]["endCursor"]
+                self.opencti.log("info", "Listing Infrastructures after " + after)
+                result = self.opencti.query(
+                    query,
+                    {
+                        "filters": filters,
+                        "search": search,
+                        "first": first,
+                        "after": after,
+                        "orderBy": order_by,
+                        "orderMode": order_mode,
+                    },
+                )
+                data = self.opencti.process_multiple(result["data"]["infrastructures"])
+                final_data = final_data + data
+            return final_data
+        else:
+            return self.opencti.process_multiple(
+                result["data"]["infrastructures"], with_pagination
+            )
 
     def read(self, **kwargs):
+        """Read an Infrastructure object
+
+        read can be either used with a known OpenCTI entity `id` or by using a
+        valid filter to search and return a single Infrastructure entity or None.
+
+        The list method accepts the following \**kwargs.
+
+        Note: either `id` or `filters` is required.
+
+        :param str id: the id of the Threat-Actor
+        :param list filters: the filters to apply if no id provided
+        """
+
         id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Campaign {" + id + "}.")
+            self.opencti.log("info", "Reading Infrastructure {" + id + "}.")
             query = (
                 """
-                query Campaign($id: String!) {
-                    campaign(id: $id) {
+                query Infrastructure($id: String!) {
+                    infrastructure(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -182,24 +234,26 @@ class Campaign:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["campaign"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["infrastructure"]
+            )
         elif filters is not None:
-            result = self.list(filters=filters)
+            result = self.list(filters=filters, customAttributes=custom_attributes)
             if len(result) > 0:
                 return result[0]
             else:
                 return None
         else:
             self.opencti.log(
-                "error", "[opencti_campaign] Missing parameters: id or filters"
+                "error", "[opencti_infrastructure] Missing parameters: id or filters"
             )
             return None
 
     """
-        Create a Campaign object
+        Create a Infrastructure object
 
-        :param name: the name of the Campaign
-        :return Campaign object
+        :param name: the name of the Infrastructure
+        :return Infrastructure object
     """
 
     def create_raw(self, **kwargs):
@@ -214,21 +268,22 @@ class Campaign:
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
-        description = kwargs.get("description", "")
+        description = kwargs.get("description", None)
         aliases = kwargs.get("aliases", None)
+        infrastructure_types = kwargs.get("infrastructure_types", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
-        objective = kwargs.get("objective", None)
+        kill_chain_phases = kwargs.get("killChainPhases", None)
 
-        if name is not None and description is not None:
-            self.opencti.log("info", "Creating Campaign {" + name + "}.")
+        if name is not None:
+            self.opencti.log("info", "Creating Infrastructure {" + name + "}.")
             query = """
-                mutation CampaignAdd($input: CampaignAddInput) {
-                    campaignAdd(input: $input) {
+                mutation InfrastructureAdd($input: InfrastructureAddInput) {
+                    infrastructureAdd(input: $input) {
                         id
                         standard_id
                         entity_type
-                        parent_types
+                        parent_types                    
                     }
                 }
             """
@@ -249,23 +304,27 @@ class Campaign:
                         "name": name,
                         "description": description,
                         "aliases": aliases,
+                        "infrastructure_types": infrastructure_types,
                         "first_seen": first_seen,
                         "last_seen": last_seen,
-                        "objective": objective,
+                        "killChainPhases": kill_chain_phases,
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["campaignAdd"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["infrastructureAdd"]
+            )
         else:
             self.opencti.log(
-                "error", "[opencti_campaign] Missing parameters: name and description"
+                "error",
+                "[opencti_infrastructure] Missing parameters: name and infrastructure_pattern and main_observable_type",
             )
 
     """
-        Create a Campaign object only if it not exists, update it on request
+        Create a Infrastructure object only if it not exists, update it on request
 
-        :param name: the name of the Campaign
-        :return Campaign object
+        :param name: the name of the Infrastructure
+        :return Infrastructure object
     """
 
     def create(self, **kwargs):
@@ -280,11 +339,12 @@ class Campaign:
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
-        description = kwargs.get("description", "")
+        description = kwargs.get("description", None)
         aliases = kwargs.get("aliases", None)
+        infrastructure_types = kwargs.get("infrastructure_types", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
-        objective = kwargs.get("objective", None)
+        kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
@@ -296,17 +356,17 @@ class Campaign:
                     id
                 }
             }
-            ... on Campaign {
+            ... on Infrastructure {
                 name
                 description
                 aliases
+                infrastructure_types
                 first_seen
                 last_seen
-                objective
             }
         """
         object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
-            types=["Campaign"],
+            types=["Infrastructure"],
             stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
@@ -314,7 +374,7 @@ class Campaign:
         if object_result is not None:
             if update or object_result["createdById"] == created_by:
                 # name
-                if object_result["name"] != name:
+                if name is not None and object_result["name"] != name:
                     self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
@@ -343,6 +403,15 @@ class Campaign:
                         id=object_result["id"], key="aliases", value=new_aliases
                     )
                     object_result["aliases"] = new_aliases
+                # confidence
+                if (
+                    self.opencti.not_empty(confidence)
+                    and object_result["confidence"] != confidence
+                ):
+                    self.opencti.stix_domain_object.update_field(
+                        id=object_result["id"], key="confidence", value=str(confidence)
+                    )
+                    object_result["confidence"] = confidence
                 # first_seen
                 if first_seen is not None and object_result["first_seen"] != first_seen:
                     self.opencti.stix_domain_object.update_field(
@@ -354,16 +423,7 @@ class Campaign:
                     self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="last_seen", value=last_seen
                     )
-                    object_result["external_id"] = last_seen
-                # objective
-                if (
-                    self.opencti.not_empty(objective)
-                    and object_result["objective"] != objective
-                ):
-                    self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="objective", value=objective
-                    )
-                    object_result["objective"] = objective
+                    object_result["last_seen"] = last_seen
             return object_result
         else:
             return self.create_raw(
@@ -379,17 +439,18 @@ class Campaign:
                 modified=modified,
                 name=name,
                 description=description,
+                infrastructure_types=infrastructure_types,
                 aliases=aliases,
                 first_seen=first_seen,
                 last_seen=last_seen,
-                objective=objective,
+                killChainPhases=kill_chain_phases,
             )
 
     """
-        Import a Campaign object from a STIX2 object
+        Import an Infrastructure object from a STIX2 object
 
-        :param stixObject: the Stix-Object Campaign
-        :return Campaign object
+        :param stixObject: the Stix-Object Infrastructure
+        :return Infrastructure object
     """
 
     def import_from_stix2(self, **kwargs):
@@ -425,27 +486,30 @@ class Campaign:
                 if "description" in stix_object
                 else "",
                 aliases=self.opencti.stix2.pick_aliases(stix_object),
-                objective=stix_object["objective"]
-                if "objective" in stix_object
-                else None,
+                infrastructure_types=stix_object["infrastructure_types"]
+                if "infrastructure_types" in stix_object
+                else "",
                 first_seen=stix_object["first_seen"]
                 if "first_seen" in stix_object
                 else None,
                 last_seen=stix_object["last_seen"]
                 if "last_seen" in stix_object
                 else None,
+                killChainPhases=extras["kill_chain_phases_ids"]
+                if "kill_chain_phases_ids" in extras
+                else None,
                 update=update,
             )
         else:
             self.opencti.log(
-                "error", "[opencti_campaign] Missing parameters: stixObject"
+                "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )
 
     """
-        Export an Campaign object in STIX2
+        Export an Infrastructure object in STIX2
     
-        :param id: the id of the Campaign
-        :return Campaign object
+        :param id: the id of the Infrastructure
+        :return Infrastructure object
     """
 
     def to_stix2(self, **kwargs):
@@ -458,34 +522,41 @@ class Campaign:
         if id is not None and entity is None:
             entity = self.read(id=id)
         if entity is not None:
-            campaign = dict()
-            campaign["id"] = entity["stix_id"]
-            campaign["type"] = "campaign"
-            campaign["spec_version"] = SPEC_VERSION
-            campaign["name"] = entity["name"]
+            infrastructure = dict()
+            infrastructure["id"] = entity["stix_id"]
+            infrastructure["type"] = "infrastructure"
+            infrastructure["spec_version"] = SPEC_VERSION
+            infrastructure["name"] = entity["name"]
             if self.opencti.not_empty(entity["stix_label"]):
-                campaign["labels"] = entity["stix_label"]
+                infrastructure["labels"] = entity["stix_label"]
             else:
-                campaign["labels"] = ["campaign"]
-            if self.opencti.not_empty(entity["alias"]):
-                campaign["aliases"] = entity["alias"]
+                infrastructure["labels"] = ["infrastructure"]
             if self.opencti.not_empty(entity["description"]):
-                campaign["description"] = entity["description"]
-            if self.opencti.not_empty(entity["objective"]):
-                campaign["objective"] = entity["objective"]
-            if self.opencti.not_empty(entity["first_seen"]):
-                campaign["first_seen"] = self.opencti.stix2.format_date(
-                    entity["first_seen"]
-                )
-            if self.opencti.not_empty(entity["last_seen"]):
-                campaign["last_seen"] = self.opencti.stix2.format_date(
-                    entity["last_seen"]
-                )
-            campaign["created"] = self.opencti.stix2.format_date(entity["created"])
-            campaign["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            campaign[CustomProperties.ID] = entity["id"]
+                infrastructure["description"] = entity["description"]
+            infrastructure["pattern"] = entity["infrastructure_pattern"]
+            infrastructure["valid_from"] = self.opencti.stix2.format_date(
+                entity["valid_from"]
+            )
+            infrastructure["valid_until"] = self.opencti.stix2.format_date(
+                entity["valid_until"]
+            )
+            if self.opencti.not_empty(entity["pattern_type"]):
+                infrastructure["pattern_type"] = entity["pattern_type"]
+            else:
+                infrastructure["pattern_type"] = "stix"
+            infrastructure["created"] = self.opencti.stix2.format_date(
+                entity["created"]
+            )
+            infrastructure["modified"] = self.opencti.stix2.format_date(
+                entity["modified"]
+            )
+            if self.opencti.not_empty(entity["alias"]):
+                infrastructure[CustomProperties.ALIASES] = entity["alias"]
+            if self.opencti.not_empty(entity["score"]):
+                infrastructure[CustomProperties.SCORE] = entity["score"]
+            infrastructure[CustomProperties.ID] = entity["id"]
             return self.opencti.stix2.prepare_export(
-                entity, campaign, mode, max_marking_definition_entity
+                entity, infrastructure, mode, max_marking_definition_entity
             )
         else:
             self.opencti.log("error", "Missing parameters: id or entity")

@@ -4,46 +4,32 @@
 from enum import Enum
 
 
-class ObservableTypes(Enum):
-    """These are the possible values for OpenCTI's observable types.
-
-    Use in conjunction with the STIX custom property `x_opencti_observable_type`.
-
-    ref: https://github.com/OpenCTI-Platform/opencti/blob/8854c2576dc17da9da54e54b116779bd2131617c/opencti-front/src/private/components/report/ReportAddObservable.js
-
-    NOTE: should this be a mapping between the stix2 SDO objects (i.e. stix2/v20/sdo.py)?
-    """
-
+class StixCyberObservableTypes(Enum):
     AUTONOMOUS_SYSTEM = "Autonomous-System"
-    CRYPTOGRAPHIC_KEY = "Cryptographic-Key"
-    CRYPTOCURRENCY_WALLET = "Cryptocurrency-Wallet"
-    DOMAIN = "Domain"
-    EMAIL_ADDR = "Email-Address"
-    EMAIL_SUBJECT = "Email-Subject"
     DIRECTORY = "Directory"
-    FILE_NAME = "File-Name"
-    FILE_PATH = "File-Path"
-    FILE_HASH_MD5 = "File-MD5"
-    FILE_HASH_SHA1 = "File-SHA1"
-    FILE_HASH_SHA256 = "File-SHA256"
-    HOSTNAME = "Hostname"
+    DOMAIN_NAME = "Domain-Name"
+    EMAIL_ADDR = "Email-Addr"
+    EMAIL_MESSAGE = "Email-Message"
+    EMAIL_MIME_PART_TYPE = "Email-Mime-Part-Type"
+    ARTIFACT = "Artifact"
+    FILE = "File"
+    X509_CERTIFICATE = "X509-Certificate"
     IPV4_ADDR = "IPv4-Addr"
     IPV6_ADDR = "IPv6-Addr"
     MAC_ADDR = "Mac-Addr"
     MUTEX = "Mutex"
-    PDB_PATH = "PDB-Path"
+    NETWORK_TRAFFIC = "Network-Traffic"
     PROCESS = "Process"
-    REGISTRY_KEY = "Registry-Key"
-    REGISTRY_VALUE = "Registry-Key-Value"
-    TEXT = "Text"
-    URL = "URL"
-    USER_AGENT = "User-Agent"
+    SOFTWARE = "Software"
+    URL = "Url"
     USER_ACCOUNT = "User-Account"
-    WIN_SERVICE_NAME = "Windows-Service-Name"
-    WIN_SERVICE_DISPLAY = "Windows-Service-Display-Name"
-    WIN_SCHEDULED_TASK = "Windows-Scheduled-Task"
-    X509_CERT_ISSUER = "X509-Certificate-Issuer"
-    X509_CERT_SN = "X509-Certificate-Serial-Number"
+    WINDOWS_REGISTRY_KEY = "Windows-Registry-Key"
+    WINDOWS_REGISTRY_VALUE_TYPE = "Windows-Registry-Value-Type"
+    X509_V3_EXTENSIONS_TYPE_ = "X509-V3-Extensions-Type"
+    X_OPENCTI_CRYPTOGRAPHIC_KEY = "X-Opencti-Cryptographic-Key"
+    X_OPENCTI_CRYPTOCURRENCY_WALLET = "X-Opencti-Cryptocurrency-Wallet"
+    X_OPENCTI_TEXT = "X-Opencti-Text"
+    X_OPENCTI_USER_AGENT = "X-Opencti-User-Agent"
 
     @classmethod
     def has_value(cls, value):
@@ -62,12 +48,11 @@ class IdentityTypes(Enum):
         return value in lower_attr
 
 
-class StixCyberObservableRelationTypes(Enum):
-    LINKED = "linked"
-    RESOLVES = "resolves"
-    BELONGS = "belongs"
-    CONTAINS = "contains"
-    CORRESPONDS = "corresponds"
+class LocationTypes(Enum):
+    CITY = "City"
+    COUNTRY = "Country"
+    REGION = "Region"
+    POSITION = "Position"
 
     @classmethod
     def has_value(cls, value):

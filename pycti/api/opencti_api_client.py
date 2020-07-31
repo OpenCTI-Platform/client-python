@@ -12,7 +12,7 @@ from typing import Union
 
 from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_job import OpenCTIApiJob
-from pycti.utils.constants import ObservableTypes
+from pycti.utils.constants import StixCyberObservableTypes
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 
 from pycti.entities.opencti_label import Label
@@ -30,10 +30,12 @@ from pycti.entities.opencti_stix_cyber_observable_relation import (
     StixCyberObservableRelation,
 )
 from pycti.entities.opencti_identity import Identity
+from pycti.entities.opencti_location import Location
 from pycti.entities.opencti_threat_actor import ThreatActor
 from pycti.entities.opencti_intrusion_set import IntrusionSet
+from pycti.entities.opencti_infrastructure import Infrastructure
 from pycti.entities.opencti_campaign import Campaign
-from pycti.entities.opencti_incident import Incident
+from pycti.entities.opencti_x_opencti_incident import XOpenctiIncident
 from pycti.entities.opencti_malware import Malware
 from pycti.entities.opencti_tool import Tool
 from pycti.entities.opencti_vulnerability import Vulnerability
@@ -41,6 +43,7 @@ from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_course_of_action import CourseOfAction
 from pycti.entities.opencti_report import Report
 from pycti.entities.opencti_note import Note
+from pycti.entities.opencti_observed_data import ObservedData
 from pycti.entities.opencti_opinion import Opinion
 from pycti.entities.opencti_indicator import Indicator
 
@@ -120,10 +123,12 @@ class OpenCTIApiClient:
         self.stix_sighting = StixSighting(self)
         self.stix_observable_relation = StixCyberObservableRelation(self)
         self.identity = Identity(self)
+        self.location = Location(self)
         self.threat_actor = ThreatActor(self)
         self.intrusion_set = IntrusionSet(self)
+        self.infrastructure = Infrastructure(self)
         self.campaign = Campaign(self)
-        self.incident = Incident(self)
+        self.x_opencti_incident = XOpenctiIncident(self)
         self.malware = Malware(self)
         self.tool = Tool(self)
         self.vulnerability = Vulnerability(self)
@@ -131,6 +136,7 @@ class OpenCTIApiClient:
         self.course_of_action = CourseOfAction(self)
         self.report = Report(self)
         self.note = Note(self)
+        self.observed_data = ObservedData(self)
         self.opinion = Opinion(self)
         self.indicator = Indicator(self)
 

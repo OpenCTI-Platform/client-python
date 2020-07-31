@@ -13,10 +13,9 @@ import dateutil.parser
 import pytz
 
 from pycti.utils.constants import (
-    ObservableTypes,
     IdentityTypes,
-    CustomProperties,
-    StixCyberObservableRelationTypes,
+    LocationTypes,
+    StixCyberObservableTypes,
 )
 
 datefinder.ValueError = ValueError, OverflowError
@@ -39,6 +38,7 @@ class OpenCTIStix2:
         self.opencti = opencti
         self.mapping_cache = {}
 
+    ######### UTILS
     def unknown_type(self, stix_object):
         self.opencti.log(
             "error",
@@ -227,10 +227,8 @@ class OpenCTIStix2:
                         "id": created_by_result["id"],
                         "type": created_by_result["entity_type"],
                     }
-            print(created_by_result)
             if created_by_result is not None:
                 created_by_ref_id = created_by_result["id"]
-        print(created_by_ref_id)
 
         # Object Marking Refs
         object_marking_ids = []
@@ -252,25 +250,14 @@ class OpenCTIStix2:
 
         # Object Tags
         object_label_ids = []
-        if CustomProperties.TAG_TYPE in stix_object:
-            for tag in stix_object[CustomProperties.TAG_TYPE]:
-                tag_result = None
-                if "id" in tag:
-                    if tag["id"] in self.mapping_cache:
-                        tag_result = self.mapping_cache[tag["id"]]
-                    else:
-                        tag_result = self.opencti.tag.read(id=tag["id"])
-                if tag_result is not None:
-                    self.mapping_cache[tag["id"]] = {"id": tag_result["id"]}
+        if "labels" in stix_object:
+            for label in stix_object["labels"]:
+                if "label_" + label in self.mapping_cache:
+                    label_id = self.mapping_cache["label_" + label]
                 else:
-                    tag_result = self.opencti.tag.create(
-                        tag_type=tag["tag_type"],
-                        value=tag["value"],
-                        color=tag["color"],
-                        id=tag["id"] if "id" in tag else None,
-                    )
-                if tag_result is not None:
-                    object_label_ids.append(tag_result["id"])
+                    label_id = self.opencti.label.create(value=label)["id"]
+                if label_id is not None:
+                    object_label_ids.append(label_id)
 
         # Kill Chain Phases
         kill_chain_phases_ids = []
@@ -288,21 +275,9 @@ class OpenCTIStix2:
                     kill_chain_phase = self.opencti.kill_chain_phase.create(
                         kill_chain_name=kill_chain_phase["kill_chain_name"],
                         phase_name=kill_chain_phase["phase_name"],
-                        phase_order=kill_chain_phase[CustomProperties.PHASE_ORDER]
-                        if CustomProperties.PHASE_ORDER in kill_chain_phase
+                        phase_order=kill_chain_phase["x_opencti_order"]
+                        if "x_opencti_order" in kill_chain_phase
                         else 0,
-                        id=kill_chain_phase[CustomProperties.ID]
-                        if CustomProperties.ID in kill_chain_phase
-                        else None,
-                        stix_id=kill_chain_phase["id"]
-                        if "id" in kill_chain_phase
-                        else None,
-                        created=kill_chain_phase[CustomProperties.CREATED]
-                        if CustomProperties.CREATED in kill_chain_phase
-                        else None,
-                        modified=kill_chain_phase[CustomProperties.MODIFIED]
-                        if CustomProperties.MODIFIED in kill_chain_phase
-                        else None,
                     )
                     self.mapping_cache[
                         kill_chain_phase["kill_chain_name"]
@@ -363,18 +338,6 @@ class OpenCTIStix2:
                         else None,
                         description=external_reference["description"]
                         if "description" in external_reference
-                        else None,
-                        id=external_reference[CustomProperties.ID]
-                        if CustomProperties.ID in external_reference
-                        else None,
-                        stix_id=external_reference["id"]
-                        if "id" in external_reference
-                        else None,
-                        created=external_reference[CustomProperties.CREATED]
-                        if CustomProperties.CREATED in external_reference
-                        else None,
-                        modified=external_reference[CustomProperties.MODIFIED]
-                        if CustomProperties.MODIFIED in external_reference
                         else None,
                     )["id"]
                 self.mapping_cache[url] = {"id": external_reference_id}
@@ -520,20 +483,23 @@ class OpenCTIStix2:
         # Import
         importer = {
             "marking-definition": self.create_marking_definition,
-            "identity": self.create_identity,
-            "threat-actor": self.create_threat_actor,
-            "intrusion-set": self.create_intrusion_set,
+            "attack-pattern": self.create_attack_pattern,
             "campaign": self.create_campaign,
-            "x-opencti-incident": self.create_incident,
+            "note": self.create_note,
+            "observed-data": self.create_observed_data,
+            "opinion": self.create_opinion,
+            "report": self.create_report,
+            "course-of-action": self.create_course_of_action,
+            "identity": self.create_identity,
+            "indicator": self.create_indicator,
+            "infrastructure": self.create_infrastructure,
+            "intrusion-set": self.create_intrusion_set,
+            "location": self.create_location,
             "malware": self.create_malware,
+            "threat-actor": self.create_threat_actor,
             "tool": self.create_tool,
             "vulnerability": self.create_vulnerability,
-            "attack-pattern": self.create_attack_pattern,
-            "course-of-action": self.create_course_of_action,
-            "report": self.create_report,
-            "note": self.create_note,
-            "opinion": self.create_opinion,
-            "indicator": self.create_indicator,
+            "x-opencti-incident": self.create_x_opencti_incident,
         }
         do_import = importer.get(
             stix_object["type"],
@@ -566,10 +532,6 @@ class OpenCTIStix2:
 
             # Add external references
             for external_reference_id in external_references_ids:
-                self.opencti.stix_domain_object.add_external_reference(
-                    id=stix_object_result["id"],
-                    external_reference_id=external_reference_id,
-                )
                 if external_reference_id in reports:
                     self.opencti.report.add_opencti_stix_object_or_stix_relationship(
                         id=reports[external_reference_id]["id"],
@@ -636,8 +598,8 @@ class OpenCTIStix2:
                                     stix_observable_id=observable_ref["id"],
                                 )
             # Add files
-            if CustomProperties.FILES in stix_object:
-                for file in stix_object[CustomProperties.FILES]:
+            if "x_opencti_files" in stix_object:
+                for file in stix_object["x_opencti_files"]:
                     self.opencti.stix_domain_object.add_file(
                         id=stix_object_result["id"],
                         file_name=file["name"],
@@ -669,76 +631,7 @@ class OpenCTIStix2:
 
         # Create the relation
 
-        ### Get the SOURCE_REF
-        if CustomProperties.SOURCE_REF in stix_relation:
-            source_ref = stix_relation[CustomProperties.SOURCE_REF]
-        else:
-            source_ref = stix_relation["source_ref"]
-        if source_ref in self.mapping_cache:
-            if (
-                StixCyberObservableRelationTypes.has_value(
-                    stix_relation["relationship_type"]
-                )
-                and "observableRefs" in self.mapping_cache[source_ref]
-                and self.mapping_cache[source_ref]["observableRefs"] is not None
-                and len(self.mapping_cache[source_ref]["observableRefs"]) > 0
-            ):
-                source_id = self.mapping_cache[source_ref]["observableRefs"][0]["id"]
-                source_type = self.mapping_cache[source_ref]["observableRefs"][0][
-                    "entity_type"
-                ]
-            else:
-                source_id = self.mapping_cache[source_ref]["id"]
-                source_type = self.mapping_cache[source_ref]["type"]
-        else:
-            stix_object_result = self.opencti.opencti_stix_object_or_stix_relationship.read(
-                id=source_ref
-            )
-            if stix_object_result is not None:
-                source_id = stix_object_result["id"]
-                source_type = stix_object_result["entity_type"]
-            else:
-                self.opencti.log(
-                    "error",
-                    "Source ref of the relationship not found, doing nothing...",
-                )
-                return None
-
-        ### Get the TARGET_REF
-        if CustomProperties.TARGET_REF in stix_relation:
-            target_ref = stix_relation[CustomProperties.TARGET_REF]
-        else:
-            target_ref = stix_relation["target_ref"]
-        if target_ref in self.mapping_cache:
-            if (
-                StixCyberObservableRelationTypes.has_value(
-                    stix_relation["relationship_type"]
-                )
-                and "observableRefs" in self.mapping_cache[target_ref]
-                and self.mapping_cache[target_ref]["observableRefs"] is not None
-                and len(self.mapping_cache[target_ref]["observableRefs"]) > 0
-            ):
-                target_id = self.mapping_cache[target_ref]["observableRefs"][0]["id"]
-                target_type = self.mapping_cache[target_ref]["observableRefs"][0][
-                    "entity_type"
-                ]
-            else:
-                target_id = self.mapping_cache[target_ref]["id"]
-                target_type = self.mapping_cache[target_ref]["type"]
-        else:
-            stix_object_result = self.opencti.opencti_stix_object_or_stix_relationship.read(
-                id=target_ref
-            )
-            if stix_object_result is not None:
-                target_id = stix_object_result["id"]
-                target_type = stix_object_result["entity_type"]
-            else:
-                self.opencti.log(
-                    "error",
-                    "Target ref of the relationship not found, doing nothing...",
-                )
-                return None
-
+        ## Workaround for missing start_time / end_time
         date = None
         if "external_references" in stix_relation:
             for external_reference in stix_relation["external_references"]:
@@ -766,101 +659,45 @@ class OpenCTIStix2:
         if date is None:
             date = datetime.datetime.today().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        stix_relation_result = None
-        if StixCyberObservableRelationTypes.has_value(
-            stix_relation["relationship_type"]
-        ):
-            stix_relation_result = self.opencti.stix_observable_relation.create(
-                fromId=source_id,
-                fromType=source_type,
-                toId=target_id,
-                toType=target_type,
-                relationship_type=stix_relation["relationship_type"],
-                description=self.convert_markdown(stix_relation["description"])
-                if "description" in stix_relation
-                else None,
-                first_seen=stix_relation[CustomProperties.FIRST_SEEN]
-                if CustomProperties.FIRST_SEEN in stix_relation
-                else date,
-                last_seen=stix_relation[CustomProperties.LAST_SEEN]
-                if CustomProperties.LAST_SEEN in stix_relation
-                else date,
-                weight=stix_relation[CustomProperties.WEIGHT]
-                if CustomProperties.WEIGHT in stix_relation
-                else 1,
-                role_played=stix_relation[CustomProperties.ROLE_PLAYED]
-                if CustomProperties.ROLE_PLAYED in stix_relation
-                else None,
-                id=stix_relation[CustomProperties.ID]
-                if CustomProperties.ID in stix_relation
-                else None,
-                stix_id=stix_relation["id"] if "id" in stix_relation else None,
-                created=stix_relation["created"]
-                if "created" in stix_relation
-                else None,
-                modified=stix_relation["modified"]
-                if "modified" in stix_relation
-                else None,
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                markingDefinitions=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else [],
-                killChainPhases=extras["kill_chain_phases_ids"]
-                if "kill_chain_phases_ids" in extras
-                else [],
-                update=update,
-                ignore_dates=stix_relation[CustomProperties.IGNORE_DATES]
-                if CustomProperties.IGNORE_DATES in stix_relation
-                else None,
-            )
-        else:
-            stix_relation_result = self.opencti.stix_relation.create(
-                fromId=source_id,
-                fromType=source_type,
-                toId=target_id,
-                toType=target_type,
-                relationship_type=stix_relation["relationship_type"],
-                description=self.convert_markdown(stix_relation["description"])
-                if "description" in stix_relation
-                else None,
-                first_seen=stix_relation[CustomProperties.FIRST_SEEN]
-                if CustomProperties.FIRST_SEEN in stix_relation
-                else date,
-                last_seen=stix_relation[CustomProperties.LAST_SEEN]
-                if CustomProperties.LAST_SEEN in stix_relation
-                else date,
-                weight=stix_relation[CustomProperties.WEIGHT]
-                if CustomProperties.WEIGHT in stix_relation
-                else 1,
-                role_played=stix_relation[CustomProperties.ROLE_PLAYED]
-                if CustomProperties.ROLE_PLAYED in stix_relation
-                else None,
-                id=stix_relation[CustomProperties.ID]
-                if CustomProperties.ID in stix_relation
-                else None,
-                stix_id=stix_relation["id"] if "id" in stix_relation else None,
-                created=stix_relation["created"]
-                if "created" in stix_relation
-                else None,
-                modified=stix_relation["modified"]
-                if "modified" in stix_relation
-                else None,
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                markingDefinitions=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else [],
-                killChainPhases=extras["kill_chain_phases_ids"]
-                if "kill_chain_phases_ids" in extras
-                else [],
-                update=update,
-                ignore_dates=stix_relation[CustomProperties.IGNORE_DATES]
-                if CustomProperties.IGNORE_DATES in stix_relation
-                else None,
-            )
+        stix_relation_result = self.opencti.stix_relation.create(
+            fromId=source_id,
+            fromType=source_type,
+            toId=target_id,
+            toType=target_type,
+            relationship_type=stix_relation["relationship_type"],
+            description=self.convert_markdown(stix_relation["description"])
+            if "description" in stix_relation
+            else None,
+            first_seen=stix_relation[CustomProperties.FIRST_SEEN]
+            if CustomProperties.FIRST_SEEN in stix_relation
+            else date,
+            last_seen=stix_relation[CustomProperties.LAST_SEEN]
+            if CustomProperties.LAST_SEEN in stix_relation
+            else date,
+            weight=stix_relation[CustomProperties.WEIGHT]
+            if CustomProperties.WEIGHT in stix_relation
+            else 1,
+            role_played=stix_relation[CustomProperties.ROLE_PLAYED]
+            if CustomProperties.ROLE_PLAYED in stix_relation
+            else None,
+            id=stix_relation[CustomProperties.ID]
+            if CustomProperties.ID in stix_relation
+            else None,
+            stix_id=stix_relation["id"] if "id" in stix_relation else None,
+            created=stix_relation["created"] if "created" in stix_relation else None,
+            modified=stix_relation["modified"] if "modified" in stix_relation else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
+            markingDefinitions=extras["object_marking_ids"]
+            if "object_marking_ids" in extras
+            else [],
+            killChainPhases=extras["kill_chain_phases_ids"]
+            if "kill_chain_phases_ids" in extras
+            else [],
+            update=update,
+            ignore_dates=stix_relation[CustomProperties.IGNORE_DATES]
+            if CustomProperties.IGNORE_DATES in stix_relation
+            else None,
+        )
         if stix_relation_result is not None:
             self.mapping_cache[stix_relation["id"]] = {
                 "id": stix_relation_result["id"],
@@ -871,10 +708,6 @@ class OpenCTIStix2:
 
         # Add external references
         for external_reference_id in external_references_ids:
-            self.opencti.opencti_stix_relation.add_external_reference(
-                id=stix_relation_result["id"],
-                external_reference_id=external_reference_id,
-            )
             if external_reference_id in reports:
                 self.opencti.report.add_opencti_stix_object_or_stix_relationship(
                     id=reports[external_reference_id]["id"],
@@ -1262,7 +1095,7 @@ class OpenCTIStix2:
             "threat-actor": self.opencti.threat_actor.to_stix2,
             "intrusion-set": self.opencti.intrusion_set.to_stix2,
             "campaign": self.opencti.campaign.to_stix2,
-            "incident": self.opencti.incident.to_stix2,
+            "incident": self.opencti.x_opencti_incident.to_stix2,
             "malware": self.opencti.malware.to_stix2,
             "tool": self.opencti.tool.to_stix2,
             "vulnerability": self.opencti.vulnerability.to_stix2,
@@ -1311,22 +1144,30 @@ class OpenCTIStix2:
                 filters.append({"key": "entity_type", "values": [entity_type]})
             else:
                 filters = [{"key": "entity_type", "values": [entity_type]}]
-            entity_type = "identity"
+            entity_type = "Identity"
+
+        if IdentityTypes.has_value(entity_type):
+            if filters is not None:
+                filters.append({"key": "entity_type", "values": [entity_type]})
+            else:
+                filters = [{"key": "entity_type", "values": [entity_type]}]
+            entity_type = "Identity"
 
         # List
         lister = {
+            "Attack-Pattern": self.opencti.attack_pattern.list,
+            "campaign": self.opencti.campaign.list,
+            "note": self.opencti.note.list,
+            "observed-data": self.opencti.observed_data.list,
             "identity": self.opencti.identity.list,
             "threat-actor": self.opencti.threat_actor.list,
             "intrusion-set": self.opencti.intrusion_set.list,
-            "campaign": self.opencti.campaign.list,
-            "incident": self.opencti.incident.list,
+            "incident": self.opencti.x_opencti_incident.list,
             "malware": self.opencti.malware.list,
             "tool": self.opencti.tool.list,
             "vulnerability": self.opencti.vulnerability.list,
-            "attack-pattern": self.opencti.attack_pattern.list,
             "course-of-action": self.opencti.course_of_action.list,
             "report": self.opencti.report.list,
-            "note": self.opencti.note.list,
             "opinion": self.opencti.opinion.list,
             "indicator": self.opencti.indicator.list,
             "stix-observable": self.opencti.stix_observable.list,
@@ -1350,7 +1191,7 @@ class OpenCTIStix2:
                 "threat-actor": self.opencti.threat_actor.to_stix2,
                 "intrusion-set": self.opencti.intrusion_set.to_stix2,
                 "campaign": self.opencti.campaign.to_stix2,
-                "incident": self.opencti.incident.to_stix2,
+                "incident": self.opencti.x_opencti_incident.to_stix2,
                 "malware": self.opencti.malware.to_stix2,
                 "tool": self.opencti.tool.to_stix2,
                 "vulnerability": self.opencti.vulnerability.to_stix2,
@@ -1616,7 +1457,7 @@ class OpenCTIStix2:
                 "threat-actor": self.opencti.threat_actor.to_stix2,
                 "intrusion-set": self.opencti.intrusion_set.to_stix2,
                 "campaign": self.opencti.campaign.to_stix2,
-                "incident": self.opencti.incident.to_stix2,
+                "incident": self.opencti.x_opencti_incident.to_stix2,
                 "malware": self.opencti.malware.to_stix2,
                 "tool": self.opencti.tool.to_stix2,
                 "vulnerability": self.opencti.vulnerability.to_stix2,
@@ -1715,6 +1556,11 @@ class OpenCTIStix2:
             stixObject=stix_object, extras=extras, update=update
         )
 
+    def create_location(self, stix_object, extras, update=False):
+        return self.opencti.location.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
+        )
+
     # TODO move in ThreatActor
     def create_threat_actor(self, stix_object, extras, update=False):
         return self.opencti.threat_actor.create(
@@ -1753,101 +1599,24 @@ class OpenCTIStix2:
             update=update,
         )
 
-    # TODO move in IntrusionSet
     def create_intrusion_set(self, stix_object, extras, update=False):
-        return self.opencti.intrusion_set.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            alias=self.pick_aliases(stix_object),
-            first_seen=stix_object[CustomProperties.FIRST_SEEN]
-            if CustomProperties.FIRST_SEEN in stix_object
-            else None,
-            last_seen=stix_object[CustomProperties.LAST_SEEN]
-            if CustomProperties.LAST_SEEN in stix_object
-            else None,
-            goal=stix_object["goals"] if "goals" in stix_object else None,
-            sophistication=stix_object["sophistication"]
-            if "sophistication" in stix_object
-            else None,
-            resource_level=stix_object["resource_level"]
-            if "resource_level" in stix_object
-            else None,
-            primary_motivation=stix_object["primary_motivation"]
-            if "primary_motivation" in stix_object
-            else None,
-            secondary_motivation=stix_object["secondary_motivations"]
-            if "secondary_motivations" in stix_object
-            else None,
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else None,
-            tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
-            update=update,
+        return self.opencti.intrusion_set.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
-    # TODO move in Campaign
+    def create_infrastructure(self, stix_object, extras, update=False):
+        return self.opencti.infrastructure.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
+        )
+
     def create_campaign(self, stix_object, extras, update=False):
-        return self.opencti.campaign.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            alias=self.pick_aliases(stix_object),
-            objective=stix_object["objective"] if "objective" in stix_object else None,
-            first_seen=stix_object[CustomProperties.FIRST_SEEN]
-            if CustomProperties.FIRST_SEEN in stix_object
-            else None,
-            last_seen=stix_object[CustomProperties.LAST_SEEN]
-            if CustomProperties.LAST_SEEN in stix_object
-            else None,
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else None,
-            tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
-            uodate=update,
+        return self.opencti.x_opencti_campaign.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
-    # TODO move in Incident
-    def create_incident(self, stix_object, extras, update=False):
-        return self.opencti.incident.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            alias=self.pick_aliases(stix_object),
-            objective=stix_object["objective"] if "objective" in stix_object else None,
-            first_seen=stix_object["first_seen"]
-            if "first_seen" in stix_object
-            else None,
-            last_seen=stix_object["last_seen"] if "last_seen" in stix_object else None,
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else None,
-            tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
-            update=update,
+    def create_x_opencti_incident(self, stix_object, extras, update=False):
+        return self.opencti.x_opencti_incident.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
     # TODO move in Malware
@@ -1923,30 +1692,18 @@ class OpenCTIStix2:
             stixObject=stix_object, extras=extras, update=update
         )
 
-    # TODO move in Course Of Action
     def create_course_of_action(self, stix_object, extras, update=False):
-        return self.opencti.course_of_action.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            alias=self.pick_aliases(stix_object),
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else None,
-            tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
-            update=update,
+        return self.opencti.course_of_action.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
     def create_report(self, stix_object, extras, update=False):
         return self.opencti.report.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
+        )
+
+    def create_observed_data(self, stix_object, extras, update=False):
+        return self.opencti.observed_data.import_from_stix2(
             stixObject=stix_object, extras=extras, update=update
         )
 

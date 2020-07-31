@@ -1,11 +1,11 @@
 # coding: utf-8
 
 import json
-from pycti.utils.constants import CustomProperties
+from pycti.utils.constants import CustomProperties, IdentityTypes
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
-class Campaign:
+class Location:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -84,22 +84,30 @@ class Campaign:
             name
             description
             aliases
-            first_seen
-            last_seen
-            objective
+            contact_information
+            ... on Individual {
+                x_opencti_firstname
+                x_opencti_lastname
+            }
+            ... on Organization {
+                x_opencti_organization_type
+                x_opencti_reliability
+            }
         """
 
     """
-        List Campaign objects
+        List Identity objects
 
+        :param types: the list of types
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination
-        :return List of Campaign objects
+        :return List of Identity objects
     """
 
     def list(self, **kwargs):
+        types = kwargs.get("types", None)
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         first = kwargs.get("first", 500)
@@ -113,12 +121,12 @@ class Campaign:
             first = 500
 
         self.opencti.log(
-            "info", "Listing Campaigns with filters " + json.dumps(filters) + "."
+            "info", "Listing Identities with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Campaigns($filters: [CampaignsFiltering], $search: String, $first: Int, $after: ID, $orderBy: CampaignsOrdering, $orderMode: OrderingMode) {
-                campaigns(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query Identities($types: [String], $filters: [IdentitiesFiltering], $search: String, $first: Int, $after: ID, $orderBy: IdentitiesOrdering, $orderMode: OrderingMode) {
+                identities(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -140,6 +148,7 @@ class Campaign:
         result = self.opencti.query(
             query,
             {
+                "types": types,
                 "filters": filters,
                 "search": search,
                 "first": first,
@@ -149,15 +158,15 @@ class Campaign:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["campaigns"], with_pagination
+            result["data"]["identities"], with_pagination
         )
 
     """
-        Read a Campaign object
+        Read a Identity object
         
-        :param id: the id of the Campaign
+        :param id: the id of the Identity
         :param filters: the filters to apply if no id provided
-        :return Campaign object
+        :return Identity object
     """
 
     def read(self, **kwargs):
@@ -165,11 +174,11 @@ class Campaign:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Campaign {" + id + "}.")
+            self.opencti.log("info", "Reading Identity {" + id + "}.")
             query = (
                 """
-                query Campaign($id: String!) {
-                    campaign(id: $id) {
+                query Identity($id: String!) {
+                    identity(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -182,7 +191,7 @@ class Campaign:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["campaign"])
+            return self.opencti.process_multiple_fields(result["data"]["identity"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -191,18 +200,19 @@ class Campaign:
                 return None
         else:
             self.opencti.log(
-                "error", "[opencti_campaign] Missing parameters: id or filters"
+                "error", "[opencti_identity] Missing parameters: id or filters"
             )
             return None
 
     """
-        Create a Campaign object
+        Create a Identity object
 
-        :param name: the name of the Campaign
-        :return Campaign object
+        :param name: the name of the Identity
+        :return Identity object
     """
 
     def create_raw(self, **kwargs):
+        type = kwargs.get("type", None)
         stix_id = kwargs.get("stix_id", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
@@ -216,97 +226,134 @@ class Campaign:
         name = kwargs.get("name", None)
         description = kwargs.get("description", "")
         aliases = kwargs.get("aliases", None)
-        first_seen = kwargs.get("first_seen", None)
-        last_seen = kwargs.get("last_seen", None)
-        objective = kwargs.get("objective", None)
-
+        contact_information = kwargs.get("contact_information", None)
+        x_opencti_organization_type = kwargs.get("x_opencti_organization_type", None)
+        x_opencti_reliability = kwargs.get("x_opencti_reliability", None)
+        x_opencti_firstname = kwargs.get("x_opencti_firstname", None)
+        x_opencti_lastname = kwargs.get("x_opencti_lastname", None)
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Campaign {" + name + "}.")
-            query = """
-                mutation CampaignAdd($input: CampaignAddInput) {
-                    campaignAdd(input: $input) {
-                        id
-                        standard_id
-                        entity_type
-                        parent_types
+            self.opencti.log("info", "Creating Identity {" + name + "}.")
+            input_variables = {
+                "stix_id": stix_id,
+                "createdBy": created_by,
+                "objectMarking": object_marking,
+                "objectLabel": object_label,
+                "externalReferences": external_references,
+                "revoked": revoked,
+                "confidence": confidence,
+                "lang": lang,
+                "created": created,
+                "modified": modified,
+                "name": name,
+                "description": description,
+                "aliases": aliases,
+                "contact_information": contact_information,
+            }
+            if type == IdentityTypes.ORGANIZATION.value:
+                query = """
+                    mutation OrganizationAdd($input: OrganizationAddInput) {
+                        organizationAdd(input: $input) {
+                            id
+                            standard_id
+                            entity_type
+                            parent_types
+                        }
                     }
-                }
-            """
-            result = self.opencti.query(
-                query,
-                {
-                    "input": {
-                        "stix_id": stix_id,
-                        "createdBy": created_by,
-                        "objectMarking": object_marking,
-                        "objectLabel": object_label,
-                        "externalReferences": external_references,
-                        "revoked": revoked,
-                        "confidence": confidence,
-                        "lang": lang,
-                        "created": created,
-                        "modified": modified,
-                        "name": name,
-                        "description": description,
-                        "aliases": aliases,
-                        "first_seen": first_seen,
-                        "last_seen": last_seen,
-                        "objective": objective,
+                """
+                input_variables[
+                    "x_opencti_organization_type"
+                ] = x_opencti_organization_type
+                input_variables["x_opencti_reliability"] = x_opencti_reliability
+                result_data_field = "organizationAdd"
+            elif type == IdentityTypes.INDIVIDUAL.value:
+                query = """
+                    mutation IndividualAdd($input: OrganizationAddInput) {
+                        individualAdd(input: $input) {
+                            id
+                            standard_id
+                            entity_type
+                            parent_types
+                        }
                     }
-                },
+                """
+                input_variables["x_opencti_firstname"] = x_opencti_firstname
+                input_variables["x_opencti_lastname"] = x_opencti_lastname
+                result_data_field = "individualAdd"
+            else:
+                query = """
+                    mutation IdentityAdd($input: IdentityAddInput) {
+                        identityAdd(input: $input) {
+                            id
+                            standard_id
+                            entity_type
+                            parent_types
+                        }
+                    }
+                """
+                input_variables["type"] = type
+                result_data_field = "identityAdd"
+            result = self.opencti.query(query, {"input": input_variables,},)
+            return self.opencti.process_multiple_fields(
+                result["data"][result_data_field]
             )
-            return self.opencti.process_multiple_fields(result["data"]["campaignAdd"])
         else:
-            self.opencti.log(
-                "error", "[opencti_campaign] Missing parameters: name and description"
-            )
+            self.opencti.log("error", "Missing parameters: name and description")
 
     """
-        Create a Campaign object only if it not exists, update it on request
+        Create a  Identity object only if it not exists, update it on request
 
-        :param name: the name of the Campaign
-        :return Campaign object
+        :param name: the name of the Identity
+        :return Identity object
     """
 
     def create(self, **kwargs):
+        type = kwargs.get("type", None)
         stix_id = kwargs.get("stix_id", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
         external_references = kwargs.get("externalReferences", None)
-        revoked = kwargs.get("revoked", None)
-        confidence = kwargs.get("confidence", None)
+        revoked = kwargs.get("revoked", False)
+        confidence = kwargs.get("confidence", 0)
         lang = kwargs.get("lang", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
         description = kwargs.get("description", "")
         aliases = kwargs.get("aliases", None)
-        first_seen = kwargs.get("first_seen", None)
-        last_seen = kwargs.get("last_seen", None)
-        objective = kwargs.get("objective", None)
+        contact_information = kwargs.get("contact_information", None)
+        x_opencti_organization_type = kwargs.get("x_opencti_organization_type", None)
+        x_opencti_reliability = kwargs.get("x_opencti_reliability", None)
+        x_opencti_firstname = kwargs.get("x_opencti_firstname", None)
+        x_opencti_lastname = kwargs.get("x_opencti_lastname", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
             standard_id
             entity_type
             parent_types
+            ... on Identity {
+                name
+                description 
+                aliases
+                contact_information
+            }
+            ... on Organization {
+                x_opencti_organization_type
+                x_opencti_reliability
+            }
+            ... on Individual {
+                x_opencti_firstname
+                x_opencti_lastname
+            }
             createdBy {
                 ... on Identity {
                     id
                 }
             }
-            ... on Campaign {
-                name
-                description
-                aliases
-                first_seen
-                last_seen
-                objective
-            }
         """
         object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
-            types=["Campaign"],
+            types=[type],
             stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
@@ -343,30 +390,48 @@ class Campaign:
                         id=object_result["id"], key="aliases", value=new_aliases
                     )
                     object_result["aliases"] = new_aliases
-                # first_seen
-                if first_seen is not None and object_result["first_seen"] != first_seen:
-                    self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="first_seen", value=first_seen
-                    )
-                    object_result["first_seen"] = first_seen
-                # last_seen
-                if last_seen is not None and object_result["last_seen"] != last_seen:
-                    self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="last_seen", value=last_seen
-                    )
-                    object_result["external_id"] = last_seen
-                # objective
+                # contact_information
                 if (
-                    self.opencti.not_empty(objective)
-                    and object_result["objective"] != objective
+                    self.opencti.not_empty(contact_information)
+                    and object_result["contact_information"] != contact_information
                 ):
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="objective", value=objective
+                        id=object_result["id"],
+                        key="contact_information",
+                        value=contact_information,
                     )
-                    object_result["objective"] = objective
+                    object_result["contact_information"] = contact_information
+                # x_opencti_organization_type
+                if (
+                    self.opencti.not_empty(x_opencti_organization_type)
+                    and "x_opencti_organization_type" in object_result
+                    and object_result["x_opencti_organization_type"]
+                    != x_opencti_organization_type
+                ):
+                    self.opencti.stix_domain_object.update_field(
+                        id=object_result["id"],
+                        key="x_opencti_organization_type",
+                        value=x_opencti_organization_type,
+                    )
+                    object_result[
+                        "x_opencti_organization_type"
+                    ] = x_opencti_organization_type
+                # x_opencti_reliability
+                if (
+                    self.opencti.not_empty(x_opencti_reliability)
+                    and "x_opencti_reliability" in object_result
+                    and object_result["x_opencti_reliability"] != x_opencti_reliability
+                ):
+                    self.opencti.stix_domain_object.update_field(
+                        id=object_result["id"],
+                        key="x_opencti_reliability",
+                        value=x_opencti_reliability,
+                    )
+                    object_result["x_opencti_reliability"] = x_opencti_reliability
             return object_result
         else:
             return self.create_raw(
+                type=type,
                 stix_id=stix_id,
                 createdBy=created_by,
                 objectMarking=object_marking,
@@ -380,16 +445,18 @@ class Campaign:
                 name=name,
                 description=description,
                 aliases=aliases,
-                first_seen=first_seen,
-                last_seen=last_seen,
-                objective=objective,
+                contact_information=contact_information,
+                x_opencti_organization_type=x_opencti_organization_type,
+                x_opencti_reliability=x_opencti_reliability,
+                x_opencti_firstname=x_opencti_firstname,
+                x_opencti_lastname=x_opencti_lastname,
             )
 
     """
-        Import a Campaign object from a STIX2 object
+        Import an Identity object from a STIX2 object
 
-        :param stixObject: the Stix-Object Campaign
-        :return Campaign object
+        :param stixObject: the Stix-Object Identity
+        :return Identity object
     """
 
     def import_from_stix2(self, **kwargs):
@@ -397,14 +464,21 @@ class Campaign:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
+            if stix_object["identity_class"] == "individual":
+                type = "Individual"
+            elif stix_object["identity_class"] == "class":
+                type = "Sector"
+            else:
+                type = "Organization"
             return self.create(
+                type=type,
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
                 else None,
                 objectMarking=extras["object_marking_ids"]
                 if "object_marking_ids" in extras
-                else None,
+                else [],
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
                 else [],
@@ -425,27 +499,35 @@ class Campaign:
                 if "description" in stix_object
                 else "",
                 aliases=self.opencti.stix2.pick_aliases(stix_object),
-                objective=stix_object["objective"]
-                if "objective" in stix_object
+                contact_information=self.opencti.stix2.convert_markdown(
+                    stix_object["contact_information"]
+                )
+                if "contact_information" in stix_object
                 else None,
-                first_seen=stix_object["first_seen"]
-                if "first_seen" in stix_object
+                x_opencti_organization_type=stix_object["x_opencti_organization_type"]
+                if "x_opencti_organization_type" in stix_object
                 else None,
-                last_seen=stix_object["last_seen"]
-                if "last_seen" in stix_object
+                x_opencti_reliability=stix_object["x_opencti_reliability"]
+                if "x_opencti_reliability" in stix_object
+                else None,
+                x_opencti_firstname=stix_object["x_opencti_firstname"]
+                if "x_opencti_firstname" in stix_object
+                else None,
+                x_opencti_lastname=stix_object["x_opencti_lastname"]
+                if "x_opencti_lastname" in stix_object
                 else None,
                 update=update,
             )
         else:
             self.opencti.log(
-                "error", "[opencti_campaign] Missing parameters: stixObject"
+                "error", "[opencti_identity] Missing parameters: stixObject"
             )
 
     """
-        Export an Campaign object in STIX2
+        Export an Identity object in STIX2
     
-        :param id: the id of the Campaign
-        :return Campaign object
+        :param id: the id of the Identity
+        :return Identity object
     """
 
     def to_stix2(self, **kwargs):
@@ -458,34 +540,47 @@ class Campaign:
         if id is not None and entity is None:
             entity = self.read(id=id)
         if entity is not None:
-            campaign = dict()
-            campaign["id"] = entity["stix_id"]
-            campaign["type"] = "campaign"
-            campaign["spec_version"] = SPEC_VERSION
-            campaign["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                campaign["labels"] = entity["stix_label"]
+            if entity["entity_type"] == "user":
+                identity_class = "individual"
+            elif entity["entity_type"] == "sector":
+                identity_class = "class"
             else:
-                campaign["labels"] = ["campaign"]
-            if self.opencti.not_empty(entity["alias"]):
-                campaign["aliases"] = entity["alias"]
+                identity_class = "organization"
+            identity = dict()
+            identity["id"] = entity["stix_id"]
+            identity["type"] = "identity"
+            identity["spec_version"] = SPEC_VERSION
+            identity["name"] = entity["name"]
+            identity["identity_class"] = identity_class
+            if self.opencti.not_empty(entity["stix_label"]):
+                identity["labels"] = entity["stix_label"]
+            else:
+                identity["labels"] = ["identity"]
             if self.opencti.not_empty(entity["description"]):
-                campaign["description"] = entity["description"]
-            if self.opencti.not_empty(entity["objective"]):
-                campaign["objective"] = entity["objective"]
-            if self.opencti.not_empty(entity["first_seen"]):
-                campaign["first_seen"] = self.opencti.stix2.format_date(
-                    entity["first_seen"]
-                )
-            if self.opencti.not_empty(entity["last_seen"]):
-                campaign["last_seen"] = self.opencti.stix2.format_date(
-                    entity["last_seen"]
-                )
-            campaign["created"] = self.opencti.stix2.format_date(entity["created"])
-            campaign["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            campaign[CustomProperties.ID] = entity["id"]
+                identity["description"] = entity["description"]
+            if self.opencti.not_empty(entity["contact_information"]):
+                identity["contact_information"] = entity["contact_information"]
+            identity["created"] = self.opencti.stix2.format_date(entity["created"])
+            identity["modified"] = self.opencti.stix2.format_date(entity["modified"])
+            if self.opencti.not_empty(entity["alias"]):
+                identity["aliases"] = entity["alias"]
+            if entity["entity_type"] == "organization":
+                if "x_opencti_organization_type" in entity and self.opencti.not_empty(
+                    entity["x_opencti_organization_type"]
+                ):
+                    identity[CustomProperties.ORG_CLASS] = entity[
+                        "x_opencti_organization_type"
+                    ]
+                if "x_opencti_reliability" in entity and self.opencti.not_empty(
+                    entity["x_opencti_reliability"]
+                ):
+                    identity[CustomProperties.x_opencti_reliability] = entity[
+                        "x_opencti_reliability"
+                    ]
+            identity[CustomProperties.IDENTITY_TYPE] = entity["entity_type"]
+            identity[CustomProperties.ID] = entity["id"]
             return self.opencti.stix2.prepare_export(
-                entity, campaign, mode, max_marking_definition_entity
+                entity, identity, mode, max_marking_definition_entity
             )
         else:
             self.opencti.log("error", "Missing parameters: id or entity")

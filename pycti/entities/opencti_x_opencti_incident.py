@@ -5,70 +5,59 @@ from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
-class Incident:
+class XOpenctiIncident:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
             id
-            stix_id
-            stix_label
+            standard_id
             entity_type
             parent_types
-            name
-            alias
-            description
-            graph_data
-            objective
-            first_seen
-            last_seen
-            created
-            modified            
+            spec_version
             created_at
             updated_at
             createdBy {
-                node {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
                 }
-            }            
-            markingDefinitions {
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
+                }
+            }
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                        id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            labels {
+            objectLabel {
                 edges {
                     node {
                         id
-                        label_type
                         value
                         color
-                    }
-                    relation {
-                        id
                     }
                 }
             }
@@ -76,8 +65,8 @@ class Incident:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         source_name
                         description
                         url
@@ -86,24 +75,18 @@ class Incident:
                         created
                         modified
                     }
-                    relation {
-                        id
-                    }
                 }
             }
-            observableRefs {
-                edges {
-                    node {
-                        id
-                        entity_type
-                        stix_id
-                        observable_value
-                    }
-                    relation {
-                        id
-                    }
-                }
-            }
+            revoked
+            confidence
+            created
+            modified
+            name
+            description
+            aliases
+            first_seen
+            last_seen
+            objective
         """
 
     """
@@ -134,8 +117,8 @@ class Incident:
         )
         query = (
             """
-            query Incidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
-                incidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query XOpenctiIncidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
+                xOpenctiIncidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -166,15 +149,15 @@ class Incident:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["incidents"], with_pagination
+            result["data"]["xOpenctiIncidents"], with_pagination
         )
 
     """
-        Read a Incident object
+        Read a X-Opencti-Incident object
         
-        :param id: the id of the Incident
+        :param id: the id of the X-Opencti-Incident
         :param filters: the filters to apply if no id provided
-        :return Incident object
+        :return X-Opencti-Incident object
     """
 
     def read(self, **kwargs):
@@ -185,8 +168,8 @@ class Incident:
             self.opencti.log("info", "Reading Incident {" + id + "}.")
             query = (
                 """
-                query Incident($id: String!) {
-                    incident(id: $id) {
+                query XOpenctiIncident($id: String!) {
+                    xOpenctiIncident(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -199,7 +182,9 @@ class Incident:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["incident"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["xOpenctiIncident"]
+            )
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -220,42 +205,32 @@ class Incident:
     """
 
     def create_raw(self, **kwargs):
+        stix_id = kwargs.get("stix_id", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
+        description = kwargs.get("description", "")
         aliases = kwargs.get("aliases", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         objective = kwargs.get("objective", None)
-        id = kwargs.get("id", None)
-        stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
-        created_by = kwargs.get("createdBy", None)
-        object_marking = kwargs.get("objectMarking", None)
-        object_label = kwargs.get("objectLabel", None)
 
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Incident {" + name + "}.")
             query = """
-                mutation IncidentAdd($input: IncidentAddInput) {
-                    incidentAdd(input: $input) {
+                mutation XOpenctiIncidentAdd($input: IncidentAddInput) {
+                    xOpenctiIncidentAdd(input: $input) {
                         id
-                        stix_id
+                        standard_id
                         entity_type
-                        parent_types
-                        observableRefs {
-                            edges {
-                                node {
-                                    id
-                                    entity_type
-                                    stix_id
-                                    observable_value
-                                }
-                                relation {
-                                    id
-                                }
-                            }
-                        }                 
+                        parent_types               
                     }
                }
             """
@@ -263,67 +238,77 @@ class Incident:
                 query,
                 {
                     "input": {
+                        "stix_id": stix_id,
+                        "createdBy": created_by,
+                        "objectMarking": object_marking,
+                        "objectLabel": object_label,
+                        "externalReferences": external_references,
+                        "revoked": revoked,
+                        "confidence": confidence,
+                        "lang": lang,
+                        "created": created,
+                        "modified": modified,
                         "name": name,
                         "description": description,
                         "aliases": aliases,
-                        "objective": objective,
                         "first_seen": first_seen,
                         "last_seen": last_seen,
-                        "internal_id_key": id,
-                        "stix_id": stix_id,
-                        "created": created,
-                        "modified": modified,
-                        "createdBy": created_by,
-                        "objectMarking": objectMarking,
-                        "labels": labels,
+                        "objective": objective,
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["incidentAdd"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["xOpenctiIncidentAdd"]
+            )
         else:
             self.opencti.log("error", "Missing parameters: name and description")
 
     """
-         Create a Incident object only if it not exists, update it on request
+         Create a X-Opencti-Incident object only if it not exists, update it on request
 
-         :param name: the name of the Incident
-         :return Incident object
+         :param name: the name of the X-Opencti-Incident
+         :return X-Opencti-Incident object
      """
 
     def create(self, **kwargs):
+        stix_id = kwargs.get("stix_id", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
+        description = kwargs.get("description", "")
         aliases = kwargs.get("aliases", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         objective = kwargs.get("objective", None)
-        id = kwargs.get("id", None)
-        stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
-        created_by = kwargs.get("createdBy", None)
-        object_marking = kwargs.get("objectMarking", None)
-        object_label = kwargs.get("objectLabel", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
+            standard_id
             entity_type
-            name
-            description 
-            alias
+            parent_types
             createdBy {
-                node {
+                ... on Identity {
                     id
                 }
-            }            
-            ... on Incident {
+            }   
+            ... on XOpenctiIncident {
+                name
+                description
+                aliases
                 first_seen
                 last_seen
                 objective
             }
         """
         object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
-            types=["Incident"],
+            types=["X-Opencti-Incident"],
             stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
@@ -345,18 +330,21 @@ class Incident:
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
-                # alias
-                if self.opencti.not_empty(alias) and object_result["alias"] != alias:
-                    if "alias" in object_result:
-                        new_aliases = object_result["alias"] + list(
-                            set(alias) - set(object_result["alias"])
+                # aliases
+                if (
+                    self.opencti.not_empty(aliases)
+                    and object_result["aliases"] != aliases
+                ):
+                    if "aliases" in object_result:
+                        new_aliases = object_result["aliases"] + list(
+                            set(aliases) - set(object_result["aliases"])
                         )
                     else:
-                        new_aliases = alias
+                        new_aliases = aliases
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="alias", value=new_aliases
+                        id=object_result["id"], key="aliases", value=new_aliases
                     )
-                    object_result["alias"] = new_aliases
+                    object_result["aliases"] = new_aliases
                 # first_seen
                 if first_seen is not None and object_result["first_seen"] != first_seen:
                     self.opencti.stix_domain_object.update_field(
@@ -381,87 +369,85 @@ class Incident:
             return object_result
         else:
             return self.create_raw(
+                stix_id=stix_id,
+                createdBy=created_by,
+                objectMarking=object_marking,
+                objectLabel=object_label,
+                externalReferences=external_references,
+                revoked=revoked,
+                confidence=confidence,
+                lang=lang,
+                created=created,
+                modified=modified,
                 name=name,
                 description=description,
                 aliases=aliases,
                 first_seen=first_seen,
                 last_seen=last_seen,
                 objective=objective,
-                id=id,
-                stix_id=stix_id,
-                created=created,
-                modified=modified,
-                createdBy=created_by,
-                objectMarking=object_marking,
-                objectLabel=object_label,
             )
 
     """
-        Add a Stix-Observable object to Incident object (observable_refs)
+        Import a X-Opencti-Incident object from a STIX2 object
 
-        :param id: the id of the Incident
-        :param entity_id: the id of the Stix-Observable
-        :return Boolean
+        :param stixObject: the Stix-Object X-Opencti-Incident
+        :return X-Opencti-Incident object
     """
 
-    def add_stix_observable(self, **kwargs):
-        id = kwargs.get("id", None)
-        incident = kwargs.get("incident", None)
-        stix_observable_id = kwargs.get("stix_observable_id", None)
-        if id is not None and stix_observable_id is not None:
-            if incident is None:
-                incident = self.read(id=id)
-            if incident is None:
-                self.opencti.log(
-                    "error",
-                    "[opencti_incident] Cannot add Object Ref, incident not found",
+    def import_from_stix2(self, **kwargs):
+        stix_object = kwargs.get("stixObject", None)
+        extras = kwargs.get("extras", {})
+        update = kwargs.get("update", False)
+        if stix_object is not None:
+            return self.create(
+                stix_id=stix_object["id"],
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
+                else None,
+                objectMarking=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
+                else None,
+                objectLabel=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
+                else [],
+                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
+                confidence=stix_object["confidence"]
+                if "confidence" in stix_object
+                else None,
+                lang=stix_object["lang"] if "lang" in stix_object else None,
+                created=stix_object["created"] if "created" in stix_object else None,
+                modified=stix_object["modified"] if "modified" in stix_object else None,
+                name=stix_object["name"],
+                description=self.opencti.stix2.convert_markdown(
+                    stix_object["description"]
                 )
-                return False
-            if stix_observable_id in incident["observableRefsIds"]:
-                return True
-            else:
-                self.opencti.log(
-                    "info",
-                    "Adding Stix-Observable {"
-                    + stix_observable_id
-                    + "} to Incident {"
-                    + id
-                    + "}",
-                )
-                query = """
-                   mutation IncidentEdit($id: ID!, $input: StixMetaRelationshipAddInput) {
-                       incidentEdit(id: $id) {
-                            relationAdd(input: $input) {
-                                id
-                            }
-                       }
-                   }
-                """
-                self.opencti.query(
-                    query,
-                    {
-                        "id": id,
-                        "input": {
-                            "fromRole": "observables_aggregation",
-                            "toId": stix_observable_id,
-                            "toRole": "soo",
-                            "through": "observable_refs",
-                        },
-                    },
-                )
-                return True
+                if "description" in stix_object
+                else "",
+                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                objective=stix_object["objective"]
+                if "objective" in stix_object
+                else None,
+                first_seen=stix_object["first_seen"]
+                if "first_seen" in stix_object
+                else None,
+                last_seen=stix_object["last_seen"]
+                if "last_seen" in stix_object
+                else None,
+                update=update,
+            )
         else:
             self.opencti.log(
-                "error",
-                "[opencti_incident] Missing parameters: id and stix_observable_id",
+                "error", "[opencti_incident] Missing parameters: stixObject"
             )
-            return False
 
     """
-        Export an Incident object in STIX2
+        Export an X-Opencti-Incident object in STIX2
     
-        :param id: the id of the Incident
-        :return Incident object
+        :param id: the id of the X-Opencti-Incident
+        :return X-Opencti-Incident object
     """
 
     def to_stix2(self, **kwargs):
