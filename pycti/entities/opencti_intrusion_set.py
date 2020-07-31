@@ -67,11 +67,11 @@ class IntrusionSet:
                     }
                 }
             }
-            tags {
+            labels {
                 edges {
                     node {
                         id
-                        tag_type
+                        label_type
                         value
                         color
                     }
@@ -265,7 +265,7 @@ class IntrusionSet:
                         "modified": modified,
                         "createdBy": created_by,
                         "objectMarking": objectMarking,
-                        "tags": tags,
+                        "labels": labels,
                     }
                 },
             )

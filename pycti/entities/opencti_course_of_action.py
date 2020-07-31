@@ -60,11 +60,11 @@ class CourseOfAction:
                     }
                 }
             }
-            tags {
+            labels {
                 edges {
                     node {
                         id
-                        tag_type
+                        label_type
                         value
                         color
                     }
@@ -247,7 +247,7 @@ class CourseOfAction:
                         "modified": modified,
                         "createdBy": created_by,
                         "objectMarking": objectMarking,
-                        "tags": tags,
+                        "labels": labels,
                     }
                 },
             )

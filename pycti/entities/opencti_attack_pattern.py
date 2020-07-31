@@ -486,7 +486,7 @@ class AttackPattern:
                 x_mitre_permissions_required=x_mitre_permissions_required,
                 x_mitre_detection=x_mitre_detection,
                 x_mitre_id=x_mitre_id,
-                kill_chain_phases=kill_chain_phases,
+                killChainPhases=kill_chain_phases,
             )
 
     """

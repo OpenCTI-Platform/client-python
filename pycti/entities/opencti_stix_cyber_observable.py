@@ -36,11 +36,11 @@ class StixCyberObservable:
                     id
                 }
             }
-            tags {
+            labels {
                 edges {
                     node {
                         id
-                        tag_type
+                        label_type
                         value
                         color
                     }
@@ -294,7 +294,7 @@ class StixCyberObservable:
                         "stix_id": stix_id,
                         "createdBy": created_by,
                         "objectMarking": objectMarking,
-                        "tags": tags,
+                        "labels": labels,
                         "createIndicator": create_indicator,
                     }
                 },

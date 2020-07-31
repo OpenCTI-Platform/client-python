@@ -738,7 +738,7 @@ class StixDomainObject:
                 """
                 variables = {
                     "id": id,
-                    "input": {"toId": identity_id, "relationship_type": "created-by", },
+                    "input": {"toId": identity_id, "relationship_type": "created-by",},
                 }
                 self.opencti.query(query, variables)
 
@@ -785,8 +785,8 @@ class StixDomainObject:
                 )
                 return False
             if (
-                    marking_definition_id
-                    in opencti_stix_object_or_stix_relationship["markingDefinitionsIds"]
+                marking_definition_id
+                in opencti_stix_object_or_stix_relationship["markingDefinitionsIds"]
             ):
                 return True
             else:
@@ -812,10 +812,8 @@ class StixDomainObject:
                     {
                         "id": id,
                         "input": {
-                            "fromRole": "so",
                             "toId": marking_definition_id,
-                            "toRole": "marking",
-                            "through": "object_marking_refs",
+                            "relationship_type": "object-marking",
                         },
                     },
                 )
@@ -827,24 +825,23 @@ class StixDomainObject:
             return False
 
     """
-        Add a Tag object to Stix-Domain-Object object (tagging)
+        Add a Label object to Stix-Domain-Object object (labelging)
 
         :param id: the id of the Stix-Domain-Object
-        :param tag_id: the id of the Tag
+        :param label_id: the id of the Label
         :return Boolean
     """
 
-    def add_tag(self, **kwargs):
+    def add_label(self, **kwargs):
         id = kwargs.get("id", None)
-        tag_id = kwargs.get("tag_id", None)
-        if id is not None and tag_id is not None:
+        label_id = kwargs.get("label_id", None)
+        if id is not None and label_id is not None:
             custom_attributes = """
                 id
-                tags {
+                objectLabel {
                     edges {
                         node {
                             id
-                            tag_type
                             value
                             color
                         }
@@ -855,22 +852,22 @@ class StixDomainObject:
                 id=id, customAttributes=custom_attributes
             )
             if opencti_stix_object_or_stix_relationship is None:
-                self.opencti.log("error", "Cannot add Tag, entity not found")
+                self.opencti.log("error", "Cannot add label, entity not found")
                 return False
-            if tag_id in opencti_stix_object_or_stix_relationship["tagsIds"]:
+            if label_id in opencti_stix_object_or_stix_relationship["labelsIds"]:
                 return True
             else:
                 self.opencti.log(
                     "info",
-                    "Adding Tag {"
-                    + tag_id
+                    "Adding label {"
+                    + label_id
                     + "} to Stix-Domain-Object {"
                     + id
                     + "}",
                 )
                 query = """
-                   mutation Stix-Domain-ObjectAddRelation($id: ID!, $input: StixMetaRelationshipAddInput) {
-                       Stix-Domain-ObjectEdit(id: $id) {
+                   mutation StixDomainObjectAddRelation($id: ID!, $input: StixMetaRelationshipAddInput) {
+                       stixDomainObjectEdit(id: $id) {
                             relationAdd(input: $input) {
                                 id
                             }
@@ -882,16 +879,14 @@ class StixDomainObject:
                     {
                         "id": id,
                         "input": {
-                            "fromRole": "so",
-                            "toId": tag_id,
-                            "toRole": "tagging",
-                            "through": "tagged",
+                            "toId": label_id,
+                            "relationship_type": "object-label",
                         },
                     },
                 )
                 return True
         else:
-            self.opencti.log("error", "Missing parameters: id and tag_id")
+            self.opencti.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -934,8 +929,8 @@ class StixDomainObject:
                 )
                 return False
             if (
-                    external_reference_id
-                    in opencti_stix_object_or_stix_relationship["externalReferencesIds"]
+                external_reference_id
+                in opencti_stix_object_or_stix_relationship["externalReferencesIds"]
             ):
                 return True
             else:
@@ -994,8 +989,8 @@ class StixDomainObject:
                 )
                 return False
             if (
-                    kill_chain_phase_id
-                    in opencti_stix_object_or_stix_relationship["killChainPhasesIds"]
+                kill_chain_phase_id
+                in opencti_stix_object_or_stix_relationship["killChainPhasesIds"]
             ):
                 return True
             else:
@@ -1008,8 +1003,8 @@ class StixDomainObject:
                     + "}",
                 )
                 query = """
-                   mutation Stix-Domain-ObjectAddRelation($id: ID!, $input: StixMetaRelationshipAddInput) {
-                       Stix-Domain-ObjectEdit(id: $id) {
+                   mutation StixDomainObjectAddRelation($id: ID!, $input: StixMetaRelationshipAddInput) {
+                       stixDomainObjectEdit(id: $id) {
                             relationAdd(input: $input) {
                                 id
                             }
@@ -1021,10 +1016,8 @@ class StixDomainObject:
                     {
                         "id": id,
                         "input": {
-                            "fromRole": "phase_belonging",
                             "toId": kill_chain_phase_id,
-                            "toRole": "kill_chain_phase",
-                            "through": "kill_chain_phases",
+                            "relationship_type": "kill-chain-phase",
                         },
                     },
                 )
@@ -1044,8 +1037,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         if id is not None:
             self.opencti.log(
-                "info",
-                "Getting reports of the Stix-Domain-Object {" + id + "}.",
+                "info", "Getting reports of the Stix-Domain-Object {" + id + "}.",
             )
             query = """
                 query StixDomainObject($id: String!) {
@@ -1054,9 +1046,10 @@ class StixDomainObject:
                             edges {
                                 node {
                                     id
-                                    stix_id
+                                    standard_id
                                     entity_type
-                                    stix_label
+                                    spec_version
+                                    
                                     name
                                     alias
                                     description
@@ -1103,11 +1096,11 @@ class StixDomainObject:
                                             }
                                         }
                                     }
-                                    tags {
+                                    labels {
                                         edges {
                                             node {
                                                 id
-                                                tag_type
+                                                label_type
                                                 value
                                                 color
                                             }
@@ -1203,8 +1196,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         if id is not None:
             self.opencti.log(
-                "info",
-                "Getting notes of the Stix-Domain-Object {" + id + "}.",
+                "info", "Getting notes of the Stix-Domain-Object {" + id + "}.",
             )
             query = """
                 query StixDomainObject($id: String!) {
@@ -1259,11 +1251,11 @@ class StixDomainObject:
                                             }
                                         }
                                     }
-                                    tags {
+                                    labels {
                                         edges {
                                             node {
                                                 id
-                                                tag_type
+                                                label_type
                                                 value
                                                 color
                                             }

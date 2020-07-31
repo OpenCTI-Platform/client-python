@@ -278,7 +278,7 @@ class ThreatActor:
                         "modified": modified,
                         "createdBy": created_by,
                         "objectMarking": objectMarking,
-                        "tags": tags,
+                        "labels": labels,
                     }
                 },
             )
@@ -326,7 +326,7 @@ class ThreatActor:
                                  created the knowledge
         :param list markingDefinitions: (optional) list of OpenCTI marking
                                         definition ids
-        :param list tags: (optional) list of OpenCTI tag ids
+        :param list labels: (optional) list of OpenCTI label ids
         :param bool update: (optional) choose to updated an existing
                             Threat-Actor entity, default `False`
         """

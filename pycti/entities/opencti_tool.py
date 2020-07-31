@@ -60,11 +60,11 @@ class Tool:
                     }
                 }
             }
-            tags {
+            labels {
                 edges {
                     node {
                         id
-                        tag_type
+                        label_type
                         value
                         color
                     }
@@ -241,7 +241,7 @@ class Tool:
                         "modified": modified,
                         "createdBy": created_by,
                         "objectMarking": objectMarking,
-                        "tags": tags,
+                        "labels": labels,
                     }
                 },
             )
@@ -367,7 +367,9 @@ class Tool:
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
                 else None,
-                tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
+                labels=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
                 update=update,
             )
         else:

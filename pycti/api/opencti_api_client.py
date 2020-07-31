@@ -15,7 +15,7 @@ from pycti.api.opencti_api_job import OpenCTIApiJob
 from pycti.utils.constants import ObservableTypes
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 
-from pycti.entities.opencti_tag import Tag
+from pycti.entities.opencti_label import Label
 from pycti.entities.opencti_marking_definition import MarkingDefinition
 from pycti.entities.opencti_external_reference import ExternalReference
 from pycti.entities.opencti_kill_chain_phase import KillChainPhase
@@ -107,7 +107,7 @@ class OpenCTIApiClient:
         self.stix2 = OpenCTIStix2(self)
 
         # Define the entities
-        self.tag = Tag(self)
+        self.label = Label(self)
         self.marking_definition = MarkingDefinition(self)
         self.external_reference = ExternalReference(self)
         self.kill_chain_phase = KillChainPhase(self)

@@ -215,14 +215,22 @@ class OpenCTIStix2:
             if created_by_ref in self.mapping_cache:
                 created_by_result = self.mapping_cache[created_by_ref]
             else:
-                created_by_result = self.opencti.stix_domain_object.read(id=created_by_ref)
+                custom_attributes = """
+                    id
+                    entity_type
+                """
+                created_by_result = self.opencti.stix_domain_object.read(
+                    id=created_by_ref, customAttributes=custom_attributes
+                )
                 if created_by_result is not None:
                     self.mapping_cache[created_by_ref] = {
                         "id": created_by_result["id"],
                         "type": created_by_result["entity_type"],
                     }
+            print(created_by_result)
             if created_by_result is not None:
                 created_by_ref_id = created_by_result["id"]
+        print(created_by_ref_id)
 
         # Object Marking Refs
         object_marking_ids = []

@@ -64,11 +64,11 @@ class Report:
                     }
                 }
             }
-            tags {
+            labels {
                 edges {
                     node {
                         id
-                        tag_type
+                        label_type
                         value
                         color
                     }
@@ -386,7 +386,7 @@ class Report:
                         "modified": modified,
                         "createdBy": created_by,
                         "objectMarking": objectMarking,
-                        "tags": tags,
+                        "labels": labels,
                     }
                 },
             )
@@ -650,7 +650,9 @@ class Report:
                 markingDefinitions=extras["object_marking_ids"]
                 if "object_marking_ids" in extras
                 else None,
-                tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
+                labels=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
                 update=update,
             )
         else:
