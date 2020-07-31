@@ -53,11 +53,8 @@ class ObservableTypes(Enum):
 
 class IdentityTypes(Enum):
     SECTOR = "Sector"
-    REGION = "Region"
-    COUNTRY = "Country"
-    CITY = "City"
     ORGANIZATION = "Organization"
-    USER = "User"
+    INDIVIDUAL = "Individual"
 
     @classmethod
     def has_value(cls, value):
@@ -142,8 +139,8 @@ class CustomProperties:
     ALIASES = "x_opencti_aliases"
 
     # applies to STIX Identity
-    ORG_CLASS = "x_opencti_organization_class"
-    RELIABILITY = "x_opencti_reliability"
+    ORG_CLASS = "x_opencti_x_opencti_organization_type"
+    x_opencti_reliability = "x_opencti_x_opencti_reliability"
     IDENTITY_TYPE = (
         "x_opencti_identity_type"  # this overrides the stix 'identity_class' property!
     )

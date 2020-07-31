@@ -434,19 +434,19 @@ class OpenCTIApiClient:
         if data is None:
             return data
         if (
-            "createdByRef" in data
-            and data["createdByRef"] is not None
-            and "node" in data["createdByRef"]
+            "createdBy" in data
+            and data["createdBy"] is not None
+            and "node" in data["createdBy"]
         ):
-            row = data["createdByRef"]["node"]
+            row = data["createdBy"]["node"]
             # Handle remote relation ID
-            if "relation" in data["createdByRef"]:
-                row["remote_relation_id"] = data["createdByRef"]["relation"]["id"]
-            data["createdByRef"] = row
-            data["createdByRefId"] = row["id"]
+            if "relation" in data["createdBy"]:
+                row["remote_relation_id"] = data["createdBy"]["relation"]["id"]
+            data["createdBy"] = row
+            data["createdById"] = row["id"]
         else:
-            data["createdByRef"] = None
-            data["createdByRefId"] = None
+            data["createdBy"] = None
+            data["createdById"] = None
         if "markingDefinitions" in data:
             data["markingDefinitions"] = self.process_multiple(
                 data["markingDefinitions"]

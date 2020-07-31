@@ -17,7 +17,7 @@ class StixObservable:
             observable_value
             created_at
             updated_at
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -29,7 +29,7 @@ class StixObservable:
                     created
                     modified
                     ... on Organization {
-                        organization_class
+                        x_opencti_organization_type
                     }
                 }
                 relation {
@@ -255,9 +255,9 @@ class StixObservable:
         description = kwargs.get("description", None)
         id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         create_indicator = kwargs.get("createIndicator", False)
 
         if type is not None and observable_value is not None:
@@ -288,8 +288,8 @@ class StixObservable:
                         "description": description,
                         "internal_id_key": id,
                         "stix_id": stix_id,
-                        "createdByRef": created_by_ref,
-                        "markingDefinitions": marking_definitions,
+                        "createdBy": created_by,
+                        "objectMarking": objectMarking,
                         "tags": tags,
                         "createIndicator": create_indicator,
                     }
@@ -314,16 +314,16 @@ class StixObservable:
         description = kwargs.get("description", None)
         id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         create_indicator = kwargs.get("createIndicator", False)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
             entity_type
             description
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -334,7 +334,7 @@ class StixObservable:
             customAttributes=custom_attributes,
         )
         if object_result is not None:
-            if update or object_result["createdByRefId"] == created_by_ref:
+            if update or object_result["createdById"] == created_by:
                 if (
                     description is not None
                     and object_result["description"] != "description"
@@ -351,9 +351,9 @@ class StixObservable:
                 description=description,
                 id=id,
                 stix_id=stix_id,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
-                tags=tags,
+                createdBy=created_by,
+                objectMarking=object_marking,
+                objectLabel=object_label,
                 createIndicator=create_indicator,
             )
 
@@ -422,14 +422,14 @@ class StixObservable:
             return None
 
     """
-        Update the Identity author of a Stix-Observable object (created_by_ref)
+        Update the Identity author of a Stix-Observable object (created_by)
 
         :param id: the id of the Stix-Observable
         :param identity_id: the id of the Identity
         :return Boolean
     """
 
-    def update_created_by_ref(self, **kwargs):
+    def update_created_by(self, **kwargs):
         id = kwargs.get("id", None)
         stix_entity = kwargs.get("entity", None)
         identity_id = kwargs.get("identity_id", None)
@@ -437,7 +437,7 @@ class StixObservable:
             if stix_entity is None:
                 custom_attributes = """
                     id
-                    createdByRef {
+                    createdBy {
                         node {
                             id
                             entity_type
@@ -449,7 +449,7 @@ class StixObservable:
                             created
                             modified
                             ... on Organization {
-                                organization_class
+                                x_opencti_organization_type
                             }
                         }
                         relation {
@@ -459,15 +459,13 @@ class StixObservable:
                 """
                 stix_entity = self.read(id=id, customAttributes=custom_attributes)
             if stix_entity is None:
-                self.opencti.log(
-                    "error", "Cannot update created_by_ref, entity not found"
-                )
+                self.opencti.log("error", "Cannot update created_by, entity not found")
                 return False
             current_identity_id = None
             current_relation_id = None
-            if stix_entity["createdByRef"] is not None:
-                current_identity_id = stix_entity["createdByRef"]["id"]
-                current_relation_id = stix_entity["createdByRef"]["remote_relation_id"]
+            if stix_entity["createdBy"] is not None:
+                current_identity_id = stix_entity["createdBy"]["id"]
+                current_relation_id = stix_entity["createdBy"]["remote_relation_id"]
             # Current identity is the same
             if current_identity_id == identity_id:
                 return True
@@ -510,7 +508,7 @@ class StixObservable:
                         "fromRole": "so",
                         "toId": identity_id,
                         "toRole": "creator",
-                        "through": "created_by_ref",
+                        "through": "created_by",
                     },
                 }
                 self.opencti.query(query, variables)

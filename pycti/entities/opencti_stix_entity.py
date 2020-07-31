@@ -13,7 +13,7 @@ class StixEntity:
             description
             created_at
             updated_at
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -25,7 +25,7 @@ class StixEntity:
                     created
                     modified
                     ... on Organization {
-                        organization_class
+                        x_opencti_organization_type
                     }
                 }
                 relation {
@@ -132,7 +132,7 @@ class StixEntity:
                 last_seen
             }
             ... on Organization {
-                organization_class
+                x_opencti_organization_type
             }
             ... on Malware {
                 killChainPhases {
@@ -181,7 +181,7 @@ class StixEntity:
                 availability_impact
             }            
             ... on Organization {
-                organization_class
+                x_opencti_organization_type
             }
             ... on Indicator {
                 indicator_pattern
@@ -316,20 +316,20 @@ class StixEntity:
             return None
 
     """
-        Update the Identity author of a Stix-Entity object (created_by_ref)
+        Update the Identity author of a Stix-Entity object (created_by)
 
         :param id: the id of the Stix-Entity
         :param identity_id: the id of the Identity
         :return Boolean
     """
 
-    def update_created_by_ref(self, **kwargs):
+    def update_created_by(self, **kwargs):
         id = kwargs.get("id", None)
         identity_id = kwargs.get("identity_id", None)
         if id is not None and identity_id is not None:
             custom_attributes = """
                 id
-                createdByRef {
+                createdBy {
                     node {
                         id
                         entity_type
@@ -341,7 +341,7 @@ class StixEntity:
                         created
                         modified
                         ... on Organization {
-                            organization_class
+                            x_opencti_organization_type
                         }
                     }
                     relation {
@@ -351,15 +351,13 @@ class StixEntity:
             """
             stix_entity = self.read(id=id, customAttributes=custom_attributes)
             if stix_entity is None:
-                self.opencti.log(
-                    "error", "Cannot update created_by_ref, entity not found"
-                )
+                self.opencti.log("error", "Cannot update created_by, entity not found")
                 return False
             current_identity_id = None
             current_relation_id = None
-            if stix_entity["createdByRef"] is not None:
-                current_identity_id = stix_entity["createdByRef"]["id"]
-                current_relation_id = stix_entity["createdByRef"]["remote_relation_id"]
+            if stix_entity["createdBy"] is not None:
+                current_identity_id = stix_entity["createdBy"]["id"]
+                current_relation_id = stix_entity["createdBy"]["remote_relation_id"]
             # Current identity is the same
             if current_identity_id == identity_id:
                 return True
@@ -402,7 +400,7 @@ class StixEntity:
                         "fromRole": "so",
                         "toId": identity_id,
                         "toRole": "creator",
-                        "through": "created_by_ref",
+                        "through": "created_by",
                     },
                 }
                 self.opencti.query(query, variables)
@@ -722,7 +720,7 @@ class StixEntity:
                                     modified
                                     created_at
                                     updated_at
-                                    createdByRef {
+                                    createdBy {
                                         node {
                                             id
                                             entity_type
@@ -875,7 +873,7 @@ class StixEntity:
                                     modified
                                     created_at
                                     updated_at
-                                    createdByRef {
+                                    createdBy {
                                         node {
                                             id
                                             entity_type

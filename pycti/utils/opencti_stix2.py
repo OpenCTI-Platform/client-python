@@ -108,8 +108,8 @@ class OpenCTIStix2:
         """
 
         # Add aliases
-        if CustomProperties.ALIASES in stix_object:
-            return stix_object[CustomProperties.ALIASES]
+        if "x_opencti_aliases" in stix_object:
+            return stix_object["x_opencti_aliases"]
         elif "x_mitre_aliases" in stix_object:
             return stix_object["x_mitre_aliases"]
         elif "x_amitt_aliases" in stix_object:
@@ -209,22 +209,20 @@ class OpenCTIStix2:
         """
 
         # Created By Ref
-        created_by_ref_id = None
-        if "created_by_ref" in stix_object:
-            created_by_ref = stix_object["created_by_ref"]
-            if created_by_ref in self.mapping_cache:
-                created_by_ref_result = self.mapping_cache[created_by_ref]
+        created_by_id = None
+        if "created_by" in stix_object:
+            created_by = stix_object["created_by"]
+            if created_by in self.mapping_cache:
+                created_by_result = self.mapping_cache[created_by]
             else:
-                created_by_ref_result = self.opencti.stix_domain_object.read(
-                    id=created_by_ref
-                )
-                if created_by_ref_result is not None:
-                    self.mapping_cache[created_by_ref] = {
-                        "id": created_by_ref_result["id"],
-                        "type": created_by_ref_result["entity_type"],
+                created_by_result = self.opencti.stix_domain_object.read(id=created_by)
+                if created_by_result is not None:
+                    self.mapping_cache[created_by] = {
+                        "id": created_by_result["id"],
+                        "type": created_by_result["entity_type"],
                     }
-            if created_by_ref_result is not None:
-                created_by_ref_id = created_by_ref_result["id"]
+            if created_by_result is not None:
+                created_by_id = created_by_result["id"]
 
         # Object Marking Refs
         marking_definitions_ids = []
@@ -430,7 +428,7 @@ class OpenCTIStix2:
                         published=published,
                         report_class="Threat Report",
                         object_status=2,
-                        createdByRef=author["id"] if author is not None else None,
+                        createdBy=author["id"] if author is not None else None,
                         update=True,
                     )
                     # Add marking
@@ -461,7 +459,7 @@ class OpenCTIStix2:
                     reports[external_reference_id] = report
 
         return {
-            "created_by_ref": created_by_ref_id,
+            "created_by": created_by_id,
             "marking_definitions": marking_definitions_ids,
             "tags": tags_ids,
             "kill_chain_phases": kill_chain_phases_ids,
@@ -490,7 +488,7 @@ class OpenCTIStix2:
 
         # Extract
         embedded_relationships = self.extract_embedded_relationships(stix_object, types)
-        created_by_ref_id = embedded_relationships["created_by_ref"]
+        created_by_id = embedded_relationships["created_by"]
         marking_definitions_ids = embedded_relationships["marking_definitions"]
         tags_ids = embedded_relationships["tags"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
@@ -500,7 +498,7 @@ class OpenCTIStix2:
 
         # Extra
         extras = {
-            "created_by_ref_id": created_by_ref_id,
+            "created_by_id": created_by_id,
             "marking_definitions_ids": marking_definitions_ids,
             "tags_ids": tags_ids,
             "kill_chain_phases_ids": kill_chain_phases_ids,
@@ -644,7 +642,7 @@ class OpenCTIStix2:
         embedded_relationships = self.extract_embedded_relationships(
             stix_relation, types
         )
-        created_by_ref_id = embedded_relationships["created_by_ref"]
+        created_by_id = embedded_relationships["created_by"]
         marking_definitions_ids = embedded_relationships["marking_definitions"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
         external_references_ids = embedded_relationships["external_references"]
@@ -652,7 +650,7 @@ class OpenCTIStix2:
 
         # Extra
         extras = {
-            "created_by_ref_id": created_by_ref_id,
+            "created_by_id": created_by_id,
             "marking_definitions_ids": marking_definitions_ids,
             "kill_chain_phases_ids": kill_chain_phases_ids,
             "external_references_ids": external_references_ids,
@@ -787,8 +785,8 @@ class OpenCTIStix2:
                 modified=stix_relation["modified"]
                 if "modified" in stix_relation
                 else None,
-                createdByRef=extras["created_by_ref_id"]
-                if "created_by_ref_id" in extras
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
                 else None,
                 markingDefinitions=extras["marking_definitions_ids"]
                 if "marking_definitions_ids" in extras
@@ -833,8 +831,8 @@ class OpenCTIStix2:
                 modified=stix_relation["modified"]
                 if "modified" in stix_relation
                 else None,
-                createdByRef=extras["created_by_ref_id"]
-                if "created_by_ref_id" in extras
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
                 else None,
                 markingDefinitions=extras["marking_definitions_ids"]
                 if "marking_definitions_ids" in extras
@@ -876,7 +874,7 @@ class OpenCTIStix2:
     def import_observables(self, stix_object):
         # Extract
         embedded_relationships = self.extract_embedded_relationships(stix_object)
-        created_by_ref_id = embedded_relationships["created_by_ref"]
+        created_by_id = embedded_relationships["created_by"]
         marking_definitions_ids = embedded_relationships["marking_definitions"]
 
         observables_to_create = {}
@@ -1093,7 +1091,7 @@ class OpenCTIStix2:
                     type=observable["type"],
                     observable_value=observable["value"],
                     id=observable["id"],
-                    createdByRef=created_by_ref_id,
+                    createdBy=created_by_id,
                     markingDefinitions=marking_definitions_ids,
                     createIndicator=stix_object[CustomProperties.CREATE_INDICATOR]
                     if CustomProperties.CREATE_INDICATOR in stix_object
@@ -1115,7 +1113,7 @@ class OpenCTIStix2:
                 toId=stix_observables_mapping[relation_to_create["to"]],
                 toType=relation_to_create["toType"],
                 relationship_type=relation_to_create["type"],
-                createdByRef=created_by_ref_id,
+                createdBy=created_by_id,
                 markingDefinitions=marking_definitions_ids,
             )
             stix_observable_relations_mapping[
@@ -1125,14 +1123,14 @@ class OpenCTIStix2:
     def import_sighting(self, stix_sighting, from_id, to_id, update=False):
         # Extract
         embedded_relationships = self.extract_embedded_relationships(stix_sighting)
-        created_by_ref_id = embedded_relationships["created_by_ref"]
+        created_by_id = embedded_relationships["created_by"]
         marking_definitions_ids = embedded_relationships["marking_definitions"]
         external_references_ids = embedded_relationships["external_references"]
         reports = embedded_relationships["reports"]
 
         # Extra
         extras = {
-            "created_by_ref_id": created_by_ref_id,
+            "created_by_id": created_by_id,
             "marking_definitions_ids": marking_definitions_ids,
             "external_references_ids": external_references_ids,
             "reports": reports,
@@ -1194,9 +1192,7 @@ class OpenCTIStix2:
             stix_id=stix_sighting["id"] if "id" in stix_sighting else None,
             created=stix_sighting["created"] if "created" in stix_sighting else None,
             modified=stix_sighting["modified"] if "modified" in stix_sighting else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else [],
@@ -1384,58 +1380,55 @@ class OpenCTIStix2:
         result = []
         objects_to_get = []
         relations_to_get = []
-        if "createdByRef" in entity and entity["createdByRef"] is not None:
-            entity_created_by_ref = entity["createdByRef"]
-            if entity_created_by_ref["entity_type"] == "user":
+        if "createdBy" in entity and entity["createdBy"] is not None:
+            entity_created_by = entity["createdBy"]
+            if entity_created_by["entity_type"] == "user":
                 identity_class = "individual"
-            elif entity_created_by_ref["entity_type"] == "sector":
+            elif entity_created_by["entity_type"] == "sector":
                 identity_class = "class"
             else:
-                identity_class = entity_created_by_ref["entity_type"]
+                identity_class = entity_created_by["entity_type"]
 
-            created_by_ref = dict()
-            created_by_ref["id"] = entity_created_by_ref["stix_id"]
-            created_by_ref["type"] = "identity"
-            created_by_ref["spec_version"] = SPEC_VERSION
-            created_by_ref["name"] = entity_created_by_ref["name"]
-            created_by_ref["identity_class"] = identity_class
-            if self.opencti.not_empty(entity_created_by_ref["stix_label"]):
-                created_by_ref["labels"] = entity_created_by_ref["stix_label"]
+            created_by = dict()
+            created_by["id"] = entity_created_by["stix_id"]
+            created_by["type"] = "identity"
+            created_by["spec_version"] = SPEC_VERSION
+            created_by["name"] = entity_created_by["name"]
+            created_by["identity_class"] = identity_class
+            if self.opencti.not_empty(entity_created_by["stix_label"]):
+                created_by["labels"] = entity_created_by["stix_label"]
             else:
-                created_by_ref["labels"] = ["identity"]
-            created_by_ref["created"] = self.format_date(
-                entity_created_by_ref["created"]
-            )
-            created_by_ref["modified"] = self.format_date(
-                entity_created_by_ref["modified"]
-            )
-            if entity_created_by_ref["entity_type"] == "organization":
+                created_by["labels"] = ["identity"]
+            created_by["created"] = self.format_date(entity_created_by["created"])
+            created_by["modified"] = self.format_date(entity_created_by["modified"])
+            if entity_created_by["entity_type"] == "organization":
                 if (
-                    "organization_class" in entity_created_by_ref
+                    "x_opencti_organization_type" in entity_created_by
                     and self.opencti.not_empty(
-                        entity_created_by_ref["organization_class"]
+                        entity_created_by["x_opencti_organization_type"]
                     )
                 ):
-                    created_by_ref[CustomProperties.ORG_CLASS] = entity_created_by_ref[
-                        "organization_class"
+                    created_by[CustomProperties.ORG_CLASS] = entity_created_by[
+                        "x_opencti_organization_type"
                     ]
-                if "reliability" in entity_created_by_ref and self.opencti.not_empty(
-                    entity_created_by_ref["reliability"]
+                if (
+                    "x_opencti_reliability" in entity_created_by
+                    and self.opencti.not_empty(
+                        entity_created_by["x_opencti_reliability"]
+                    )
                 ):
-                    created_by_ref[
-                        CustomProperties.RELIABILITY
-                    ] = entity_created_by_ref["reliability"]
-            if self.opencti.not_empty(entity_created_by_ref["alias"]):
-                created_by_ref[CustomProperties.ALIASES] = entity_created_by_ref[
-                    "alias"
-                ]
-            created_by_ref[CustomProperties.IDENTITY_TYPE] = entity_created_by_ref[
+                    created_by[
+                        CustomProperties.x_opencti_reliability
+                    ] = entity_created_by["x_opencti_reliability"]
+            if self.opencti.not_empty(entity_created_by["alias"]):
+                created_by[CustomProperties.ALIASES] = entity_created_by["alias"]
+            created_by[CustomProperties.IDENTITY_TYPE] = entity_created_by[
                 "entity_type"
             ]
-            created_by_ref[CustomProperties.ID] = entity_created_by_ref["id"]
+            created_by[CustomProperties.ID] = entity_created_by["id"]
 
-            stix_object["created_by_ref"] = created_by_ref["id"]
-            result.append(created_by_ref)
+            stix_object["created_by"] = created_by["id"]
+            result.append(created_by)
         if "markingDefinitions" in entity and len(entity["markingDefinitions"]) > 0:
             marking_definitions = []
             for entity_marking_definition in entity["markingDefinitions"]:
@@ -1717,9 +1710,7 @@ class OpenCTIStix2:
             modified=stix_object[CustomProperties.MODIFIED]
             if CustomProperties.MODIFIED in stix_object
             else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
         )
 
     def create_identity(self, stix_object, extras, update=False):
@@ -1757,9 +1748,7 @@ class OpenCTIStix2:
             stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else [],
@@ -1800,9 +1789,7 @@ class OpenCTIStix2:
             stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else None,
@@ -1831,9 +1818,7 @@ class OpenCTIStix2:
             stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else None,
@@ -1860,9 +1845,7 @@ class OpenCTIStix2:
             stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else None,
@@ -1885,9 +1868,7 @@ class OpenCTIStix2:
             stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else None,
@@ -1932,9 +1913,7 @@ class OpenCTIStix2:
             stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else None,
@@ -1961,9 +1940,7 @@ class OpenCTIStix2:
             stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdByRef=extras["created_by_ref_id"]
-            if "created_by_ref_id" in extras
-            else None,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
             markingDefinitions=extras["marking_definitions_ids"]
             if "marking_definitions_ids" in extras
             else None,

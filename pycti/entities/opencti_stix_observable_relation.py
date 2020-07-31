@@ -33,7 +33,7 @@ class StixObservableRelation:
                 entity_type
                 observable_value
             }
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -268,8 +268,8 @@ class StixObservableRelation:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
 
         self.opencti.log(
             "info",
@@ -311,8 +311,8 @@ class StixObservableRelation:
                     "stix_id": stix_id,
                     "created": created,
                     "modified": modified,
-                    "createdByRef": created_by_ref,
-                    "markingDefinitions": marking_definitions,
+                    "createdBy": created_by,
+                    "objectMarking": objectMarking,
                 }
             },
         )
@@ -342,8 +342,8 @@ class StixObservableRelation:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
         update = kwargs.get("update", False)
         ignore_dates = kwargs.get("ignore_dates", False)
         custom_attributes = """
@@ -472,8 +472,8 @@ class StixObservableRelation:
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
+                createdBy=created_by,
+                objectMarking=object_marking,
             )
 
     """

@@ -25,7 +25,7 @@ class Incident:
             modified            
             created_at
             updated_at
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -222,7 +222,7 @@ class Incident:
     def create_raw(self, **kwargs):
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         objective = kwargs.get("objective", None)
@@ -230,9 +230,9 @@ class Incident:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
 
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Incident {" + name + "}.")
@@ -265,7 +265,7 @@ class Incident:
                     "input": {
                         "name": name,
                         "description": description,
-                        "alias": alias,
+                        "aliases": aliases,
                         "objective": objective,
                         "first_seen": first_seen,
                         "last_seen": last_seen,
@@ -273,8 +273,8 @@ class Incident:
                         "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
-                        "createdByRef": created_by_ref,
-                        "markingDefinitions": marking_definitions,
+                        "createdBy": created_by,
+                        "objectMarking": objectMarking,
                         "tags": tags,
                     }
                 },
@@ -293,7 +293,7 @@ class Incident:
     def create(self, **kwargs):
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         objective = kwargs.get("objective", None)
@@ -301,9 +301,9 @@ class Incident:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
@@ -311,7 +311,7 @@ class Incident:
             name
             description 
             alias
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -329,7 +329,7 @@ class Incident:
             customAttributes=custom_attributes,
         )
         if object_result is not None:
-            if update or object_result["createdByRefId"] == created_by_ref:
+            if update or object_result["createdById"] == created_by:
                 # name
                 if object_result["name"] != name:
                     self.opencti.stix_domain_object.update_field(
@@ -383,7 +383,7 @@ class Incident:
             return self.create_raw(
                 name=name,
                 description=description,
-                alias=alias,
+                aliases=aliases,
                 first_seen=first_seen,
                 last_seen=last_seen,
                 objective=objective,
@@ -391,9 +391,9 @@ class Incident:
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
-                tags=tags,
+                createdBy=created_by,
+                objectMarking=object_marking,
+                objectLabel=object_label,
             )
 
     """

@@ -23,7 +23,7 @@ class CourseOfAction:
             modified            
             created_at
             updated_at
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -35,7 +35,7 @@ class CourseOfAction:
                     created
                     modified
                     ... on Organization {
-                        organization_class
+                        x_opencti_organization_type
                     }
                 }
                 relation {
@@ -213,14 +213,14 @@ class CourseOfAction:
     def create_raw(self, **kwargs):
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
 
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Course Of Action {" + name + "}.")
@@ -240,13 +240,13 @@ class CourseOfAction:
                     "input": {
                         "name": name,
                         "description": description,
-                        "alias": alias,
+                        "aliases": aliases,
                         "internal_id_key": id,
                         "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
-                        "createdByRef": created_by_ref,
-                        "markingDefinitions": marking_definitions,
+                        "createdBy": created_by,
+                        "objectMarking": objectMarking,
                         "tags": tags,
                     }
                 },
@@ -270,14 +270,14 @@ class CourseOfAction:
     def create(self, **kwargs):
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
@@ -285,7 +285,7 @@ class CourseOfAction:
             name
             description 
             alias
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -298,7 +298,7 @@ class CourseOfAction:
             customAttributes=custom_attributes,
         )
         if object_result is not None:
-            if update or object_result["createdByRefId"] == created_by_ref:
+            if update or object_result["createdById"] == created_by:
                 # name
                 if object_result["name"] != name:
                     self.opencti.stix_domain_object.update_field(
@@ -331,14 +331,14 @@ class CourseOfAction:
             return self.create_raw(
                 name=name,
                 description=description,
-                alias=alias,
+                aliases=aliases,
                 id=id,
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
-                tags=tags,
+                createdBy=created_by,
+                objectMarking=object_marking,
+                objectLabel=object_label,
             )
 
     """

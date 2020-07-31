@@ -43,7 +43,7 @@ class StixRelation:
                     description
                 }
             }
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -55,7 +55,7 @@ class StixRelation:
                     created
                     modified
                     ... on Organization {
-                        organization_class
+                        x_opencti_organization_type
                     }
                 }
                 relation {
@@ -299,8 +299,8 @@ class StixRelation:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
 
         self.opencti.log(
@@ -343,8 +343,8 @@ class StixRelation:
                     "stix_id": stix_id,
                     "created": created,
                     "modified": modified,
-                    "createdByRef": created_by_ref,
-                    "markingDefinitions": marking_definitions,
+                    "createdBy": created_by,
+                    "objectMarking": objectMarking,
                     "killChainPhases": kill_chain_phases,
                 }
             },
@@ -373,8 +373,8 @@ class StixRelation:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
         ignore_dates = kwargs.get("ignore_dates", False)
@@ -386,7 +386,7 @@ class StixRelation:
             weight
             first_seen
             last_seen
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -435,7 +435,7 @@ class StixRelation:
                 customAttributes=custom_attributes,
             )
         if stix_relation_result is not None:
-            if update or stix_relation_result["createdByRef"] == created_by_ref:
+            if update or stix_relation_result["createdBy"] == created_by:
                 if (
                     description is not None
                     and stix_relation_result["description"] != description
@@ -514,8 +514,8 @@ class StixRelation:
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
+                createdBy=created_by,
+                objectMarking=object_marking,
                 killChainPhases=kill_chain_phases,
             )
 

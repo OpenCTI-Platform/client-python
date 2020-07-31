@@ -44,7 +44,7 @@ class StixSighting:
                     description
                 }
             }
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -56,7 +56,7 @@ class StixSighting:
                     created
                     modified
                     ... on Organization {
-                        organization_class
+                        x_opencti_organization_type
                     }
                 }
                 relation {
@@ -273,8 +273,8 @@ class StixSighting:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
 
         self.opencti.log(
             "info", "Creating stix_sighting {" + from_id + ", " + str(to_id) + "}.",
@@ -305,8 +305,8 @@ class StixSighting:
                     "stix_id": stix_id,
                     "created": created,
                     "modified": modified,
-                    "createdByRef": created_by_ref,
-                    "markingDefinitions": marking_definitions,
+                    "createdBy": created_by,
+                    "objectMarking": objectMarking,
                 }
             },
         )
@@ -332,8 +332,8 @@ class StixSighting:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
         update = kwargs.get("update", False)
         ignore_dates = kwargs.get("ignore_dates", False)
         custom_attributes = """
@@ -346,7 +346,7 @@ class StixSighting:
             negative
             first_seen
             last_seen
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -394,7 +394,7 @@ class StixSighting:
                 customAttributes=custom_attributes,
             )
         if stix_sighting_result is not None:
-            if update or stix_sighting_result["createdByRef"] == created_by_ref:
+            if update or stix_sighting_result["createdBy"] == created_by:
                 if (
                     description is not None
                     and stix_sighting_result["description"] != description
@@ -469,8 +469,8 @@ class StixSighting:
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
+                createdBy=created_by,
+                objectMarking=object_marking,
             )
 
     """

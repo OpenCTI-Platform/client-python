@@ -27,7 +27,7 @@ report = opencti_api_client.report.create(
     description="A report wrote by my organization",
     published=date,
     report_class="Internal Report",
-    createdByRef=organization["id"],
+    createdBy=organization["id"],
 )
 
 # Print

@@ -50,7 +50,7 @@ class AttackPattern:
                     }
                 }
             }
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -62,7 +62,7 @@ class AttackPattern:
                     created
                     modified
                     ... on Organization {
-                        organization_class
+                        x_opencti_organization_type
                     }
                 }
                 relation {
@@ -259,7 +259,7 @@ class AttackPattern:
     def create_raw(self, **kwargs):
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         platform = kwargs.get("platform", None)
         required_permission = kwargs.get("required_permission", None)
         external_id = kwargs.get("external_id", None)
@@ -268,9 +268,9 @@ class AttackPattern:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
 
         if name is not None and description is not None:
@@ -291,7 +291,7 @@ class AttackPattern:
                     "input": {
                         "name": name,
                         "description": description,
-                        "alias": alias,
+                        "aliases": aliases,
                         "platform": platform,
                         "required_permission": required_permission,
                         "external_id": external_id,
@@ -300,8 +300,8 @@ class AttackPattern:
                         "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
-                        "createdByRef": created_by_ref,
-                        "markingDefinitions": marking_definitions,
+                        "createdBy": created_by,
+                        "objectMarking": objectMarking,
                         "tags": tags,
                         "killChainPhases": kill_chain_phases,
                     }
@@ -326,7 +326,7 @@ class AttackPattern:
     def create(self, **kwargs):
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         platform = kwargs.get("platform", None)
         required_permission = kwargs.get("required_permission", None)
         external_id = kwargs.get("external_id", None)
@@ -335,9 +335,9 @@ class AttackPattern:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
         custom_attributes = """
@@ -347,7 +347,7 @@ class AttackPattern:
             description 
             alias
             confidence
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -369,9 +369,7 @@ class AttackPattern:
         """
         object_result = None
         if stix_id is not None:
-            object_result = self.read(
-                id=stix_id, customAttributes=custom_attributes
-            )
+            object_result = self.read(id=stix_id, customAttributes=custom_attributes)
         if object_result is None and external_id is not None:
             object_result = self.read(
                 filters=[{"key": "external_id", "values": [external_id]}]
@@ -402,7 +400,7 @@ class AttackPattern:
                         object_result = None
 
         if object_result is not None:
-            if update or object_result["createdByRefId"] == created_by_ref:
+            if update or object_result["createdById"] == created_by:
                 # name
                 if object_result["name"] != name:
                     self.opencti.stix_domain_object.update_field(
@@ -475,7 +473,7 @@ class AttackPattern:
             return self.create_raw(
                 name=name,
                 description=description,
-                alias=alias,
+                aliases=aliases,
                 platform=platform,
                 required_permission=required_permission,
                 external_id=external_id,
@@ -484,9 +482,9 @@ class AttackPattern:
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
-                tags=tags,
+                createdBy=created_by,
+                objectMarking=object_marking,
+                objectLabel=object_label,
                 killChainPhases=kill_chain_phases,
             )
 
@@ -541,8 +539,8 @@ class AttackPattern:
                 stix_id=stix_object["id"] if "id" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
-                createdByRef=extras["created_by_ref_id"]
-                if "created_by_ref_id" in extras
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
                 else None,
                 markingDefinitions=extras["marking_definitions_ids"]
                 if "marking_definitions_ids" in extras

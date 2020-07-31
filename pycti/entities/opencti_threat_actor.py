@@ -43,6 +43,10 @@ class ThreatActor:
                     x_opencti_organization_type
                     x_opencti_reliability
                 }
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
+                }
             }
             objectMarking {
                 edges {
@@ -224,7 +228,7 @@ class ThreatActor:
 
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         goal = kwargs.get("goal", None)
@@ -237,9 +241,9 @@ class ThreatActor:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
 
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Threat-Actor {" + name + "}.")
@@ -259,7 +263,7 @@ class ThreatActor:
                     "input": {
                         "name": name,
                         "description": description,
-                        "alias": alias,
+                        "aliases": aliases,
                         "first_seen": first_seen,
                         "last_seen": last_seen,
                         "goal": goal,
@@ -272,8 +276,8 @@ class ThreatActor:
                         "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
-                        "createdByRef": created_by_ref,
-                        "markingDefinitions": marking_definitions,
+                        "createdBy": created_by,
+                        "objectMarking": objectMarking,
                         "tags": tags,
                     }
                 },
@@ -318,7 +322,7 @@ class ThreatActor:
                                         personal_motivation in text
         :param str created: (optional) date in OpenCTI date format
         :param str modified: (optional) date in OpenCTI date format
-        :param str createdByRef: (optional) id of the organization that
+        :param str createdBy: (optional) id of the organization that
                                  created the knowledge
         :param list markingDefinitions: (optional) list of OpenCTI marking
                                         definition ids
@@ -330,7 +334,7 @@ class ThreatActor:
         id = kwargs.get("id", None)
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        alias = kwargs.get("alias", None)
+        aliases = kwargs.get("aliases", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         goal = kwargs.get("goal", None)
@@ -342,9 +346,9 @@ class ThreatActor:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
@@ -352,7 +356,7 @@ class ThreatActor:
             name
             description
             alias
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -375,7 +379,7 @@ class ThreatActor:
             customAttributes=custom_attributes,
         )
         if object_result is not None:
-            if update or object_result["createdByRefId"] == created_by_ref:
+            if update or object_result["createdById"] == created_by:
                 # name
                 if object_result["name"] != name:
                     self.opencti.stix_domain_object.update_field(
@@ -481,7 +485,7 @@ class ThreatActor:
             return self._create_raw(
                 name=name,
                 description=description,
-                alias=alias,
+                aliases=aliases,
                 first_seen=first_seen,
                 last_seen=last_seen,
                 goal=goal,
@@ -494,9 +498,9 @@ class ThreatActor:
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
-                tags=tags,
+                createdBy=created_by,
+                objectMarking=object_marking,
+                objectLabel=object_label,
             )
 
     def to_stix2(self, **kwargs):

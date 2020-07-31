@@ -33,6 +33,10 @@ class StixDomainObject:
                     x_opencti_organization_type
                     x_opencti_reliability
                 }
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
+                }
             }
             objectMarking {
                 edges {
@@ -456,12 +460,11 @@ class StixDomainObject:
         types = kwargs.get("types", None)
         stix_id = kwargs.get("stix_id", None)
         name = kwargs.get("name", None)
+        aliases = kwargs.get("aliases", [])
         custom_attributes = kwargs.get("customAttributes", None)
         object_result = None
         if stix_id is not None:
-            object_result = self.read(
-                id=stix_id, customAttributes=custom_attributes
-            )
+            object_result = self.read(id=stix_id, customAttributes=custom_attributes)
         if object_result is None and name is not None:
             object_result = self.read(
                 types=types,
@@ -471,9 +474,16 @@ class StixDomainObject:
             if object_result is None:
                 object_result = self.read(
                     types=types,
-                    filters=[{"key": "alias", "values": [name]}],
+                    filters=[{"key": "aliases", "values": [name]}],
                     customAttributes=custom_attributes,
                 )
+                if object_result is None:
+                    for alias in aliases:
+                        object_result = self.read(
+                            types=types,
+                            filters=[{"key": "aliases", "values": [alias]}],
+                            customAttributes=custom_attributes,
+                        )
         return object_result
 
     """

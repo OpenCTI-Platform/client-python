@@ -51,7 +51,7 @@ class Indicator:
                     }
                 }
             }
-            createdByRef {
+            createdBy {
                 node {
                     id
                     entity_type
@@ -63,7 +63,7 @@ class Indicator:
                     created
                     modified
                     ... on Organization {
-                        organization_class
+                        x_opencti_organization_type
                     }
                 }
                 relation {
@@ -297,9 +297,9 @@ class Indicator:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
 
         if (
@@ -351,8 +351,8 @@ class Indicator:
                         "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
-                        "createdByRef": created_by_ref,
-                        "markingDefinitions": marking_definitions,
+                        "createdBy": created_by,
+                        "objectMarking": objectMarking,
                         "tags": tags,
                         "killChainPhases": kill_chain_phases,
                     }
@@ -387,9 +387,9 @@ class Indicator:
         stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
-        created_by_ref = kwargs.get("createdByRef", None)
-        marking_definitions = kwargs.get("markingDefinitions", None)
-        tags = kwargs.get("tags", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
         custom_attributes = """
@@ -400,7 +400,7 @@ class Indicator:
             score
             confidence
             detection
-            createdByRef {
+            createdBy {
                 node {
                     id
                 }
@@ -423,9 +423,7 @@ class Indicator:
         """
         object_result = None
         if stix_id is not None:
-            object_result = self.read(
-                id=stix_id, customAttributes=custom_attributes
-            )
+            object_result = self.read(id=stix_id, customAttributes=custom_attributes)
         if object_result is None:
             object_result = self.read(
                 filters=[
@@ -438,7 +436,7 @@ class Indicator:
                 customAttributes=custom_attributes,
             )
         if object_result is not None:
-            if update or object_result["createdByRefId"] == created_by_ref:
+            if update or object_result["createdById"] == created_by:
                 # name
                 if name is not None and object_result["name"] != name:
                     self.opencti.stix_domain_object.update_field(
@@ -497,9 +495,9 @@ class Indicator:
                 stix_id=stix_id,
                 created=created,
                 modified=modified,
-                createdByRef=created_by_ref,
-                markingDefinitions=marking_definitions,
-                tags=tags,
+                createdBy=created_by,
+                objectMarking=object_marking,
+                objectLabel=object_label,
                 killChainPhases=kill_chain_phases,
             )
 
@@ -616,8 +614,8 @@ class Indicator:
                 stix_id=stix_object["id"] if "id" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
-                createdByRef=extras["created_by_ref_id"]
-                if "created_by_ref_id" in extras
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
                 else None,
                 markingDefinitions=extras["marking_definitions_ids"]
                 if "marking_definitions_ids" in extras
