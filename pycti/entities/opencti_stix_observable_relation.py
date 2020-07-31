@@ -9,7 +9,7 @@ class StixObservableRelation:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             entity_type
             relationship_type
             description
@@ -23,13 +23,13 @@ class StixObservableRelation:
             updated_at
             from {
                 id
-                stix_id_key
+                stix_id
                 entity_type
                 observable_value
             }
             to {
                 id
-                stix_id_key
+                stix_id
                 entity_type
                 observable_value
             }
@@ -37,7 +37,7 @@ class StixObservableRelation:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -54,7 +54,7 @@ class StixObservableRelation:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -72,7 +72,7 @@ class StixObservableRelation:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -186,7 +186,7 @@ class StixObservableRelation:
         Read a stix_observable_relation object
 
         :param id: the id of the stix_observable_relation
-        :param stix_id_key: the STIX id of the stix_observable_relation
+        :param stix_id: the STIX id of the stix_observable_relation
         :param fromId: the id of the source entity of the relation
         :param toId: the id of the target entity of the relation
         :param relationType: the relation type
@@ -265,7 +265,7 @@ class StixObservableRelation:
         last_seen = kwargs.get("last_seen", None)
         weight = kwargs.get("weight", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -287,7 +287,7 @@ class StixObservableRelation:
                 mutation StixObservableRelationAdd($input: StixObservableRelationAddInput!) {
                     stixObservableRelationAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -308,7 +308,7 @@ class StixObservableRelation:
                     "last_seen": last_seen,
                     "weight": weight,
                     "internal_id_key": id,
-                    "stix_id_key": stix_id_key,
+                    "stix_id": stix_id,
                     "created": created,
                     "modified": modified,
                     "createdByRef": created_by_ref,
@@ -339,7 +339,7 @@ class StixObservableRelation:
         last_seen = kwargs.get("last_seen", None)
         weight = kwargs.get("weight", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -356,9 +356,9 @@ class StixObservableRelation:
             last_seen
         """
         stix_relation_result = None
-        if stix_id_key is not None:
+        if stix_id is not None:
             stix_relation_result = self.read(
-                id=stix_id_key, customAttributes=custom_attributes
+                id=stix_id, customAttributes=custom_attributes
             )
         if stix_relation_result is None:
             if (
@@ -469,7 +469,7 @@ class StixObservableRelation:
                 weight=weight,
                 role_played=role_played,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,

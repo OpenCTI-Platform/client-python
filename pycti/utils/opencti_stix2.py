@@ -215,7 +215,7 @@ class OpenCTIStix2:
             if created_by_ref in self.mapping_cache:
                 created_by_ref_result = self.mapping_cache[created_by_ref]
             else:
-                created_by_ref_result = self.opencti.stix_domain_entity.read(
+                created_by_ref_result = self.opencti.stix_domain_object.read(
                     id=created_by_ref
                 )
                 if created_by_ref_result is not None:
@@ -288,7 +288,7 @@ class OpenCTIStix2:
                         id=kill_chain_phase[CustomProperties.ID]
                         if CustomProperties.ID in kill_chain_phase
                         else None,
-                        stix_id_key=kill_chain_phase["id"]
+                        stix_id=kill_chain_phase["id"]
                         if "id" in kill_chain_phase
                         else None,
                         created=kill_chain_phase[CustomProperties.CREATED]
@@ -359,7 +359,7 @@ class OpenCTIStix2:
                         id=external_reference[CustomProperties.ID]
                         if CustomProperties.ID in external_reference
                         else None,
-                        stix_id_key=external_reference["id"]
+                        stix_id=external_reference["id"]
                         if "id" in external_reference
                         else None,
                         created=external_reference[CustomProperties.CREATED]
@@ -630,7 +630,7 @@ class OpenCTIStix2:
             # Add files
             if CustomProperties.FILES in stix_object:
                 for file in stix_object[CustomProperties.FILES]:
-                    self.opencti.stix_domain_entity.add_file(
+                    self.opencti.stix_domain_object.add_file(
                         id=stix_object_result["id"],
                         file_name=file["name"],
                         data=base64.b64decode(file["data"]),
@@ -780,7 +780,7 @@ class OpenCTIStix2:
                 id=stix_relation[CustomProperties.ID]
                 if CustomProperties.ID in stix_relation
                 else None,
-                stix_id_key=stix_relation["id"] if "id" in stix_relation else None,
+                stix_id=stix_relation["id"] if "id" in stix_relation else None,
                 created=stix_relation["created"]
                 if "created" in stix_relation
                 else None,
@@ -826,7 +826,7 @@ class OpenCTIStix2:
                 id=stix_relation[CustomProperties.ID]
                 if CustomProperties.ID in stix_relation
                 else None,
-                stix_id_key=stix_relation["id"] if "id" in stix_relation else None,
+                stix_id=stix_relation["id"] if "id" in stix_relation else None,
                 created=stix_relation["created"]
                 if "created" in stix_relation
                 else None,
@@ -1191,7 +1191,7 @@ class OpenCTIStix2:
             id=stix_sighting[CustomProperties.ID]
             if CustomProperties.ID in stix_sighting
             else None,
-            stix_id_key=stix_sighting["id"] if "id" in stix_sighting else None,
+            stix_id=stix_sighting["id"] if "id" in stix_sighting else None,
             created=stix_sighting["created"] if "created" in stix_sighting else None,
             modified=stix_sighting["modified"] if "modified" in stix_sighting else None,
             createdByRef=extras["created_by_ref_id"]
@@ -1394,7 +1394,7 @@ class OpenCTIStix2:
                 identity_class = entity_created_by_ref["entity_type"]
 
             created_by_ref = dict()
-            created_by_ref["id"] = entity_created_by_ref["stix_id_key"]
+            created_by_ref["id"] = entity_created_by_ref["stix_id"]
             created_by_ref["type"] = "identity"
             created_by_ref["spec_version"] = SPEC_VERSION
             created_by_ref["name"] = entity_created_by_ref["name"]
@@ -1446,7 +1446,7 @@ class OpenCTIStix2:
                 marking_definition = {
                     "type": "marking-definition",
                     "spec_version": SPEC_VERSION,
-                    "id": entity_marking_definition["stix_id_key"],
+                    "id": entity_marking_definition["stix_id"],
                     "created": created,
                     "definition_type": entity_marking_definition[
                         "definition_type"
@@ -1476,7 +1476,7 @@ class OpenCTIStix2:
             kill_chain_phases = []
             for entity_kill_chain_phase in entity["killChainPhases"]:
                 kill_chain_phase = {
-                    "id": entity_kill_chain_phase["stix_id_key"],
+                    "id": entity_kill_chain_phase["stix_id"],
                     "kill_chain_name": entity_kill_chain_phase["kill_chain_name"],
                     "phase_name": entity_kill_chain_phase["phase_name"],
                     CustomProperties.ID: entity_kill_chain_phase["id"],
@@ -1492,7 +1492,7 @@ class OpenCTIStix2:
             external_references = []
             for entity_external_reference in entity["externalReferences"]:
                 external_reference = dict()
-                external_reference["id"] = entity_external_reference["stix_id_key"]
+                external_reference["id"] = entity_external_reference["stix_id"]
                 if self.opencti.not_empty(entity_external_reference["source_name"]):
                     external_reference["source_name"] = entity_external_reference[
                         "source_name"
@@ -1524,12 +1524,12 @@ class OpenCTIStix2:
             object_refs = []
             objects_to_get = entity["objectRefs"]
             for entity_object_ref in entity["objectRefs"]:
-                object_refs.append(entity_object_ref["stix_id_key"])
+                object_refs.append(entity_object_ref["stix_id"])
             if "relationRefs" in entity and len(entity["relationRefs"]) > 0:
                 relations_to_get = entity["relationRefs"]
                 for entity_relation_ref in entity["relationRefs"]:
-                    if entity_relation_ref["stix_id_key"] not in object_refs:
-                        object_refs.append(entity_relation_ref["stix_id_key"])
+                    if entity_relation_ref["stix_id"] not in object_refs:
+                        object_refs.append(entity_relation_ref["stix_id"])
             stix_object["object_refs"] = object_refs
 
         uuids = [stix_object["id"]]
@@ -1576,8 +1576,8 @@ class OpenCTIStix2:
                     else:
                         other_side_entity = stix_relation["to"]
                     objects_to_get.append(other_side_entity)
-                    if other_side_entity["stix_id_key"] in observables_stix_ids:
-                        other_side_entity["stix_id_key"] = observable_object_data[
+                    if other_side_entity["stix_id"] in observables_stix_ids:
+                        other_side_entity["stix_id"] = observable_object_data[
                             "observedData"
                         ]["id"]
                     relation_object_data = self.opencti.stix_relation.to_stix2(
@@ -1712,7 +1712,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"],
+            stix_id=stix_object["id"],
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object[CustomProperties.MODIFIED]
             if CustomProperties.MODIFIED in stix_object
@@ -1754,7 +1754,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
+            stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
             createdByRef=extras["created_by_ref_id"]
@@ -1797,7 +1797,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
+            stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
             createdByRef=extras["created_by_ref_id"]
@@ -1828,7 +1828,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
+            stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
             createdByRef=extras["created_by_ref_id"]
@@ -1857,7 +1857,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
+            stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
             createdByRef=extras["created_by_ref_id"]
@@ -1882,7 +1882,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
+            stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
             createdByRef=extras["created_by_ref_id"]
@@ -1929,7 +1929,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
+            stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
             createdByRef=extras["created_by_ref_id"]
@@ -1958,7 +1958,7 @@ class OpenCTIStix2:
             id=stix_object[CustomProperties.ID]
             if CustomProperties.ID in stix_object
             else None,
-            stix_id_key=stix_object["id"] if "id" in stix_object else None,
+            stix_id=stix_object["id"] if "id" in stix_object else None,
             created=stix_object["created"] if "created" in stix_object else None,
             modified=stix_object["modified"] if "modified" in stix_object else None,
             createdByRef=extras["created_by_ref_id"]
@@ -2008,7 +2008,7 @@ class OpenCTIStix2:
             ]
             stix_observable["type"] = observable["entity_type"]
             observed_data["objects"].append(stix_observable)
-            stix_ids.append(observable["stix_id_key"])
+            stix_ids.append(observable["stix_id"])
 
         return {"observedData": observed_data, "stixIds": stix_ids}
 

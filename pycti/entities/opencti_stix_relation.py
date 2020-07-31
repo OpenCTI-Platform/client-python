@@ -11,7 +11,7 @@ class StixRelation:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             entity_type
             relationship_type
             description
@@ -26,7 +26,7 @@ class StixRelation:
             fromRole
             from {
                 id
-                stix_id_key
+                stix_id
                 entity_type
                 ...on StixDomainEntity {
                     name
@@ -36,7 +36,7 @@ class StixRelation:
             toRole
             to {
                 id
-                stix_id_key
+                stix_id
                 entity_type
                 ...on StixDomainEntity {
                     name
@@ -47,7 +47,7 @@ class StixRelation:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -67,7 +67,7 @@ class StixRelation:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -85,7 +85,7 @@ class StixRelation:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         kill_chain_name
                         phase_name
                         phase_order
@@ -102,7 +102,7 @@ class StixRelation:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -296,7 +296,7 @@ class StixRelation:
         last_seen = kwargs.get("last_seen", None)
         weight = kwargs.get("weight", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -319,7 +319,7 @@ class StixRelation:
                 mutation StixRelationAdd($input: StixRelationAddInput!) {
                     stixRelationAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -340,7 +340,7 @@ class StixRelation:
                     "last_seen": last_seen,
                     "weight": weight,
                     "internal_id_key": id,
-                    "stix_id_key": stix_id_key,
+                    "stix_id": stix_id,
                     "created": created,
                     "modified": modified,
                     "createdByRef": created_by_ref,
@@ -370,7 +370,7 @@ class StixRelation:
         last_seen = kwargs.get("last_seen", None)
         weight = kwargs.get("weight", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -395,9 +395,9 @@ class StixRelation:
         stix_relation_result = None
         if id is not None:
             stix_relation_result = self.read(id=id, customAttributes=custom_attributes)
-        if stix_relation_result is None and stix_id_key is not None:
+        if stix_relation_result is None and stix_id is not None:
             stix_relation_result = self.read(
-                id=stix_id_key, customAttributes=custom_attributes
+                id=stix_id, customAttributes=custom_attributes
             )
         if stix_relation_result is None:
             if (
@@ -511,7 +511,7 @@ class StixRelation:
                 weight=weight,
                 role_played=role_played,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -660,8 +660,8 @@ class StixRelation:
                 entity["to"]["entity_type"],
             )
             if roles is not None:
-                final_from_id = entity["from"]["stix_id_key"]
-                final_to_id = entity["to"]["stix_id_key"]
+                final_from_id = entity["from"]["stix_id"]
+                final_to_id = entity["to"]["stix_id"]
             else:
                 roles = self.opencti.resolve_role(
                     entity["relationship_type"],
@@ -669,11 +669,11 @@ class StixRelation:
                     entity["from"]["entity_type"],
                 )
                 if roles is not None:
-                    final_from_id = entity["to"]["stix_id_key"]
-                    final_to_id = entity["from"]["stix_id_key"]
+                    final_from_id = entity["to"]["stix_id"]
+                    final_to_id = entity["from"]["stix_id"]
 
             stix_relation = dict()
-            stix_relation["id"] = entity["stix_id_key"]
+            stix_relation["id"] = entity["stix_id"]
             stix_relation["type"] = "relationship"
             stix_relation["spec_version"] = SPEC_VERSION
             stix_relation["relationship_type"] = entity["relationship_type"]

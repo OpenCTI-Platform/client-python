@@ -11,7 +11,7 @@ class Opinion:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             entity_type
             stix_label
             name
@@ -27,7 +27,7 @@ class Opinion:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -47,7 +47,7 @@ class Opinion:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -78,7 +78,7 @@ class Opinion:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -96,7 +96,7 @@ class Opinion:
                 edges {
                     node {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                     }
                 }
@@ -105,7 +105,7 @@ class Opinion:
                 edges {
                     node {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         observable_value
                     }
@@ -115,7 +115,7 @@ class Opinion:
                 edges {
                     node {
                         id
-                        stix_id_key
+                        stix_id
                     }
                 }
             }
@@ -226,20 +226,20 @@ class Opinion:
         Read a Opinion object by stix_id or name
 
         :param type: the Stix-Domain-Entity type
-        :param stix_id_key: the STIX ID of the Stix-Domain-Entity
+        :param stix_id: the STIX ID of the Stix-Domain-Entity
         :param name: the name of the Stix-Domain-Entity
         :return Stix-Domain-Entity object
     """
 
     def get_by_stix_id_or_name(self, **kwargs):
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         description = kwargs.get("description", None)
         explanation = kwargs.get("explanation", None)
         custom_attributes = kwargs.get(explanation, None)
         object_result = None
-        if stix_id_key is not None:
+        if stix_id is not None:
             object_result = self.read(
-                id=stix_id_key, customAttributes=custom_attributes
+                id=stix_id, customAttributes=custom_attributes
             )
         if (
             object_result is None
@@ -335,7 +335,7 @@ class Opinion:
         explanation = kwargs.get("explanation", None)
         graph_data = kwargs.get("graph_data", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -347,14 +347,14 @@ class Opinion:
                 mutation OpinionAdd($input: OpinionAddInput) {
                     opinionAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                         observableRefs {
                             edges {
                                 node {
                                     id
-                                    stix_id_key
+                                    stix_id
                                     entity_type
                                     observable_value
                                 }
@@ -372,7 +372,7 @@ class Opinion:
                         "explanation": explanation,
                         "graph_data": graph_data,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                         "createdByRef": created_by_ref,
@@ -403,7 +403,7 @@ class Opinion:
         explanation = kwargs.get("explanation", None)
         graph_data = kwargs.get("graph_data", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -423,7 +423,7 @@ class Opinion:
                 edges {
                     node {
                         id
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -433,7 +433,7 @@ class Opinion:
         """
         object_result = None
         if external_reference_id is not None:
-            object_result = self.opencti.stix_domain_entity.read(
+            object_result = self.opencti.stix_domain_object.read(
                 types=["Opinion"],
                 filters=[
                     {"key": "hasExternalReference", "values": [external_reference_id]}
@@ -446,7 +446,7 @@ class Opinion:
             and explanation is not None
         ):
             object_result = self.get_by_stix_id_or_name(
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 description=description,
                 explanation=explanation,
                 custom_attributes=custom_attributes,
@@ -454,7 +454,7 @@ class Opinion:
         if object_result is not None:
             if update or object_result["createdByRefId"] == created_by_ref:
                 if name is not None and object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -462,7 +462,7 @@ class Opinion:
                     description is not None
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
@@ -470,7 +470,7 @@ class Opinion:
                     explanation is not None
                     and object_result["explanation"] != explanation
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="explanation", value=explanation
                     )
                     object_result["explanation"] = explanation
@@ -486,7 +486,7 @@ class Opinion:
                 explanation=explanation,
                 graph_data=graph_data,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -627,7 +627,7 @@ class Opinion:
                 id=stix_object[CustomProperties.ID]
                 if CustomProperties.ID in stix_object
                 else None,
-                stix_id_key=stix_object["id"] if "id" in stix_object else None,
+                stix_id=stix_object["id"] if "id" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 createdByRef=extras["created_by_ref_id"]
@@ -661,7 +661,7 @@ class Opinion:
             entity = self.read(id=id)
         if entity is not None:
             opinion = dict()
-            opinion["id"] = entity["stix_id_key"]
+            opinion["id"] = entity["stix_id"]
             opinion["type"] = "opinion"
             opinion["spec_version"] = SPEC_VERSION
             opinion["explanation"] = entity["explanation"]

@@ -10,7 +10,7 @@ class CourseOfAction:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             stix_label
             entity_type
             parent_types
@@ -27,7 +27,7 @@ class CourseOfAction:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -47,7 +47,7 @@ class CourseOfAction:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -78,7 +78,7 @@ class CourseOfAction:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -215,7 +215,7 @@ class CourseOfAction:
         description = kwargs.get("description", None)
         alias = kwargs.get("alias", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -228,7 +228,7 @@ class CourseOfAction:
                 mutation CourseOfActionAdd($input: CourseOfActionAddInput) {
                     courseOfActionAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -242,7 +242,7 @@ class CourseOfAction:
                         "description": description,
                         "alias": alias,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                         "createdByRef": created_by_ref,
@@ -272,7 +272,7 @@ class CourseOfAction:
         description = kwargs.get("description", None)
         alias = kwargs.get("alias", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -291,9 +291,9 @@ class CourseOfAction:
                 }
             }            
         """
-        object_result = self.opencti.stix_domain_entity.get_by_stix_id_or_name(
+        object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
             types=["Course-Of-Action"],
-            stix_id_key=stix_id_key,
+            stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
         )
@@ -301,7 +301,7 @@ class CourseOfAction:
             if update or object_result["createdByRefId"] == created_by_ref:
                 # name
                 if object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -310,7 +310,7 @@ class CourseOfAction:
                     self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
@@ -322,7 +322,7 @@ class CourseOfAction:
                         )
                     else:
                         new_aliases = alias
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="alias", value=new_aliases
                     )
                     object_result["alias"] = new_aliases
@@ -333,7 +333,7 @@ class CourseOfAction:
                 description=description,
                 alias=alias,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -359,7 +359,7 @@ class CourseOfAction:
             entity = self.read(id=id)
         if entity is not None:
             course_of_action = dict()
-            course_of_action["id"] = entity["stix_id_key"]
+            course_of_action["id"] = entity["stix_id"]
             course_of_action["type"] = "course-of-action"
             course_of_action["spec_version"] = SPEC_VERSION
             course_of_action["name"] = entity["name"]

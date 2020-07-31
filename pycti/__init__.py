@@ -15,7 +15,7 @@ from .entities.opencti_marking_definition import MarkingDefinition
 from .entities.opencti_external_reference import ExternalReference
 from .entities.opencti_kill_chain_phase import KillChainPhase
 from .entities.opencti_stix_entity import StixEntity
-from .entities.opencti_stix_domain_entity import StixDomainEntity
+from .entities.opencti_stix_domain_object import StixDomainObject
 from .entities.opencti_stix_observable import StixObservable
 from .entities.opencti_stix_relation import StixRelation
 from .entities.opencti_stix_sighting import StixSighting
@@ -52,7 +52,7 @@ __all__ = [
     "ExternalReference",
     "KillChainPhase",
     "StixEntity",
-    "StixDomainEntity",
+    "StixDomainObject",
     "StixObservable",
     "StixRelation",
     "StixSighting",

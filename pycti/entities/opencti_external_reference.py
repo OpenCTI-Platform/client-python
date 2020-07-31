@@ -9,7 +9,7 @@ class ExternalReference:
         self.properties = """
             id
             entity_type
-            stix_id_key
+            stix_id
             source_name
             description
             url
@@ -135,7 +135,7 @@ class ExternalReference:
         external_id = kwargs.get("external_id", None)
         description = kwargs.get("description", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
 
@@ -163,7 +163,7 @@ class ExternalReference:
                         "description": description,
                         "url": url,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                     }
@@ -191,7 +191,7 @@ class ExternalReference:
         external_id = kwargs.get("external_id", None)
         description = kwargs.get("description", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
 
@@ -205,7 +205,7 @@ class ExternalReference:
                 external_id=external_id,
                 description=description,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
             )

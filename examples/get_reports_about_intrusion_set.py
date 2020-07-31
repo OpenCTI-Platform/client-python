@@ -25,7 +25,7 @@ reports = opencti_api_client.report.list(
 for report in reports:
     print(
         "["
-        + report["stix_id_key"]
+        + report["stix_id"]
         + "] "
         + report["name"]
         + " ("

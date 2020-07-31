@@ -8,7 +8,7 @@ class MarkingDefinition:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             entity_type
             definition_type
             definition
@@ -135,7 +135,7 @@ class MarkingDefinition:
         level = kwargs.get("level", 0)
         color = kwargs.get("color", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
 
@@ -160,7 +160,7 @@ class MarkingDefinition:
                         "internal_id_key": id,
                         "level": level,
                         "color": color,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                     }
@@ -189,13 +189,13 @@ class MarkingDefinition:
         level = kwargs.get("level", 0)
         color = kwargs.get("color", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
 
         object_result = None
-        if stix_id_key is not None:
-            object_result = self.read(id=stix_id_key)
+        if stix_id is not None:
+            object_result = self.read(id=stix_id)
         if object_result is None:
             object_result = self.read(
                 filters=[
@@ -212,7 +212,7 @@ class MarkingDefinition:
                 level=level,
                 color=color,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
             )

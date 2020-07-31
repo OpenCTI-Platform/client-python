@@ -21,73 +21,50 @@ class ThreatActor:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
-            stix_label
+            standard_id
             entity_type
             parent_types
-            name
-            alias
-            description
-            graph_data
-            goal
-            sophistication
-            resource_level
-            primary_motivation
-            secondary_motivation
-            personal_motivation
-            first_seen
-            last_seen
-            created
-            modified
+            spec_version
             created_at
             updated_at
-            createdByRef {
-                node {
+            createdBy {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id_key
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        organization_class
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
                 }
             }
-            markingDefinitions {
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id_key
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                        id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            tags {
+            objectLabel {
                 edges {
                     node {
                         id
-                        tag_type
                         value
                         color
-                    }
-                    relation {
-                        id
                     }
                 }
             }
@@ -95,8 +72,8 @@ class ThreatActor:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id_key
                         source_name
                         description
                         url
@@ -105,11 +82,25 @@ class ThreatActor:
                         created
                         modified
                     }
-                    relation {
-                        id
-                    }
                 }
             }
+            revoked
+            confidence
+            created
+            modified
+            name
+            description
+            aliases
+            threat_actor_types
+            first_seen
+            last_seen
+            roles
+            goals
+            sophistication
+            resource_level
+            primary_motivation
+            secondary_motivations
+            personal_motivations
         """
 
     def list(self, **kwargs) -> dict:
@@ -243,7 +234,7 @@ class ThreatActor:
         secondary_motivation = kwargs.get("secondary_motivation", None)
         personal_motivation = kwargs.get("personal_motivation", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -256,7 +247,7 @@ class ThreatActor:
                 mutation ThreatActorAdd($input: ThreatActorAddInput) {
                     threatActorAdd(input: $input) {
                         id
-                        stix_id_key
+                        standard_id
                         entity_type
                         parent_types
                     }
@@ -278,7 +269,7 @@ class ThreatActor:
                         "secondary_motivation": secondary_motivation,
                         "personal_motivation": personal_motivation,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                         "createdByRef": created_by_ref,
@@ -305,12 +296,12 @@ class ThreatActor:
 
         The create method accepts the following \**kwargs.
 
-        Note: `name` and `description` or `stix_id_key` is required.
+        Note: `name` and `description` or `stix_id` is required.
 
         :param str id: (optional) OpenCTI `id` for the Threat-Actor
         :param str name: the name of the Threat-Actor
         :param str description: descriptive text
-        :param str stix_id_key: stix2 id reference for the Threat-Actor entity
+        :param str stix_id: stix2 id reference for the Threat-Actor entity
         :param list alias: (optional) list of alias names for the Threat-Actor
         :param str first_seen: (optional) date in OpenCTI date format
         :param str last_seen: (optional) date in OpenCTI date format
@@ -348,7 +339,7 @@ class ThreatActor:
         primary_motivation = kwargs.get("primary_motivation", None)
         secondary_motivation = kwargs.get("secondary_motivation", None)
         personal_motivation = kwargs.get("personal_motivation", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -377,9 +368,9 @@ class ThreatActor:
                 personal_motivation
             }
         """
-        object_result = self.opencti.stix_domain_entity.get_by_stix_id_or_name(
+        object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
             types=["Threat-Actor"],
-            stix_id_key=stix_id_key,
+            stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
         )
@@ -387,7 +378,7 @@ class ThreatActor:
             if update or object_result["createdByRefId"] == created_by_ref:
                 # name
                 if object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -396,7 +387,7 @@ class ThreatActor:
                     self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
@@ -408,25 +399,25 @@ class ThreatActor:
                         )
                     else:
                         new_aliases = alias
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="alias", value=new_aliases
                     )
                     object_result["alias"] = new_aliases
                 # first_seen
                 if first_seen is not None and object_result["first_seen"] != first_seen:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="first_seen", value=first_seen
                     )
                     object_result["first_seen"] = first_seen
                 # last_seen
                 if last_seen is not None and object_result["last_seen"] != last_seen:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="last_seen", value=last_seen
                     )
                     object_result["last_seen"] = last_seen
                 # goal
                 if self.opencti.not_empty(goal) and object_result["goal"] != goal:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="goal", value=goal
                     )
                     object_result["goal"] = goal
@@ -435,7 +426,7 @@ class ThreatActor:
                     self.opencti.not_empty(sophistication)
                     and object_result["sophistication"] != sophistication
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="sophistication",
                         value=sophistication,
@@ -446,7 +437,7 @@ class ThreatActor:
                     self.opencti.not_empty(resource_level)
                     and object_result["resource_level"] != resource_level
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="resource_level",
                         value=resource_level,
@@ -457,7 +448,7 @@ class ThreatActor:
                     self.opencti.not_empty(primary_motivation)
                     and object_result["primary_motivation"] != primary_motivation
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="primary_motivation",
                         value=primary_motivation,
@@ -468,7 +459,7 @@ class ThreatActor:
                     self.opencti.not_empty(secondary_motivation)
                     and object_result["secondary_motivation"] != secondary_motivation
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="secondary_motivation",
                         value=secondary_motivation,
@@ -479,7 +470,7 @@ class ThreatActor:
                     self.opencti.not_empty(personal_motivation)
                     and object_result["personal_motivation"] != personal_motivation
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="personal_motivation",
                         value=personal_motivation,
@@ -500,7 +491,7 @@ class ThreatActor:
                 secondary_motivation=secondary_motivation,
                 personal_motivation=personal_motivation,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -530,7 +521,7 @@ class ThreatActor:
             entity = self.read(id=id)
         if entity is not None:
             threat_actor = dict()
-            threat_actor["id"] = entity["stix_id_key"]
+            threat_actor["id"] = entity["stix_id"]
             threat_actor["type"] = "threat-actor"
             threat_actor["spec_version"] = SPEC_VERSION
             threat_actor["name"] = entity["name"]

@@ -10,7 +10,7 @@ class Identity:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             stix_label
             entity_type
             parent_types
@@ -30,7 +30,7 @@ class Identity:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -51,7 +51,7 @@ class Identity:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -82,7 +82,7 @@ class Identity:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -221,7 +221,7 @@ class Identity:
         contact_information = kwargs.get("contact_information", None)
         alias = kwargs.get("alias", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -238,7 +238,7 @@ class Identity:
                 "contact_information": contact_information,
                 "alias": alias,
                 "internal_id_key": id,
-                "stix_id_key": stix_id_key,
+                "stix_id": stix_id,
                 "created": created,
                 "modified": modified,
                 "createdByRef": created_by_ref,
@@ -250,7 +250,7 @@ class Identity:
                     mutation OrganizationAdd($input: OrganizationAddInput) {
                         organizationAdd(input: $input) {
                             id
-                            stix_id_key
+                            stix_id
                             entity_type
                             parent_types
                         }
@@ -264,7 +264,7 @@ class Identity:
                     mutation IdentityAdd($input: IdentityAddInput) {
                         identityAdd(input: $input) {
                             id
-                            stix_id_key
+                            stix_id
                             entity_type
                             parent_types
                         }
@@ -293,7 +293,7 @@ class Identity:
         contact_information = kwargs.get("contact_information", None)
         alias = kwargs.get("alias", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -304,7 +304,7 @@ class Identity:
         update = kwargs.get("update", False)
         custom_attributes = """
             id
-            stix_id_key
+            stix_id
             entity_type
             name
             description 
@@ -322,9 +322,9 @@ class Identity:
                 }
             }            
         """
-        object_result = self.opencti.stix_domain_entity.get_by_stix_id_or_name(
+        object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
             types=[type],
-            stix_id_key=stix_id_key,
+            stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
         )
@@ -332,7 +332,7 @@ class Identity:
             if update or object_result["createdByRefId"] == created_by_ref:
                 # name
                 if object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -341,7 +341,7 @@ class Identity:
                     self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
@@ -350,7 +350,7 @@ class Identity:
                     self.opencti.not_empty(contact_information)
                     and object_result["contact_information"] != contact_information
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="contact_information",
                         value=contact_information,
@@ -364,7 +364,7 @@ class Identity:
                         )
                     else:
                         new_aliases = alias
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="alias", value=new_aliases
                     )
                     object_result["alias"] = new_aliases
@@ -374,7 +374,7 @@ class Identity:
                     and "organization_class" in object_result
                     and object_result["organization_class"] != organization_class
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="organization_class",
                         value=organization_class,
@@ -386,7 +386,7 @@ class Identity:
                     and "reliability" in object_result
                     and object_result["reliability"] != reliability
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="reliability", value=reliability,
                     )
                     object_result["reliability"] = reliability
@@ -399,7 +399,7 @@ class Identity:
                 contact_information=contact_information,
                 alias=alias,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -451,7 +451,7 @@ class Identity:
                 id=stix_object[CustomProperties.ID]
                 if CustomProperties.ID in stix_object
                 else None,
-                stix_id_key=stix_object["id"] if "id" in stix_object else None,
+                stix_id=stix_object["id"] if "id" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 createdByRef=extras["created_by_ref_id"]
@@ -498,7 +498,7 @@ class Identity:
             else:
                 identity_class = "organization"
             identity = dict()
-            identity["id"] = entity["stix_id_key"]
+            identity["id"] = entity["stix_id"]
             identity["type"] = "identity"
             identity["spec_version"] = SPEC_VERSION
             identity["name"] = entity["name"]

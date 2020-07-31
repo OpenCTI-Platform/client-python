@@ -11,7 +11,7 @@ class IntrusionSet:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             stix_label
             entity_type
             parent_types
@@ -34,7 +34,7 @@ class IntrusionSet:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -54,7 +54,7 @@ class IntrusionSet:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -85,7 +85,7 @@ class IntrusionSet:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -226,7 +226,7 @@ class IntrusionSet:
         primary_motivation = kwargs.get("primary_motivation", None)
         secondary_motivation = kwargs.get("secondary_motivation", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -239,7 +239,7 @@ class IntrusionSet:
                 mutation IntrusionSetAdd($input: IntrusionSetAddInput) {
                     intrusionSetAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -260,7 +260,7 @@ class IntrusionSet:
                         "primary_motivation": primary_motivation,
                         "secondary_motivation": secondary_motivation,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                         "createdByRef": created_by_ref,
@@ -297,7 +297,7 @@ class IntrusionSet:
         primary_motivation = kwargs.get("primary_motivation", None)
         secondary_motivation = kwargs.get("secondary_motivation", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -325,9 +325,9 @@ class IntrusionSet:
                 secondary_motivation
             }
         """
-        object_result = self.opencti.stix_domain_entity.get_by_stix_id_or_name(
+        object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
             types=["Intrusion-Set"],
-            stix_id_key=stix_id_key,
+            stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
         )
@@ -335,7 +335,7 @@ class IntrusionSet:
             if update or object_result["createdByRefId"] == created_by_ref:
                 # name
                 if object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -344,7 +344,7 @@ class IntrusionSet:
                     self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
@@ -356,25 +356,25 @@ class IntrusionSet:
                         )
                     else:
                         new_aliases = alias
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="alias", value=new_aliases
                     )
                     object_result["alias"] = new_aliases
                 # first_seen
                 if first_seen is not None and object_result["first_seen"] != first_seen:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="first_seen", value=first_seen
                     )
                     object_result["first_seen"] = first_seen
                 # last_seen
                 if last_seen is not None and object_result["last_seen"] != last_seen:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="last_seen", value=last_seen
                     )
                     object_result["last_seen"] = last_seen
                 # goal
                 if self.opencti.not_empty(goal) and object_result["goal"] != goal:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="goal", value=goal
                     )
                     object_result["goal"] = goal
@@ -383,7 +383,7 @@ class IntrusionSet:
                     self.opencti.not_empty(sophistication)
                     and object_result["sophistication"] != sophistication
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="sophistication",
                         value=sophistication,
@@ -394,7 +394,7 @@ class IntrusionSet:
                     self.opencti.not_empty(resource_level)
                     and object_result["resource_level"] != resource_level
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="resource_level",
                         value=resource_level,
@@ -405,7 +405,7 @@ class IntrusionSet:
                     self.opencti.not_empty(primary_motivation)
                     and object_result["primary_motivation"] != primary_motivation
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="primary_motivation",
                         value=primary_motivation,
@@ -416,7 +416,7 @@ class IntrusionSet:
                     self.opencti.not_empty(secondary_motivation)
                     and object_result["secondary_motivation"] != secondary_motivation
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="secondary_motivation",
                         value=secondary_motivation,
@@ -436,7 +436,7 @@ class IntrusionSet:
                 primary_motivation=primary_motivation,
                 secondary_motivation=secondary_motivation,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -462,7 +462,7 @@ class IntrusionSet:
             entity = self.read(id=id)
         if entity is not None:
             intrusion_set = dict()
-            intrusion_set["id"] = entity["stix_id_key"]
+            intrusion_set["id"] = entity["stix_id"]
             intrusion_set["type"] = "intrusion-set"
             intrusion_set["spec_version"] = SPEC_VERSION
             intrusion_set["name"] = entity["name"]

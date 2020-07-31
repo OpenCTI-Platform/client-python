@@ -11,7 +11,7 @@ class StixSighting:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             entity_type
             relationship_type
             description
@@ -27,7 +27,7 @@ class StixSighting:
             fromRole
             from {
                 id
-                stix_id_key
+                stix_id
                 entity_type
                 ...on StixDomainEntity {
                     name
@@ -37,7 +37,7 @@ class StixSighting:
             toRole
             to {
                 id
-                stix_id_key
+                stix_id
                 entity_type
                 ...on StixDomainEntity {
                     name
@@ -48,7 +48,7 @@ class StixSighting:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -68,7 +68,7 @@ class StixSighting:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -86,7 +86,7 @@ class StixSighting:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -270,7 +270,7 @@ class StixSighting:
         number = kwargs.get("number", 1)
         negative = kwargs.get("negative", False)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -283,7 +283,7 @@ class StixSighting:
                 mutation StixSightingAdd($input: StixSightingAddInput!) {
                     stixSightingAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -302,7 +302,7 @@ class StixSighting:
                     "number": number,
                     "negative": negative,
                     "internal_id_key": id,
-                    "stix_id_key": stix_id_key,
+                    "stix_id": stix_id,
                     "created": created,
                     "modified": modified,
                     "createdByRef": created_by_ref,
@@ -329,7 +329,7 @@ class StixSighting:
         confidence = kwargs.get("confidence", 15)
         negative = kwargs.get("negative", False)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -355,9 +355,9 @@ class StixSighting:
         stix_sighting_result = None
         if id is not None:
             stix_sighting_result = self.read(id=id, customAttributes=custom_attributes)
-        if stix_sighting_result is None and stix_id_key is not None:
+        if stix_sighting_result is None and stix_id is not None:
             stix_sighting_result = self.read(
-                id=stix_id_key, customAttributes=custom_attributes
+                id=stix_id, customAttributes=custom_attributes
             )
         if stix_sighting_result is None and to_id is not None:
             if (
@@ -466,7 +466,7 @@ class StixSighting:
                 number=number,
                 negative=negative,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -553,11 +553,11 @@ class StixSighting:
             entity = self.read(id=id)
         if entity is not None:
             stix_sighting = dict()
-            stix_sighting["id"] = entity["stix_id_key"]
+            stix_sighting["id"] = entity["stix_id"]
             stix_sighting["type"] = "sighting"
             stix_sighting["spec_version"] = SPEC_VERSION
-            stix_sighting["sighting_of_ref"] = entity["from"]["stix_id_key"]
-            stix_sighting["where_sighted_refs"] = entity["to"]["stix_id_key"]
+            stix_sighting["sighting_of_ref"] = entity["from"]["stix_id"]
+            stix_sighting["where_sighted_refs"] = entity["to"]["stix_id"]
             if self.opencti.not_empty(entity["description"]):
                 stix_sighting["description"] = entity["description"]
             stix_sighting["created"] = self.opencti.stix2.format_date(entity["created"])

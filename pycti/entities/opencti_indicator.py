@@ -15,7 +15,7 @@ class Indicator:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             stix_label
             entity_type
             parent_types
@@ -39,7 +39,7 @@ class Indicator:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         kill_chain_name
                         phase_name
                         phase_order
@@ -55,7 +55,7 @@ class Indicator:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -75,7 +75,7 @@ class Indicator:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -106,7 +106,7 @@ class Indicator:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -125,7 +125,7 @@ class Indicator:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         observable_value
                     }
                     relation {
@@ -294,7 +294,7 @@ class Indicator:
         confidence = kwargs.get("confidence", 50)
         detection = kwargs.get("detection", False)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -312,7 +312,7 @@ class Indicator:
                 mutation IndicatorAdd($input: IndicatorAddInput) {
                     indicatorAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                         observableRefs {
@@ -320,7 +320,7 @@ class Indicator:
                                 node {
                                     id
                                     entity_type
-                                    stix_id_key
+                                    stix_id
                                     observable_value
                                 }
                                 relation {
@@ -348,7 +348,7 @@ class Indicator:
                         "detection": detection,
                         "confidence": confidence,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                         "createdByRef": created_by_ref,
@@ -384,7 +384,7 @@ class Indicator:
         confidence = kwargs.get("confidence", 50)
         detection = kwargs.get("detection", False)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -411,7 +411,7 @@ class Indicator:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             observable_value
                         }
                         relation {
@@ -422,9 +422,9 @@ class Indicator:
             }
         """
         object_result = None
-        if stix_id_key is not None:
+        if stix_id is not None:
             object_result = self.read(
-                id=stix_id_key, customAttributes=custom_attributes
+                id=stix_id, customAttributes=custom_attributes
             )
         if object_result is None:
             object_result = self.read(
@@ -441,7 +441,7 @@ class Indicator:
             if update or object_result["createdByRefId"] == created_by_ref:
                 # name
                 if name is not None and object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -450,13 +450,13 @@ class Indicator:
                     self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
                 # score
                 if self.opencti.not_empty(score) and object_result["score"] != score:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="score", value=str(score)
                     )
                     object_result["score"] = score
@@ -465,7 +465,7 @@ class Indicator:
                     self.opencti.not_empty(confidence)
                     and object_result["confidence"] != confidence
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="confidence", value=str(confidence)
                     )
                     object_result["confidence"] = confidence
@@ -474,7 +474,7 @@ class Indicator:
                     self.opencti.not_empty(detection)
                     and object_result["detection"] != detection
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="detection",
                         value=str(detection).lower(),
@@ -494,7 +494,7 @@ class Indicator:
                 detection=detection,
                 confidence=confidence,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -613,7 +613,7 @@ class Indicator:
                 id=stix_object[CustomProperties.ID]
                 if CustomProperties.ID in stix_object
                 else None,
-                stix_id_key=stix_object["id"] if "id" in stix_object else None,
+                stix_id=stix_object["id"] if "id" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 createdByRef=extras["created_by_ref_id"]
@@ -651,7 +651,7 @@ class Indicator:
             entity = self.read(id=id)
         if entity is not None:
             indicator = dict()
-            indicator["id"] = entity["stix_id_key"]
+            indicator["id"] = entity["stix_id"]
             indicator["type"] = "indicator"
             indicator["spec_version"] = SPEC_VERSION
             indicator["name"] = entity["name"]

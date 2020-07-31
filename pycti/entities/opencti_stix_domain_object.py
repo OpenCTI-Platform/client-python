@@ -5,68 +5,56 @@ import os
 import magic
 
 
-class StixDomainEntity:
+class StixDomainObject:
     def __init__(self, opencti, file):
         self.opencti = opencti
         self.file = file
         self.properties = """
             id
-            stix_id_key
+            standard_id
             entity_type
             parent_types
-            name
-            alias
-            description
-            graph_data        
+            spec_version
             created_at
             updated_at
-            createdByRef {
-                node {
+            createdBy {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id_key
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        organization_class
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
                 }
-            }            
-            markingDefinitions {
+            }
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id_key
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                        id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            tags {
+            objectLabel {
                 edges {
                     node {
                         id
-                        tag_type
                         value
                         color
-                    }
-                    relation {
-                        id
                     }
                 }
             }
@@ -74,8 +62,8 @@ class StixDomainEntity:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id_key
                         source_name
                         description
                         url
@@ -84,10 +72,222 @@ class StixDomainEntity:
                         created
                         modified
                     }
-                    relation {
-                        id
+                }
+            }
+            revoked
+            confidence
+            created
+            modified
+            ... on AttackPattern {
+                name
+                description
+                aliases
+                x_mitre_platforms
+                x_mitre_permissions_required
+                x_mitre_detection
+                x_mitre_id
+            }
+            ... on Campaign {
+                name
+                description
+                aliases
+                first_seen
+                last_seen
+                objective
+            }
+            ... on Note {
+                attribute_abstract
+                content
+                authors
+            }
+            ... on ObservedData {
+                first_observed
+                last_observed
+                number_observed
+            }
+            ... on Opinion {
+                explanation
+                authors
+                opinion
+            }
+            ... on Report {
+                name
+                description
+                report_types
+                published
+                x_opencti_report_status
+            }
+            ... on CourseOfAction {
+                name
+                description
+                x_opencti_aliases
+            }
+            ... on Individual {
+                name
+                description
+                aliases
+                contact_information
+                x_opencti_firstname
+                x_opencti_lastname
+            }
+            ... on Organization {
+                name
+                description
+                aliases
+                contact_information
+                x_opencti_organization_type
+                x_opencti_reliability
+            }
+            ... on Sector {
+                name
+                description
+                aliases
+                contact_information
+            }
+            ... on Indicator {
+                pattern_type
+                pattern_version
+                pattern
+                name
+                description
+                indicator_types
+                valid_from
+                valid_until
+                x_opencti_score
+                x_opencti_detection
+                x_opencti_main_observable_type
+            }
+            ... on Infrastructure {
+                name
+                description
+                aliases
+                infrastructure_types
+                first_seen
+                last_seen
+            }
+            ... on IntrusionSet {
+                name
+                description
+                aliases
+                first_seen
+                last_seen
+                goals
+                resource_level
+                primary_motivation
+                secondary_motivations
+            }
+            ... on City {
+                name
+                description
+                latitude
+                longitude
+                precision
+                x_opencti_aliases
+            }
+            ... on Country {
+                name
+                description
+                latitude
+                longitude
+                precision
+                x_opencti_aliases
+            }
+            ... on  Region {
+                name
+                description
+                latitude
+                longitude
+                precision
+                x_opencti_aliases
+            }
+            ... on Position {
+                name
+                description
+                latitude
+                longitude
+                precision
+                x_opencti_aliases
+                street_address
+                postal_code
+            }
+            ... on Malware {
+                name
+                description
+                aliases
+                malware_types
+                is_family
+                first_seen
+                last_seen
+                architecture_execution_envs
+                implementation_languages
+                capabilities
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            standard_id                            
+                            entity_type
+                            kill_chain_name
+                            phase_name
+                            x_opencti_order
+                            created
+                            modified
+                        }
                     }
                 }
+            }
+            ... on ThreatActor {
+                name
+                description
+                aliases
+                threat_actor_types
+                first_seen
+                last_seen
+                roles
+                goals
+                sophistication
+                resource_level
+                primary_motivation
+                secondary_motivations
+                personal_motivations
+            }
+            ... on Tool {
+                name
+                description
+                aliases
+                tool_types
+                tool_version
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            standard_id
+                            entity_type
+                            kill_chain_name
+                            phase_name
+                            x_opencti_order
+                            created
+                            modified
+                        }
+                    }
+                }
+            }
+            ... on Vulnerability {
+                name
+                description
+                x_opencti_base_score
+                x_opencti_base_severity
+                x_opencti_attack_vector
+                x_opencti_integrity_impact
+                x_opencti_availability_impact
+            }
+            ... on XOpenctiIncident {
+                name
+                description
+                aliases
+                first_seen
+                last_seen
+                objective
             }
             importFiles {
                 edges {
@@ -98,179 +298,17 @@ class StixDomainEntity:
                     }
                 }
             }
-            ... on AttackPattern {
-                platform
-                required_permission
-                external_id
-            }
-            ... on ThreatActor {
-                goal
-                sophistication
-                resource_level
-                primary_motivation
-                secondary_motivation
-                personal_motivation
-            }
-            ... on IntrusionSet {
-                first_seen
-                last_seen
-                goal
-                sophistication
-                resource_level
-                primary_motivation
-                secondary_motivation
-            }
-            ... on Campaign {
-                objective
-                first_seen
-                last_seen
-            }
-            ... on Incident {
-                objective
-                first_seen
-                last_seen
-                observableRefs {
-                    edges {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            observable_value
-                        }
-                        relation {
-                            id
-                        }
-                    }
-                }
-            }
-            ... on Malware {
-                is_family
-                killChainPhases {
-                    edges {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            kill_chain_name
-                            phase_name
-                            phase_order
-                            created
-                            modified
-                        }
-                        relation {
-                            id
-                        }
-                    }
-                }
-            }
-            ... on Tool {
-                tool_version
-                killChainPhases {
-                    edges {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            kill_chain_name
-                            phase_name
-                            phase_order
-                            created
-                            modified
-                        }
-                        relation {
-                            id
-                        }
-                    }
-                }
-            }
-            ... on Vulnerability {
-                base_score
-                base_severity
-                attack_vector
-                integrity_impact
-                availability_impact
-            }
-            ... on Organization {
-                organization_class
-            }
-            ... on Indicator {
-                indicator_pattern
-                pattern_type
-                observableRefs {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            entity_type
-                            observable_value
-                        }
-                        relation {
-                            id
-                        }
-                    }
-                }
-                killChainPhases {
-                    edges {
-                        node {
-                            id
-                            entity_type
-                            stix_id_key
-                            kill_chain_name
-                            phase_name
-                            phase_order
-                            created
-                            modified
-                        }
-                        relation {
-                            id
-                        }
-                    }
-                }
-            }
-            ... on Report {
-                report_class
-                published
-                object_status
-                source_confidence_level
-                objectRefs {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            entity_type
-                        }
-                    }
-                }
-                observableRefs {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                            entity_type
-                            observable_value
-                        }
-                    }
-                }
-                relationRefs {
-                    edges {
-                        node {
-                            id
-                            stix_id_key
-                        }
-                    }
-                }
-            }
         """
 
     """
-        List Stix-Domain-Entity objects
+        List Stix-Domain-Object objects
 
         :param types: the list of types
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination
-        :return List of Stix-Domain-Entity objects
+        :return List of Stix-Domain-Object objects
     """
 
     def list(self, **kwargs):
@@ -289,12 +327,12 @@ class StixDomainEntity:
 
         self.opencti.log(
             "info",
-            "Listing Stix-Domain-Entities with filters " + json.dumps(filters) + ".",
+            "Listing Stix-Domain-Objects with filters " + json.dumps(filters) + ".",
         )
         query = (
             """
-                query StixDomainEntities($types: [String], $filters: [StixDomainEntitiesFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainEntitiesOrdering, $orderMode: OrderingMode) {
-                    stixDomainEntities(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
+                    stixDomainObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {
                                 """
@@ -328,10 +366,10 @@ class StixDomainEntity:
 
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["stixDomainEntities"])
+            data = self.opencti.process_multiple(result["data"]["stixDomainObjects"])
             final_data = final_data + data
-            while result["data"]["stixDomainEntities"]["pageInfo"]["hasNextPage"]:
-                after = result["data"]["stixDomainEntities"]["pageInfo"]["endCursor"]
+            while result["data"]["stixDomainObjects"]["pageInfo"]["hasNextPage"]:
+                after = result["data"]["stixDomainObjects"]["pageInfo"]["endCursor"]
                 self.opencti.log("info", "Listing Stix-Domain-Entities after " + after)
                 result = self.opencti.query(
                     query,
@@ -346,22 +384,22 @@ class StixDomainEntity:
                     },
                 )
                 data = self.opencti.process_multiple(
-                    result["data"]["stixDomainEntities"]
+                    result["data"]["stixDomainObjects"]
                 )
                 final_data = final_data + data
             return final_data
         else:
             return self.opencti.process_multiple(
-                result["data"]["stixDomainEntities"], with_pagination
+                result["data"]["stixDomainObjects"], with_pagination
             )
 
     """
-        Read a Stix-Domain-Entity object
+        Read a Stix-Domain-Object object
         
-        :param id: the id of the Stix-Domain-Entity
+        :param id: the id of the Stix-Domain-Object
         :param types: list of Stix Domain Entity types
         :param filters: the filters to apply if no id provided
-        :return Stix-Domain-Entity object
+        :return Stix-Domain-Object object
     """
 
     def read(self, **kwargs):
@@ -370,11 +408,11 @@ class StixDomainEntity:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Stix-Domain-Entity {" + id + "}.")
+            self.opencti.log("info", "Reading Stix-Domain-Object {" + id + "}.")
             query = (
                 """
-                    query StixDomainEntity($id: String!) {
-                        stixDomainEntity(id: $id) {
+                    query StixDomainObject($id: String!) {
+                        stixDomainObject(id: $id) {
                             """
                 + (
                     custom_attributes
@@ -388,7 +426,7 @@ class StixDomainEntity:
             )
             result = self.opencti.query(query, {"id": id})
             return self.opencti.process_multiple_fields(
-                result["data"]["stixDomainEntity"]
+                result["data"]["stixDomainObject"]
             )
         elif filters is not None:
             result = self.list(
@@ -401,28 +439,28 @@ class StixDomainEntity:
         else:
             self.opencti.log(
                 "error",
-                "[opencti_stix_domain_entity] Missing parameters: id or filters",
+                "[opencti_stix_domain_object] Missing parameters: id or filters",
             )
             return None
 
     """
-        Get a Stix-Domain-Entity object by stix_id or name
+        Get a Stix-Domain-Object object by stix_id or name
 
-        :param types: a list of Stix-Domain-Entity types
-        :param stix_id_key: the STIX ID of the Stix-Domain-Entity
-        :param name: the name of the Stix-Domain-Entity
-        :return Stix-Domain-Entity object
+        :param types: a list of Stix-Domain-Object types
+        :param stix_id: the STIX ID of the Stix-Domain-Object
+        :param name: the name of the Stix-Domain-Object
+        :return Stix-Domain-Object object
     """
 
     def get_by_stix_id_or_name(self, **kwargs):
         types = kwargs.get("types", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         name = kwargs.get("name", None)
         custom_attributes = kwargs.get("customAttributes", None)
         object_result = None
-        if stix_id_key is not None:
+        if stix_id is not None:
             object_result = self.read(
-                id=stix_id_key, customAttributes=custom_attributes
+                id=stix_id, customAttributes=custom_attributes
             )
         if object_result is None and name is not None:
             object_result = self.read(
@@ -439,12 +477,12 @@ class StixDomainEntity:
         return object_result
 
     """
-        Update a Stix-Domain-Entity object field
+        Update a Stix-Domain-Object object field
 
-        :param id: the Stix-Domain-Entity id
+        :param id: the Stix-Domain-Object id
         :param key: the key of the field
         :param value: the value of the field
-        :return The updated Stix-Domain-Entity object
+        :return The updated Stix-Domain-Object object
     """
 
     def update_field(self, **kwargs):
@@ -453,11 +491,11 @@ class StixDomainEntity:
         value = kwargs.get("value", None)
         if id is not None and key is not None and value is not None:
             self.opencti.log(
-                "info", "Updating Stix-Domain-Entity {" + id + "} field {" + key + "}."
+                "info", "Updating Stix-Domain-Object {" + id + "} field {" + key + "}."
             )
             query = """
-                    mutation StixDomainEntityEdit($id: ID!, $input: EditInput!) {
-                        stixDomainEntityEdit(id: $id) {
+                    mutation StixDomainObjectEdit($id: ID!, $input: EditInput!) {
+                        stixDomainObjectEdit(id: $id) {
                             fieldPatch(input: $input) {
                                 id
                             }
@@ -468,29 +506,29 @@ class StixDomainEntity:
                 query, {"id": id, "input": {"key": key, "value": value}}
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["stixDomainEntityEdit"]["fieldPatch"]
+                result["data"]["stixDomainObjectEdit"]["fieldPatch"]
             )
         else:
             self.opencti.log(
                 "error",
-                "[opencti_stix_domain_entity] Missing parameters: id and key and value",
+                "[opencti_stix_domain_object] Missing parameters: id and key and value",
             )
             return None
 
     """
-        Delete a Stix-Domain-Entity
+        Delete a Stix-Domain-Object
 
-        :param id: the Stix-Domain-Entity id
+        :param id: the Stix-Domain-Object id
         :return void
     """
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting Stix-Domain-Entity {" + id + "}.")
+            self.opencti.log("info", "Deleting Stix-Domain-Object {" + id + "}.")
             query = """
-                 mutation StixDomainEntityEdit($id: ID!) {
-                     stixDomainEntityEdit(id: $id) {
+                 mutation StixDomainObjectEdit($id: ID!) {
+                     stixDomainObjectEdit(id: $id) {
                          delete
                      }
                  }
@@ -498,14 +536,14 @@ class StixDomainEntity:
             self.opencti.query(query, {"id": id})
         else:
             self.opencti.log(
-                "error", "[opencti_stix_domain_entity] Missing parameters: id"
+                "error", "[opencti_stix_domain_object] Missing parameters: id"
             )
             return None
 
     """
-        Upload a file in this Stix-Domain-Entity 
+        Upload a file in this Stix-Domain-Object 
 
-        :param id: the Stix-Domain-Entity id
+        :param id: the Stix-Domain-Object id
         :param file_name
         :param data
         :return void
@@ -517,23 +555,23 @@ class StixDomainEntity:
         data = kwargs.get("data", None)
         mime_type = kwargs.get("mime_type", "text/plain")
         if id is not None and file_name is not None:
-            stix_domain_entity = self.read(id=id)
-            if stix_domain_entity is None:
+            stix_domain_object = self.read(id=id)
+            if stix_domain_object is None:
                 self.opencti.log("error", "Cannot add File, entity not found")
                 return False
             final_file_name = os.path.basename(file_name)
             current_files = {}
-            for file in stix_domain_entity["importFiles"]:
+            for file in stix_domain_object["importFiles"]:
                 current_files[file["name"]] = file
             if final_file_name in current_files:
                 return current_files[final_file_name]
             else:
                 self.opencti.log(
-                    "info", "Uploading a file in Stix-Domain-Entity {" + id + "}."
+                    "info", "Uploading a file in Stix-Domain-Object {" + id + "}."
                 )
                 query = """
-                    mutation StixDomainEntityEdit($id: ID!, $file: Upload!) {
-                        stixDomainEntityEdit(id: $id) {
+                    mutation StixDomainObjectEdit($id: ID!, $file: Upload!) {
+                        stixDomainObjectEdit(id: $id) {
                             importPush(file: $file) {
                                 id
                                 name
@@ -552,14 +590,14 @@ class StixDomainEntity:
         else:
             self.opencti.log(
                 "error",
-                "[opencti_stix_domain_entity] Missing parameters: id or file_name",
+                "[opencti_stix_domain_object] Missing parameters: id or file_name",
             )
             return None
 
     def push_list_export(self, entity_type, file_name, data, context="", list_args=""):
         query = """
-            mutation StixDomainEntitiesExportPush($type: String!, $file: Upload!, $context: String, $listArgs: String) {
-                stixDomainEntitiesExportPush(type: $type, file: $file, context: $context, listArgs: $listArgs)
+            mutation StixDomainObjectsExportPush($type: String!, $file: Upload!, $context: String, $listArgs: String) {
+                stixDomainObjectsExportPush(type: $type, file: $file, context: $context, listArgs: $listArgs)
             } 
         """
         self.opencti.query(
@@ -574,8 +612,8 @@ class StixDomainEntity:
 
     def push_entity_export(self, entity_id, file_name, data):
         query = """
-            mutation StixDomainEntityEdit($id: ID!, $file: Upload!) {
-                stixDomainEntityEdit(id: $id) {
+            mutation StixDomainObjectEdit($id: ID!, $file: Upload!) {
+                stixDomainObjectEdit(id: $id) {
                     exportPush(file: $file)
                 }
             } 

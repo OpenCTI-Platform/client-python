@@ -10,12 +10,19 @@ class AttackPattern:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            standard_id
             stix_label
             entity_type
             parent_types
-            name
-            alias
+            stix_ids
+            spec_version
+            created_at
+            updated_at
+            createdBy {
+              ... on Identity {
+                
+              }
+            }
             description
             confidence
             graph_data
@@ -31,7 +38,7 @@ class AttackPattern:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         kill_chain_name
                         phase_name
                         phase_order
@@ -47,7 +54,7 @@ class AttackPattern:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -67,7 +74,7 @@ class AttackPattern:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -98,7 +105,7 @@ class AttackPattern:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -258,7 +265,7 @@ class AttackPattern:
         external_id = kwargs.get("external_id", None)
         confidence = kwargs.get("confidence", 50)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -272,7 +279,7 @@ class AttackPattern:
                 mutation AttackPatternAdd($input: AttackPatternAddInput) {
                     attackPatternAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -290,7 +297,7 @@ class AttackPattern:
                         "external_id": external_id,
                         "confidence": confidence,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                         "createdByRef": created_by_ref,
@@ -325,7 +332,7 @@ class AttackPattern:
         external_id = kwargs.get("external_id", None)
         confidence = kwargs.get("confidence", 50)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -361,9 +368,9 @@ class AttackPattern:
             }
         """
         object_result = None
-        if stix_id_key is not None:
+        if stix_id is not None:
             object_result = self.read(
-                id=stix_id_key, customAttributes=custom_attributes
+                id=stix_id, customAttributes=custom_attributes
             )
         if object_result is None and external_id is not None:
             object_result = self.read(
@@ -398,7 +405,7 @@ class AttackPattern:
             if update or object_result["createdByRefId"] == created_by_ref:
                 # name
                 if object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -407,7 +414,7 @@ class AttackPattern:
                     self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
@@ -419,7 +426,7 @@ class AttackPattern:
                         )
                     else:
                         new_aliases = alias
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="alias", value=new_aliases
                     )
                     object_result["alias"] = new_aliases
@@ -428,7 +435,7 @@ class AttackPattern:
                     self.opencti.not_empty(platform)
                     and object_result["platform"] != platform
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="platform", value=platform
                     )
                     object_result["platform"] = platform
@@ -437,7 +444,7 @@ class AttackPattern:
                     self.opencti.not_empty(required_permission)
                     and object_result["required_permission"] != required_permission
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="required_permission",
                         value=required_permission,
@@ -448,7 +455,7 @@ class AttackPattern:
                     self.opencti.not_empty(external_id)
                     and object_result["external_id"] != external_id
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
                         key="external_id",
                         value=str(external_id),
@@ -459,7 +466,7 @@ class AttackPattern:
                     self.opencti.not_empty(confidence)
                     and object_result["confidence"] != confidence
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="confidence", value=str(confidence)
                     )
                     object_result["confidence"] = confidence
@@ -474,7 +481,7 @@ class AttackPattern:
                 external_id=external_id,
                 confidence=confidence,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -531,7 +538,7 @@ class AttackPattern:
                 id=stix_object[CustomProperties.ID]
                 if CustomProperties.ID in stix_object
                 else None,
-                stix_id_key=stix_object["id"] if "id" in stix_object else None,
+                stix_id=stix_object["id"] if "id" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 createdByRef=extras["created_by_ref_id"]
@@ -569,7 +576,7 @@ class AttackPattern:
             entity = self.read(id=id)
         if entity is not None:
             attack_pattern = dict()
-            attack_pattern["id"] = entity["stix_id_key"]
+            attack_pattern["id"] = entity["stix_id"]
             attack_pattern["type"] = "attack-pattern"
             attack_pattern["spec_version"] = SPEC_VERSION
             if self.opencti.not_empty(entity["external_id"]):

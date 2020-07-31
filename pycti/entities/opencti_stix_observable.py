@@ -10,7 +10,7 @@ class StixObservable:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             entity_type
             name
             description
@@ -21,7 +21,7 @@ class StixObservable:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -54,7 +54,7 @@ class StixObservable:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -72,7 +72,7 @@ class StixObservable:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -91,7 +91,7 @@ class StixObservable:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         valid_from
                         valid_until
                         score
@@ -254,7 +254,7 @@ class StixObservable:
         observable_value = kwargs.get("observable_value", None)
         description = kwargs.get("description", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created_by_ref = kwargs.get("createdByRef", None)
         marking_definitions = kwargs.get("markingDefinitions", None)
         tags = kwargs.get("tags", None)
@@ -273,7 +273,7 @@ class StixObservable:
                 mutation StixObservableAdd($input: StixObservableAddInput) {
                     stixObservableAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -287,7 +287,7 @@ class StixObservable:
                         "observable_value": observable_value,
                         "description": description,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "createdByRef": created_by_ref,
                         "markingDefinitions": marking_definitions,
                         "tags": tags,
@@ -313,7 +313,7 @@ class StixObservable:
         observable_value = kwargs.get("observable_value", None)
         description = kwargs.get("description", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created_by_ref = kwargs.get("createdByRef", None)
         marking_definitions = kwargs.get("markingDefinitions", None)
         tags = kwargs.get("tags", None)
@@ -350,7 +350,7 @@ class StixObservable:
                 observable_value=observable_value,
                 description=description,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 createdByRef=created_by_ref,
                 markingDefinitions=marking_definitions,
                 tags=tags,
@@ -441,7 +441,7 @@ class StixObservable:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             stix_label
                             name
                             alias
@@ -537,7 +537,7 @@ class StixObservable:
             entity = self.read(id=id)
         if entity is not None:
             stix_observable = dict()
-            stix_observable["id"] = entity["stix_id_key"]
+            stix_observable["id"] = entity["stix_id"]
             stix_observable["type"] = entity["entity_type"]
             stix_observable["spec_version"] = SPEC_VERSION
             stix_observable["value"] = entity["observable_value"]

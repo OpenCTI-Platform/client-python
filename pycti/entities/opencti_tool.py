@@ -10,7 +10,7 @@ class Tool:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             stix_label
             entity_type
             parent_types
@@ -27,7 +27,7 @@ class Tool:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -47,7 +47,7 @@ class Tool:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -78,7 +78,7 @@ class Tool:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -209,7 +209,7 @@ class Tool:
         description = kwargs.get("description", None)
         alias = kwargs.get("alias", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -222,7 +222,7 @@ class Tool:
                 mutation ToolAdd($input: ToolAddInput) {
                     toolAdd(input: $input) {
                         id
-                        stix_id_key
+                        stix_id
                         entity_type
                         parent_types
                     }
@@ -236,7 +236,7 @@ class Tool:
                         "description": description,
                         "alias": alias,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                         "createdByRef": created_by_ref,
@@ -263,7 +263,7 @@ class Tool:
         description = kwargs.get("description", None)
         alias = kwargs.get("alias", None)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         created_by_ref = kwargs.get("createdByRef", None)
@@ -282,9 +282,9 @@ class Tool:
                 }
             }            
         """
-        object_result = self.opencti.stix_domain_entity.get_by_stix_id_or_name(
+        object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
             types=["Tool"],
-            stix_id_key=stix_id_key,
+            stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
         )
@@ -292,7 +292,7 @@ class Tool:
             if update or object_result["createdByRefId"] == created_by_ref:
                 # name
                 if object_result["name"] != name:
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="name", value=name
                     )
                     object_result["name"] = name
@@ -301,7 +301,7 @@ class Tool:
                     self.opencti.not_empty(description)
                     and object_result["description"] != description
                 ):
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
@@ -313,7 +313,7 @@ class Tool:
                         )
                     else:
                         new_aliases = alias
-                    self.opencti.stix_domain_entity.update_field(
+                    self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="alias", value=new_aliases
                     )
                     object_result["alias"] = new_aliases
@@ -324,7 +324,7 @@ class Tool:
                 description=description,
                 alias=alias,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
                 createdByRef=created_by_ref,
@@ -355,7 +355,7 @@ class Tool:
                 id=stix_object[CustomProperties.ID]
                 if CustomProperties.ID in stix_object
                 else None,
-                stix_id_key=stix_object["id"] if "id" in stix_object else None,
+                stix_id=stix_object["id"] if "id" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 createdByRef=extras["created_by_ref_id"]
@@ -392,7 +392,7 @@ class Tool:
         if entity is not None:
             entity = self.read(id=id)
             tool = dict()
-            tool["id"] = entity["stix_id_key"]
+            tool["id"] = entity["stix_id"]
             tool["type"] = "tool"
             tool["spec_version"] = SPEC_VERSION
             tool["name"] = entity["name"]

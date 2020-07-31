@@ -9,7 +9,7 @@ class KillChainPhase:
         self.properties = """
             id
             entity_type
-            stix_id_key
+            stix_id
             kill_chain_name
             phase_name
             phase_order
@@ -130,7 +130,7 @@ class KillChainPhase:
         phase_name = kwargs.get("phase_name", None)
         phase_order = kwargs.get("phase_order", 0)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
 
@@ -155,7 +155,7 @@ class KillChainPhase:
                         "phase_name": phase_name,
                         "phase_order": phase_order,
                         "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
+                        "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
                     }
@@ -182,7 +182,7 @@ class KillChainPhase:
         phase_name = kwargs.get("phase_name", None)
         phase_order = kwargs.get("phase_order", 0)
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
+        stix_id = kwargs.get("stix_id", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
 
@@ -200,7 +200,7 @@ class KillChainPhase:
                 phase_name=phase_name,
                 phase_order=phase_order,
                 id=id,
-                stix_id_key=stix_id_key,
+                stix_id=stix_id,
                 created=created,
                 modified=modified,
             )

@@ -20,7 +20,7 @@ from pycti.entities.opencti_marking_definition import MarkingDefinition
 from pycti.entities.opencti_external_reference import ExternalReference
 from pycti.entities.opencti_kill_chain_phase import KillChainPhase
 from pycti.entities.opencti_stix_entity import StixEntity
-from pycti.entities.opencti_stix_domain_entity import StixDomainEntity
+from pycti.entities.opencti_stix_domain_object import StixDomainObject
 from pycti.entities.opencti_stix_observable import StixObservable
 from pycti.entities.opencti_stix_relation import StixRelation
 from pycti.entities.opencti_stix_sighting import StixSighting
@@ -108,7 +108,7 @@ class OpenCTIApiClient:
         self.external_reference = ExternalReference(self)
         self.kill_chain_phase = KillChainPhase(self)
         self.stix_entity = StixEntity(self)
-        self.stix_domain_entity = StixDomainEntity(self, File)
+        self.stix_domain_object = StixDomainObject(self, File)
         self.stix_observable = StixObservable(self)
         self.stix_relation = StixRelation(self)
         self.stix_sighting = StixSighting(self)

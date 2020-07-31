@@ -6,7 +6,7 @@ class StixEntity:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id_key
+            stix_id
             entity_type
             parent_types
             name
@@ -17,7 +17,7 @@ class StixEntity:
                 node {
                     id
                     entity_type
-                    stix_id_key
+                    stix_id
                     stix_label
                     name
                     alias
@@ -37,7 +37,7 @@ class StixEntity:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         definition_type
                         definition
                         level
@@ -68,7 +68,7 @@ class StixEntity:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         source_name
                         description
                         url
@@ -91,7 +91,7 @@ class StixEntity:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             kill_chain_name
                             phase_name
                             phase_order
@@ -140,7 +140,7 @@ class StixEntity:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             kill_chain_name
                             phase_name
                             phase_order
@@ -160,7 +160,7 @@ class StixEntity:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             kill_chain_name
                             phase_name
                             phase_order
@@ -190,7 +190,7 @@ class StixEntity:
                     edges {
                         node {
                             id
-                            stix_id_key
+                            stix_id
                             entity_type
                             observable_value
                         }
@@ -204,7 +204,7 @@ class StixEntity:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             kill_chain_name
                             phase_name
                             phase_order
@@ -226,7 +226,7 @@ class StixEntity:
                     edges {
                         node {
                             id
-                            stix_id_key
+                            stix_id
                             entity_type
                         }
                         relation {
@@ -238,7 +238,7 @@ class StixEntity:
                     edges {
                         node {
                             id
-                            stix_id_key
+                            stix_id
                             entity_type
                             observable_value
                         }
@@ -251,7 +251,7 @@ class StixEntity:
                     edges {
                         node {
                             id
-                            stix_id_key
+                            stix_id
                         }
                         relation {
                             id
@@ -267,7 +267,7 @@ class StixEntity:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             kill_chain_name
                             phase_name
                             phase_order
@@ -333,7 +333,7 @@ class StixEntity:
                     node {
                         id
                         entity_type
-                        stix_id_key
+                        stix_id
                         stix_label
                         name
                         alias
@@ -430,7 +430,7 @@ class StixEntity:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             definition_type
                             definition
                             level
@@ -572,7 +572,7 @@ class StixEntity:
                         node {
                             id
                             entity_type
-                            stix_id_key
+                            stix_id
                             source_name
                             description
                             url
@@ -707,7 +707,7 @@ class StixEntity:
                             edges {
                                 node {
                                     id
-                                    stix_id_key
+                                    stix_id
                                     entity_type
                                     stix_label
                                     name
@@ -726,7 +726,7 @@ class StixEntity:
                                         node {
                                             id
                                             entity_type
-                                            stix_id_key
+                                            stix_id
                                             stix_label
                                             name
                                             alias
@@ -743,7 +743,7 @@ class StixEntity:
                                             node {
                                                 id
                                                 entity_type
-                                                stix_id_key
+                                                stix_id
                                                 definition_type
                                                 definition
                                                 level
@@ -774,7 +774,7 @@ class StixEntity:
                                             node {
                                                 id
                                                 entity_type
-                                                stix_id_key
+                                                stix_id
                                                 source_name
                                                 description
                                                 url
@@ -792,7 +792,7 @@ class StixEntity:
                                         edges {
                                             node {
                                                 id
-                                                stix_id_key
+                                                stix_id
                                                 entity_type
                                             }
                                             relation {
@@ -804,7 +804,7 @@ class StixEntity:
                                         edges {
                                             node {
                                                 id
-                                                stix_id_key
+                                                stix_id
                                                 entity_type
                                                 observable_value
                                             }
@@ -817,7 +817,7 @@ class StixEntity:
                                         edges {
                                             node {
                                                 id
-                                                stix_id_key
+                                                stix_id
                                             }
                                             relation {
                                                 id
@@ -863,7 +863,7 @@ class StixEntity:
                             edges {
                                 node {
                                     id
-                                    stix_id_key
+                                    stix_id
                                     entity_type
                                     stix_label
                                     name
@@ -879,7 +879,7 @@ class StixEntity:
                                         node {
                                             id
                                             entity_type
-                                            stix_id_key
+                                            stix_id
                                             stix_label
                                             name
                                             alias
@@ -896,7 +896,7 @@ class StixEntity:
                                             node {
                                                 id
                                                 entity_type
-                                                stix_id_key
+                                                stix_id
                                                 definition_type
                                                 definition
                                                 level
@@ -927,7 +927,7 @@ class StixEntity:
                                             node {
                                                 id
                                                 entity_type
-                                                stix_id_key
+                                                stix_id
                                                 source_name
                                                 description
                                                 url
@@ -945,7 +945,7 @@ class StixEntity:
                                         edges {
                                             node {
                                                 id
-                                                stix_id_key
+                                                stix_id
                                                 entity_type
                                             }
                                             relation {
@@ -957,7 +957,7 @@ class StixEntity:
                                         edges {
                                             node {
                                                 id
-                                                stix_id_key
+                                                stix_id
                                                 entity_type
                                                 observable_value
                                             }
@@ -970,7 +970,7 @@ class StixEntity:
                                         edges {
                                             node {
                                                 id
-                                                stix_id_key
+                                                stix_id
                                             }
                                             relation {
                                                 id
