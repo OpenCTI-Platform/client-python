@@ -316,7 +316,7 @@ class StixRelation:
             + "}.",
         )
         query = """
-                mutation StixRelationAdd($input: StixRelationAddInput!) {
+                mutation StixRelationAdd($input: StixStixMetaRelationshipAddInput!) {
                     stixRelationAdd(input: $input) {
                         id
                         stix_id
@@ -609,7 +609,7 @@ class StixRelation:
                     + "}",
                 )
                 query = """
-                   mutation StixRelationAddRelation($id: ID!, $input: RelationAddInput) {
+                   mutation StixRelationAddRelation($id: ID!, $input: StixMetaRelationshipAddInput) {
                        stixRelationEdit(id: $id) {
                             relationAdd(input: $input) {
                                 id

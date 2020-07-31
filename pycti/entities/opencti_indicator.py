@@ -534,7 +534,7 @@ class Indicator:
                     + "}",
                 )
                 query = """
-                   mutation IndicatorEdit($id: ID!, $input: RelationAddInput) {
+                   mutation IndicatorEdit($id: ID!, $input: StixMetaRelationshipAddInput) {
                        indicatorEdit(id: $id) {
                             relationAdd(input: $input) {
                                 id

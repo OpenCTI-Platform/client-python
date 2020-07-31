@@ -209,20 +209,20 @@ class OpenCTIStix2:
         """
 
         # Created By Ref
-        created_by_id = None
-        if "created_by" in stix_object:
-            created_by = stix_object["created_by"]
-            if created_by in self.mapping_cache:
-                created_by_result = self.mapping_cache[created_by]
+        created_by_ref_id = None
+        if "created_by_ref" in stix_object:
+            created_by_ref = stix_object["created_by_ref"]
+            if created_by_ref in self.mapping_cache:
+                created_by_result = self.mapping_cache[created_by_ref]
             else:
-                created_by_result = self.opencti.stix_domain_object.read(id=created_by)
+                created_by_result = self.opencti.stix_domain_object.read(id=created_by_ref)
                 if created_by_result is not None:
-                    self.mapping_cache[created_by] = {
+                    self.mapping_cache[created_by_ref] = {
                         "id": created_by_result["id"],
                         "type": created_by_result["entity_type"],
                     }
             if created_by_result is not None:
-                created_by_id = created_by_result["id"]
+                created_by_ref_id = created_by_result["id"]
 
         # Object Marking Refs
         object_marking_ids = []
@@ -449,19 +449,19 @@ class OpenCTIStix2:
                         self.mapping_cache["marking_tlpwhite"] = {
                             "id": object_marking_ref_result["id"]
                         }
-                        self.opencti.opencti_stix_object_or_stix_relationship.add_marking_definition(
+                        self.opencti.stix_domain_object.add_marking_definition(
                             id=report["id"],
                             marking_definition_id=object_marking_ref_result["id"],
                         )
 
                     # Add external reference to report
-                    self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+                    self.opencti.stix_domain_object.add_external_reference(
                         id=report["id"], external_reference_id=external_reference_id,
                     )
                     reports[external_reference_id] = report
 
         return {
-            "created_by": created_by_id,
+            "created_by_ref": created_by_ref_id,
             "marking_definitions": object_marking_ids,
             "tags": object_label_ids,
             "kill_chain_phases": kill_chain_phases_ids,
@@ -490,7 +490,7 @@ class OpenCTIStix2:
 
         # Extract
         embedded_relationships = self.extract_embedded_relationships(stix_object, types)
-        created_by_id = embedded_relationships["created_by"]
+        created_by_id = embedded_relationships["created_by_ref"]
         object_marking_ids = embedded_relationships["marking_definitions"]
         object_label_ids = embedded_relationships["tags"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
@@ -504,7 +504,7 @@ class OpenCTIStix2:
             "object_marking_ids": object_marking_ids,
             "object_label_ids": object_label_ids,
             "kill_chain_phases_ids": kill_chain_phases_ids,
-            "object_refs_ids": object_refs_ids,
+            "object_ids": object_refs_ids,
             "external_references_ids": external_references_ids,
             "reports": reports,
         }
@@ -558,7 +558,7 @@ class OpenCTIStix2:
 
             # Add external references
             for external_reference_id in external_references_ids:
-                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+                self.opencti.stix_domain_object.add_external_reference(
                     id=stix_object_result["id"],
                     external_reference_id=external_reference_id,
                 )
@@ -863,7 +863,7 @@ class OpenCTIStix2:
 
         # Add external references
         for external_reference_id in external_references_ids:
-            self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+            self.opencti.opencti_stix_relation.add_external_reference(
                 id=stix_relation_result["id"],
                 external_reference_id=external_reference_id,
             )
@@ -1226,7 +1226,7 @@ class OpenCTIStix2:
 
         # Add external references
         for external_reference_id in external_references_ids:
-            self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+            self.opencti.stix_domain_object.add_external_reference(
                 id=stix_sighting_result["id"],
                 external_reference_id=external_reference_id,
             )

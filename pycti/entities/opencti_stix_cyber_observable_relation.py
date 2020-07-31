@@ -284,7 +284,7 @@ class StixCyberObservableRelation:
             + "}.",
         )
         query = """
-                mutation StixCyberObservableRelationAdd($input: StixCyberObservableRelationAddInput!) {
+                mutation StixCyberObservableRelationAdd($input: StixCyberObservableStixMetaRelationshipAddInput!) {
                     StixCyberObservableRelationAdd(input: $input) {
                         id
                         stix_id

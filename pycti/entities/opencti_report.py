@@ -477,7 +477,7 @@ class Report:
                     )
                     object_result["description"] = description
             if external_reference_id is not None:
-                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+                self.opencti.stix_domain_object.add_external_reference(
                     id=object_result["id"], external_reference_id=external_reference_id,
                 )
             return object_result
@@ -499,7 +499,7 @@ class Report:
                 objectLabel=object_label,
             )
             if external_reference_id is not None:
-                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+                self.opencti.stix_domain_object.add_external_reference(
                     id=report["id"], external_reference_id=external_reference_id,
                 )
             return report
@@ -524,7 +524,7 @@ class Report:
                 "info", "Adding Stix-Entity {" + entity_id + "} to Report {" + id + "}",
             )
             query = """
-               mutation ReportEditRelationAdd($id: ID!, $input: RelationAddInput) {
+               mutation ReportEditRelationAdd($id: ID!, $input: StixMetaRelationshipAddInput) {
                    reportEdit(id: $id) {
                         relationAdd(input: $input) {
                             id
@@ -576,7 +576,7 @@ class Report:
                 + "}",
             )
             query = """
-               mutation ReportEditRelationAdd($id: ID!, $input: RelationAddInput) {
+               mutation ReportEditRelationAdd($id: ID!, $input: StixMetaRelationshipAddInput) {
                    reportEdit(id: $id) {
                         relationAdd(input: $input) {
                             id

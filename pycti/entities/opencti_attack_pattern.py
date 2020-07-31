@@ -361,7 +361,6 @@ class AttackPattern:
                 }
             }
         """
-        print(description)
         object_result = None
         if stix_id is not None:
             object_result = self.read(id=stix_id, customAttributes=custom_attributes)

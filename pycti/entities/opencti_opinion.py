@@ -473,7 +473,7 @@ class Opinion:
                     )
                     object_result["explanation"] = explanation
             if external_reference_id is not None:
-                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+                self.opencti.stix_domain_object.add_external_reference(
                     id=object_result["id"], external_reference_id=external_reference_id,
                 )
             return object_result
@@ -491,7 +491,7 @@ class Opinion:
                 objectMarking=object_marking,
             )
             if external_reference_id is not None:
-                self.opencti.opencti_stix_object_or_stix_relationship.add_external_reference(
+                self.opencti.stix_domain_object.add_external_reference(
                     id=opinion["id"], external_reference_id=external_reference_id,
                 )
             return opinion
@@ -517,7 +517,7 @@ class Opinion:
                 "Adding Stix-Entity {" + entity_id + "} to Opinion {" + id + "}",
             )
             query = """
-               mutation OpinionEdit($id: ID!, $input: RelationAddInput) {
+               mutation OpinionEdit($id: ID!, $input: StixMetaRelationshipAddInput) {
                    opinionEdit(id: $id) {
                         relationAdd(input: $input) {
                             id
@@ -569,7 +569,7 @@ class Opinion:
                 + "}",
             )
             query = """
-               mutation OpinionEdit($id: ID!, $input: RelationAddInput) {
+               mutation OpinionEdit($id: ID!, $input: StixMetaRelationshipAddInput) {
                    opinionEdit(id: $id) {
                         relationAdd(input: $input) {
                             id

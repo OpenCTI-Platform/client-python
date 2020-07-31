@@ -504,7 +504,7 @@ class StixCyberObservable:
                     )
                 # Add the new relation
                 query = """
-                   mutation StixCyberObservableEdit($id: ID!, $input: RelationAddInput) {
+                   mutation StixCyberObservableEdit($id: ID!, $input: StixMetaRelationshipAddInput) {
                        StixCyberObservableEdit(id: $id) {
                             relationAdd(input: $input) {
                                 id
