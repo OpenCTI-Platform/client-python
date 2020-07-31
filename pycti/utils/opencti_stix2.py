@@ -631,7 +631,7 @@ class OpenCTIStix2:
 
         # Create the relation
 
-        ## Workaround for missing start_time / end_time
+        ## Try to guess start_time / stop_time from external reference
         date = None
         if "external_references" in stix_relation:
             for external_reference in stix_relation["external_references"]:
@@ -656,47 +656,9 @@ class OpenCTIStix2:
                                 break
                     except:
                         date = None
-        if date is None:
-            date = datetime.datetime.today().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        stix_relation_result = self.opencti.stix_relation.create(
-            fromId=source_id,
-            fromType=source_type,
-            toId=target_id,
-            toType=target_type,
-            relationship_type=stix_relation["relationship_type"],
-            description=self.convert_markdown(stix_relation["description"])
-            if "description" in stix_relation
-            else None,
-            first_seen=stix_relation[CustomProperties.FIRST_SEEN]
-            if CustomProperties.FIRST_SEEN in stix_relation
-            else date,
-            last_seen=stix_relation[CustomProperties.LAST_SEEN]
-            if CustomProperties.LAST_SEEN in stix_relation
-            else date,
-            weight=stix_relation[CustomProperties.WEIGHT]
-            if CustomProperties.WEIGHT in stix_relation
-            else 1,
-            role_played=stix_relation[CustomProperties.ROLE_PLAYED]
-            if CustomProperties.ROLE_PLAYED in stix_relation
-            else None,
-            id=stix_relation[CustomProperties.ID]
-            if CustomProperties.ID in stix_relation
-            else None,
-            stix_id=stix_relation["id"] if "id" in stix_relation else None,
-            created=stix_relation["created"] if "created" in stix_relation else None,
-            modified=stix_relation["modified"] if "modified" in stix_relation else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else [],
-            killChainPhases=extras["kill_chain_phases_ids"]
-            if "kill_chain_phases_ids" in extras
-            else [],
-            update=update,
-            ignore_dates=stix_relation[CustomProperties.IGNORE_DATES]
-            if CustomProperties.IGNORE_DATES in stix_relation
-            else None,
+        stix_relation_result = self.opencti.stix_core_relationship.import_from_stix2(
+            stixRelation=stix_relation, extras=extras, update=update, defaultDate=date
         )
         if stix_relation_result is not None:
             self.mapping_cache[stix_relation["id"]] = {

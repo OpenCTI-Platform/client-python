@@ -586,7 +586,9 @@ class Indicator:
                 else None,
                 pattern=stix_object["pattern"] if "pattern" in stix_object else "",
                 name=stix_object["name"] if "name" in stix_object else "",
-                description=stix_object["description"]
+                description=self.opencti.stix2.convert_markdown(
+                    stix_object["description"]
+                )
                 if "description" in stix_object
                 else "",
                 indicator_types=stix_object["indicator_types"]

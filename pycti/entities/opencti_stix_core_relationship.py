@@ -11,89 +11,63 @@ class StixCoreRelationship:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id
             entity_type
-            relationship_type
-            description
-            weight
-            role_played
-            start_time
-            stop_time
-            created
-            modified
+            parent_types
+            spec_version
             created_at
             updated_at
-            fromRole
-            from {
-                id
-                stix_id
-                entity_type
-                ...on StixDomainEntity {
-                    name
-                    description
-                }
-            }
-            toRole
-            to {
-                id
-                stix_id
-                entity_type
-                ...on StixDomainEntity {
-                    name
-                    description
-                }
-            }
+            standard_id
+            relationship_type
+            description
+            start_time
+            stop_time
+            revoked
+            confidence
+            lang
+            created
+            modified
             createdBy {
-                node {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        x_opencti_organization_type
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
+                }
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
                 }
             }
-            markingDefinitions {
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                       id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            killChainPhases {
+            objectLabel {
                 edges {
                     node {
                         id
-                        entity_type
-                        stix_id
-                        kill_chain_name
-                        phase_name
-                        phase_order
-                        created
-                        modified
-                    }
-                    relation {
-                       id
+                        value
+                        color
                     }
                 }
             }
@@ -101,8 +75,8 @@ class StixCoreRelationship:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         source_name
                         description
                         url
@@ -111,9 +85,162 @@ class StixCoreRelationship:
                         created
                         modified
                     }
-                    relation {
-                        id
-                    }
+                }
+            }
+            from {
+                ... on BasicObject {
+                    id
+                    entity_type
+                    parent_types
+                }
+                ... on BasicRelationship {
+                    id
+                    entity_type
+                    parent_types
+                }
+                ... on StixObject {
+                    standard_id
+                    spec_version
+                    created_at
+                    updated_at
+                }
+                ... on AttackPattern {
+                    name
+                }
+                ... on Campaign {
+                    name
+                }
+                ... on CourseOfAction {
+                    name
+                }
+                ... on Individual {
+                    name
+                }
+                ... on Organization {
+                    name
+                }
+                ... on Sector {
+                    name
+                }
+                ... on Indicator {
+                    name
+                }
+                ... on Infrastructure {
+                    name
+                }
+                ... on IntrusionSet {
+                    name
+                }
+                ... on Position {
+                    name
+                }
+                ... on City {
+                    name
+                }
+                ... on Country {
+                    name
+                }
+                ... on Region {
+                    name
+                }
+                ... on Malware {
+                    name
+                }
+                ... on ThreatActor {
+                    name
+                }
+                ... on Tool {
+                    name
+                }
+                ... on Vulnerability {
+                    name
+                }
+                ... on XOpenctiIncident {
+                    name
+                }                
+                ... on StixCoreRelationship {
+                    standard_id
+                    spec_version
+                    created_at
+                    updated_at
+                }
+            }
+            to {
+                ... on BasicObject {
+                    id
+                    entity_type
+                    parent_types
+                }
+                ... on BasicRelationship {
+                    id
+                    entity_type
+                    parent_types
+                }
+                ... on StixObject {
+                    standard_id
+                    spec_version
+                    created_at
+                    updated_at
+                }
+                ... on AttackPattern {
+                    name
+                }
+                ... on Campaign {
+                    name
+                }
+                ... on CourseOfAction {
+                    name
+                }
+                ... on Individual {
+                    name
+                }
+                ... on Organization {
+                    name
+                }
+                ... on Sector {
+                    name
+                }
+                ... on Indicator {
+                    name
+                }
+                ... on Infrastructure {
+                    name
+                }
+                ... on IntrusionSet {
+                    name
+                }
+                ... on Position {
+                    name
+                }
+                ... on City {
+                    name
+                }
+                ... on Country {
+                    name
+                }
+                ... on Region {
+                    name
+                }
+                ... on Malware {
+                    name
+                }
+                ... on ThreatActor {
+                    name
+                }
+                ... on Tool {
+                    name
+                }
+                ... on Vulnerability {
+                    name
+                }
+                ... on XOpenctiIncident {
+                    name
+                }
+                ... on StixCoreRelationship {
+                    standard_id
+                    spec_version
+                    created_at
+                    updated_at
                 }
             }
         """
@@ -288,40 +415,31 @@ class StixCoreRelationship:
 
     def create_raw(self, **kwargs):
         from_id = kwargs.get("fromId", None)
-        from_role = kwargs.get("fromRole", None)
         to_id = kwargs.get("toId", None)
-        to_role = kwargs.get("toRole", None)
+        stix_id = kwargs.get("stix_id", None)
         relationship_type = kwargs.get("relationship_type", None)
         description = kwargs.get("description", None)
-        role_played = kwargs.get("role_played", None)
         start_time = kwargs.get("start_time", None)
         stop_time = kwargs.get("stop_time", None)
-        weight = kwargs.get("weight", None)
-        id = kwargs.get("id", None)
-        stix_id = kwargs.get("stix_id", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
         created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
+        modified = kwargs.get("modified", "")
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
 
         self.opencti.log(
-            "info",
-            "Creating stix_core_relationship {"
-            + from_role
-            + ": "
-            + from_id
-            + ", "
-            + to_role
-            + ": "
-            + to_id
-            + "}.",
+            "info", "Creating stix_core_relationship {" + from_id + ", " + to_id + "}.",
         )
         query = """
                 mutation StixCoreRelationshipAdd($input: StixStixMetaRelationshipAddInput!) {
                     stixCoreRelationshipAdd(input: $input) {
                         id
-                        stix_id
+                        standard_id
                         entity_type
                         parent_types
                     }
@@ -332,21 +450,21 @@ class StixCoreRelationship:
             {
                 "input": {
                     "fromId": from_id,
-                    "fromRole": from_role,
                     "toId": to_id,
-                    "toRole": to_role,
+                    "stix_id": stix_id,
                     "relationship_type": relationship_type,
                     "description": description,
-                    "role_played": role_played,
                     "start_time": start_time,
                     "stop_time": stop_time,
-                    "weight": weight,
-                    "internal_id_key": id,
-                    "stix_id": stix_id,
+                    "revoked": revoked,
+                    "confidence": confidence,
+                    "lang": lang,
                     "created": created,
                     "modified": modified,
                     "createdBy": created_by,
-                    "objectMarking": objectMarking,
+                    "objectMarking": object_marking,
+                    "objectLabel": object_label,
+                    "externalReferences": external_references,
                     "killChainPhases": kill_chain_phases,
                 }
             },
@@ -364,37 +482,37 @@ class StixCoreRelationship:
 
     def create(self, **kwargs):
         from_id = kwargs.get("fromId", None)
-        from_type = kwargs.get("fromType", None)
-        to_type = kwargs.get("toType", None)
         to_id = kwargs.get("toId", None)
+        stix_id = kwargs.get("stix_id", None)
         relationship_type = kwargs.get("relationship_type", None)
         description = kwargs.get("description", None)
-        role_played = kwargs.get("role_played", None)
         start_time = kwargs.get("start_time", None)
         stop_time = kwargs.get("stop_time", None)
-        weight = kwargs.get("weight", None)
-        id = kwargs.get("id", None)
-        stix_id = kwargs.get("stix_id", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
         created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
+        modified = kwargs.get("modified", "")
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
         ignore_dates = kwargs.get("ignore_dates", False)
         custom_attributes = """
             id
+            standard_id
             entity_type
-            name
-            description
-            weight
+            parent_types
             start_time
             stop_time
+            confidence
             createdBy {
-                node {
+                ... on Identity {
                     id
                 }
-            }            
+            }       
         """
         stix_core_relationship_result = None
         if id is not None:
@@ -453,15 +571,15 @@ class StixCoreRelationship:
                     )
                     stix_core_relationship_result["description"] = description
                 if (
-                    weight is not None
-                    and stix_core_relationship_result["weight"] != weight
+                    confidence is not None
+                    and stix_core_relationship_result["confidence"] != confidence
                 ):
                     self.update_field(
                         id=stix_core_relationship_result["id"],
-                        key="weight",
-                        value=str(weight),
+                        key="confidence",
+                        value=str(confidence),
                     )
-                    stix_core_relationship_result["weight"] = weight
+                    stix_core_relationship_result["confidence"] = confidence
                 if start_time is not None:
                     new_start_time = dateutil.parser.parse(start_time)
                     old_start_time = dateutil.parser.parse(
@@ -488,45 +606,23 @@ class StixCoreRelationship:
                         stix_core_relationship_result["stop_time"] = stop_time
             return stix_core_relationship_result
         else:
-            roles = self.opencti.resolve_role(relationship_type, from_type, to_type)
-            if roles is not None:
-                final_from_id = from_id
-                final_to_id = to_id
-            else:
-                roles = self.opencti.resolve_role(relationship_type, to_type, from_type)
-                if roles is not None:
-                    final_from_id = to_id
-                    final_to_id = from_id
-                else:
-                    self.opencti.log(
-                        "error",
-                        "Relation creation failed, cannot resolve roles: {"
-                        + relationship_type
-                        + ": "
-                        + from_type
-                        + ", "
-                        + to_type
-                        + "}",
-                    )
-                    return None
-
             return self.create_raw(
-                fromId=final_from_id,
-                fromRole=roles["from_role"],
-                toId=final_to_id,
-                toRole=roles["to_role"],
+                fromId=from_id,
+                toId=to_id,
+                stix_id=stix_id,
                 relationship_type=relationship_type,
                 description=description,
                 start_time=start_time,
                 stop_time=stop_time,
-                weight=weight,
-                role_played=role_played,
-                id=id,
-                stix_id=stix_id,
+                revoked=revoked,
+                confidence=confidence,
+                lang=lang,
                 created=created,
                 modified=modified,
                 createdBy=created_by,
                 objectMarking=object_marking,
+                objectLabel=object_label,
+                externalReferences=external_references,
                 killChainPhases=kill_chain_phases,
             )
 
@@ -638,10 +734,8 @@ class StixCoreRelationship:
                     {
                         "id": id,
                         "input": {
-                            "fromRole": "phase_belonging",
                             "toId": kill_chain_phase_id,
-                            "toRole": "kill_chain_phase",
-                            "through": "kill_chain_phases",
+                            "relationship_type": "kill-chain-phase",
                         },
                     },
                 )
@@ -652,6 +746,70 @@ class StixCoreRelationship:
                 "[opencti_stix_core_relationship] Missing parameters: id and kill_chain_phase_id",
             )
             return False
+
+    """
+        Import an Indicator object from a STIX2 object
+
+        :param stixObject: the Stix-Object Indicator
+        :return Indicator object
+    """
+
+    def import_from_stix2(self, **kwargs):
+        stix_relation = kwargs.get("stixRelation", None)
+        extras = kwargs.get("extras", {})
+        update = kwargs.get("update", False)
+        default_date = kwargs.get("defaultDate", False)
+        if stix_relation is not None:
+            return self.create(
+                fromId=stix_relation["source_ref"],
+                toId=stix_relation["target_ref"],
+                stix_id=stix_relation["id"],
+                relationshipç_type=stix_relation["relationshipç_type"],
+                description=self.opencti.stix2.convert_markdown(
+                    stix_relation["description"]
+                )
+                if "description" in stix_relation
+                else "",
+                start_time=stix_relation["start_time"]
+                if "start_time" in stix_relation
+                else default_date,
+                stop_time=stix_relation["stop_time"]
+                if "stop_time" in stix_relation
+                else default_date,
+                revoked=stix_relation["revoked"]
+                if "revoked" in stix_relation
+                else None,
+                confidence=stix_relation["confidence"]
+                if "confidence" in stix_relation
+                else None,
+                lang=stix_relation["lang"] if "lang" in stix_relation else None,
+                created=stix_relation["created"]
+                if "created" in stix_relation
+                else None,
+                modified=stix_relation["modified"]
+                if "modified" in stix_relation
+                else None,
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
+                else None,
+                objectMarking=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
+                else None,
+                objectLabel=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
+                else [],
+                killChainPhases=extras["kill_chain_phases_ids"]
+                if "kill_chain_phases_ids" in extras
+                else None,
+                update=update,
+            )
+        else:
+            self.opencti.log(
+                "error", "[opencti_attack_pattern] Missing parameters: stixObject"
+            )
 
     """
         Export an stix_core_relationship object in STIX2

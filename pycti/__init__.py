@@ -19,8 +19,8 @@ from .entities.opencti_stix_object_or_stix_relationship import (
 )
 from .entities.opencti_stix_domain_object import StixDomainObject
 from .entities.opencti_stix_cyber_observable import StixCyberObservable
-from .entities.opencti_stix_relation import StixRelation
-from .entities.opencti_stix_sighting import StixSighting
+from .entities.opencti_stix_core_relationship import StixCoreRelationship
+from .entities.opencti_stix_sighting_relationship import StixSightingRelationship
 from .entities.opencti_stix_cyber_observable_relation import StixCyberObservableRelation
 from .entities.opencti_identity import Identity
 from .entities.opencti_location import Location
@@ -59,8 +59,8 @@ __all__ = [
     "StixObjectOrStixRelationship",
     "StixDomainObject",
     "StixCyberObservable",
-    "StixRelation",
-    "StixSighting",
+    "StixCoreRelationship",
+    "StixSightingRelationship",
     "StixCyberObservableRelation",
     "Identity",
     "Location",

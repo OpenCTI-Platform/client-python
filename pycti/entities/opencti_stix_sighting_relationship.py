@@ -6,7 +6,7 @@ from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
-class StixSighting:
+class StixSightingRelationship:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -148,8 +148,8 @@ class StixSighting:
         )
         query = (
             """
-                query StixSightings($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $filters: [StixSightingsFiltering], $first: Int, $after: ID, $orderBy: StixSightingsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
-                    stixSightings(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
+                query StixSightingRelationships($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $filters: [StixSightingRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixSightingRelationshipsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
+                    stixSightingRelationships(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
                         edges {
                             node {
                                 """
@@ -189,7 +189,7 @@ class StixSighting:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["stixSightings"], with_pagination
+            result["data"]["stixSightingRelationships"], with_pagination
         )
 
     """
@@ -220,8 +220,8 @@ class StixSighting:
             self.opencti.log("info", "Reading stix_sighting {" + id + "}.")
             query = (
                 """
-                    query StixSighting($id: String!) {
-                        stixSighting(id: $id) {
+                    query StixSightingRelationship($id: String!) {
+                        stixSightingRelationship(id: $id) {
                             """
                 + (
                     custom_attributes
@@ -234,7 +234,9 @@ class StixSighting:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["stixSighting"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["stixSightingRelationship"]
+            )
         elif from_id is not None and to_id is not None:
             result = self.list(
                 fromId=from_id,
@@ -280,8 +282,8 @@ class StixSighting:
             "info", "Creating stix_sighting {" + from_id + ", " + str(to_id) + "}.",
         )
         query = """
-                mutation StixSightingAdd($input: StixSightingAddInput!) {
-                    stixSightingAdd(input: $input) {
+                mutation StixSightingRelationshipAdd($input: StixSightingRelationshipAddInput!) {
+                    stixSightingRelationshipAdd(input: $input) {
                         id
                         stix_id
                         entity_type
@@ -310,7 +312,9 @@ class StixSighting:
                 }
             },
         )
-        return self.opencti.process_multiple_fields(result["data"]["stixSightingAdd"])
+        return self.opencti.process_multiple_fields(
+            result["data"]["stixSightingRelationshipAdd"]
+        )
 
     """
         Create a stix_sighting object only if it not exists, update it on request
@@ -491,8 +495,8 @@ class StixSighting:
                 "info", "Updating stix_sighting {" + id + "} field {" + key + "}."
             )
             query = """
-                    mutation StixSightingEdit($id: ID!, $input: EditInput!) {
-                        stixSightingEdit(id: $id) {
+                    mutation StixSightingRelationshipEdit($id: ID!, $input: EditInput!) {
+                        stixSightingRelationshipEdit(id: $id) {
                             fieldPatch(input: $input) {
                                 id
                             }
@@ -503,7 +507,7 @@ class StixSighting:
                 query, {"id": id, "input": {"key": key, "value": value}}
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["stixSightingEdit"]["fieldPatch"]
+                result["data"]["stixSightingRelationshipEdit"]["fieldPatch"]
             )
         else:
             self.opencti.log(
@@ -524,8 +528,8 @@ class StixSighting:
         if id is not None:
             self.opencti.log("info", "Deleting stix_sighting {" + id + "}.")
             query = """
-                mutation StixSightingEdit($id: ID!) {
-                    stixSightingEdit(id: $id) {
+                mutation StixSightingRelationshipEdit($id: ID!) {
+                    stixSightingRelationshipEdit(id: $id) {
                         delete
                     }
                 }
