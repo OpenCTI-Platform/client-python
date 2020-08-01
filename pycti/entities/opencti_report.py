@@ -3,8 +3,6 @@
 import json
 
 from dateutil.parser import parse
-from pycti.utils.constants import CustomProperties
-from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
 class Report:

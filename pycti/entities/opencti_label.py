@@ -39,7 +39,7 @@ class Label:
         )
         query = (
             """
-            query labels($filters: [labelsFiltering], $first: Int, $after: ID, $orderBy: labelsOrdering, $orderMode: OrderingMode) {
+            query Labels($filters: [LabelsFiltering], $first: Int, $after: ID, $orderBy: LabelsOrdering, $orderMode: OrderingMode) {
                 labels(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
@@ -122,10 +122,10 @@ class Label:
         value = kwargs.get("value", None)
         color = kwargs.get("color", None)
 
-        if value is not None and color is not None:
+        if value is not None:
             query = (
                 """
-                mutation LabelAdd($input: labelAddInput) {
+                mutation LabelAdd($input: LabelAddInput) {
                     labelAdd(input: $input) {
                         """
                 + self.properties
@@ -140,8 +140,7 @@ class Label:
             return self.opencti.process_multiple_fields(result["data"]["labelAdd"])
         else:
             self.opencti.log(
-                "error",
-                "[opencti_label] Missing parameters: label_type and value and color",
+                "error", "[opencti_label] Missing parameters: value",
             )
 
     """

@@ -3,8 +3,6 @@
 import json
 
 from typing import Union
-
-from pycti.utils.constants import CustomProperties
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 

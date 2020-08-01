@@ -1,7 +1,7 @@
 # coding: utf-8
 
 import json
-from pycti.utils.constants import CustomProperties, IdentityTypes
+from pycti.utils.constants import IdentityTypes
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 

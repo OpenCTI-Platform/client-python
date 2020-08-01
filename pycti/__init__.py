@@ -42,7 +42,6 @@ from .entities.opencti_indicator import Indicator
 
 from .utils.opencti_stix2 import OpenCTIStix2
 from .utils.constants import StixCyberObservableTypes
-from .utils.constants import CustomProperties
 
 __all__ = [
     "OpenCTIApiClient",
@@ -81,5 +80,4 @@ __all__ = [
     "Indicator",
     "OpenCTIStix2",
     "StixCyberObservableTypes",
-    "CustomProperties",
 ]

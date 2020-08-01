@@ -15,6 +15,7 @@ import pytz
 from pycti.utils.constants import (
     IdentityTypes,
     LocationTypes,
+    ContainerTypes,
     StixCyberObservableTypes,
 )
 
@@ -1581,30 +1582,9 @@ class OpenCTIStix2:
             stixObject=stix_object, extras=extras, update=update
         )
 
-    # TODO move in Malware
     def create_malware(self, stix_object, extras, update=False):
-        return self.opencti.malware.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            is_family=stix_object["is_family"] if "is_family" in stix_object else False,
-            alias=self.pick_aliases(stix_object),
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else None,
-            killChainPhases=extras["kill_chain_phases_ids"]
-            if "kill_chain_phases_ids" in extras
-            else None,
-            tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
-            update=update,
+        return self.opencti.malware.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
     def create_tool(self, stix_object, extras, update=False):
@@ -1784,14 +1764,7 @@ class OpenCTIStix2:
         # Identities
         start_time = time.time()
         for item in stix_bundle["objects"]:
-            if item["type"] == "identity" and (
-                len(types) == 0
-                or "identity" in types
-                or (
-                    CustomProperties.IDENTITY_TYPE in item
-                    and item[CustomProperties.IDENTITY_TYPE] in types
-                )
-            ):
+            if item["type"] == "identity" and (len(types) == 0 or "identity" in types):
                 self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
@@ -1799,17 +1772,23 @@ class OpenCTIStix2:
             "info", "Identities imported in: %ssecs" % round(end_time - start_time)
         )
 
+        # StixCyberObservables
+        start_time = time.time()
+        for item in stix_bundle["objects"]:
+            if StixCyberObservableTypes.has_value(item["type"]):
+                self.import_observable(item)
+        end_time = time.time()
+        self.opencti.log(
+            "info", "Observables imported in: %ssecs" % round(end_time - start_time)
+        )
+
         # StixDomainObjects except Report/Opinion/Notes
         start_time = time.time()
         for item in stix_bundle["objects"]:
             if (
-                item["type"] != "relationship"
+                not ContainerTypes.has_value(item["type"])
+                and item["type"] != "relationship"
                 and item["type"] != "sighting"
-                and item["type"] != "report"
-                and item["type"] != "note"
-                and item["type"] != "opinion"
-                and item["type"] != "observed-data"
-                and (len(types) == 0 or item["type"] in types)
             ):
                 self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
@@ -1818,53 +1797,16 @@ class OpenCTIStix2:
             "info", "Objects imported in: %ssecs" % round(end_time - start_time)
         )
 
-        # StixCyberObservables
-        start_time = time.time()
-        for item in stix_bundle["objects"]:
-            if item["type"] == "observed-data" and (
-                len(types) == 0 or "observed-data" in types
-            ):
-                self.import_observables(item)
-        end_time = time.time()
-        self.opencti.log(
-            "info", "Observables imported in: %ssecs" % round(end_time - start_time)
-        )
-
         # StixRelationObjects
         start_time = time.time()
         for item in stix_bundle["objects"]:
-            if item["type"] == "relationship":
-                # Import only relationships between entities
-                if (
-                    CustomProperties.SOURCE_REF not in item
-                    or "relationship" not in item[CustomProperties.SOURCE_REF]
-                ) and (
-                    CustomProperties.TARGET_REF not in item
-                    or "relationship" not in item[CustomProperties.TARGET_REF]
-                ):
-                    source_ref = (
-                        item[CustomProperties.SOURCE_REF]
-                        if CustomProperties.SOURCE_REF in item
-                        else item["source_ref"]
-                    )
-                    target_ref = (
-                        item[CustomProperties.TARGET_REF]
-                        if CustomProperties.TARGET_REF in item
-                        else item["target_ref"]
-                    )
-                    if "observed-data" in source_ref:
-                        if source_ref in self.mapping_cache:
-                            for observable in self.mapping_cache[source_ref]:
-                                item[CustomProperties.SOURCE_REF] = observable["id"]
-                                self.import_relationship(item, update, types)
-                    elif "observed-data" in target_ref:
-                        if target_ref in self.mapping_cache:
-                            for observable in self.mapping_cache[target_ref]:
-                                item[CustomProperties.TARGET_REF] = observable["id"]
-                                self.import_relationship(item, update, types)
-                    else:
-                        self.import_relationship(item, update, types)
-                    imported_elements.append({"id": item["id"], "type": item["type"]})
+            if (
+                item["type"] == "relationship"
+                and "relationship--" not in item["source_ref"]
+                and "relationship--" not in item["target_ref"]
+            ):
+                self.import_relationship(item, update, types)
+                imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
         self.opencti.log(
             "info", "Relationships imported in: %ssecs" % round(end_time - start_time)

@@ -2,9 +2,6 @@
 
 import json
 
-from pycti.utils.constants import CustomProperties
-from pycti.utils.opencti_stix2 import SPEC_VERSION
-
 
 class Note:
     def __init__(self, opencti):
