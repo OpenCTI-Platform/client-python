@@ -150,8 +150,8 @@ class OpenCTIStix2:
         # Check if level is less or equal to max
         for typed_entity_marking_definition in typed_entity_marking_definitions:
             if (
-                typed_entity_marking_definition["level"]
-                <= max_marking_definition_entity["level"]
+                typed_entity_marking_definition["x_opencti_order"]
+                <= max_marking_definition_entity["x_opencti_order"]
             ):
                 return True
         return False
@@ -168,16 +168,11 @@ class OpenCTIStix2:
         :return: list of imported stix2 objects
         :rtype: List
         """
-
-        if types is None:
-            types = []
         if not os.path.isfile(file_path):
             self.opencti.log("error", "The bundle file does not exists")
             return None
-
         with open(os.path.join(file_path)) as file:
             data = json.load(file)
-
         return self.import_bundle(data, update, types)
 
     def import_bundle_from_json(self, json_data, update=False, types=None) -> List:
@@ -192,9 +187,6 @@ class OpenCTIStix2:
         :return: list of imported stix2 objects
         :rtype: List
         """
-
-        if types is None:
-            types = []
         data = json.loads(json_data)
         return self.import_bundle(data, update, types)
 
@@ -348,7 +340,7 @@ class OpenCTIStix2:
                     "threat-actor",
                     "intrusion-set",
                     "campaign",
-                    "incident",
+                    "x-opencti-incident",
                     "malware",
                     "relationship",
                 ] and (types is None or "report" in types):
@@ -515,22 +507,14 @@ class OpenCTIStix2:
             stix_object_results = [stix_object_results]
 
         for stix_object_result in stix_object_results:
-            # Add embedded relationships
             self.mapping_cache[stix_object["id"]] = {
                 "id": stix_object_result["id"],
                 "type": stix_object_result["entity_type"],
-                "observableRefs": stix_object_result["observableRefs"]
-                if "observableRefs" in stix_object_result
-                else [],
             }
             self.mapping_cache[stix_object_result["id"]] = {
                 "id": stix_object_result["id"],
                 "type": stix_object_result["entity_type"],
-                "observableRefs": stix_object_result["observableRefs"]
-                if "observableRefs" in stix_object_result
-                else [],
             }
-
             # Add external references
             for external_reference_id in external_references_ids:
                 if external_reference_id in reports:
@@ -540,64 +524,18 @@ class OpenCTIStix2:
                     )
             # Add object refs
             for object_refs_id in object_refs_ids:
-                if "observed-data" in object_refs_id:
-                    if object_refs_id in self.mapping_cache:
-                        for observable in self.mapping_cache[object_refs_id]:
-                            if stix_object_result["entity_type"] == "report":
-                                self.opencti.report.add_stix_observable(
-                                    id=stix_object_result["id"],
-                                    stix_observable_id=observable["id"],
-                                )
-                            elif stix_object_result["entity_type"] == "note":
-                                self.opencti.note.add_stix_observable(
-                                    id=stix_object_result["id"],
-                                    stix_observable_id=observable["id"],
-                                )
-                            elif stix_object_result["entity_type"] == "opinion":
-                                self.opencti.opinion.add_stix_observable(
-                                    id=stix_object_result["id"],
-                                    stix_observable_id=observable["id"],
-                                )
-                else:
-                    if stix_object_result["entity_type"] == "report":
-                        self.opencti.report.add_opencti_stix_object_or_stix_relationship(
-                            id=stix_object_result["id"], entity_id=object_refs_id,
-                        )
-                    elif stix_object_result["entity_type"] == "note":
-                        self.opencti.note.add_opencti_stix_object_or_stix_relationship(
-                            id=stix_object_result["id"], entity_id=object_refs_id,
-                        )
-                    elif stix_object_result["entity_type"] == "opinion":
-                        self.opencti.opinion.add_opencti_stix_object_or_stix_relationship(
-                            id=stix_object_result["id"], entity_id=object_refs_id,
-                        )
-                    if (
-                        object_refs_id in self.mapping_cache
-                        and "observableRefs" in self.mapping_cache[object_refs_id]
-                        and self.mapping_cache[object_refs_id] is not None
-                        and self.mapping_cache[object_refs_id]["observableRefs"]
-                        is not None
-                        and len(self.mapping_cache[object_refs_id]["observableRefs"])
-                        > 0
-                    ):
-                        for observable_ref in self.mapping_cache[object_refs_id][
-                            "observableRefs"
-                        ]:
-                            if stix_object_result["entity_type"] == "report":
-                                self.opencti.report.add_stix_observable(
-                                    id=stix_object_result["id"],
-                                    stix_observable_id=observable_ref["id"],
-                                )
-                            elif stix_object_result["entity_type"] == "note":
-                                self.opencti.note.add_stix_observable(
-                                    id=stix_object_result["id"],
-                                    stix_observable_id=observable_ref["id"],
-                                )
-                            elif stix_object_result["entity_type"] == "opinion":
-                                self.opencti.opinion.add_stix_observable(
-                                    id=stix_object_result["id"],
-                                    stix_observable_id=observable_ref["id"],
-                                )
+                if stix_object_result["entity_type"] == "report":
+                    self.opencti.report.add_opencti_stix_object_or_stix_relationship(
+                        id=stix_object_result["id"], entity_id=object_refs_id,
+                    )
+                elif stix_object_result["entity_type"] == "note":
+                    self.opencti.note.add_opencti_stix_object_or_stix_relationship(
+                        id=stix_object_result["id"], entity_id=object_refs_id,
+                    )
+                elif stix_object_result["entity_type"] == "opinion":
+                    self.opencti.opinion.add_opencti_stix_object_or_stix_relationship(
+                        id=stix_object_result["id"], entity_id=object_refs_id,
+                    )
             # Add files
             if "x_opencti_files" in stix_object:
                 for file in stix_object["x_opencti_files"]:
@@ -677,10 +615,12 @@ class OpenCTIStix2:
                     entity_id=stix_relation_result["id"],
                 )
                 self.opencti.report.add_opencti_stix_object_or_stix_relationship(
-                    id=reports[external_reference_id]["id"], entity_id=source_id,
+                    id=reports[external_reference_id]["id"],
+                    entity_id=stix_relation["source_ref"],
                 )
                 self.opencti.report.add_opencti_stix_object_or_stix_relationship(
-                    id=reports[external_reference_id]["id"], entity_id=target_id,
+                    id=reports[external_reference_id]["id"],
+                    entity_id=stix_relation["target_ref"],
                 )
 
     def import_observables(self, stix_object):
@@ -1737,9 +1677,6 @@ class OpenCTIStix2:
             return author
 
     def import_bundle(self, stix_bundle, update=False, types=None) -> List:
-        if types is None:
-            types = []
-
         # Check if the bundle is correctly formatted
         if "type" not in stix_bundle or stix_bundle["type"] != "bundle":
             raise ValueError("JSON data type is not a STIX2 bundle")
@@ -1764,7 +1701,7 @@ class OpenCTIStix2:
         # Identities
         start_time = time.time()
         for item in stix_bundle["objects"]:
-            if item["type"] == "identity" and (len(types) == 0 or "identity" in types):
+            if item["type"] == "identity" and (types is None or "identity" in types):
                 self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
@@ -1816,12 +1753,9 @@ class OpenCTIStix2:
         start_time = time.time()
         for item in stix_bundle["objects"]:
             if item["type"] == "relationship":
-                if (
-                    CustomProperties.SOURCE_REF in item
-                    and "relationship" in item[CustomProperties.SOURCE_REF]
-                ) or (
-                    CustomProperties.TARGET_REF in item
-                    and "relationship" in item[CustomProperties.TARGET_REF]
+                if item["type"] == "relationship" and (
+                    "relationship--" in item["source_ref"]
+                    or "relationship--" in item["target_ref"]
                 ):
                     self.import_relationship(item, update, types)
                     imported_elements.append({"id": item["id"], "type": item["type"]})
@@ -1868,10 +1802,23 @@ class OpenCTIStix2:
             "info", "Sightings imported in: %ssecs" % round(end_time - start_time)
         )
 
+        # ObservedDatas
+        start_time = time.time()
+        for item in stix_bundle["objects"]:
+            if item["type"] == "observed-data" and (
+                types is None or "observed-data" in types
+            ):
+                self.import_object(item, update, types)
+                imported_elements.append({"id": item["id"], "type": item["type"]})
+        end_time = time.time()
+        self.opencti.log(
+            "info", "Observed-Datas imported in: %ssecs" % round(end_time - start_time)
+        )
+
         # Reports
         start_time = time.time()
         for item in stix_bundle["objects"]:
-            if item["type"] == "report" and (len(types) == 0 or "report" in types):
+            if item["type"] == "report" and (types is None or "report" in types):
                 self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
@@ -1882,7 +1829,7 @@ class OpenCTIStix2:
         # Notes
         start_time = time.time()
         for item in stix_bundle["objects"]:
-            if item["type"] == "note" and (len(types) == 0 or "note" in types):
+            if item["type"] == "note" and (types is None or "note" in types):
                 self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
@@ -1893,7 +1840,7 @@ class OpenCTIStix2:
         # Opinions
         start_time = time.time()
         for item in stix_bundle["objects"]:
-            if item["type"] == "opinion" and (len(types) == 0 or "opinion" in types):
+            if item["type"] == "opinion" and (types is None or "opinion" in types):
                 self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
