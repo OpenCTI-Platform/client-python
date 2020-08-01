@@ -17,7 +17,7 @@ class Location:
             created_at
             updated_at
             createdBy {
-                ... on Identity {
+                ... on Location {
                     id
                     standard_id
                     entity_type
