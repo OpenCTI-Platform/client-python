@@ -318,8 +318,8 @@ class Report:
                 + "}",
             )
             query = """
-                query TeportContainsStixObjectOrStixRelationship($id: String!, $stixObjectOrStixRelationshipId: String!) {
-                    reportContainsStixObjectOrStixRelationship(id: $id, stixObjectOrStixRelationshipId: $objectId)
+                query ReportContainsStixObjectOrStixRelationship($id: String!, $stixObjectOrStixRelationshipId: String!) {
+                    reportContainsStixObjectOrStixRelationship(id: $id, stixObjectOrStixRelationshipId: $stixObjectOrStixRelationshipId)
                 }
             """
             result = self.opencti.query(
@@ -445,8 +445,6 @@ class Report:
                 description
                 report_types
                 published
-                aliases
-                malware_types
                 x_opencti_report_status
             }       
         """

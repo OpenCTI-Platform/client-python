@@ -384,20 +384,6 @@ class OpenCTIStix2:
                             title + " (" + str(external_reference["external_id"]) + ")"
                         )
 
-                    author = self.resolve_author(title)
-                    report = self.opencti.report.create(
-                        name=title,
-                        external_reference_id=external_reference_id,
-                        description=external_reference["description"]
-                        if "description" in external_reference
-                        else "",
-                        published=published,
-                        report_class="Threat Report",
-                        object_status=2,
-                        createdBy=author["id"] if author is not None else None,
-                        update=True,
-                    )
-                    # Add marking
                     if "marking_tlpwhite" in self.mapping_cache:
                         object_marking_ref_result = self.mapping_cache[
                             "marking_tlpwhite"
@@ -409,18 +395,23 @@ class OpenCTIStix2:
                                 {"key": "definition", "values": ["TLP:WHITE"]},
                             ]
                         )
-                    if object_marking_ref_result is not None:
                         self.mapping_cache["marking_tlpwhite"] = {
                             "id": object_marking_ref_result["id"]
                         }
-                        self.opencti.stix_domain_object.add_marking_definition(
-                            id=report["id"],
-                            marking_definition_id=object_marking_ref_result["id"],
-                        )
 
-                    # Add external reference to report
-                    self.opencti.stix_domain_object.add_external_reference(
-                        id=report["id"], external_reference_id=external_reference_id,
+                    author = self.resolve_author(title)
+                    report = self.opencti.report.create(
+                        name=title,
+                        external_reference_id=external_reference_id,
+                        createdBy=author["id"] if author is not None else None,
+                        objectMarking=[object_marking_ref_result["id"]],
+                        description=external_reference["description"]
+                        if "description" in external_reference
+                        else "",
+                        report_types="threat-report",
+                        published=published,
+                        x_opencti_report_status=2,
+                        update=True,
                     )
                     reports[external_reference_id] = report
 
@@ -515,26 +506,29 @@ class OpenCTIStix2:
                 "id": stix_object_result["id"],
                 "type": stix_object_result["entity_type"],
             }
-            # Add external references
+            # Add reports from external references
             for external_reference_id in external_references_ids:
                 if external_reference_id in reports:
-                    self.opencti.report.add_opencti_stix_object_or_stix_relationship(
+                    self.opencti.report.add_stix_object_or_stix_relationship(
                         id=reports[external_reference_id]["id"],
-                        entity_id=stix_object_result["id"],
+                        stixObjectOrStixRelationshipId=stix_object_result["id"],
                     )
             # Add object refs
             for object_refs_id in object_refs_ids:
                 if stix_object_result["entity_type"] == "report":
-                    self.opencti.report.add_opencti_stix_object_or_stix_relationship(
-                        id=stix_object_result["id"], entity_id=object_refs_id,
+                    self.opencti.report.add_stix_object_or_stix_relationship(
+                        id=stix_object_result["id"],
+                        stixObjectOrStixRelationshipId=object_refs_id,
                     )
                 elif stix_object_result["entity_type"] == "note":
-                    self.opencti.note.add_opencti_stix_object_or_stix_relationship(
-                        id=stix_object_result["id"], entity_id=object_refs_id,
+                    self.opencti.note.add_stix_object_or_stix_relationship(
+                        id=stix_object_result["id"],
+                        stixObjectOrStixRelationshipId=object_refs_id,
                     )
                 elif stix_object_result["entity_type"] == "opinion":
-                    self.opencti.opinion.add_opencti_stix_object_or_stix_relationship(
-                        id=stix_object_result["id"], entity_id=object_refs_id,
+                    self.opencti.opinion.add_stix_object_or_stix_relationship(
+                        id=stix_object_result["id"],
+                        stixObjectOrStixRelationshipId=object_refs_id,
                     )
             # Add files
             if "x_opencti_files" in stix_object:
@@ -612,15 +606,15 @@ class OpenCTIStix2:
             if external_reference_id in reports:
                 self.opencti.report.add_opencti_stix_object_or_stix_relationship(
                     id=reports[external_reference_id]["id"],
-                    entity_id=stix_relation_result["id"],
+                    stixObjectOrStixRelationshipId=stix_relation_result["id"],
                 )
                 self.opencti.report.add_opencti_stix_object_or_stix_relationship(
                     id=reports[external_reference_id]["id"],
-                    entity_id=stix_relation["source_ref"],
+                    stixObjectOrStixRelationshipId=stix_relation["source_ref"],
                 )
                 self.opencti.report.add_opencti_stix_object_or_stix_relationship(
                     id=reports[external_reference_id]["id"],
-                    entity_id=stix_relation["target_ref"],
+                    stixObjectOrStixRelationshipId=stix_relation["target_ref"],
                 )
 
     def import_observables(self, stix_object):
