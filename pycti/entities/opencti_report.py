@@ -616,9 +616,7 @@ class Report:
                 update=update,
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_report] Missing parameters: stixObject"
-            )
+            self.opencti.log("error", "[opencti_report] Missing parameters: stixObject")
 
     """
         Export an Threat-Actor object in STIX2
