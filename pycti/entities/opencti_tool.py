@@ -9,66 +9,54 @@ class Tool:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id
-            stix_label
+            standard_id
             entity_type
             parent_types
-            name
-            alias
-            description
-            graph_data
-            tool_version
-            created
-            modified            
+            spec_version
             created_at
             updated_at
             createdBy {
-                node {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        x_opencti_organization_type
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
                 }
-            }            
-            markingDefinitions {
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
+                }
+            }
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                        id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            labels {
+            objectLabel {
                 edges {
                     node {
                         id
-                        label_type
                         value
                         color
-                    }
-                    relation {
-                        id
                     }
                 }
             }
@@ -76,8 +64,8 @@ class Tool:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         source_name
                         description
                         url
@@ -86,11 +74,31 @@ class Tool:
                         created
                         modified
                     }
-                    relation {
+                }
+            }
+            revoked
+            confidence
+            created
+            modified
+            name
+            description
+            aliases
+            tool_types
+            tool_version
+            killChainPhases {
+                edges {
+                    node {
                         id
+                        standard_id                            
+                        entity_type
+                        kill_chain_name
+                        phase_name
+                        x_opencti_order
+                        created
+                        modified
                     }
                 }
-            }     
+            }
         """
 
     """
@@ -204,16 +212,22 @@ class Tool:
     """
 
     def create_raw(self, **kwargs):
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        aliases = kwargs.get("aliases", None)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        name = kwargs.get("name", None)
+        description = kwargs.get("description", "")
+        aliases = kwargs.get("aliases", None)
+        tool_types = kwargs.get("tool_types", None)
+        tool_version = kwargs.get("tool_version", None)
+        kill_chain_phases = kwargs.get("killChainPhases", None)
 
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Tool {" + name + "}.")
@@ -231,16 +245,22 @@ class Tool:
                 query,
                 {
                     "input": {
+                        "stix_id": stix_id,
+                        "createdBy": created_by,
+                        "objectMarking": object_marking,
+                        "objectLabel": object_label,
+                        "externalReferences": external_references,
+                        "revoked": revoked,
+                        "confidence": confidence,
+                        "lang": lang,
+                        "created": created,
+                        "modified": modified,
                         "name": name,
                         "description": description,
                         "aliases": aliases,
-                        "internal_id_key": id,
-                        "stix_id": stix_id,
-                        "created": created,
-                        "modified": modified,
-                        "createdBy": created_by,
-                        "objectMarking": objectMarking,
-                        "labels": labels,
+                        "tool_types": tool_types,
+                        "tool_version": tool_version,
+                        "killChainPhases": kill_chain_phases,
                     }
                 },
             )
@@ -258,28 +278,54 @@ class Tool:
     """
 
     def create(self, **kwargs):
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        aliases = kwargs.get("aliases", None)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        name = kwargs.get("name", None)
+        description = kwargs.get("description", "")
+        aliases = kwargs.get("aliases", None)
+        tool_types = kwargs.get("tool_types", None)
+        tool_version = kwargs.get("tool_version", None)
+        kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
+            standard_id
             entity_type
-            name
-            description 
-            alias
+            parent_types
             createdBy {
-                node {
+                ... on Identity {
                     id
                 }
-            }            
+            }
+            ... on Tool {
+                name
+                description
+                aliases
+                tool_types
+                tool_version
+                killChainPhases {
+                    edges {
+                        node {
+                            id
+                            standard_id                            
+                            entity_type
+                            kill_chain_name
+                            phase_name
+                            x_opencti_order
+                            created
+                            modified
+                        }
+                    }
+                }
+            }    
         """
         object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
             types=["Tool"],
@@ -304,31 +350,40 @@ class Tool:
                         id=object_result["id"], key="description", value=description
                     )
                     object_result["description"] = description
-                # alias
-                if self.opencti.not_empty(alias) and object_result["alias"] != alias:
-                    if "alias" in object_result:
-                        new_aliases = object_result["alias"] + list(
-                            set(alias) - set(object_result["alias"])
+                # aliases
+                if (
+                    self.opencti.not_empty(aliases)
+                    and object_result["aliases"] != aliases
+                ):
+                    if "aliases" in object_result:
+                        new_aliases = object_result["aliases"] + list(
+                            set(aliases) - set(object_result["aliases"])
                         )
                     else:
-                        new_aliases = alias
+                        new_aliases = aliases
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="alias", value=new_aliases
+                        id=object_result["id"], key="aliases", value=new_aliases
                     )
-                    object_result["alias"] = new_aliases
+                    object_result["aliases"] = new_aliases
             return object_result
         else:
             return self.create_raw(
-                name=name,
-                description=description,
-                aliases=aliases,
-                id=id,
                 stix_id=stix_id,
-                created=created,
-                modified=modified,
                 createdBy=created_by,
                 objectMarking=object_marking,
                 objectLabel=object_label,
+                externalReferences=external_references,
+                revoked=revoked,
+                confidence=confidence,
+                lang=lang,
+                created=created,
+                modified=modified,
+                name=name,
+                description=description,
+                aliases=aliases,
+                tool_types=tool_types,
+                tool_version=tool_version,
+                killChainPhases=kill_chain_phases,
             )
 
     """
@@ -344,31 +399,42 @@ class Tool:
         update = kwargs.get("update", False)
         if stix_object is not None:
             return self.opencti.tool.create(
+                stix_id=stix_object["id"],
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
+                else None,
+                objectMarking=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
+                else None,
+                objectLabel=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
+                else [],
+                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
+                confidence=stix_object["confidence"]
+                if "confidence" in stix_object
+                else None,
+                lang=stix_object["lang"] if "lang" in stix_object else None,
+                created=stix_object["created"] if "created" in stix_object else None,
+                modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
                 description=self.opencti.stix2.convert_markdown(
                     stix_object["description"]
                 )
                 if "description" in stix_object
                 else "",
-                alias=self.opencti.stix2.pick_aliases(stix_object),
-                id=stix_object[CustomProperties.ID]
-                if CustomProperties.ID in stix_object
+                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                tool_types=stix_object["tool_types"]
+                if "tool_types" in stix_object
                 else None,
-                stix_id=stix_object["id"] if "id" in stix_object else None,
-                created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                markingDefinitions=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else None,
+                tool_version=stix_object["tool_version"]
+                if "tool_version" in stix_object
+                else False,
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
                 else None,
-                labels=extras["object_label_ids"]
-                if "object_label_ids" in extras
-                else [],
                 update=update,
             )
         else:

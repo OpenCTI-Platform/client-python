@@ -1463,42 +1463,9 @@ class OpenCTIStix2:
             stixObject=stix_object, extras=extras, update=update
         )
 
-    # TODO move in ThreatActor
     def create_threat_actor(self, stix_object, extras, update=False):
-        return self.opencti.threat_actor.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            alias=self.pick_aliases(stix_object),
-            goal=stix_object["goals"] if "goals" in stix_object else None,
-            sophistication=stix_object["sophistication"]
-            if "sophistication" in stix_object
-            else None,
-            resource_level=stix_object["resource_level"]
-            if "resource_level" in stix_object
-            else None,
-            primary_motivaton=stix_object["primary_motivation"]
-            if "primary_motivation" in stix_object
-            else None,
-            secondary_motivation=stix_object["secondary_motivations"]
-            if "secondary_motivations" in stix_object
-            else None,
-            personal_motivation=stix_object["personal_motivations"]
-            if "personal_motivations" in stix_object
-            else None,
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else [],
-            tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
-            update=update,
+        return self.opencti.threat_actor.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
     def create_intrusion_set(self, stix_object, extras, update=False):
@@ -1531,41 +1498,9 @@ class OpenCTIStix2:
             stixObject=stix_object, extras=extras, update=update
         )
 
-    # TODO move in Vulnerability
     def create_vulnerability(self, stix_object, extras, update=False):
-        return self.opencti.vulnerability.create(
-            name=stix_object["name"],
-            description=self.convert_markdown(stix_object["description"])
-            if "description" in stix_object
-            else "",
-            base_score=stix_object[CustomProperties.BASE_SCORE]
-            if CustomProperties.BASE_SCORE in stix_object
-            else None,
-            base_severity=stix_object[CustomProperties.BASE_SEVERITY]
-            if CustomProperties.BASE_SEVERITY in stix_object
-            else None,
-            attack_vector=stix_object[CustomProperties.ATTACK_VECTOR]
-            if CustomProperties.ATTACK_VECTOR in stix_object
-            else None,
-            integrity_impact=stix_object[CustomProperties.INTEGRITY_IMPACT]
-            if CustomProperties.INTEGRITY_IMPACT in stix_object
-            else None,
-            availability_impact=stix_object[CustomProperties.AVAILABILITY_IMPACT]
-            if CustomProperties.AVAILABILITY_IMPACT in stix_object
-            else None,
-            alias=self.pick_aliases(stix_object),
-            id=stix_object[CustomProperties.ID]
-            if CustomProperties.ID in stix_object
-            else None,
-            stix_id=stix_object["id"] if "id" in stix_object else None,
-            created=stix_object["created"] if "created" in stix_object else None,
-            modified=stix_object["modified"] if "modified" in stix_object else None,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else None,
-            tags=extras["object_label_ids"] if "object_label_ids" in extras else [],
-            update=update,
+        return self.opencti.vulnerability.import_from_stix2(
+            stixObject=stix_object, extras=extras, update=update
         )
 
     def create_attack_pattern(self, stix_object, extras, update=False):

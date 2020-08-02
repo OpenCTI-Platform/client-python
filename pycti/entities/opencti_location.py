@@ -1,7 +1,6 @@
 # coding: utf-8
 
 import json
-from pycti.utils.constants import IdentityTypes
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
@@ -17,7 +16,7 @@ class Location:
             created_at
             updated_at
             createdBy {
-                ... on Location {
+                ... on Identity {
                     id
                     standard_id
                     entity_type
@@ -83,19 +82,21 @@ class Location:
             modified
             name
             description
-            aliases
-            contact_information
+            latitude
+            longitude
+            precision
+            x_opencti_aliases
         """
 
     """
-        List Identity objects
+        List Location objects
 
         :param types: the list of types
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination
-        :return List of Identity objects
+        :return List of Location objects
     """
 
     def list(self, **kwargs):
@@ -113,12 +114,12 @@ class Location:
             first = 500
 
         self.opencti.log(
-            "info", "Listing Identities with filters " + json.dumps(filters) + "."
+            "info", "Listing Locations with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Identities($types: [String], $filters: [IdentitiesFiltering], $search: String, $first: Int, $after: ID, $orderBy: IdentitiesOrdering, $orderMode: OrderingMode) {
-                identities(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query Locations($types: [String], $filters: [LocationsFiltering], $search: String, $first: Int, $after: ID, $orderBy: LocationsOrdering, $orderMode: OrderingMode) {
+                locations(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -150,15 +151,15 @@ class Location:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["identities"], with_pagination
+            result["data"]["locations"], with_pagination
         )
 
     """
-        Read a Identity object
+        Read a Location object
         
-        :param id: the id of the Identity
+        :param id: the id of the Location
         :param filters: the filters to apply if no id provided
-        :return Identity object
+        :return Location object
     """
 
     def read(self, **kwargs):
@@ -166,11 +167,11 @@ class Location:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Identity {" + id + "}.")
+            self.opencti.log("info", "Reading Location {" + id + "}.")
             query = (
                 """
-                query Identity($id: String!) {
-                    identity(id: $id) {
+                query Location($id: String!) {
+                    location(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -183,7 +184,7 @@ class Location:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["identity"])
+            return self.opencti.process_multiple_fields(result["data"]["location"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -192,15 +193,15 @@ class Location:
                 return None
         else:
             self.opencti.log(
-                "error", "[opencti_identity] Missing parameters: id or filters"
+                "error", "[opencti_location] Missing parameters: id or filters"
             )
             return None
 
     """
-        Create a Identity object
+        Create a Location object
 
-        :param name: the name of the Identity
-        :return Identity object
+        :param name: the name of the Location
+        :return Location object
     """
 
     def create_raw(self, **kwargs):
@@ -217,85 +218,57 @@ class Location:
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
         description = kwargs.get("description", "")
-        aliases = kwargs.get("aliases", None)
-        contact_information = kwargs.get("contact_information", None)
-        x_opencti_organization_type = kwargs.get("x_opencti_organization_type", None)
-        x_opencti_reliability = kwargs.get("x_opencti_reliability", None)
-        x_opencti_firstname = kwargs.get("x_opencti_firstname", None)
-        x_opencti_lastname = kwargs.get("x_opencti_lastname", None)
-        if name is not None and description is not None:
-            self.opencti.log("info", "Creating Identity {" + name + "}.")
-            input_variables = {
-                "stix_id": stix_id,
-                "createdBy": created_by,
-                "objectMarking": object_marking,
-                "objectLabel": object_label,
-                "externalReferences": external_references,
-                "revoked": revoked,
-                "confidence": confidence,
-                "lang": lang,
-                "created": created,
-                "modified": modified,
-                "name": name,
-                "description": description,
-                "aliases": aliases,
-                "contact_information": contact_information,
-            }
-            if type == IdentityTypes.ORGANIZATION.value:
-                query = """
-                    mutation OrganizationAdd($input: OrganizationAddInput) {
-                        organizationAdd(input: $input) {
-                            id
-                            standard_id
-                            entity_type
-                            parent_types
-                        }
+        latitude = kwargs.get("latitude", None)
+        longitude = kwargs.get("longitude", None)
+        precision = kwargs.get("precision", None)
+        x_opencti_aliases = kwargs.get("x_opencti_aliases", None)
+        if name is not None:
+            self.opencti.log("info", "Creating Location {" + name + "}.")
+            query = """
+                mutation LocationAdd($input: LocationAddInput) {
+                    locationAdd(input: $input) {
+                        id
+                        standard_id
+                        entity_type
+                        parent_types
                     }
-                """
-                input_variables[
-                    "x_opencti_organization_type"
-                ] = x_opencti_organization_type
-                input_variables["x_opencti_reliability"] = x_opencti_reliability
-                result_data_field = "organizationAdd"
-            elif type == IdentityTypes.INDIVIDUAL.value:
-                query = """
-                    mutation IndividualAdd($input: OrganizationAddInput) {
-                        individualAdd(input: $input) {
-                            id
-                            standard_id
-                            entity_type
-                            parent_types
-                        }
+                }
+            """
+            result = self.opencti.query(
+                query,
+                {
+                    "input": {
+                        "type": type,
+                        "stix_id": stix_id,
+                        "createdBy": created_by,
+                        "objectMarking": object_marking,
+                        "objectLabel": object_label,
+                        "externalReferences": external_references,
+                        "revoked": revoked,
+                        "confidence": confidence,
+                        "lang": lang,
+                        "created": created,
+                        "modified": modified,
+                        "name": name,
+                        "description": description,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "precision": precision,
+                        "x_opencti_aliases": x_opencti_aliases,
                     }
-                """
-                input_variables["x_opencti_firstname"] = x_opencti_firstname
-                input_variables["x_opencti_lastname"] = x_opencti_lastname
-                result_data_field = "individualAdd"
-            else:
-                query = """
-                    mutation IdentityAdd($input: IdentityAddInput) {
-                        identityAdd(input: $input) {
-                            id
-                            standard_id
-                            entity_type
-                            parent_types
-                        }
-                    }
-                """
-                input_variables["type"] = type
-                result_data_field = "identityAdd"
-            result = self.opencti.query(query, {"input": input_variables,},)
+                },
+            )
             return self.opencti.process_multiple_fields(
-                result["data"][result_data_field]
+                result["data"]["threatActorAdd"]
             )
         else:
-            self.opencti.log("error", "Missing parameters: name and description")
+            self.opencti.log("error", "Missing parameters: name")
 
     """
-        Create a  Identity object only if it not exists, update it on request
+        Create a  Location object only if it not exists, update it on request
 
-        :param name: the name of the Identity
-        :return Identity object
+        :param name: the name of the Location
+        :return Location object
     """
 
     def create(self, **kwargs):
@@ -305,43 +278,35 @@ class Location:
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
         external_references = kwargs.get("externalReferences", None)
-        revoked = kwargs.get("revoked", False)
-        confidence = kwargs.get("confidence", 0)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
         lang = kwargs.get("lang", None)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
         description = kwargs.get("description", "")
-        aliases = kwargs.get("aliases", None)
-        contact_information = kwargs.get("contact_information", None)
-        x_opencti_organization_type = kwargs.get("x_opencti_organization_type", None)
-        x_opencti_reliability = kwargs.get("x_opencti_reliability", None)
-        x_opencti_firstname = kwargs.get("x_opencti_firstname", None)
-        x_opencti_lastname = kwargs.get("x_opencti_lastname", None)
+        latitude = kwargs.get("latitude", None)
+        longitude = kwargs.get("longitude", None)
+        precision = kwargs.get("precision", None)
+        x_opencti_aliases = kwargs.get("x_opencti_aliases", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
             standard_id
             entity_type
             parent_types
-            ... on Identity {
-                name
-                description 
-                aliases
-                contact_information
-            }
-            ... on Organization {
-                x_opencti_organization_type
-                x_opencti_reliability
-            }
-            ... on Individual {
-                x_opencti_firstname
-                x_opencti_lastname
-            }
             createdBy {
                 ... on Identity {
                     id
                 }
+            }            
+            ... on Location {
+                name
+                description 
+                latitude
+                longitude
+                precision
+                x_opencti_aliases
             }
         """
         object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
@@ -369,57 +334,51 @@ class Location:
                     object_result["description"] = description
                 # aliases
                 if (
-                    self.opencti.not_empty(aliases)
-                    and object_result["aliases"] != aliases
+                    self.opencti.not_empty(x_opencti_aliases)
+                    and object_result["x_opencti_aliases"] != x_opencti_aliases
                 ):
-                    if "aliases" in object_result:
-                        new_aliases = object_result["aliases"] + list(
-                            set(aliases) - set(object_result["aliases"])
+                    if "x_opencti_aliases" in object_result:
+                        new_aliases = object_result["x_opencti_aliases"] + list(
+                            set(x_opencti_aliases)
+                            - set(object_result["x_opencti_aliases"])
                         )
                     else:
-                        new_aliases = aliases
-                    self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="aliases", value=new_aliases
-                    )
-                    object_result["aliases"] = new_aliases
-                # contact_information
-                if (
-                    self.opencti.not_empty(contact_information)
-                    and object_result["contact_information"] != contact_information
-                ):
+                        new_aliases = x_opencti_aliases
                     self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
-                        key="contact_information",
-                        value=contact_information,
+                        key="x_opencti_aliases",
+                        value=new_aliases,
                     )
-                    object_result["contact_information"] = contact_information
-                # x_opencti_organization_type
+                    object_result["x_opencti_aliases"] = new_aliases
+                # latitude
                 if (
-                    self.opencti.not_empty(x_opencti_organization_type)
-                    and "x_opencti_organization_type" in object_result
-                    and object_result["x_opencti_organization_type"]
-                    != x_opencti_organization_type
+                    self.opencti.not_empty(latitude)
+                    and object_result["latitude"] != latitude
                 ):
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"],
-                        key="x_opencti_organization_type",
-                        value=x_opencti_organization_type,
+                        id=object_result["id"], key="latitude", value=latitude,
                     )
-                    object_result[
-                        "x_opencti_organization_type"
-                    ] = x_opencti_organization_type
-                # x_opencti_reliability
+                    object_result["latitude"] = latitude
+                # longitude
                 if (
-                    self.opencti.not_empty(x_opencti_reliability)
-                    and "x_opencti_reliability" in object_result
-                    and object_result["x_opencti_reliability"] != x_opencti_reliability
+                    self.opencti.not_empty(longitude)
+                    and "longitude" in object_result
+                    and object_result["longitude"] != longitude
                 ):
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"],
-                        key="x_opencti_reliability",
-                        value=x_opencti_reliability,
+                        id=object_result["id"], key="longitude", value=longitude,
                     )
-                    object_result["x_opencti_reliability"] = x_opencti_reliability
+                    object_result["longitude"] = longitude
+                # precision
+                if (
+                    self.opencti.not_empty(precision)
+                    and "precision" in object_result
+                    and object_result["precision"] != precision
+                ):
+                    self.opencti.stix_domain_object.update_field(
+                        id=object_result["id"], key="precision", value=precision,
+                    )
+                    object_result["precision"] = precision
             return object_result
         else:
             return self.create_raw(
@@ -436,19 +395,17 @@ class Location:
                 modified=modified,
                 name=name,
                 description=description,
-                aliases=aliases,
-                contact_information=contact_information,
-                x_opencti_organization_type=x_opencti_organization_type,
-                x_opencti_reliability=x_opencti_reliability,
-                x_opencti_firstname=x_opencti_firstname,
-                x_opencti_lastname=x_opencti_lastname,
+                latitude=latitude,
+                longitude=longitude,
+                precision=precision,
+                x_opencti_aliases=x_opencti_aliases,
             )
 
     """
-        Import an Identity object from a STIX2 object
+        Import an Location object from a STIX2 object
 
-        :param stixObject: the Stix-Object Identity
-        :return Identity object
+        :param stixObject: the Stix-Object Location
+        :return Location object
     """
 
     def import_from_stix2(self, **kwargs):
@@ -456,12 +413,10 @@ class Location:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
-            if stix_object["identity_class"] == "individual":
-                type = "Individual"
-            elif stix_object["identity_class"] == "class":
-                type = "Sector"
+            if "x_opencti_location_type" in stix_object:
+                type = stix_object["x_opencti_location_type"]
             else:
-                type = "Organization"
+                type = "Position"
             return self.create(
                 type=type,
                 stix_id=stix_object["id"],
@@ -490,36 +445,26 @@ class Location:
                 )
                 if "description" in stix_object
                 else "",
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
-                contact_information=self.opencti.stix2.convert_markdown(
-                    stix_object["contact_information"]
-                )
-                if "contact_information" in stix_object
+                latitude=stix_object["latitude"] if "latitude" in stix_object else None,
+                longitude=stix_object["longitude"]
+                if "longitude" in stix_object
                 else None,
-                x_opencti_organization_type=stix_object["x_opencti_organization_type"]
-                if "x_opencti_organization_type" in stix_object
+                precision=stix_object["precision"]
+                if "precision" in stix_object
                 else None,
-                x_opencti_reliability=stix_object["x_opencti_reliability"]
-                if "x_opencti_reliability" in stix_object
-                else None,
-                x_opencti_firstname=stix_object["x_opencti_firstname"]
-                if "x_opencti_firstname" in stix_object
-                else None,
-                x_opencti_lastname=stix_object["x_opencti_lastname"]
-                if "x_opencti_lastname" in stix_object
-                else None,
+                x_opencti_aliases=self.opencti.stix2.pick_aliases(stix_object),
                 update=update,
             )
         else:
             self.opencti.log(
-                "error", "[opencti_identity] Missing parameters: stixObject"
+                "error", "[opencti_location] Missing parameters: stixObject"
             )
 
     """
-        Export an Identity object in STIX2
+        Export an Location object in STIX2
     
-        :param id: the id of the Identity
-        :return Identity object
+        :param id: the id of the Location
+        :return Location object
     """
 
     def to_stix2(self, **kwargs):
@@ -533,46 +478,46 @@ class Location:
             entity = self.read(id=id)
         if entity is not None:
             if entity["entity_type"] == "user":
-                identity_class = "individual"
+                location_class = "individual"
             elif entity["entity_type"] == "sector":
-                identity_class = "class"
+                location_class = "class"
             else:
-                identity_class = "organization"
-            identity = dict()
-            identity["id"] = entity["stix_id"]
-            identity["type"] = "identity"
-            identity["spec_version"] = SPEC_VERSION
-            identity["name"] = entity["name"]
-            identity["identity_class"] = identity_class
+                location_class = "organization"
+            location = dict()
+            location["id"] = entity["stix_id"]
+            location["type"] = "location"
+            location["spec_version"] = SPEC_VERSION
+            location["name"] = entity["name"]
+            location["location_class"] = location_class
             if self.opencti.not_empty(entity["stix_label"]):
-                identity["labels"] = entity["stix_label"]
+                location["labels"] = entity["stix_label"]
             else:
-                identity["labels"] = ["identity"]
+                location["labels"] = ["location"]
             if self.opencti.not_empty(entity["description"]):
-                identity["description"] = entity["description"]
+                location["description"] = entity["description"]
             if self.opencti.not_empty(entity["contact_information"]):
-                identity["contact_information"] = entity["contact_information"]
-            identity["created"] = self.opencti.stix2.format_date(entity["created"])
-            identity["modified"] = self.opencti.stix2.format_date(entity["modified"])
+                location["contact_information"] = entity["contact_information"]
+            location["created"] = self.opencti.stix2.format_date(entity["created"])
+            location["modified"] = self.opencti.stix2.format_date(entity["modified"])
             if self.opencti.not_empty(entity["alias"]):
-                identity["aliases"] = entity["alias"]
+                location["aliases"] = entity["alias"]
             if entity["entity_type"] == "organization":
                 if "x_opencti_organization_type" in entity and self.opencti.not_empty(
                     entity["x_opencti_organization_type"]
                 ):
-                    identity[CustomProperties.ORG_CLASS] = entity[
+                    location[CustomProperties.ORG_CLASS] = entity[
                         "x_opencti_organization_type"
                     ]
                 if "x_opencti_reliability" in entity and self.opencti.not_empty(
                     entity["x_opencti_reliability"]
                 ):
-                    identity[CustomProperties.x_opencti_reliability] = entity[
+                    location[CustomProperties.x_opencti_reliability] = entity[
                         "x_opencti_reliability"
                     ]
-            identity[CustomProperties.IDENTITY_TYPE] = entity["entity_type"]
-            identity[CustomProperties.ID] = entity["id"]
+            location[CustomProperties.IDENTITY_TYPE] = entity["entity_type"]
+            location[CustomProperties.ID] = entity["id"]
             return self.opencti.stix2.prepare_export(
-                entity, identity, mode, max_marking_definition_entity
+                entity, location, mode, max_marking_definition_entity
             )
         else:
             self.opencti.log("error", "Missing parameters: id or entity")
