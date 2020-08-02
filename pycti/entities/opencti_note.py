@@ -266,28 +266,6 @@ class Note:
                 return None
 
     """
-        Read a Note object by stix_id or content
-
-        :param stix_id: the STIX ID of the Note
-        :param content: the content of the Note
-        :return Stix-Domain-Entity object
-    """
-
-    def get_by_stix_id_or_content(self, **kwargs):
-        stix_id = kwargs.get("stix_id", None)
-        content = kwargs.get("content", None)
-        custom_attributes = kwargs.get("customAttributes", None)
-        object_result = None
-        if stix_id is not None:
-            object_result = self.read(id=stix_id, customAttributes=custom_attributes)
-        if object_result is None and content is not None:
-            object_result = self.read(
-                filters=[{"key": "content", "values": [content]},],
-                customAttributes=custom_attributes,
-            )
-        return object_result
-
-    """
         Check if a note already contains a STIX entity
         
         :return Boolean
@@ -421,9 +399,7 @@ class Note:
                 authors
             }
         """
-        object_result = self.get_by_stix_id_or_content(
-            stix_id=stix_id, content=content, custom_attributes=custom_attributes,
-        )
+        object_result = self.read(id=stix_id, customAttributes=custom_attributes)
         if object_result is not None:
             if update or object_result["createdById"] == created_by:
                 if (
