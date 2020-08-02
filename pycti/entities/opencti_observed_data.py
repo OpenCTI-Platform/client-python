@@ -413,7 +413,9 @@ class ObservedData:
                     and object_result["number_observed"] != number_observed
                 ):
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="number_observed", value=number_observed
+                        id=object_result["id"],
+                        key="number_observed",
+                        value=number_observed,
                     )
                     object_result["number_observed"] = number_observed
             return object_result
