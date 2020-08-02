@@ -28,7 +28,7 @@ from .entities.opencti_threat_actor import ThreatActor
 from .entities.opencti_intrusion_set import IntrusionSet
 from .entities.opencti_infrastructure import Infrastructure
 from .entities.opencti_campaign import Campaign
-from .entities.opencti_x_opencti_incident import XOpenctiIncident
+from .entities.opencti_x_opencti_incident import XOpenCTIIncident
 from .entities.opencti_malware import Malware
 from .entities.opencti_tool import Tool
 from .entities.opencti_vulnerability import Vulnerability
@@ -67,7 +67,7 @@ __all__ = [
     "IntrusionSet",
     "Infrastructure",
     "Campaign",
-    "XOpenctiIncident",
+    "XOpenCTIIncident",
     "Malware",
     "Tool",
     "Vulnerability",

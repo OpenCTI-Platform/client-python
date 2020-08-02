@@ -154,7 +154,7 @@ class StixCoreRelationship:
                 ... on Vulnerability {
                     name
                 }
-                ... on XOpenctiIncident {
+                ... on XOpenCTIIncident {
                     name
                 }         
                 ... on StixCyberObservable {
@@ -235,7 +235,7 @@ class StixCoreRelationship:
                 ... on Vulnerability {
                     name
                 }
-                ... on XOpenctiIncident {
+                ... on XOpenCTIIncident {
                     name
                 }
                 ... on StixCyberObservable {
@@ -985,7 +985,7 @@ class StixCoreRelationship:
                 fromId=stix_relation["source_ref"],
                 toId=stix_relation["target_ref"],
                 stix_id=stix_relation["id"],
-                relationshipç_type=stix_relation["relationshipç_type"],
+                relationship_type=stix_relation["relationship_type"],
                 description=self.opencti.stix2.convert_markdown(
                     stix_relation["description"]
                 )

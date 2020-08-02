@@ -152,7 +152,7 @@ class ObservedData:
                         ... on Vulnerability {
                             name
                         }
-                        ... on XOpenctiIncident {
+                        ... on XOpenCTIIncident {
                             name
                         }                
                         ... on StixCoreRelationship {

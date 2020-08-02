@@ -153,7 +153,7 @@ class StixSightingRelationship:
                 ... on Vulnerability {
                     name
                 }
-                ... on XOpenctiIncident {
+                ... on XOpenCTIIncident {
                     name
                 }           
                 ... on StixCyberObservable {
@@ -234,7 +234,7 @@ class StixSightingRelationship:
                 ... on Vulnerability {
                     name
                 }
-                ... on XOpenctiIncident {
+                ... on XOpenCTIIncident {
                     name
                 }
                 ... on StixCyberObservable {

@@ -4,7 +4,7 @@ import json
 from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
-class XOpenctiIncident:
+class XOpenCTIIncident:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -116,8 +116,8 @@ class XOpenctiIncident:
         )
         query = (
             """
-            query XOpenctiIncidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
-                xOpenctiIncidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query XOpenCTIIncidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
+                xOpenCTIIncidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -148,15 +148,15 @@ class XOpenctiIncident:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["xOpenctiIncidents"], with_pagination
+            result["data"]["xOpenCTIIncidents"], with_pagination
         )
 
     """
-        Read a X-Opencti-Incident object
+        Read a X-OpenCTI-Incident object
         
-        :param id: the id of the X-Opencti-Incident
+        :param id: the id of the X-OpenCTI-Incident
         :param filters: the filters to apply if no id provided
-        :return X-Opencti-Incident object
+        :return X-OpenCTI-Incident object
     """
 
     def read(self, **kwargs):
@@ -167,8 +167,8 @@ class XOpenctiIncident:
             self.opencti.log("info", "Reading Incident {" + id + "}.")
             query = (
                 """
-                query XOpenctiIncident($id: String!) {
-                    xOpenctiIncident(id: $id) {
+                query XOpenCTIIncident($id: String!) {
+                    xOpenCTIIncident(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -182,7 +182,7 @@ class XOpenctiIncident:
             )
             result = self.opencti.query(query, {"id": id})
             return self.opencti.process_multiple_fields(
-                result["data"]["xOpenctiIncident"]
+                result["data"]["xOpenCTIIncident"]
             )
         elif filters is not None:
             result = self.list(filters=filters)
@@ -224,8 +224,8 @@ class XOpenctiIncident:
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Incident {" + name + "}.")
             query = """
-                mutation XOpenctiIncidentAdd($input: IncidentAddInput) {
-                    xOpenctiIncidentAdd(input: $input) {
+                mutation XOpenCTIIncidentAdd($input: IncidentAddInput) {
+                    xOpenCTIIncidentAdd(input: $input) {
                         id
                         standard_id
                         entity_type
@@ -257,16 +257,16 @@ class XOpenctiIncident:
                 },
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["xOpenctiIncidentAdd"]
+                result["data"]["xOpenCTIIncidentAdd"]
             )
         else:
             self.opencti.log("error", "Missing parameters: name and description")
 
     """
-         Create a X-Opencti-Incident object only if it not exists, update it on request
+         Create a X-OpenCTI-Incident object only if it not exists, update it on request
 
-         :param name: the name of the X-Opencti-Incident
-         :return X-Opencti-Incident object
+         :param name: the name of the X-OpenCTI-Incident
+         :return X-OpenCTI-Incident object
      """
 
     def create(self, **kwargs):
@@ -297,7 +297,7 @@ class XOpenctiIncident:
                     id
                 }
             }   
-            ... on XOpenctiIncident {
+            ... on XOpenCTIIncident {
                 name
                 description
                 aliases
@@ -307,7 +307,7 @@ class XOpenctiIncident:
             }
         """
         object_result = self.opencti.stix_domain_object.get_by_stix_id_or_name(
-            types=["X-Opencti-Incident"],
+            types=["X-OpenCTI-Incident"],
             stix_id=stix_id,
             name=name,
             customAttributes=custom_attributes,
@@ -387,10 +387,10 @@ class XOpenctiIncident:
             )
 
     """
-        Import a X-Opencti-Incident object from a STIX2 object
+        Import a X-OpenCTI-Incident object from a STIX2 object
 
-        :param stixObject: the Stix-Object X-Opencti-Incident
-        :return X-Opencti-Incident object
+        :param stixObject: the Stix-Object X-OpenCTI-Incident
+        :return X-OpenCTI-Incident object
     """
 
     def import_from_stix2(self, **kwargs):
@@ -443,10 +443,10 @@ class XOpenctiIncident:
             )
 
     """
-        Export an X-Opencti-Incident object in STIX2
+        Export an X-OpenCTI-Incident object in STIX2
     
-        :param id: the id of the X-Opencti-Incident
-        :return X-Opencti-Incident object
+        :param id: the id of the X-OpenCTI-Incident
+        :return X-OpenCTI-Incident object
     """
 
     def to_stix2(self, **kwargs):

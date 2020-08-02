@@ -299,7 +299,7 @@ class StixDomainObject:
                 x_opencti_integrity_impact
                 x_opencti_availability_impact
             }
-            ... on XOpenctiIncident {
+            ... on XOpenCTIIncident {
                 name
                 description
                 aliases
