@@ -156,7 +156,10 @@ class StixCoreRelationship:
                 }
                 ... on XOpenctiIncident {
                     name
-                }                
+                }         
+                ... on StixCyberObservable {
+                    observable_value
+                }                       
                 ... on StixCoreRelationship {
                     standard_id
                     spec_version
@@ -235,6 +238,9 @@ class StixCoreRelationship:
                 ... on XOpenctiIncident {
                     name
                 }
+                ... on StixCyberObservable {
+                    observable_value
+                }                
                 ... on StixCoreRelationship {
                     standard_id
                     spec_version
@@ -689,6 +695,222 @@ class StixCoreRelationship:
                 "error", "[opencti_stix_core_relationship] Missing parameters: id"
             )
             return None
+
+    """
+        Add a Marking-Definition object to Stix-Domain-Object object (object_marking_refs)
+
+        :param id: the id of the Stix-Domain-Object
+        :param marking_definition_id: the id of the Marking-Definition
+        :return Boolean
+    """
+
+    def add_marking_definition(self, **kwargs):
+        id = kwargs.get("id", None)
+        marking_definition_id = kwargs.get("marking_definition_id", None)
+        if id is not None and marking_definition_id is not None:
+            custom_attributes = """
+                id
+                objectMarking {
+                    edges {
+                        node {
+                            id
+                            standard_id
+                            entity_type
+                            definition_type
+                            definition
+                            x_opencti_order
+                            x_opencti_color
+                            created
+                            modified
+                        }
+                    }
+                }
+            """
+            stix_core_relationship = self.read(
+                id=id, customAttributes=custom_attributes
+            )
+            if stix_core_relationship is None:
+                self.opencti.log(
+                    "error", "Cannot add Marking-Definition, entity not found"
+                )
+                return False
+            if marking_definition_id in stix_core_relationship["markingDefinitionsIds"]:
+                return True
+            else:
+                self.opencti.log(
+                    "info",
+                    "Adding Marking-Definition {"
+                    + marking_definition_id
+                    + "} to Stix-Domain-Object {"
+                    + id
+                    + "}",
+                )
+                query = """
+                   mutation StixCoreRelationshipAddRelation($id: ID!, $input: StixMetaRelationshipAddInput) {
+                       stixCoreRelationshipEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                """
+                self.opencti.query(
+                    query,
+                    {
+                        "id": id,
+                        "input": {
+                            "toId": marking_definition_id,
+                            "relationship_type": "object-marking",
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(
+                "error", "Missing parameters: id and marking_definition_id"
+            )
+            return False
+
+    """
+        Add a Label object to Stix-Domain-Object object (labelging)
+
+        :param id: the id of the Stix-Domain-Object
+        :param label_id: the id of the Label
+        :return Boolean
+    """
+
+    def add_label(self, **kwargs):
+        id = kwargs.get("id", None)
+        label_id = kwargs.get("label_id", None)
+        if id is not None and label_id is not None:
+            custom_attributes = """
+                id
+                objectLabel {
+                    edges {
+                        node {
+                            id
+                            value
+                            color
+                        }
+                    }
+                }
+            """
+            stix_core_relationship = self.read(
+                id=id, customAttributes=custom_attributes
+            )
+            if stix_core_relationship is None:
+                self.opencti.log("error", "Cannot add label, entity not found")
+                return False
+            if label_id in stix_core_relationship["labelsIds"]:
+                return True
+            else:
+                self.opencti.log(
+                    "info",
+                    "Adding label {"
+                    + label_id
+                    + "} to stix-core-relationship {"
+                    + id
+                    + "}",
+                )
+                query = """
+                   mutation StixCoreRelationshipAddRelation($id: ID!, $input: StixMetaRelationshipAddInput) {
+                       stixCoreRelationshipEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                """
+                self.opencti.query(
+                    query,
+                    {
+                        "id": id,
+                        "input": {
+                            "toId": label_id,
+                            "relationship_type": "object-label",
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log("error", "Missing parameters: id and label_id")
+            return False
+
+    """
+        Add a External-Reference object to Stix-Core-Relationship (external-reference)
+
+        :param id: the id of the Stix-Core-Relationship
+        :param marking_definition_id: the id of the Marking-Definition
+        :return Boolean
+    """
+
+    def add_external_reference(self, **kwargs):
+        id = kwargs.get("id", None)
+        external_reference_id = kwargs.get("external_reference_id", None)
+        if id is not None and external_reference_id is not None:
+            custom_attributes = """
+                id
+                externalReferences {
+                    edges {
+                        node {
+                            id
+                            standard_id
+                            entity_type
+                            source_name
+                            description
+                            url
+                            hash
+                            external_id
+                            created
+                            modified
+                        }
+                    }
+                }
+            """
+            stix_core_relationship = self.read(
+                id=id, customAttributes=custom_attributes
+            )
+            if stix_core_relationship is None:
+                self.opencti.log(
+                    "error", "Cannot add External-Reference, entity not found"
+                )
+                return False
+            if external_reference_id in stix_core_relationship["externalReferencesIds"]:
+                return True
+            else:
+                self.opencti.log(
+                    "info",
+                    "Adding External-Reference {"
+                    + external_reference_id
+                    + "} to Stix-core-relationship {"
+                    + id
+                    + "}",
+                )
+                query = """
+                   mutation StixCoreRelationshipEditRelationAdd($id: ID!, $input: StixMetaRelationshipAddInput) {
+                       stixCoreRelationshipEdit(id: $id) {
+                            relationAdd(input: $input) {
+                                id
+                            }
+                       }
+                   }
+                """
+                self.opencti.query(
+                    query,
+                    {
+                        "id": id,
+                        "input": {
+                            "toId": external_reference_id,
+                            "relationship_type": "external-reference",
+                        },
+                    },
+                )
+                return True
+        else:
+            self.opencti.log(
+                "error", "Missing parameters: id and external_reference_id"
+            )
+            return False
 
     """
         Add a Kill-Chain-Phase object to stix_core_relationship object (kill_chain_phases)

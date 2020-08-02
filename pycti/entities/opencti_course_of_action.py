@@ -298,6 +298,7 @@ class CourseOfAction:
             types=["Course-Of-Action"],
             stix_id=stix_id,
             name=name,
+            fieldName="x_opencti_alias",
             customAttributes=custom_attributes,
         )
         if object_result is not None:

@@ -9,60 +9,54 @@ class StixCyberObservable:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id
+            standard_id
             entity_type
-            name
-            description
-            observable_value
+            parent_types
+            spec_version
             created_at
             updated_at
             createdBy {
-                node {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        x_opencti_organization_type
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
+                }
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
                 }
             }
-            labels {
+            objectMarking {
                 edges {
                     node {
                         id
-                        label_type
-                        value
-                        color
-                    }
-                    relation {
-                        id
-                    }
-                }
-            }            
-            markingDefinitions {
-                edges {
-                    node {
-                        id
+                        standard_id
                         entity_type
-                        stix_id
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
+                        x_opencti_order
+                        x_opencti_color
                     }
-                    relation {
-                       id
+                }
+            }
+            objectLabel {
+                edges {
+                    node {
+                        id
+                        value
+                        color
                     }
                 }
             }
@@ -70,8 +64,8 @@ class StixCyberObservable:
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         source_name
                         description
                         url
@@ -80,30 +74,104 @@ class StixCyberObservable:
                         created
                         modified
                     }
-                    relation {
-                        id
-                    }
-                }
-            }            
-            indicators {
-                edges {
-                    node {
-                        id
-                        entity_type
-                        stix_id
-                        valid_from
-                        valid_until
-                        score
-                        pattern_type
-                        indicator_pattern
-                        created
-                        modified
-                    }
-                    relation {
-                        id
-                    }
                 }
             }
+            observable_value
+            ... on AutonomousSystem {
+                number
+                name
+                rir
+            }
+            ... on Directory {
+                path
+                path_enc
+                ctime
+                mtime
+                atime
+            }
+            ... on DomainName {
+                value
+            }
+            ... on EmailAddr {
+                value
+                display_name
+            }
+            ... on EmailMessage {
+                is_multipart
+                attribute_date
+                content_type
+                message_id
+                subject
+                received_lines
+                body
+            }
+            ... on HashedObservable {
+                md5
+                sha1
+                sha256
+                sha512                
+            }
+            ... on Artifact {
+                mime_type
+                payload_bin
+                url
+                encryption_algorithm
+                decryption_key
+            }        
+            ... on StixFile {
+                extensions
+                size
+                name
+                name_enc
+                magic_number_hex
+                mime_type
+                ctime
+                mtime
+                atime
+            }
+            ... on X509Certificate {
+                is_self_signed
+                version
+                serial_number
+                signature_algorithm
+                issuer
+                validity_not_before
+                validity_not_after
+            }
+            ... on IPv4Addr {
+                value
+            }
+            ... on IPv6Addr {
+                value
+            }
+            ... on MacAddr {
+                value
+            }
+            ... on Mutex {
+                name            
+            }
+            ... on NetworkTraffic {
+                extensions
+                start
+                end
+                is_active
+                src_port
+                dst_port
+                protocols
+                src_byte_count
+                dst_byte_count
+                src_packets
+                dst_packets
+            }
+            ... on Process {
+                extensions
+                is_hidden
+                pid
+                created_time
+                cwd
+                command_line
+                environment_variables
+            }                                                                                          
         """
 
     """
@@ -312,25 +380,28 @@ class StixCyberObservable:
     """
 
     def create(self, **kwargs):
-        type = kwargs.get("type", None)
-        observable_value = kwargs.get("observable_value", None)
-        description = kwargs.get("description", None)
-        id = kwargs.get("id", None)
-        stix_id = kwargs.get("stix_id", None)
+        observable_data = kwargs.get("observableData", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
-        create_indicator = kwargs.get("createIndicator", False)
+        external_references = kwargs.get("externalReferences", None)
         update = kwargs.get("update", False)
+
+        create_indicator = (
+            observable_data["x_opencti_create_indicator"]
+            if "x_opencti_create_indicator" in observable_data
+            else None
+        )
         custom_attributes = """
             id
+            standard_id
             entity_type
-            description
+            parent_types
             createdBy {
-                node {
+                ... on Identity {
                     id
                 }
-            }            
+            }
         """
         object_result = self.read(
             filters=[{"key": "observable_value", "values": [observable_value]}],
@@ -349,14 +420,20 @@ class StixCyberObservable:
             return object_result
         else:
             return self.create_raw(
-                type=type,
-                observable_value=observable_value,
-                description=description,
-                id=id,
-                stix_id=stix_id,
-                createdBy=created_by,
-                objectMarking=object_marking,
-                objectLabel=object_label,
+                observableData=stix_object,
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
+                else None,
+                objectMarking=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
+                else [],
+                objectLabel=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
+                else [],
+                update=update,
                 createIndicator=create_indicator,
             )
 

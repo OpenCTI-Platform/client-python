@@ -235,7 +235,7 @@ class Tool:
                 mutation ToolAdd($input: ToolAddInput) {
                     toolAdd(input: $input) {
                         id
-                        stix_id
+                        standard_id
                         entity_type
                         parent_types
                     }
@@ -431,7 +431,7 @@ class Tool:
                 else None,
                 tool_version=stix_object["tool_version"]
                 if "tool_version" in stix_object
-                else False,
+                else None,
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
                 else None,

@@ -202,7 +202,7 @@ class OpenCTIStix2:
         """
 
         # Created By Ref
-        created_by_ref_id = None
+        created_by_id = None
         if "created_by_ref" in stix_object:
             created_by_ref = stix_object["created_by_ref"]
             if created_by_ref in self.mapping_cache:
@@ -221,7 +221,7 @@ class OpenCTIStix2:
                         "type": created_by_result["entity_type"],
                     }
             if created_by_result is not None:
-                created_by_ref_id = created_by_result["id"]
+                created_by_id = created_by_result["id"]
 
         # Object Marking Refs
         object_marking_ids = []
@@ -416,9 +416,9 @@ class OpenCTIStix2:
                     reports[external_reference_id] = report
 
         return {
-            "created_by_ref": created_by_ref_id,
-            "marking_definitions": object_marking_ids,
-            "tags": object_label_ids,
+            "created_by": created_by_id,
+            "object_marking": object_marking_ids,
+            "object_label": object_label_ids,
             "kill_chain_phases": kill_chain_phases_ids,
             "object_refs": object_refs_ids,
             "external_references": external_references_ids,
@@ -445,9 +445,9 @@ class OpenCTIStix2:
 
         # Extract
         embedded_relationships = self.extract_embedded_relationships(stix_object, types)
-        created_by_id = embedded_relationships["created_by_ref"]
-        object_marking_ids = embedded_relationships["marking_definitions"]
-        object_label_ids = embedded_relationships["tags"]
+        created_by_id = embedded_relationships["created_by"]
+        object_marking_ids = embedded_relationships["object_marking"]
+        object_label_ids = embedded_relationships["object_label"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
         object_refs_ids = embedded_relationships["object_refs"]
         external_references_ids = embedded_relationships["external_references"]
@@ -553,8 +553,10 @@ class OpenCTIStix2:
             stix_relation, types
         )
         created_by_id = embedded_relationships["created_by"]
-        object_marking_ids = embedded_relationships["marking_definitions"]
+        object_marking_ids = embedded_relationships["object_marking"]
+        object_label_ids = embedded_relationships["object_label"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
+        object_refs_ids = embedded_relationships["object_refs"]
         external_references_ids = embedded_relationships["external_references"]
         reports = embedded_relationships["reports"]
 
@@ -562,7 +564,9 @@ class OpenCTIStix2:
         extras = {
             "created_by_id": created_by_id,
             "object_marking_ids": object_marking_ids,
+            "object_label_ids": object_label_ids,
             "kill_chain_phases_ids": kill_chain_phases_ids,
+            "object_ids": object_refs_ids,
             "external_references_ids": external_references_ids,
             "reports": reports,
         }
@@ -621,6 +625,50 @@ class OpenCTIStix2:
                     id=reports[external_reference_id]["id"],
                     stixObjectOrStixRelationshipId=stix_relation["target_ref"],
                 )
+
+    def import_observable(self, stix_object, update=False, types=None):
+        # Extract
+        embedded_relationships = self.extract_embedded_relationships(stix_object, types)
+        created_by_id = embedded_relationships["created_by"]
+        object_marking_ids = embedded_relationships["object_marking"]
+        object_label_ids = embedded_relationships["object_label"]
+        kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
+        object_refs_ids = embedded_relationships["object_refs"]
+        external_references_ids = embedded_relationships["external_references"]
+        reports = embedded_relationships["reports"]
+
+        # Extra
+        extras = {
+            "created_by_id": created_by_id,
+            "object_marking_ids": object_marking_ids,
+            "object_label_ids": object_label_ids,
+            "kill_chain_phases_ids": kill_chain_phases_ids,
+            "object_ids": object_refs_ids,
+            "external_references_ids": external_references_ids,
+            "reports": reports,
+        }
+
+        stix_observable_result = self.opencti.stix_observable.create(
+            observableData=stix_object,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
+            objectMarking=extras["object_marking_ids"]
+            if "object_marking_ids" in extras
+            else [],
+            objectLabel=extras["object_label_ids"]
+            if "object_label_ids" in extras
+            else [],
+            externalReferences=extras["external_references_ids"]
+            if "external_references_ids" in extras
+            else [],
+            update=update,
+        )
+        if stix_observable_result is not None:
+            self.mapping_cache[stix_observable_result["id"]] = {
+                "id": stix_observable_result["id"],
+                "type": stix_observable_result["entity_type"],
+            }
+        else:
+            return None
 
     def import_observables(self, stix_object):
         # Extract
@@ -871,11 +919,16 @@ class OpenCTIStix2:
                 relation_to_create["id"]
             ] = stix_observable_relation_result["id"]
 
-    def import_sighting(self, stix_sighting, from_id, to_id, update=False):
+    def import_sighting(self, stix_sighting, from_id, to_id, update=False, types=None):
         # Extract
-        embedded_relationships = self.extract_embedded_relationships(stix_sighting)
+        embedded_relationships = self.extract_embedded_relationships(
+            stix_sighting, types
+        )
         created_by_id = embedded_relationships["created_by"]
-        object_marking_ids = embedded_relationships["marking_definitions"]
+        object_marking_ids = embedded_relationships["object_marking"]
+        object_label_ids = embedded_relationships["object_label"]
+        kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
+        object_refs_ids = embedded_relationships["object_refs"]
         external_references_ids = embedded_relationships["external_references"]
         reports = embedded_relationships["reports"]
 
@@ -883,6 +936,9 @@ class OpenCTIStix2:
         extras = {
             "created_by_id": created_by_id,
             "object_marking_ids": object_marking_ids,
+            "object_label_ids": object_label_ids,
+            "kill_chain_phases_ids": kill_chain_phases_ids,
+            "object_ids": object_refs_ids,
             "external_references_ids": external_references_ids,
             "reports": reports,
         }
@@ -925,6 +981,7 @@ class OpenCTIStix2:
         stix_sighting_result = self.opencti.stix_sighting.create(
             fromId=final_from_id,
             toId=final_to_id,
+            stix_id=stix_sighting["id"] if "id" in stix_sighting else None,
             description=self.convert_markdown(stix_sighting["description"])
             if "description" in stix_sighting
             else None,
@@ -934,29 +991,28 @@ class OpenCTIStix2:
             last_seen=stix_sighting["last_seen"]
             if "last_seen" in stix_sighting
             else date,
+            number=stix_sighting["count"] if "count" in stix_sighting else 1,
+            x_opencti_negative=stix_sighting["x_opencti_negative"]
+            if "x_opencti_negative" in stix_sighting
+            else False,
+            created=stix_sighting["created"] if "created" in stix_sighting else None,
+            modified=stix_sighting["modified"] if "modified" in stix_sighting else None,
             confidence=stix_sighting["confidence"]
             if "confidence" in stix_sighting
             else 15,
-            number=stix_sighting["count"] if "count" in stix_sighting else 1,
-            negative=stix_sighting[CustomProperties.NEGATIVE]
-            if CustomProperties.NEGATIVE in stix_sighting
-            else False,
-            id=stix_sighting[CustomProperties.ID]
-            if CustomProperties.ID in stix_sighting
-            else None,
-            stix_id=stix_sighting["id"] if "id" in stix_sighting else None,
-            created=stix_sighting["created"] if "created" in stix_sighting else None,
-            modified=stix_sighting["modified"] if "modified" in stix_sighting else None,
             createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            markingDefinitions=extras["object_marking_ids"]
+            objectMarking=extras["object_marking_ids"]
             if "object_marking_ids" in extras
             else [],
-            killChainPhases=extras["kill_chain_phases_ids"]
-            if "kill_chain_phases_ids" in extras
+            objectLabel=extras["object_label_ids"]
+            if "object_label_ids" in extras
+            else [],
+            externalReferences=extras["external_references_ids"]
+            if "external_references_ids" in extras
             else [],
             update=update,
-            ignore_dates=stix_sighting[CustomProperties.IGNORE_DATES]
-            if CustomProperties.IGNORE_DATES in stix_sighting
+            ignore_dates=stix_sighting["x_opencti_ignore_dates"]
+            if "x_opencti_ignore_dates" in stix_sighting
             else None,
         )
         if stix_sighting_result is not None:
@@ -966,13 +1022,6 @@ class OpenCTIStix2:
             }
         else:
             return None
-
-        # Add external references
-        for external_reference_id in external_references_ids:
-            self.opencti.stix_domain_object.add_external_reference(
-                id=stix_sighting_result["id"],
-                external_reference_id=external_reference_id,
-            )
 
     def export_entity(
         self, entity_type, entity_id, mode="simple", max_marking_definition=None

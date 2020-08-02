@@ -210,7 +210,7 @@ class StixDomainObject:
                 precision
                 x_opencti_aliases
             }
-            ... on  Region {
+            ... on Region {
                 name
                 description
                 latitude
@@ -475,6 +475,7 @@ class StixDomainObject:
         stix_id = kwargs.get("stix_id", None)
         name = kwargs.get("name", None)
         aliases = kwargs.get("aliases", [])
+        field_name = kwargs.get("fieldName", "aliases")
         custom_attributes = kwargs.get("customAttributes", None)
         object_result = None
         if stix_id is not None:
@@ -489,14 +490,14 @@ class StixDomainObject:
             if object_result is None:
                 object_result = self.read(
                     types=types,
-                    filters=[{"key": "aliases", "values": [name]}],
+                    filters=[{"key": field_name, "values": [name]}],
                     customAttributes=custom_attributes,
                 )
                 if object_result is None:
                     for alias in aliases:
                         object_result = self.read(
                             types=types,
-                            filters=[{"key": "aliases", "values": [alias]}],
+                            filters=[{"key": field_name, "values": [alias]}],
                             customAttributes=custom_attributes,
                         )
         return object_result
@@ -776,18 +777,13 @@ class StixDomainObject:
                     }
                 }
             """
-            opencti_stix_object_or_stix_relationship = self.read(
-                id=id, customAttributes=custom_attributes
-            )
-            if opencti_stix_object_or_stix_relationship is None:
+            stix_domain_object = self.read(id=id, customAttributes=custom_attributes)
+            if stix_domain_object is None:
                 self.opencti.log(
                     "error", "Cannot add Marking-Definition, entity not found"
                 )
                 return False
-            if (
-                marking_definition_id
-                in opencti_stix_object_or_stix_relationship["markingDefinitionsIds"]
-            ):
+            if marking_definition_id in stix_domain_object["markingDefinitionsIds"]:
                 return True
             else:
                 self.opencti.log(
@@ -848,13 +844,11 @@ class StixDomainObject:
                     }
                 }
             """
-            opencti_stix_object_or_stix_relationship = self.read(
-                id=id, customAttributes=custom_attributes
-            )
-            if opencti_stix_object_or_stix_relationship is None:
+            stix_domain_object = self.read(id=id, customAttributes=custom_attributes)
+            if stix_domain_object is None:
                 self.opencti.log("error", "Cannot add label, entity not found")
                 return False
-            if label_id in opencti_stix_object_or_stix_relationship["labelsIds"]:
+            if label_id in stix_domain_object["labelsIds"]:
                 return True
             else:
                 self.opencti.log(
@@ -920,18 +914,13 @@ class StixDomainObject:
                     }
                 }
             """
-            opencti_stix_object_or_stix_relationship = self.read(
-                id=id, customAttributes=custom_attributes
-            )
-            if opencti_stix_object_or_stix_relationship is None:
+            stix_domain_object = self.read(id=id, customAttributes=custom_attributes)
+            if stix_domain_object is None:
                 self.opencti.log(
                     "error", "Cannot add External-Reference, entity not found"
                 )
                 return False
-            if (
-                external_reference_id
-                in opencti_stix_object_or_stix_relationship["externalReferencesIds"]
-            ):
+            if external_reference_id in stix_domain_object["externalReferencesIds"]:
                 return True
             else:
                 self.opencti.log(
