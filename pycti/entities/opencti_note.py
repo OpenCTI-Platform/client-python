@@ -8,74 +8,63 @@ class Note:
         self.opencti = opencti
         self.properties = """
             id
-            stix_id
+            standard_id
             entity_type
-            stix_label
-            name
-            alias
-            description
-            content
-            graph_data
-            created
-            modified
+            parent_types
+            spec_version
             created_at
             updated_at
             createdBy {
-                node {
+                ... on Identity {
                     id
+                    standard_id
                     entity_type
-                    stix_id
-                    stix_label
+                    parent_types
                     name
-                    alias
+                    aliases
                     description
                     created
                     modified
-                    ... on Organization {
-                        x_opencti_organization_type
-                    }
                 }
-                relation {
-                    id
+                ... on Organization {
+                    x_opencti_organization_type
+                    x_opencti_reliability
+                }
+                ... on Individual {
+                    x_opencti_firstname
+                    x_opencti_lastname
                 }
             }
-            markingDefinitions {
+            objectMarking {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         definition_type
                         definition
-                        level
-                        color
                         created
                         modified
-                    }
-                    relation {
-                        id
+                        x_opencti_order
+                        x_opencti_color
                     }
                 }
             }
-            labels {
+            objectLabel {
                 edges {
                     node {
                         id
-                        label_type
                         value
                         color
                     }
-                    relation {
-                        id
-                    }
                 }
-            }            
+            }
             externalReferences {
                 edges {
                     node {
                         id
+                        standard_id
                         entity_type
-                        stix_id
                         source_name
                         description
                         url
@@ -84,35 +73,94 @@ class Note:
                         created
                         modified
                     }
-                    relation {
-                        id
-                    }
                 }
             }
-            objectRefs {
+            revoked
+            confidence
+            created
+            modified
+            attribute_abstract
+            content
+            authors
+            objects {
                 edges {
                     node {
-                        id
-                        stix_id
-                        entity_type
-                    }
-                }
-            }
-            observableRefs {
-                edges {
-                    node {
-                        id
-                        stix_id
-                        entity_type
-                        observable_value
-                    }
-                }
-            }
-            relationRefs {
-                edges {
-                    node {
-                        id
-                        stix_id
+                        ... on BasicObject {
+                            id
+                            entity_type
+                            parent_types
+                        }
+                        ... on BasicRelationship {
+                            id
+                            entity_type
+                            parent_types
+                        }
+                        ... on StixObject {
+                            standard_id
+                            spec_version
+                            created_at
+                            updated_at
+                        }
+                        ... on AttackPattern {
+                            name
+                        }
+                        ... on Campaign {
+                            name
+                        }
+                        ... on CourseOfAction {
+                            name
+                        }
+                        ... on Individual {
+                            name
+                        }
+                        ... on Organization {
+                            name
+                        }
+                        ... on Sector {
+                            name
+                        }
+                        ... on Indicator {
+                            name
+                        }
+                        ... on Infrastructure {
+                            name
+                        }
+                        ... on IntrusionSet {
+                            name
+                        }
+                        ... on Position {
+                            name
+                        }
+                        ... on City {
+                            name
+                        }
+                        ... on Country {
+                            name
+                        }
+                        ... on Region {
+                            name
+                        }
+                        ... on Malware {
+                            name
+                        }
+                        ... on ThreatActor {
+                            name
+                        }
+                        ... on Tool {
+                            name
+                        }
+                        ... on Vulnerability {
+                            name
+                        }
+                        ... on XOpenctiIncident {
+                            name
+                        }                
+                        ... on StixCoreRelationship {
+                            standard_id
+                            spec_version
+                            created_at
+                            updated_at
+                        }
                     }
                 }
             }
@@ -218,28 +266,23 @@ class Note:
                 return None
 
     """
-        Read a Note object by stix_id or name
+        Read a Note object by stix_id or content
 
-        :param type: the Stix-Domain-Entity type
-        :param stix_id: the STIX ID of the Stix-Domain-Entity
-        :param name: the name of the Stix-Domain-Entity
+        :param stix_id: the STIX ID of the Note
+        :param content: the content of the Note
         :return Stix-Domain-Entity object
     """
 
-    def get_by_stix_id_or_name(self, **kwargs):
+    def get_by_stix_id_or_content(self, **kwargs):
         stix_id = kwargs.get("stix_id", None)
-        description = kwargs.get("description", None)
         content = kwargs.get("content", None)
         custom_attributes = kwargs.get("customAttributes", None)
         object_result = None
         if stix_id is not None:
             object_result = self.read(id=stix_id, customAttributes=custom_attributes)
-        if object_result is None and description is not None and content is not None:
+        if object_result is None and content is not None:
             object_result = self.read(
-                filters=[
-                    {"key": "description", "values": [description]},
-                    {"key": "content", "values": [content]},
-                ],
+                filters=[{"key": "content", "values": [content]},],
                 customAttributes=custom_attributes,
             )
         return object_result
@@ -250,63 +293,32 @@ class Note:
         :return Boolean
     """
 
-    def contains_opencti_stix_object_or_stix_relationship(self, **kwargs):
+    def contains_stix_object_or_stix_relationship(self, **kwargs):
         id = kwargs.get("id", None)
-        entity_id = kwargs.get("entity_id", None)
-        if id is not None and entity_id is not None:
-            self.opencti.log(
-                "info", "Checking Stix-Entity {" + entity_id + "} in Note {" + id + "}",
-            )
-            query = """
-                query NoteContainsStixDomainEntity($id: String!, $objectId: String!) {
-                    noteContainsStixDomainEntity(id: $id, objectId: $objectId)
-                }
-            """
-            result = self.opencti.query(query, {"id": id, "objectId": entity_id})
-            if result["data"]["noteContainsStixDomainEntity"]:
-                return True
-            query = """
-                query NoteContainsStixRelation($id: String!, $objectId: String!) {
-                    noteContainsStixRelation(id: $id, objectId: $objectId)
-                }
-            """
-            result = self.opencti.query(query, {"id": id, "objectId": entity_id})
-            return result["data"]["noteContainsStixRelation"]
-        else:
-            self.opencti.log(
-                "error", "[opencti_note] Missing parameters: id or entity_id",
-            )
-
-    """
-        Check if a note already contains a STIX observable
-
-        :return Boolean
-    """
-
-    def contains_stix_observable(self, **kwargs):
-        id = kwargs.get("id", None)
-        stix_observable_id = kwargs.get("stix_observable_id", None)
-        if id is not None and stix_observable_id is not None:
+        stix_object_or_stix_relationship_id = kwargs.get(
+            "stixObjectOrStixRelationshipId", None
+        )
+        if id is not None and stix_object_or_stix_relationship_id is not None:
             self.opencti.log(
                 "info",
-                "Checking Stix-Observable {"
-                + stix_observable_id
+                "Checking StixObjectOrStixRelationship {"
+                + stix_object_or_stix_relationship_id
                 + "} in Note {"
                 + id
                 + "}",
             )
             query = """
-                query NoteContainsStixCyberObservable($id: String!, $objectId: String!) {
-                    noteContainsStixCyberObservable(id: $id, objectId: $objectId)
+                query NoteContainsStixObjectOrStixRelationship($id: String!, $stixObjectOrStixRelationshipId: String!) {
+                    noteContainsStixObjectOrStixRelationship(id: $id, stixObjectOrStixRelationshipId: $stixObjectOrStixRelationshipId)
                 }
             """
             result = self.opencti.query(
-                query, {"id": id, "objectId": stix_observable_id}
+                query, {"id": id, "objectId": stix_object_or_stix_relationship_id}
             )
-            return result["data"]["noteContainsStixCyberObservable"]
+            return result["data"]["noteContainsStixObjectOrStixRelationship"]
         else:
             self.opencti.log(
-                "error", "[opencti_note] Missing parameters: id or stix_observable_id",
+                "error", "[opencti_note] Missing parameters: id or entity_id",
             )
 
     """
@@ -317,36 +329,29 @@ class Note:
     """
 
     def create_raw(self, **kwargs):
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", None)
-        content = kwargs.get("content", None)
-        graph_data = kwargs.get("graph_data", None)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        abstract = kwargs.get("abstract", None)
+        content = kwargs.get("content", None)
+        authors = kwargs.get("authors", None)
 
-        if name is not None and description is not None and content is not None:
-            self.opencti.log("info", "Creating Note {" + description + "}.")
+        if content is not None:
+            self.opencti.log("info", "Creating Note {" + content + "}.")
             query = """
                 mutation NoteAdd($input: NoteAddInput) {
                     noteAdd(input: $input) {
                         id
-                        stix_id
+                        standard_id
                         entity_type
-                        parent_types
-                        observableRefs {
-                            edges {
-                                node {
-                                    id
-                                    stix_id
-                                    entity_type
-                                    observable_value
-                                }
-                            }
-                        }                        
+                        parent_types                    
                     }
                 }
             """
@@ -354,24 +359,26 @@ class Note:
                 query,
                 {
                     "input": {
-                        "name": name,
-                        "description": description,
-                        "content": content,
-                        "graph_data": graph_data,
-                        "internal_id_key": id,
                         "stix_id": stix_id,
+                        "createdBy": created_by,
+                        "objectMarking": object_marking,
+                        "objectLabel": object_label,
+                        "externalReferences": external_references,
+                        "revoked": revoked,
+                        "confidence": confidence,
+                        "lang": lang,
                         "created": created,
                         "modified": modified,
-                        "createdBy": created_by,
-                        "objectMarking": objectMarking,
+                        "attribute_abstract": abstract,
+                        "content": content,
+                        "authors": authors,
                     }
                 },
             )
             return self.opencti.process_multiple_fields(result["data"]["noteAdd"])
         else:
             self.opencti.log(
-                "error",
-                "[opencti_note] Missing parameters: name and description and published and note_class",
+                "error", "[opencti_note] Missing parameters: content",
             )
 
     """
@@ -384,98 +391,71 @@ class Note:
      """
 
     def create(self, **kwargs):
-        name = kwargs.get("name", None)
-        external_reference_id = kwargs.get("external_reference_id", None)
-        description = kwargs.get("description", None)
-        content = kwargs.get("content", None)
-        graph_data = kwargs.get("graph_data", None)
-        id = kwargs.get("id", None)
         stix_id = kwargs.get("stix_id", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
+        external_references = kwargs.get("externalReferences", None)
+        revoked = kwargs.get("revoked", None)
+        confidence = kwargs.get("confidence", None)
+        lang = kwargs.get("lang", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
+        abstract = kwargs.get("abstract", None)
+        content = kwargs.get("content", None)
+        authors = kwargs.get("authors", None)
         update = kwargs.get("update", False)
         custom_attributes = """
             id
+            standard_id
             entity_type
-            name
-            description 
+            parent_types
             createdBy {
-                node {
+                ... on Identity {
                     id
                 }
             }
-            externalReferences {
-                edges {
-                    node {
-                        id
-                        stix_id
-                        source_name
-                        description
-                        url
-                    }
-                }
+            ... on Note {
+                attribute_abstract
+                content
+                authors
             }
         """
-        object_result = None
-        if external_reference_id is not None:
-            object_result = self.opencti.stix_domain_object.read(
-                types=["Note"],
-                filters=[
-                    {"key": "hasExternalReference", "values": [external_reference_id]}
-                ],
-                customAttributes=custom_attributes,
-            )
-        if object_result is None and description is not None and content is not None:
-            object_result = self.get_by_stix_id_or_name(
-                stix_id=stix_id,
-                description=description,
-                content=content,
-                custom_attributes=custom_attributes,
-            )
+        object_result = self.get_by_stix_id_or_content(
+            stix_id=stix_id, content=content, custom_attributes=custom_attributes,
+        )
         if object_result is not None:
             if update or object_result["createdById"] == created_by:
-                if name is not None and object_result["name"] != name:
-                    self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="name", value=name
-                    )
-                    object_result["name"] = name
                 if (
-                    description is not None
-                    and object_result["description"] != description
+                    abstract is not None
+                    and object_result["attribute_abstract"] != abstract
                 ):
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="description", value=description
+                        id=object_result["id"], key="attribute_abstract", value=abstract
                     )
-                    object_result["description"] = description
+                    object_result["attribute_abstract"] = abstract
                 if content is not None and object_result["content"] != content:
                     self.opencti.stix_domain_object.update_field(
                         id=object_result["id"], key="content", value=content
                     )
                     object_result["content"] = content
-            if external_reference_id is not None:
-                self.opencti.stix_domain_object.add_external_reference(
-                    id=object_result["id"], external_reference_id=external_reference_id,
-                )
             return object_result
         else:
             note = self.create_raw(
-                name=name,
-                description=description,
-                content=content,
-                graph_data=graph_data,
-                id=id,
                 stix_id=stix_id,
-                created=created,
-                modified=modified,
                 createdBy=created_by,
                 objectMarking=object_marking,
+                objectLabel=object_label,
+                externalReferences=external_references,
+                revoked=revoked,
+                confidence=confidence,
+                lang=lang,
+                created=created,
+                modified=modified,
+                abstract=abstract,
+                content=content,
+                authors=authors,
             )
-            if external_reference_id is not None:
-                self.opencti.stix_domain_object.add_external_reference(
-                    id=note["id"], external_reference_id=external_reference_id,
-                )
             return note
 
     """
@@ -486,65 +466,21 @@ class Note:
         :return Boolean
     """
 
-    def add_opencti_stix_object_or_stix_relationship(self, **kwargs):
+    def add_stix_object_or_stix_relationship(self, **kwargs):
         id = kwargs.get("id", None)
-        entity_id = kwargs.get("entity_id", None)
-        if id is not None and entity_id is not None:
-            if self.contains_opencti_stix_object_or_stix_relationship(
-                id=id, entity_id=entity_id
-            ):
-                return True
-            self.opencti.log(
-                "info", "Adding Stix-Entity {" + entity_id + "} to Note {" + id + "}",
-            )
-            query = """
-               mutation NoteEdit($id: ID!, $input: StixMetaRelationshipAddInput) {
-                   noteEdit(id: $id) {
-                        relationAdd(input: $input) {
-                            id
-                        }
-                   }
-               }
-            """
-            self.opencti.query(
-                query,
-                {
-                    "id": id,
-                    "input": {
-                        "fromRole": "knowledge_aggregation",
-                        "toId": entity_id,
-                        "toRole": "so",
-                        "through": "object_refs",
-                    },
-                },
-            )
-            return True
-        else:
-            self.opencti.log(
-                "error", "[opencti_note] Missing parameters: id and entity_id"
-            )
-            return False
-
-    """
-        Add a Stix-Observable object to Note object (observable_refs)
-
-        :param id: the id of the Note
-        :param entity_id: the id of the Stix-Observable
-        :return Boolean
-    """
-
-    def add_stix_observable(self, **kwargs):
-        id = kwargs.get("id", None)
-        stix_observable_id = kwargs.get("stix_observable_id", None)
-        if id is not None and stix_observable_id is not None:
-            if self.contains_stix_observable(
-                id=id, stix_observable_id=stix_observable_id
+        stix_object_or_stix_relationship_id = kwargs.get(
+            "stixObjectOrStixRelationshipId", None
+        )
+        if id is not None and stix_object_or_stix_relationship_id is not None:
+            if self.contains_stix_object_or_stix_relationship(
+                id=id,
+                stixObjectOrStixRelationshipId=stix_object_or_stix_relationship_id,
             ):
                 return True
             self.opencti.log(
                 "info",
-                "Adding Stix-Observable {"
-                + stix_observable_id
+                "Adding StixObjectOrStixRelationship {"
+                + stix_object_or_stix_relationship_id
                 + "} to Note {"
                 + id
                 + "}",
@@ -563,17 +499,16 @@ class Note:
                 {
                     "id": id,
                     "input": {
-                        "fromRole": "observables_aggregation",
-                        "toId": stix_observable_id,
-                        "toRole": "soo",
-                        "through": "observable_refs",
+                        "toId": stix_object_or_stix_relationship_id,
+                        "relationship_type": "object",
                     },
                 },
             )
             return True
         else:
             self.opencti.log(
-                "error", "[opencti_note] Missing parameters: id and stix_observable_id",
+                "error",
+                "[opencti_note] Missing parameters: id and stix_object_or_stix_relationship_id",
             )
             return False
 
@@ -589,35 +524,34 @@ class Note:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
-            if CustomProperties.NAME in stix_object:
-                name = stix_object[CustomProperties.NAME]
-            elif "abstract" in stix_object:
-                name = stix_object["abstract"]
-            else:
-                name = ""
             return self.create(
-                description=self.opencti.stix2.convert_markdown(stix_object["abstract"])
+                stix_id=stix_object["id"],
+                createdBy=extras["created_by_id"]
+                if "created_by_id" in extras
+                else None,
+                objectMarking=extras["object_marking_ids"]
+                if "object_marking_ids" in extras
+                else None,
+                objectLabel=extras["object_label_ids"]
+                if "object_label_ids" in extras
+                else [],
+                externalReferences=extras["external_references_ids"]
+                if "external_references_ids" in extras
+                else [],
+                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
+                confidence=stix_object["confidence"]
+                if "confidence" in stix_object
+                else None,
+                lang=stix_object["lang"] if "lang" in stix_object else None,
+                created=stix_object["created"] if "created" in stix_object else None,
+                modified=stix_object["modified"] if "modified" in stix_object else None,
+                abstract=self.opencti.stix2.convert_markdown(stix_object["abstract"])
                 if "abstract" in stix_object
                 else "",
                 content=self.opencti.stix2.convert_markdown(stix_object["content"])
                 if "content" in stix_object
                 else "",
-                name=name,
-                graph_data=stix_object[CustomProperties.GRAPH_DATA]
-                if CustomProperties.GRAPH_DATA in stix_object
-                else "",
-                id=stix_object[CustomProperties.ID]
-                if CustomProperties.ID in stix_object
-                else None,
-                stix_id=stix_object["id"] if "id" in stix_object else None,
-                created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                markingDefinitions=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else [],
+                authors=stix_object["authors"] if "authors" in stix_object else None,
                 update=update,
             )
         else:

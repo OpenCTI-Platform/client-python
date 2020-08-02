@@ -520,6 +520,11 @@ class OpenCTIStix2:
                         id=stix_object_result["id"],
                         stixObjectOrStixRelationshipId=object_refs_id,
                     )
+                elif stix_object_result["entity_type"] == "observed-data":
+                    self.opencti.observed_data.add_stix_object_or_stix_relationship(
+                        id=stix_object_result["id"],
+                        stixObjectOrStixRelationshipId=object_refs_id,
+                    )
                 elif stix_object_result["entity_type"] == "note":
                     self.opencti.note.add_stix_object_or_stix_relationship(
                         id=stix_object_result["id"],

@@ -85,14 +85,6 @@ class Location:
             description
             aliases
             contact_information
-            ... on Individual {
-                x_opencti_firstname
-                x_opencti_lastname
-            }
-            ... on Organization {
-                x_opencti_organization_type
-                x_opencti_reliability
-            }
         """
 
     """
