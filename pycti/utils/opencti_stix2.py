@@ -1392,13 +1392,17 @@ class OpenCTIStix2:
         # StixRelationObjects
         start_time = time.time()
         for item in stix_bundle["objects"]:
-            if (
-                item["type"] == "relationship"
-                and "relationship--" not in item["source_ref"]
-                and "relationship--" not in item["target_ref"]
-            ):
-                self.import_relationship(item, update, types)
-                imported_elements.append({"id": item["id"], "type": item["type"]})
+            if item["type"] == "relationship":
+                split_source_ref = item["source_ref"].split("--")
+                split_target_ref = item["target_ref"].split("--")
+                if (
+                    not ContainerTypes.has_value(split_source_ref[0])
+                    and split_source_ref[0] != "relationship"
+                    and not ContainerTypes.has_value(split_target_ref[0])
+                    and split_target_ref[0] != "relationship"
+                ):
+                    self.import_relationship(item, update, types)
+                    imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
         self.opencti.log(
             "info", "Relationships imported in: %ssecs" % round(end_time - start_time)
@@ -1470,17 +1474,6 @@ class OpenCTIStix2:
             "info", "Observed-Datas imported in: %ssecs" % round(end_time - start_time)
         )
 
-        # Reports
-        start_time = time.time()
-        for item in stix_bundle["objects"]:
-            if item["type"] == "report" and (types is None or "report" in types):
-                self.import_object(item, update, types)
-                imported_elements.append({"id": item["id"], "type": item["type"]})
-        end_time = time.time()
-        self.opencti.log(
-            "info", "Reports imported in: %ssecs" % round(end_time - start_time)
-        )
-
         # Notes
         start_time = time.time()
         for item in stix_bundle["objects"]:
@@ -1502,4 +1495,39 @@ class OpenCTIStix2:
         self.opencti.log(
             "info", "Opinions imported in: %ssecs" % round(end_time - start_time)
         )
+
+        # StixRelationObjects (with containers)
+        start_time = time.time()
+        for item in stix_bundle["objects"]:
+            if item["type"] == "relationship":
+                split_source_ref = item["source_ref"].split("--")
+                split_target_ref = item["target_ref"].split("--")
+                if (
+                    split_source_ref[0] != "report"
+                    and split_target_ref[0] != "report"
+                    and (
+                        ContainerTypes.has_value(split_source_ref[0])
+                        or ContainerTypes.has_value(split_target_ref[0])
+                    )
+                ):
+                    self.import_relationship(item, update, types)
+                    imported_elements.append({"id": item["id"], "type": item["type"]})
+        end_time = time.time()
+        self.opencti.log(
+            "info",
+            "Relationships to containers imported in: %ssecs"
+            % round(end_time - start_time),
+        )
+
+        # Reports
+        start_time = time.time()
+        for item in stix_bundle["objects"]:
+            if item["type"] == "report" and (types is None or "report" in types):
+                self.import_object(item, update, types)
+                imported_elements.append({"id": item["id"], "type": item["type"]})
+        end_time = time.time()
+        self.opencti.log(
+            "info", "Reports imported in: %ssecs" % round(end_time - start_time)
+        )
+
         return imported_elements

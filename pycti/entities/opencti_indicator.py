@@ -608,7 +608,7 @@ class Indicator:
                     "x_opencti_main_observable_type"
                 ]
                 if "x_opencti_main_observable_type" in stix_object
-                else False,
+                else "Unknown",
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
                 else None,

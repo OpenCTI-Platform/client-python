@@ -267,7 +267,7 @@ class Identity:
                 result_data_field = "organizationAdd"
             elif type == IdentityTypes.INDIVIDUAL.value:
                 query = """
-                    mutation IndividualAdd($input: OrganizationAddInput) {
+                    mutation IndividualAdd($input: IndividualAddInput) {
                         individualAdd(input: $input) {
                             id
                             standard_id
@@ -464,12 +464,12 @@ class Identity:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
-            if stix_object["identity_class"] == "individual":
-                type = "Individual"
-            elif stix_object["identity_class"] == "class":
-                type = "Sector"
-            else:
-                type = "Organization"
+            type = "Organization"
+            if "identity_class" in stix_object:
+                if stix_object["identity_class"] == "individual":
+                    type = "Individual"
+                elif stix_object["identity_class"] == "class":
+                    type = "Sector"
             return self.create(
                 type=type,
                 stix_id=stix_object["id"],

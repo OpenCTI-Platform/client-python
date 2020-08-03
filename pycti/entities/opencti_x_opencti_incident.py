@@ -224,7 +224,7 @@ class XOpenCTIIncident:
         if name is not None and description is not None:
             self.opencti.log("info", "Creating Incident {" + name + "}.")
             query = """
-                mutation XOpenCTIIncidentAdd($input: IncidentAddInput) {
+                mutation XOpenCTIIncidentAdd($input: XOpenCTIIncidentAddInput) {
                     xOpenCTIIncidentAdd(input: $input) {
                         id
                         standard_id

@@ -258,9 +258,7 @@ class Location:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(
-                result["data"]["threatActorAdd"]
-            )
+            return self.opencti.process_multiple_fields(result["data"]["locationAdd"])
         else:
             self.opencti.log("error", "Missing parameters: name")
 
