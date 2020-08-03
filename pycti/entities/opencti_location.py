@@ -313,7 +313,7 @@ class Location:
             types=[type],
             stix_id=stix_id,
             name=name,
-            fieldName="x_opencti_alias",
+            fieldName="x_opencti_aliases",
             customAttributes=custom_attributes,
         )
         if object_result is not None:

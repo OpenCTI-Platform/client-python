@@ -206,3 +206,16 @@ class ExternalReference:
                 created=created,
                 modified=modified,
             )
+
+
+    # TODO Move to ExternalReference
+    def delete(self, id):
+        logging.info("Deleting + " + id + "...")
+        query = """
+             mutation ExternalReferenceEdit($id: ID!) {
+                 externalReferenceEdit(id: $id) {
+                     delete
+                 }
+             }
+         """
+        self.query(query, {"id": id})

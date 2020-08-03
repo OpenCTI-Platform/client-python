@@ -25,7 +25,7 @@ relations = opencti_api_client.stix_core_relationship.list(
     fromTypes=["Intrusion-Set"],
     toId=malware["id"],
     toTypes=["Malware"],
-    relationType="uses",
+    relationship_type="uses",
 )
 
 # Delete the relations

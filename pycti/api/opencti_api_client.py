@@ -12,7 +12,6 @@ from typing import Union
 
 from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_job import OpenCTIApiJob
-from pycti.utils.constants import StixCyberObservableTypes
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 
 from pycti.entities.opencti_label import Label
@@ -543,15 +542,3 @@ class OpenCTIApiClient:
                 "error", "[upload] Missing parameters: file_name or data",
             )
             return None
-
-    # TODO Move to ExternalReference
-    def delete_external_reference(self, id):
-        logging.info("Deleting + " + id + "...")
-        query = """
-             mutation ExternalReferenceEdit($id: ID!) {
-                 externalReferenceEdit(id: $id) {
-                     delete
-                 }
-             }
-         """
-        self.query(query, {"id": id})

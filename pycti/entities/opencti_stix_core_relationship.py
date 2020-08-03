@@ -255,7 +255,7 @@ class StixCoreRelationship:
 
         :param fromId: the id of the source entity of the relation
         :param toId: the id of the target entity of the relation
-        :param relationType: the relation type
+        :param relationship_type: the relation type
         :param startTimeStart: the start_time date start filter
         :param startTimeStop: the start_time date stop filter
         :param stopTimeStart: the stop_time date start filter
@@ -271,7 +271,7 @@ class StixCoreRelationship:
         from_types = kwargs.get("fromTypes", None)
         to_id = kwargs.get("toId", None)
         to_types = kwargs.get("toTypes", None)
-        relation_type = kwargs.get("relationType", None)
+        relationship_type = kwargs.get("relationship_type", None)
         start_time_start = kwargs.get("startTimeStart", None)
         start_time_stop = kwargs.get("startTimeStop", None)
         stop_time_start = kwargs.get("stopTimeStart", None)
@@ -291,7 +291,7 @@ class StixCoreRelationship:
         self.opencti.log(
             "info",
             "Listing stix_core_relationships with {type: "
-            + str(relation_type)
+            + str(relationship_type)
             + ", from_id: "
             + str(from_id)
             + ", to_id: "
@@ -300,8 +300,8 @@ class StixCoreRelationship:
         )
         query = (
             """
-                query StixCoreRelationships($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationType: String, $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $inferred: Boolean, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
-                    stixCoreRelationships(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationType: $relationType, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, inferred: $inferred, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
+                query StixCoreRelationships($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: String, $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $inferred: Boolean, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
+                    stixCoreRelationships(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, inferred: $inferred, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
                         edges {
                             node {
                                 """
@@ -327,7 +327,7 @@ class StixCoreRelationship:
                 "fromTypes": from_types,
                 "toId": to_id,
                 "toTypes": to_types,
-                "relationType": relation_type,
+                "relationship_type": relationship_type,
                 "startTimeStart": start_time_start,
                 "startTimeStop": start_time_stop,
                 "stopTimeStart": stop_time_start,
@@ -351,7 +351,7 @@ class StixCoreRelationship:
         :param id: the id of the stix_core_relationship
         :param fromId: the id of the source entity of the relation
         :param toId: the id of the target entity of the relation
-        :param relationType: the relation type
+        :param relationship_type: the relation type
         :param startTimeStart: the start_time date start filter
         :param startTimeStop: the start_time date stop filter
         :param stopTimeStart: the stop_time date start filter
@@ -364,7 +364,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         from_id = kwargs.get("fromId", None)
         to_id = kwargs.get("toId", None)
-        relation_type = kwargs.get("relationType", None)
+        relationship_type = kwargs.get("relationship_type", None)
         start_time_start = kwargs.get("startTimeStart", None)
         start_time_stop = kwargs.get("startTimeStop", None)
         stop_time_start = kwargs.get("stopTimeStart", None)
@@ -396,7 +396,7 @@ class StixCoreRelationship:
             result = self.list(
                 fromId=from_id,
                 toId=to_id,
-                relationType=relation_type,
+                relationship_type=relationship_type,
                 startTimeStart=start_time_start,
                 startTimeStop=start_time_stop,
                 stopTimeStart=stop_time_start,
@@ -520,11 +520,7 @@ class StixCoreRelationship:
             }       
         """
         stix_core_relationship_result = None
-        if id is not None:
-            stix_core_relationship_result = self.read(
-                id=id, customAttributes=custom_attributes
-            )
-        if stix_core_relationship_result is None and stix_id is not None:
+        if stix_id is not None:
             stix_core_relationship_result = self.read(
                 id=stix_id, customAttributes=custom_attributes
             )
@@ -556,7 +552,7 @@ class StixCoreRelationship:
             stix_core_relationship_result = self.read(
                 fromId=from_id,
                 toId=to_id,
-                relationType=relationship_type,
+                relationship_type=relationship_type,
                 startTimeStart=start_time_start,
                 startTimeStop=start_time_stop,
                 stopTimeStart=stop_time_start,

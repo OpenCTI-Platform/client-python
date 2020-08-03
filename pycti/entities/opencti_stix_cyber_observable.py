@@ -171,7 +171,75 @@ class StixCyberObservable:
                 cwd
                 command_line
                 environment_variables
-            }                                                                                          
+            }
+            ... on Software {
+                name
+                cpe
+                swid
+                languages
+                vendor
+                version
+            }
+            ... on Url {
+                value
+            }
+            ... on UserAccount {
+                extensions
+                user_id
+                credential
+                account_login
+                account_type
+                display_name
+                is_service_account
+                is_privileged
+                can_escalate_privs
+                is_disabled
+                account_created
+                account_expires
+                credential_last_changed
+                account_first_login
+                account_last_login
+            }
+            WindowsRegistryKey {
+                attribute_key
+                modified_time
+                number_of_subkeys
+            }
+            WindowsRegistryValueType {
+                name
+                data
+                data_type
+            }
+            X509V3ExtensionsType {
+                basic_constraints
+                name_constraints
+                policy_constraints
+                key_usage
+                extended_key_usage
+                subject_key_identifier
+                authority_key_identifier
+                subject_alternative_name
+                issuer_alternative_name
+                subject_directory_attributes
+                crl_distribution_points
+                inhibit_any_policy
+                private_key_usage_period_not_before
+                private_key_usage_period_not_after
+                certificate_policies
+                policy_mappings
+            }
+            XOpenCTICryptographicKey {
+                value
+            }
+            XOpenCTICryptocurrencyWallet {
+                value
+            }
+            XOpenCTIText {
+                value
+            }
+            XOpenCTIUserAgent {
+                value
+            }
         """
 
     """

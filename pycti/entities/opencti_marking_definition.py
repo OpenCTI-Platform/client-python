@@ -231,7 +231,7 @@ class MarkingDefinition:
                     definition_type + ":" + stix_object["definition"]["tlp"].upper()
                 )
 
-            # TODO: Compatibility with 3.X to be REMOVED
+            # TODO: Compatibility with OpenCTI 3.X to be REMOVED
             stix_object["x_opencti_order"] = (
                 stix_object["x_opencti_level"]
                 if "x_opencti_level" in stix_object

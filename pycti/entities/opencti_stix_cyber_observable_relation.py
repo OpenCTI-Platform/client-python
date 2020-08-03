@@ -93,7 +93,7 @@ class StixCyberObservableRelation:
 
         :param fromId: the id of the source entity of the relation
         :param toId: the id of the target entity of the relation
-        :param relationType: the relation type
+        :param relationship_type: the relation type
         :param firstSeenStart: the first_seen date start filter
         :param firstSeenStop: the first_seen date stop filter
         :param lastSeenStart: the last_seen date start filter
@@ -109,7 +109,7 @@ class StixCyberObservableRelation:
         from_types = kwargs.get("fromTypes", None)
         to_id = kwargs.get("toId", None)
         to_types = kwargs.get("toTypes", None)
-        relation_type = kwargs.get("relationType", None)
+        relationship_type = kwargs.get("relationship_type", None)
         first_seen_start = kwargs.get("firstSeenStart", None)
         first_seen_stop = kwargs.get("firstSeenStop", None)
         last_seen_start = kwargs.get("lastSeenStart", None)
@@ -128,7 +128,7 @@ class StixCyberObservableRelation:
         self.opencti.log(
             "info",
             "Listing stix_observable_relations with {type: "
-            + str(relation_type)
+            + str(relationship_type)
             + ", from_id: "
             + str(from_id)
             + ", to_id: "
@@ -137,8 +137,8 @@ class StixCyberObservableRelation:
         )
         query = (
             """
-            query StixCyberObservableRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationType: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID, $orderBy: StixCyberObservableRelationsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
-                StixCyberObservableRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationType: $relationType, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
+            query StixCyberObservableRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID, $orderBy: StixCyberObservableRelationsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
+                StixCyberObservableRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
                     edges {
                         node {
                             """
@@ -165,7 +165,7 @@ class StixCyberObservableRelation:
                 "fromTypes": from_types,
                 "toId": to_id,
                 "toTypes": to_types,
-                "relationType": relation_type,
+                "relationship_type": relationship_type,
                 "firstSeenStart": first_seen_start,
                 "firstSeenStop": first_seen_stop,
                 "lastSeenStart": last_seen_start,
@@ -189,7 +189,7 @@ class StixCyberObservableRelation:
         :param stix_id: the STIX id of the stix_observable_relation
         :param fromId: the id of the source entity of the relation
         :param toId: the id of the target entity of the relation
-        :param relationType: the relation type
+        :param relationship_type: the relation type
         :param firstSeenStart: the first_seen date start filter
         :param firstSeenStop: the first_seen date stop filter
         :param lastSeenStart: the last_seen date start filter
@@ -202,7 +202,7 @@ class StixCyberObservableRelation:
         id = kwargs.get("id", None)
         from_id = kwargs.get("fromId", None)
         to_id = kwargs.get("toId", None)
-        relation_type = kwargs.get("relationType", None)
+        relationship_type = kwargs.get("relationship_type", None)
         first_seen_start = kwargs.get("firstSeenStart", None)
         first_seen_stop = kwargs.get("firstSeenStop", None)
         last_seen_start = kwargs.get("lastSeenStart", None)
@@ -234,7 +234,7 @@ class StixCyberObservableRelation:
             result = self.list(
                 fromId=from_id,
                 toId=to_id,
-                relationType=relation_type,
+                relationship_type=relationship_type,
                 firstSeenStart=first_seen_start,
                 firstSeenStop=first_seen_stop,
                 lastSeenStart=last_seen_start,
@@ -388,7 +388,7 @@ class StixCyberObservableRelation:
             stix_relation_result = self.read(
                 fromId=from_id,
                 toId=to_id,
-                relationType=relationship_type,
+                relationship_type=relationship_type,
                 firstSeenStart=first_seen_start,
                 firstSeenStop=first_seen_stop,
                 lastSeenStart=last_seen_start,
