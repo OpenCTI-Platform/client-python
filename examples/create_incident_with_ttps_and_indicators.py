@@ -57,7 +57,7 @@ for kill_chain_phase_id in ttp1["killChainPhasesIds"]:
 
 # Create the observable and indicator and indicates to the relation
 # Create the observable
-observable_ttp1 = opencti_api_client.stix_observable.create(
+observable_ttp1 = opencti_api_client.stix_cyber_observable.create(
     type="Email-Address", observable_value="phishing@mail.com", createIndicator=True
 )
 # Get the indicator
@@ -108,7 +108,7 @@ for kill_chain_phase_id in ttp2["killChainPhasesIds"]:
 
 # Create the observable and indicator and indicates to the relation
 # Create the observable
-observable_ttp2 = opencti_api_client.stix_observable.create(
+observable_ttp2 = opencti_api_client.stix_cyber_observable.create(
     type="Registry-Key", observable_value="Disk security", createIndicator=True
 )
 # Get the indicator

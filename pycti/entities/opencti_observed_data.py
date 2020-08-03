@@ -293,7 +293,11 @@ class ObservedData:
                 }
             """
             result = self.opencti.query(
-                query, {"id": id, "objectId": stix_object_or_stix_relationship_id}
+                query,
+                {
+                    "id": id,
+                    "stixObjectOrStixRelationshipId": stix_object_or_stix_relationship_id,
+                },
             )
             return result["data"]["observedDataContainsStixObjectOrStixRelationship"]
         else:
@@ -526,10 +530,10 @@ class ObservedData:
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 first_observed=stix_object["first_observed"]
                 if "first_observed" in stix_object
-                else "",
+                else None,
                 last_observed=stix_object["last_observed"]
                 if "last_observed" in stix_object
-                else "",
+                else None,
                 number_observed=stix_object["number_observed"]
                 if "number_observed" in stix_object
                 else None,
@@ -537,7 +541,7 @@ class ObservedData:
             )
             if "objects" in stix_object:
                 for key, observable_item in stix_object["objects"].items():
-                    stix_observable_result = self.opencti.stix_observable.create(
+                    stix_observable_result = self.opencti.stix_cyber_observable.create(
                         observableData=observable_item,
                         createdBy=extras["created_by_id"]
                         if "created_by_id" in extras

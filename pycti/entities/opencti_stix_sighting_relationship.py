@@ -417,7 +417,7 @@ class StixSightingRelationship:
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         count = kwargs.get("count", None)
-        x_opencti_negative = kwargs.get("x_opencti_negative", None)
+        x_opencti_negative = kwargs.get("x_opencti_negative", False)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         confidence = kwargs.get("confidence", None)
@@ -480,7 +480,7 @@ class StixSightingRelationship:
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         count = kwargs.get("count", None)
-        x_opencti_negative = kwargs.get("x_opencti_negative", None)
+        x_opencti_negative = kwargs.get("x_opencti_negative", False)
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         confidence = kwargs.get("confidence", None)
@@ -495,8 +495,9 @@ class StixSightingRelationship:
             standard_id
             entity_type
             parent_types
-            start_time
-            stop_time
+            first_seen
+            last_seen
+            x_opencti_negative
             confidence
             createdBy {
                 ... on Identity {
@@ -504,13 +505,7 @@ class StixSightingRelationship:
                 }
             }       
         """
-        stix_sighting_result = None
-        if id is not None:
-            stix_sighting_result = self.read(id=id, customAttributes=custom_attributes)
-        if stix_sighting_result is None and stix_id is not None:
-            stix_sighting_result = self.read(
-                id=stix_id, customAttributes=custom_attributes
-            )
+        stix_sighting_result = self.read(id=stix_id, customAttributes=custom_attributes)
         if stix_sighting_result is None and to_id is not None:
             if (
                 ignore_dates is False

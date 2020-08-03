@@ -400,7 +400,6 @@ class StixCyberObservable:
             else kwargs.get("createIndicator", False)
         )
         type = observable_data["type"].capitalize()
-        # File is already taken, File = StixFile in OpenCTI
         if type == "File":
             type = "StixFile"
         if type is not None:
@@ -414,7 +413,7 @@ class StixCyberObservable:
             )
             input_variables = {
                 "type": type,
-                "stix_id": observable_data["id"],
+                "stix_id": observable_data["id"] if "id" in observable_data else None,
                 "createdBy": created_by,
                 "objectMarking": object_marking,
                 "objectLabel": object_label,
@@ -434,7 +433,7 @@ class StixCyberObservable:
             query = """
                 mutation StixCyberObservableAdd(
                     $type: String!,
-                    AutonomousSystem: AutonomousSystemAddInput,
+                    $AutonomousSystem: AutonomousSystemAddInput,
                     $Directory: DirectoryAddInput,
                     $DomainName: DomainNameAddInput,
                     $EmailAddr: EmailAddrAddInput,
@@ -498,172 +497,147 @@ class StixCyberObservable:
                 }
             """
             if type == "Autonomous-System":
-                input_variables["number"] = observable_data["number"]
-                input_variables["name"] = (
-                    observable_data["name"] if "name" in observable_data else None
-                )
-                input_variables["rir"] = (
-                    observable_data["rir"] if "rir" in observable_data else None
-                )
+                input_variables["AutonomousSystem"] = {
+                    "number": observable_data["number"],
+                    "name": observable_data["name"]
+                    if "name" in observable_data
+                    else None,
+                    "rir": observable_data["rir"] if "rir" in observable_data else None,
+                }
             elif type == "Directory":
-                input_variables["path"] = observable_data["path"]
-                input_variables["path_enc"] = (
-                    observable_data["path_enc"]
+                input_variables["Directory"] = {
+                    "path": observable_data["path"],
+                    "path_enc": observable_data["path_enc"]
                     if "path_enc" in observable_data
-                    else None
-                )
-                input_variables["ctime"] = (
-                    observable_data["ctime"] if "ctime" in observable_data else None
-                )
-                input_variables["mtime"] = (
-                    observable_data["mtime"] if "mtime" in observable_data else None
-                )
-                input_variables["atime"] = (
-                    observable_data["atime"] if "atime" in observable_data else None
-                )
+                    else None,
+                    "ctime": observable_data["ctime"]
+                    if "ctime" in observable_data
+                    else None,
+                    "mtime": observable_data["mtime"]
+                    if "mtime" in observable_data
+                    else None,
+                    "atime": observable_data["atime"]
+                    if "atime" in observable_data
+                    else None,
+                }
             elif type == "Domain-Name":
-                input_variables["value"] = observable_data["value"]
+                input_variables["DomainName"] = {"value": observable_data["value"]}
             elif type == "Email-Addr":
-                input_variables["value"] = observable_data["value"]
-                input_variables["display_name"] = (
-                    observable_data["display_name"]
+                input_variables["EmailAddr"] = {
+                    "value": observable_data["value"],
+                    "display_name": observable_data["display_name"]
                     if "display_name" in observable_data
-                    else None
-                )
+                    else None,
+                }
             elif type == "Email-Message":
-                input_variables["is_multipart"] = (
-                    observable_data["is_multipart"]
+                input_variables["EmailMessage"] = {
+                    "is_multipart": observable_data["is_multipart"]
                     if "is_multipart" in observable_data
-                    else None
-                )
-                input_variables["attribute_date"] = (
-                    observable_data["attribute_date"]
+                    else None,
+                    "display_name": observable_data["display_name"]
+                    if "display_name" in observable_data
+                    else None,
+                    "attribute_date": observable_data["attribute_date"]
                     if "date" in observable_data
-                    else None
-                )
-                input_variables["message_id"] = (
-                    observable_data["message_id"]
+                    else None,
+                    "message_id": observable_data["message_id"]
                     if "message_id" in observable_data
-                    else None
-                )
-                input_variables["subject"] = (
-                    observable_data["subject"] if "subject" in observable_data else None
-                )
-                input_variables["received_lines"] = (
-                    observable_data["received_lines"]
+                    else None,
+                    "subject": observable_data["subject"]
+                    if "subject" in observable_data
+                    else None,
+                    "received_lines": observable_data["received_lines"]
                     if "received_lines" in observable_data
-                    else None
-                )
-                input_variables["body"] = (
-                    observable_data["body"] if "body" in observable_data else None
-                )
+                    else None,
+                    "body": observable_data["body"]
+                    if "body" in observable_data
+                    else None,
+                }
             elif type == "Email-Mime-Part-Type":
-                input_variables["body"] = (
-                    observable_data["body"] if "body" in observable_data else None
-                )
-                input_variables["content_type"] = (
-                    observable_data["content_type"]
+                input_variables["EmailMimePartType"] = {
+                    "body": observable_data["body"]
+                    if "body" in observable_data
+                    else None,
+                    "content_type": observable_data["content_type"]
                     if "content_type" in observable_data
-                    else None
-                )
-                input_variables["content_disposition"] = (
-                    observable_data["content_disposition"]
+                    else None,
+                    "content_disposition": observable_data["content_disposition"]
                     if "content_disposition" in observable_data
-                    else None
-                )
+                    else None,
+                }
             elif type == "Artifact":
-                input_variables["md5"] = (
-                    observable_data["md5"] if "md5" in observable_data else None
-                )
-                input_variables["sha1"] = (
-                    observable_data["sha1"] if "sha1" in observable_data else None
-                )
-                input_variables["sha256"] = (
-                    observable_data["sha256"] if "sha256" in observable_data else None
-                )
-                input_variables["sha512"] = (
-                    observable_data["sha512"] if "sha512" in observable_data else None
-                )
-                input_variables["mime_type"] = (
-                    observable_data["mime_type"]
+                input_variables["Artifact"] = {
+                    "md5": observable_data["md5"] if "md5" in observable_data else None,
+                    "sha1": observable_data["sha1"]
+                    if "sha1" in observable_data
+                    else None,
+                    "sha256": observable_data["sha256"]
+                    if "sha256" in observable_data
+                    else None,
+                    "sha512": observable_data["sha512"]
+                    if "sha512" in observable_data
+                    else None,
+                    "mime_type": observable_data["mime_type"]
                     if "mime_type" in observable_data
-                    else None
-                )
-                input_variables["payload_bin"] = (
-                    observable_data["payload_bin"]
+                    else None,
+                    "payload_bin": observable_data["payload_bin"]
                     if "payload_bin" in observable_data
-                    else None
-                )
-                input_variables["url"] = (
-                    observable_data["url"] if "url" in observable_data else None
-                )
-                input_variables["encryption_algorithm"] = (
-                    observable_data["encryption_algorithm"]
+                    else None,
+                    "url": observable_data["url"] if "url" in observable_data else None,
+                    "encryption_algorithm": observable_data["encryption_algorithm"]
                     if "encryption_algorithm" in observable_data
-                    else None
-                )
-                input_variables["decryption_key"] = (
-                    observable_data["decryption_key"]
+                    else None,
+                    "decryption_key": observable_data["decryption_key"]
                     if "decryption_key" in observable_data
-                    else None
-                )
+                    else None,
+                }
             elif type == "StixFile":
-                input_variables["md5"] = (
-                    observable_data["md5"] if "md5" in observable_data else None
-                )
-                input_variables["sha1"] = (
-                    observable_data["sha1"] if "sha1" in observable_data else None
-                )
-                input_variables["sha256"] = (
-                    observable_data["sha256"] if "sha256" in observable_data else None
-                )
-                input_variables["sha512"] = (
-                    observable_data["sha512"] if "sha512" in observable_data else None
-                )
-                input_variables["extensions"] = (
-                    observable_data["extensions"]
+                input_variables["StixFile"] = {
+                    "md5": observable_data["md5"] if "md5" in observable_data else None,
+                    "sha1": observable_data["sha1"]
+                    if "sha1" in observable_data
+                    else None,
+                    "sha256": observable_data["sha256"]
+                    if "sha256" in observable_data
+                    else None,
+                    "sha512": observable_data["sha512"]
+                    if "sha512" in observable_data
+                    else None,
+                    "extensions": observable_data["extensions"]
                     if "extensions" in observable_data
-                    else None
-                )
-                input_variables["size"] = (
-                    observable_data["size"] if "size" in observable_data else None
-                )
-                input_variables["name"] = (
-                    observable_data["name"] if "name" in observable_data else None
-                )
-                input_variables["name_enc"] = (
-                    observable_data["name_enc"]
+                    else None,
+                    "size": observable_data["size"]
+                    if "size" in observable_data
+                    else None,
+                    "name": observable_data["name"]
+                    if "name" in observable_data
+                    else None,
+                    "name_enc": observable_data["name_enc"]
                     if "name_enc" in observable_data
-                    else None
-                )
-                input_variables["magic_number_hex"] = (
-                    observable_data["magic_number_hex"]
+                    else None,
+                    "magic_number_hex": observable_data["magic_number_hex"]
                     if "magic_number_hex" in observable_data
-                    else None
-                )
-                input_variables["mime_type"] = (
-                    observable_data["mime_type"]
+                    else None,
+                    "mime_type": observable_data["mime_type"]
                     if "mime_type" in observable_data
-                    else None
-                )
-                input_variables["mtime"] = (
-                    observable_data["mtime"] if "mtime" in observable_data else None
-                )
-                input_variables["ctime"] = (
-                    observable_data["mime_type"]
-                    if "mime_type" in observable_data
-                    else None
-                )
-                input_variables["atime"] = (
-                    observable_data["atime"] if "atime" in observable_data else None
-                )
+                    else None,
+                    "mtime": observable_data["mtime"]
+                    if "mtime" in observable_data
+                    else None,
+                    "ctime": observable_data["ctime"]
+                    if "ctime" in observable_data
+                    else None,
+                    "atime": observable_data["atime"]
+                    if "atime" in observable_data
+                    else None,
+                }
 
             result = self.opencti.query(query, input_variables)
             return self.opencti.process_multiple_fields(
                 result["data"]["stixCyberObservableAdd"]
             )
         else:
-            self.opencti.log("error", "Missing parameters: type and observable_value")
+            self.opencti.log("error", "Missing parameters: type")
 
     """
         Update a Stix-Observable object field

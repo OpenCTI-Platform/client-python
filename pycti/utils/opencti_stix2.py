@@ -783,9 +783,8 @@ class OpenCTIStix2:
                         "error", "To ref of the sithing not found, doing nothing...",
                     )
                     return None
-
         date = datetime.datetime.today().strftime("%Y-%m-%dT%H:%M:%SZ")
-        stix_sighting_result = self.opencti.stix_sighting.create(
+        stix_sighting_result = self.opencti.stix_sighting_relationship.create(
             fromId=final_from_id,
             toId=final_to_id,
             stix_id=stix_sighting["id"] if "id" in stix_sighting else None,
@@ -798,7 +797,7 @@ class OpenCTIStix2:
             last_seen=stix_sighting["last_seen"]
             if "last_seen" in stix_sighting
             else date,
-            number=stix_sighting["count"] if "count" in stix_sighting else 1,
+            count=stix_sighting["count"] if "count" in stix_sighting else 1,
             x_opencti_negative=stix_sighting["x_opencti_negative"]
             if "x_opencti_negative" in stix_sighting
             else False,
@@ -1425,6 +1424,19 @@ class OpenCTIStix2:
             % round(end_time - start_time),
         )
 
+        # ObservedDatas
+        start_time = time.time()
+        for item in stix_bundle["objects"]:
+            if item["type"] == "observed-data" and (
+                types is None or "observed-data" in types
+            ):
+                self.import_object(item, update, types)
+                imported_elements.append({"id": item["id"], "type": item["type"]})
+        end_time = time.time()
+        self.opencti.log(
+            "info", "Observed-Datas imported in: %ssecs" % round(end_time - start_time)
+        )
+
         # StixSightingsObjects
         start_time = time.time()
         for item in stix_bundle["objects"]:
@@ -1440,8 +1452,6 @@ class OpenCTIStix2:
                 if len(to_ids) > 0:
                     for to_id in to_ids:
                         self.import_sighting(item, from_id, to_id, update)
-                else:
-                    self.import_sighting(item, from_id, None, update)
 
                 # Import observed_data_refs
                 if "observed_data_refs" in item:
@@ -1459,19 +1469,6 @@ class OpenCTIStix2:
         end_time = time.time()
         self.opencti.log(
             "info", "Sightings imported in: %ssecs" % round(end_time - start_time)
-        )
-
-        # ObservedDatas
-        start_time = time.time()
-        for item in stix_bundle["objects"]:
-            if item["type"] == "observed-data" and (
-                types is None or "observed-data" in types
-            ):
-                self.import_object(item, update, types)
-                imported_elements.append({"id": item["id"], "type": item["type"]})
-        end_time = time.time()
-        self.opencti.log(
-            "info", "Observed-Datas imported in: %ssecs" % round(end_time - start_time)
         )
 
         # Notes

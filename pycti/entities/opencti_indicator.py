@@ -429,12 +429,14 @@ class Indicator:
                 # score
                 if (
                     self.opencti.not_empty(x_opencti_score)
-                    and object_result["score"] != x_opencti_score
+                    and object_result["x_opencti_score"] != x_opencti_score
                 ):
                     self.opencti.stix_domain_object.update_field(
-                        id=object_result["id"], key="score", value=str(x_opencti_score)
+                        id=object_result["id"],
+                        key="x_opencti_score",
+                        value=str(x_opencti_score),
                     )
-                    object_result["score"] = x_opencti_score
+                    object_result["x_opencti_score"] = x_opencti_score
                 # confidence
                 if (
                     self.opencti.not_empty(confidence)
@@ -447,14 +449,14 @@ class Indicator:
                 # detection
                 if (
                     self.opencti.not_empty(x_opencti_detection)
-                    and object_result["detection"] != x_opencti_detection
+                    and object_result["x_opencti_detection"] != x_opencti_detection
                 ):
                     self.opencti.stix_domain_object.update_field(
                         id=object_result["id"],
-                        key="detection",
+                        key="x_opencti_detection",
                         value=str(x_opencti_detection).lower(),
                     )
-                    object_result["detection"] = x_opencti_detection
+                    object_result["x_opencti_detection"] = x_opencti_detection
             return object_result
         else:
             return self.create_raw(
