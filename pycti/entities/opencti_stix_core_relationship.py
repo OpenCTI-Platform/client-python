@@ -441,7 +441,7 @@ class StixCoreRelationship:
             "info", "Creating stix_core_relationship {" + from_id + ", " + to_id + "}.",
         )
         query = """
-                mutation StixCoreRelationshipAdd($input: StixStixMetaRelationshipAddInput!) {
+                mutation StixCoreRelationshipAdd($input: StixCoreRelationshipAddInput!) {
                     stixCoreRelationshipAdd(input: $input) {
                         id
                         standard_id

@@ -40,6 +40,7 @@ class OpenCTIStix2:
         self.mapping_cache = {}
 
     ######### UTILS
+    # region utils
     def unknown_type(self, stix_object):
         self.opencti.log(
             "error",
@@ -189,6 +190,57 @@ class OpenCTIStix2:
         """
         data = json.loads(json_data)
         return self.import_bundle(data, update, types)
+
+    def resolve_author(self, title):
+        if "fireeye" in title.lower() or "mandiant" in title.lower():
+            return self.get_author("FireEye")
+        if "eset" in title.lower():
+            return self.get_author("ESET")
+        if "dragos" in title.lower():
+            return self.get_author("Dragos")
+        if "us-cert" in title.lower():
+            return self.get_author("US-CERT")
+        if (
+            "unit 42" in title.lower()
+            or "unit42" in title.lower()
+            or "palo alto" in title.lower()
+        ):
+            return self.get_author("Palo Alto Networks")
+        if "accenture" in title.lower():
+            return self.get_author("Accenture")
+        if "symantec" in title.lower():
+            return self.get_author("Symantec")
+        if "trendmicro" in title.lower() or "trend micro" in title.lower():
+            return self.get_author("Trend Micro")
+        if "mcafee" in title.lower():
+            return self.get_author("McAfee")
+        if "crowdstrike" in title.lower():
+            return self.get_author("CrowdStrike")
+        if "securelist" in title.lower() or "kaspersky" in title.lower():
+            return self.get_author("Kaspersky")
+        if "f-secure" in title.lower():
+            return self.get_author("F-Secure")
+        if "checkpoint" in title.lower():
+            return self.get_author("CheckPoint")
+        if "talos" in title.lower():
+            return self.get_author("Cisco Talos")
+        if "secureworks" in title.lower():
+            return self.get_author("Dell SecureWorks")
+        if "microsoft" in title.lower():
+            return self.get_author("Microsoft")
+        if "mitre att&ck" in title.lower():
+            return self.get_author("The MITRE Corporation")
+        return None
+
+    def get_author(self, name):
+        if name in self.mapping_cache:
+            return self.mapping_cache[name]
+        else:
+            author = self.opencti.identity.create(
+                type="Organization", name=name, description="",
+            )
+            self.mapping_cache[name] = author
+            return author
 
     def extract_embedded_relationships(self, stix_object, types=None) -> dict:
         """extracts embedded relationship objects from a stix2 entity
@@ -425,6 +477,9 @@ class OpenCTIStix2:
             "reports": reports,
         }
 
+    # endregion
+
+    # region import
     def import_object(self, stix_object, update=False, types=None) -> list:
         """import a stix2 object
 
@@ -466,24 +521,24 @@ class OpenCTIStix2:
 
         # Import
         importer = {
-            "marking-definition": self.create_marking_definition,
-            "attack-pattern": self.create_attack_pattern,
-            "campaign": self.create_campaign,
-            "note": self.create_note,
-            "observed-data": self.create_observed_data,
-            "opinion": self.create_opinion,
-            "report": self.create_report,
-            "course-of-action": self.create_course_of_action,
-            "identity": self.create_identity,
-            "indicator": self.create_indicator,
-            "infrastructure": self.create_infrastructure,
-            "intrusion-set": self.create_intrusion_set,
-            "location": self.create_location,
-            "malware": self.create_malware,
-            "threat-actor": self.create_threat_actor,
-            "tool": self.create_tool,
-            "vulnerability": self.create_vulnerability,
-            "x-opencti-incident": self.create_x_opencti_incident,
+            "marking-definition": self.opencti.marking_definition.import_from_stix2,
+            "attack-pattern": self.opencti.attack_pattern.import_from_stix2,
+            "campaign": self.opencti.campaign.import_from_stix2,
+            "note": self.opencti.note.import_from_stix2,
+            "observed-data": self.opencti.observed_data.import_from_stix2,
+            "opinion": self.opencti.opinion.import_from_stix2,
+            "report": self.opencti.report.import_from_stix2,
+            "course-of-action": self.opencti.course_of_action.import_from_stix2,
+            "identity": self.opencti.identity.import_from_stix2,
+            "indicator": self.opencti.indicator.import_from_stix2,
+            "infrastructure": self.opencti.infrastructure.import_from_stix2,
+            "intrusion-set": self.opencti.intrusion_set.import_from_stix2,
+            "location": self.opencti.location.import_from_stix2,
+            "malware": self.opencti.malware.import_from_stix2,
+            "threat-actor": self.opencti.threat_actor.import_from_stix2,
+            "tool": self.opencti.tool.import_from_stix2,
+            "vulnerability": self.opencti.vulnerability.import_from_stix2,
+            "x-opencti-incident": self.opencti.x_opencti_incident.import_from_stix2,
         }
         do_import = importer.get(
             stix_object["type"],
@@ -546,6 +601,50 @@ class OpenCTIStix2:
                     )
 
         return stix_object_results
+
+    def import_observable(self, stix_object, update=False, types=None):
+        # Extract
+        embedded_relationships = self.extract_embedded_relationships(stix_object, types)
+        created_by_id = embedded_relationships["created_by"]
+        object_marking_ids = embedded_relationships["object_marking"]
+        object_label_ids = embedded_relationships["object_label"]
+        kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
+        object_refs_ids = embedded_relationships["object_refs"]
+        external_references_ids = embedded_relationships["external_references"]
+        reports = embedded_relationships["reports"]
+
+        # Extra
+        extras = {
+            "created_by_id": created_by_id,
+            "object_marking_ids": object_marking_ids,
+            "object_label_ids": object_label_ids,
+            "kill_chain_phases_ids": kill_chain_phases_ids,
+            "object_ids": object_refs_ids,
+            "external_references_ids": external_references_ids,
+            "reports": reports,
+        }
+
+        stix_observable_result = self.opencti.stix_observable.create(
+            observableData=stix_object,
+            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
+            objectMarking=extras["object_marking_ids"]
+            if "object_marking_ids" in extras
+            else [],
+            objectLabel=extras["object_label_ids"]
+            if "object_label_ids" in extras
+            else [],
+            externalReferences=extras["external_references_ids"]
+            if "external_references_ids" in extras
+            else [],
+            update=update,
+        )
+        if stix_observable_result is not None:
+            self.mapping_cache[stix_observable_result["id"]] = {
+                "id": stix_observable_result["id"],
+                "type": stix_observable_result["entity_type"],
+            }
+        else:
+            return None
 
     def import_relationship(self, stix_relation, update=False, types=None):
         # Extract
@@ -625,299 +724,6 @@ class OpenCTIStix2:
                     id=reports[external_reference_id]["id"],
                     stixObjectOrStixRelationshipId=stix_relation["target_ref"],
                 )
-
-    def import_observable(self, stix_object, update=False, types=None):
-        # Extract
-        embedded_relationships = self.extract_embedded_relationships(stix_object, types)
-        created_by_id = embedded_relationships["created_by"]
-        object_marking_ids = embedded_relationships["object_marking"]
-        object_label_ids = embedded_relationships["object_label"]
-        kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
-        object_refs_ids = embedded_relationships["object_refs"]
-        external_references_ids = embedded_relationships["external_references"]
-        reports = embedded_relationships["reports"]
-
-        # Extra
-        extras = {
-            "created_by_id": created_by_id,
-            "object_marking_ids": object_marking_ids,
-            "object_label_ids": object_label_ids,
-            "kill_chain_phases_ids": kill_chain_phases_ids,
-            "object_ids": object_refs_ids,
-            "external_references_ids": external_references_ids,
-            "reports": reports,
-        }
-
-        stix_observable_result = self.opencti.stix_observable.create(
-            observableData=stix_object,
-            createdBy=extras["created_by_id"] if "created_by_id" in extras else None,
-            objectMarking=extras["object_marking_ids"]
-            if "object_marking_ids" in extras
-            else [],
-            objectLabel=extras["object_label_ids"]
-            if "object_label_ids" in extras
-            else [],
-            externalReferences=extras["external_references_ids"]
-            if "external_references_ids" in extras
-            else [],
-            update=update,
-        )
-        if stix_observable_result is not None:
-            self.mapping_cache[stix_observable_result["id"]] = {
-                "id": stix_observable_result["id"],
-                "type": stix_observable_result["entity_type"],
-            }
-        else:
-            return None
-
-    def import_observables(self, stix_object):
-        # Extract
-        embedded_relationships = self.extract_embedded_relationships(stix_object)
-        created_by_id = embedded_relationships["created_by"]
-        object_marking_ids = embedded_relationships["marking_definitions"]
-
-        observables_to_create = {}
-        relations_to_create = []
-        for key, observable_item in stix_object["objects"].items():
-            # TODO artifact
-            if (
-                CustomProperties.OBSERVABLE_TYPE in observable_item
-                and CustomProperties.OBSERVABLE_VALUE in observable_item
-            ):
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "stix_id": "observable--" + str(uuid.uuid4()),
-                        "type": observable_item[CustomProperties.OBSERVABLE_TYPE],
-                        "value": observable_item[CustomProperties.OBSERVABLE_VALUE],
-                    }
-                ]
-            elif observable_item["type"] == "autonomous-system":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "stix_id": "observable--" + str(uuid.uuid4()),
-                        "type": ObservableTypes.AUTONOMOUS_SYSTEM.value,
-                        "value": "AS" + observable_item["number"],
-                    }
-                ]
-            elif observable_item["type"] == "directory":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "stix_id": "observable--" + str(uuid.uuid4()),
-                        "type": ObservableTypes.DIRECTORY.value,
-                        "value": observable_item["path"],
-                    }
-                ]
-            elif observable_item["type"] == "domain-name":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "stix_id": "observable--" + str(uuid.uuid4()),
-                        "type": ObservableTypes.DOMAIN.value,
-                        "value": observable_item["value"],
-                    }
-                ]
-            elif observable_item["type"] == "email-addr":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "stix_id": "observable--" + str(uuid.uuid4()),
-                        "type": ObservableTypes.EMAIL_ADDR.value,
-                        "value": observable_item["value"],
-                    }
-                ]
-                # TODO Belongs to ref
-            # TODO email-message
-            # TODO mime-part-type
-            elif observable_item["type"] == "file":
-                observables_to_create[key] = []
-                if "name" in observable_item:
-                    observables_to_create[key].append(
-                        {
-                            "id": str(uuid.uuid4()),
-                            "type": ObservableTypes.FILE_NAME.value,
-                            "value": observable_item["name"],
-                        }
-                    )
-                if "hashes" in observable_item:
-                    for keyfile, value in observable_item["hashes"].items():
-                        if keyfile == "MD5":
-                            observables_to_create[key].append(
-                                {
-                                    "id": str(uuid.uuid4()),
-                                    "type": ObservableTypes.FILE_HASH_MD5.value,
-                                    "value": value,
-                                }
-                            )
-                        if keyfile == "SHA-1":
-                            observables_to_create[key].append(
-                                {
-                                    "id": str(uuid.uuid4()),
-                                    "type": ObservableTypes.FILE_HASH_SHA1.value,
-                                    "value": value,
-                                }
-                            )
-                        if keyfile == "SHA-256":
-                            observables_to_create[key].append(
-                                {
-                                    "id": str(uuid.uuid4()),
-                                    "type": ObservableTypes.FILE_HASH_SHA256.value,
-                                    "value": value,
-                                }
-                            )
-            elif observable_item["type"] == "ipv4-addr":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "type": ObservableTypes.IPV4_ADDR.value,
-                        "value": observable_item["value"],
-                    }
-                ]
-            elif observable_item["type"] == "ipv6-addr":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "type": ObservableTypes.IPV6_ADDR.value,
-                        "value": observable_item["value"],
-                    }
-                ]
-            elif observable_item["type"] == "mac-addr":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "type": ObservableTypes.MAC_ADDR.value,
-                        "value": observable_item["value"],
-                    }
-                ]
-            elif observable_item["type"] == "windows-registry-key":
-                observables_to_create[key] = [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "type": ObservableTypes.REGISTRY_KEY.value,
-                        "value": observable_item["key"],
-                    }
-                ]
-
-        for key, observable_item in stix_object["objects"].items():
-            if observable_item["type"] == "directory":
-                if "contains_refs" in observable_item:
-                    for file in observable_item["contains_refs"]:
-                        for observable_to_create_from in observables_to_create[key]:
-                            for observables_to_create_to in observables_to_create[file]:
-                                if (
-                                    observable_to_create_from["id"]
-                                    != observables_to_create_to["id"]
-                                ):
-                                    relations_to_create.append(
-                                        {
-                                            "id": str(uuid.uuid4()),
-                                            "from": observable_to_create_from["id"],
-                                            "to": observables_to_create_to["id"],
-                                            "type": "contains",
-                                        }
-                                    )
-            if observable_item["type"] == "domain-name":
-                if "resolves_to_refs" in observable_item:
-                    for resolved in observable_item["resolves_to_refs"]:
-                        for observable_to_create_from in observables_to_create[key]:
-                            for observables_to_create_to in observables_to_create[
-                                resolved
-                            ]:
-                                if (
-                                    observable_to_create_from["id"]
-                                    != observables_to_create_to["id"]
-                                ):
-                                    relations_to_create.append(
-                                        {
-                                            "id": str(uuid.uuid4()),
-                                            "from": observable_to_create_from["id"],
-                                            "fromType": observable_to_create_from[
-                                                "type"
-                                            ],
-                                            "to": observables_to_create_to["id"],
-                                            "toType": observables_to_create_to["type"],
-                                            "type": "resolves",
-                                        }
-                                    )
-            if observable_item["type"] == "file":
-                for observable_to_create_from in observables_to_create[key]:
-                    for observables_to_create_to in observables_to_create[key]:
-                        if (
-                            observable_to_create_from["id"]
-                            != observables_to_create_to["id"]
-                        ):
-                            relations_to_create.append(
-                                {
-                                    "id": str(uuid.uuid4()),
-                                    "from": observable_to_create_from["id"],
-                                    "fromType": observable_to_create_from["type"],
-                                    "to": observables_to_create_to["id"],
-                                    "toType": observables_to_create_to["type"],
-                                    "type": "corresponds",
-                                }
-                            )
-            if observable_item["type"] == "ipv4-addr":
-                if "belongs_to_refs" in observable_item:
-                    for belonging in observable_item["belongs_to_refs"]:
-                        for observable_to_create_from in observables_to_create[key]:
-                            for observables_to_create_to in observables_to_create[
-                                belonging
-                            ]:
-                                if (
-                                    observable_to_create_from["id"]
-                                    != observables_to_create_to["id"]
-                                ):
-                                    relations_to_create.append(
-                                        {
-                                            "id": str(uuid.uuid4()),
-                                            "from": observable_to_create_from["id"],
-                                            "fromType": observable_to_create_from[
-                                                "type"
-                                            ],
-                                            "to": observables_to_create_to["id"],
-                                            "toType": observables_to_create_to["type"],
-                                            "type": "belongs",
-                                        }
-                                    )
-
-        stix_observables_mapping = {}
-        self.mapping_cache[stix_object["id"]] = []
-        for key, observable_to_create in observables_to_create.items():
-            for observable in observable_to_create:
-                observable_result = self.opencti.stix_observable.create(
-                    type=observable["type"],
-                    observable_value=observable["value"],
-                    id=observable["id"],
-                    createdBy=created_by_id,
-                    markingDefinitions=object_marking_ids,
-                    createIndicator=stix_object[CustomProperties.CREATE_INDICATOR]
-                    if CustomProperties.CREATE_INDICATOR in stix_object
-                    else False,
-                )
-                stix_observables_mapping[observable["id"]] = observable_result["id"]
-                self.mapping_cache[stix_object["id"]].append(
-                    {
-                        "id": observable_result["id"],
-                        "type": observable_result["entity_type"],
-                    }
-                )
-
-        stix_observable_relations_mapping = {}
-        for relation_to_create in relations_to_create:
-            stix_observable_relation_result = self.opencti.stix_observable_relation.create(
-                fromId=stix_observables_mapping[relation_to_create["from"]],
-                fromType=relation_to_create["fromType"],
-                toId=stix_observables_mapping[relation_to_create["to"]],
-                toType=relation_to_create["toType"],
-                relationship_type=relation_to_create["type"],
-                createdBy=created_by_id,
-                markingDefinitions=object_marking_ids,
-            )
-            stix_observable_relations_mapping[
-                relation_to_create["id"]
-            ] = stix_observable_relation_result["id"]
 
     def import_sighting(self, stix_sighting, from_id, to_id, update=False, types=None):
         # Extract
@@ -1023,154 +829,9 @@ class OpenCTIStix2:
         else:
             return None
 
-    def export_entity(
-        self, entity_type, entity_id, mode="simple", max_marking_definition=None
-    ):
-        max_marking_definition_entity = (
-            self.opencti.marking_definition.read(id=max_marking_definition)
-            if max_marking_definition is not None
-            else None
-        )
-        bundle = {
-            "type": "bundle",
-            "id": "bundle--" + str(uuid.uuid4()),
-            "objects": [],
-        }
-        # Map types
-        if IdentityTypes.has_value(entity_type):
-            entity_type = "identity"
+    # endregion
 
-        # Export
-        exporter = {
-            "identity": self.opencti.identity.to_stix2,
-            "threat-actor": self.opencti.threat_actor.to_stix2,
-            "intrusion-set": self.opencti.intrusion_set.to_stix2,
-            "campaign": self.opencti.campaign.to_stix2,
-            "incident": self.opencti.x_opencti_incident.to_stix2,
-            "malware": self.opencti.malware.to_stix2,
-            "tool": self.opencti.tool.to_stix2,
-            "vulnerability": self.opencti.vulnerability.to_stix2,
-            "attack-pattern": self.opencti.attack_pattern.to_stix2,
-            "course-of-action": self.opencti.course_of_action.to_stix2,
-            "report": self.opencti.report.to_stix2,
-            "note": self.opencti.note.to_stix2,
-            "opinion": self.opencti.opinion.to_stix2,
-            "indicator": self.opencti.indicator.to_stix2,
-        }
-        do_export = exporter.get(
-            entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
-        )
-        objects = do_export(
-            id=entity_id,
-            mode=mode,
-            max_marking_definition_entity=max_marking_definition_entity,
-        )
-        if objects is not None:
-            bundle["objects"].extend(objects)
-        return bundle
-
-    def export_list(
-        self,
-        entity_type,
-        search=None,
-        filters=None,
-        order_by=None,
-        order_mode=None,
-        max_marking_definition=None,
-        types=None,
-    ):
-        max_marking_definition_entity = (
-            self.opencti.marking_definition.read(id=max_marking_definition)
-            if max_marking_definition is not None
-            else None
-        )
-        bundle = {
-            "type": "bundle",
-            "id": "bundle--" + str(uuid.uuid4()),
-            "objects": [],
-        }
-
-        if IdentityTypes.has_value(entity_type):
-            if filters is not None:
-                filters.append({"key": "entity_type", "values": [entity_type]})
-            else:
-                filters = [{"key": "entity_type", "values": [entity_type]}]
-            entity_type = "Identity"
-
-        if IdentityTypes.has_value(entity_type):
-            if filters is not None:
-                filters.append({"key": "entity_type", "values": [entity_type]})
-            else:
-                filters = [{"key": "entity_type", "values": [entity_type]}]
-            entity_type = "Identity"
-
-        # List
-        lister = {
-            "Attack-Pattern": self.opencti.attack_pattern.list,
-            "campaign": self.opencti.campaign.list,
-            "note": self.opencti.note.list,
-            "observed-data": self.opencti.observed_data.list,
-            "identity": self.opencti.identity.list,
-            "threat-actor": self.opencti.threat_actor.list,
-            "intrusion-set": self.opencti.intrusion_set.list,
-            "incident": self.opencti.x_opencti_incident.list,
-            "malware": self.opencti.malware.list,
-            "tool": self.opencti.tool.list,
-            "vulnerability": self.opencti.vulnerability.list,
-            "course-of-action": self.opencti.course_of_action.list,
-            "report": self.opencti.report.list,
-            "opinion": self.opencti.opinion.list,
-            "indicator": self.opencti.indicator.list,
-            "stix-observable": self.opencti.stix_observable.list,
-        }
-        do_list = lister.get(
-            entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
-        )
-        entities_list = do_list(
-            search=search,
-            filters=filters,
-            orderBy=order_by,
-            orderMode=order_mode,
-            types=types,
-            getAll=True,
-        )
-
-        if entities_list is not None:
-            # Export
-            exporter = {
-                "identity": self.opencti.identity.to_stix2,
-                "threat-actor": self.opencti.threat_actor.to_stix2,
-                "intrusion-set": self.opencti.intrusion_set.to_stix2,
-                "campaign": self.opencti.campaign.to_stix2,
-                "incident": self.opencti.x_opencti_incident.to_stix2,
-                "malware": self.opencti.malware.to_stix2,
-                "tool": self.opencti.tool.to_stix2,
-                "vulnerability": self.opencti.vulnerability.to_stix2,
-                "attack-pattern": self.opencti.attack_pattern.to_stix2,
-                "course-of-action": self.opencti.course_of_action.to_stix2,
-                "report": self.opencti.report.to_stix2,
-                "note": self.opencti.note.to_stix2,
-                "opinion": self.opencti.opinion.to_stix2,
-                "indicator": self.opencti.indicator.to_stix2,
-                "stix-observable": self.opencti.stix_observable.to_stix2,
-            }
-            do_export = exporter.get(
-                entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
-            )
-            uuids = []
-            for entity in entities_list:
-                entity_bundle = do_export(
-                    entity=entity,
-                    max_marking_definition_entity=max_marking_definition_entity,
-                )
-                if entity_bundle is not None:
-                    entity_bundle_filtered = self.filter_objects(uuids, entity_bundle)
-                    for x in entity_bundle_filtered:
-                        uuids.append(x["id"])
-                    bundle["objects"] = bundle["objects"] + entity_bundle_filtered
-
-        return bundle
-
+    # region export
     def prepare_export(
         self, entity, stix_object, mode="simple", max_marking_definition_entity=None
     ):
@@ -1497,95 +1158,153 @@ class OpenCTIStix2:
         else:
             return []
 
-    def create_marking_definition(self, stix_object, extras, update=False):
-        return self.opencti.marking_definition.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
+    def export_entity(
+        self, entity_type, entity_id, mode="simple", max_marking_definition=None
+    ):
+        max_marking_definition_entity = (
+            self.opencti.marking_definition.read(id=max_marking_definition)
+            if max_marking_definition is not None
+            else None
+        )
+        bundle = {
+            "type": "bundle",
+            "id": "bundle--" + str(uuid.uuid4()),
+            "objects": [],
+        }
+        # Map types
+        if IdentityTypes.has_value(entity_type):
+            entity_type = "identity"
+
+        # Export
+        exporter = {
+            "identity": self.opencti.identity.to_stix2,
+            "threat-actor": self.opencti.threat_actor.to_stix2,
+            "intrusion-set": self.opencti.intrusion_set.to_stix2,
+            "campaign": self.opencti.campaign.to_stix2,
+            "incident": self.opencti.x_opencti_incident.to_stix2,
+            "malware": self.opencti.malware.to_stix2,
+            "tool": self.opencti.tool.to_stix2,
+            "vulnerability": self.opencti.vulnerability.to_stix2,
+            "attack-pattern": self.opencti.attack_pattern.to_stix2,
+            "course-of-action": self.opencti.course_of_action.to_stix2,
+            "report": self.opencti.report.to_stix2,
+            "note": self.opencti.note.to_stix2,
+            "opinion": self.opencti.opinion.to_stix2,
+            "indicator": self.opencti.indicator.to_stix2,
+        }
+        do_export = exporter.get(
+            entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
+        )
+        objects = do_export(
+            id=entity_id,
+            mode=mode,
+            max_marking_definition_entity=max_marking_definition_entity,
+        )
+        if objects is not None:
+            bundle["objects"].extend(objects)
+        return bundle
+
+    def export_list(
+        self,
+        entity_type,
+        search=None,
+        filters=None,
+        order_by=None,
+        order_mode=None,
+        max_marking_definition=None,
+        types=None,
+    ):
+        max_marking_definition_entity = (
+            self.opencti.marking_definition.read(id=max_marking_definition)
+            if max_marking_definition is not None
+            else None
+        )
+        bundle = {
+            "type": "bundle",
+            "id": "bundle--" + str(uuid.uuid4()),
+            "objects": [],
+        }
+
+        if IdentityTypes.has_value(entity_type):
+            if filters is not None:
+                filters.append({"key": "entity_type", "values": [entity_type]})
+            else:
+                filters = [{"key": "entity_type", "values": [entity_type]}]
+            entity_type = "Identity"
+
+        if IdentityTypes.has_value(entity_type):
+            if filters is not None:
+                filters.append({"key": "entity_type", "values": [entity_type]})
+            else:
+                filters = [{"key": "entity_type", "values": [entity_type]}]
+            entity_type = "Identity"
+
+        # List
+        lister = {
+            "Attack-Pattern": self.opencti.attack_pattern.list,
+            "campaign": self.opencti.campaign.list,
+            "note": self.opencti.note.list,
+            "observed-data": self.opencti.observed_data.list,
+            "identity": self.opencti.identity.list,
+            "threat-actor": self.opencti.threat_actor.list,
+            "intrusion-set": self.opencti.intrusion_set.list,
+            "incident": self.opencti.x_opencti_incident.list,
+            "malware": self.opencti.malware.list,
+            "tool": self.opencti.tool.list,
+            "vulnerability": self.opencti.vulnerability.list,
+            "course-of-action": self.opencti.course_of_action.list,
+            "report": self.opencti.report.list,
+            "opinion": self.opencti.opinion.list,
+            "indicator": self.opencti.indicator.list,
+            "stix-observable": self.opencti.stix_observable.list,
+        }
+        do_list = lister.get(
+            entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
+        )
+        entities_list = do_list(
+            search=search,
+            filters=filters,
+            orderBy=order_by,
+            orderMode=order_mode,
+            types=types,
+            getAll=True,
         )
 
-    def create_identity(self, stix_object, extras, update=False):
-        return self.opencti.identity.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
+        if entities_list is not None:
+            # Export
+            exporter = {
+                "identity": self.opencti.identity.to_stix2,
+                "threat-actor": self.opencti.threat_actor.to_stix2,
+                "intrusion-set": self.opencti.intrusion_set.to_stix2,
+                "campaign": self.opencti.campaign.to_stix2,
+                "incident": self.opencti.x_opencti_incident.to_stix2,
+                "malware": self.opencti.malware.to_stix2,
+                "tool": self.opencti.tool.to_stix2,
+                "vulnerability": self.opencti.vulnerability.to_stix2,
+                "attack-pattern": self.opencti.attack_pattern.to_stix2,
+                "course-of-action": self.opencti.course_of_action.to_stix2,
+                "report": self.opencti.report.to_stix2,
+                "note": self.opencti.note.to_stix2,
+                "opinion": self.opencti.opinion.to_stix2,
+                "indicator": self.opencti.indicator.to_stix2,
+                "stix-observable": self.opencti.stix_observable.to_stix2,
+            }
+            do_export = exporter.get(
+                entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
+            )
+            uuids = []
+            for entity in entities_list:
+                entity_bundle = do_export(
+                    entity=entity,
+                    max_marking_definition_entity=max_marking_definition_entity,
+                )
+                if entity_bundle is not None:
+                    entity_bundle_filtered = self.filter_objects(uuids, entity_bundle)
+                    for x in entity_bundle_filtered:
+                        uuids.append(x["id"])
+                    bundle["objects"] = bundle["objects"] + entity_bundle_filtered
 
-    def create_location(self, stix_object, extras, update=False):
-        return self.opencti.location.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_threat_actor(self, stix_object, extras, update=False):
-        return self.opencti.threat_actor.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_intrusion_set(self, stix_object, extras, update=False):
-        return self.opencti.intrusion_set.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_infrastructure(self, stix_object, extras, update=False):
-        return self.opencti.infrastructure.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_campaign(self, stix_object, extras, update=False):
-        return self.opencti.x_opencti_campaign.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_x_opencti_incident(self, stix_object, extras, update=False):
-        return self.opencti.x_opencti_incident.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_malware(self, stix_object, extras, update=False):
-        return self.opencti.malware.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_tool(self, stix_object, extras, update=False):
-        return self.opencti.tool.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_vulnerability(self, stix_object, extras, update=False):
-        return self.opencti.vulnerability.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_attack_pattern(self, stix_object, extras, update=False):
-        return self.opencti.attack_pattern.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_course_of_action(self, stix_object, extras, update=False):
-        return self.opencti.course_of_action.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_report(self, stix_object, extras, update=False):
-        return self.opencti.report.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_observed_data(self, stix_object, extras, update=False):
-        return self.opencti.observed_data.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_note(self, stix_object, extras, update=False):
-        return self.opencti.note.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_opinion(self, stix_object, extras, update=False):
-        return self.opencti.opinion.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
-
-    def create_indicator(self, stix_object, extras, update=False):
-        return self.opencti.indicator.import_from_stix2(
-            stixObject=stix_object, extras=extras, update=update
-        )
+        return bundle
 
     def export_stix_observables(self, entity):
         stix_ids = []
@@ -1607,57 +1326,6 @@ class OpenCTIStix2:
             stix_ids.append(observable["stix_id"])
 
         return {"observedData": observed_data, "stixIds": stix_ids}
-
-    def resolve_author(self, title):
-        if "fireeye" in title.lower() or "mandiant" in title.lower():
-            return self.get_author("FireEye")
-        if "eset" in title.lower():
-            return self.get_author("ESET")
-        if "dragos" in title.lower():
-            return self.get_author("Dragos")
-        if "us-cert" in title.lower():
-            return self.get_author("US-CERT")
-        if (
-            "unit 42" in title.lower()
-            or "unit42" in title.lower()
-            or "palo alto" in title.lower()
-        ):
-            return self.get_author("Palo Alto Networks")
-        if "accenture" in title.lower():
-            return self.get_author("Accenture")
-        if "symantec" in title.lower():
-            return self.get_author("Symantec")
-        if "trendmicro" in title.lower() or "trend micro" in title.lower():
-            return self.get_author("Trend Micro")
-        if "mcafee" in title.lower():
-            return self.get_author("McAfee")
-        if "crowdstrike" in title.lower():
-            return self.get_author("CrowdStrike")
-        if "securelist" in title.lower() or "kaspersky" in title.lower():
-            return self.get_author("Kaspersky")
-        if "f-secure" in title.lower():
-            return self.get_author("F-Secure")
-        if "checkpoint" in title.lower():
-            return self.get_author("CheckPoint")
-        if "talos" in title.lower():
-            return self.get_author("Cisco Talos")
-        if "secureworks" in title.lower():
-            return self.get_author("Dell SecureWorks")
-        if "microsoft" in title.lower():
-            return self.get_author("Microsoft")
-        if "mitre att&ck" in title.lower():
-            return self.get_author("The MITRE Corporation")
-        return None
-
-    def get_author(self, name):
-        if name in self.mapping_cache:
-            return self.mapping_cache[name]
-        else:
-            author = self.opencti.identity.create(
-                type="Organization", name=name, description="",
-            )
-            self.mapping_cache[name] = author
-            return author
 
     def import_bundle(self, stix_bundle, update=False, types=None) -> List:
         # Check if the bundle is correctly formatted
@@ -1716,6 +1384,9 @@ class OpenCTIStix2:
         self.opencti.log(
             "info", "Objects imported in: %ssecs" % round(end_time - start_time)
         )
+
+        # StixCyberObservableRelationships
+        # TODO
 
         # StixRelationObjects
         start_time = time.time()
