@@ -510,6 +510,7 @@ class StixCoreRelationship:
             standard_id
             entity_type
             parent_types
+            description
             start_time
             stop_time
             confidence

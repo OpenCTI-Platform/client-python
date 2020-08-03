@@ -429,6 +429,7 @@ class StixCyberObservable:
                     if "modified" in observable_data
                     else None,
                 ),
+                "createIndicator": create_indicator
             }
             query = """
                 mutation StixCyberObservableAdd(
@@ -458,6 +459,7 @@ class StixCyberObservable:
                     $XOpenCTICryptocurrencyWallet: XOpenCTICryptocurrencyWalletAddInput,
                     $XOpenCTIText: XOpenCTITextAddInput,
                     $XOpenCTIUserAgent: XOpenCTIUserAgentAddInput
+                    $createIndicator: Boolean
                 ) {
                     stixCyberObservableAdd(
                         type: $type,
@@ -486,6 +488,7 @@ class StixCyberObservable:
                         XOpenCTICryptocurrencyWallet: $XOpenCTICryptocurrencyWallet,
                         XOpenCTIText: $XOpenCTIText,
                         XOpenCTIUserAgent: $XOpenCTIUserAgent
+                        createIndicator: $createIndicator
                     ) {
                         id
                         standard_id

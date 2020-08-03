@@ -542,9 +542,9 @@ class OpenCTIStix2:
         }
         do_import = importer.get(
             stix_object["type"],
-            lambda stix_object, extras, update: self.unknown_type(stix_object),
+            lambda **kwargs: self.unknown_type(stix_object),
         )
-        stix_object_results = do_import(stix_object, extras, update)
+        stix_object_results = do_import(stixObject=stix_object, extras=extras, update=update)
 
         if stix_object_results is None:
             return stix_object_results
@@ -712,15 +712,15 @@ class OpenCTIStix2:
         # Add external references
         for external_reference_id in external_references_ids:
             if external_reference_id in reports:
-                self.opencti.report.add_opencti_stix_object_or_stix_relationship(
+                self.opencti.report.add_stix_object_or_stix_relationship(
                     id=reports[external_reference_id]["id"],
                     stixObjectOrStixRelationshipId=stix_relation_result["id"],
                 )
-                self.opencti.report.add_opencti_stix_object_or_stix_relationship(
+                self.opencti.report.add_stix_object_or_stix_relationship(
                     id=reports[external_reference_id]["id"],
                     stixObjectOrStixRelationshipId=stix_relation["source_ref"],
                 )
-                self.opencti.report.add_opencti_stix_object_or_stix_relationship(
+                self.opencti.report.add_stix_object_or_stix_relationship(
                     id=reports[external_reference_id]["id"],
                     stixObjectOrStixRelationshipId=stix_relation["target_ref"],
                 )
