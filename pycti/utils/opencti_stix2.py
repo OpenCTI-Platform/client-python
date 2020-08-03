@@ -541,10 +541,11 @@ class OpenCTIStix2:
             "x-opencti-incident": self.opencti.x_opencti_incident.import_from_stix2,
         }
         do_import = importer.get(
-            stix_object["type"],
-            lambda **kwargs: self.unknown_type(stix_object),
+            stix_object["type"], lambda **kwargs: self.unknown_type(stix_object),
         )
-        stix_object_results = do_import(stixObject=stix_object, extras=extras, update=update)
+        stix_object_results = do_import(
+            stixObject=stix_object, extras=extras, update=update
+        )
 
         if stix_object_results is None:
             return stix_object_results

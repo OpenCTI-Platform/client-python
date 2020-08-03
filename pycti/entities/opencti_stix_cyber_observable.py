@@ -429,7 +429,7 @@ class StixCyberObservable:
                     if "modified" in observable_data
                     else None,
                 ),
-                "createIndicator": create_indicator
+                "createIndicator": create_indicator,
             }
             query = """
                 mutation StixCyberObservableAdd(
