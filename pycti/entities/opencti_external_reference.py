@@ -207,7 +207,6 @@ class ExternalReference:
                 modified=modified,
             )
 
-
     # TODO Move to ExternalReference
     def delete(self, id):
         logging.info("Deleting + " + id + "...")
