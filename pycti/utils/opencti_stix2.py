@@ -671,6 +671,11 @@ class OpenCTIStix2:
             update=update,
         )
         if stix_observable_result is not None:
+            if "id" in stix_object:
+                self.mapping_cache[stix_object["id"]] = {
+                    "id": stix_observable_result["id"],
+                    "type": stix_observable_result["entity_type"],
+                }
             self.mapping_cache[stix_observable_result["id"]] = {
                 "id": stix_observable_result["id"],
                 "type": stix_observable_result["entity_type"],
@@ -1456,16 +1461,9 @@ class OpenCTIStix2:
                 # Import observed_data_refs
                 if "observed_data_refs" in item:
                     for observed_data_ref in item["observed_data_refs"]:
-                        if observed_data_ref in self.mapping_cache:
-                            for from_element in self.mapping_cache[observed_data_ref]:
-                                if len(to_ids) > 0:
-                                    for to_id in to_ids:
-                                        print(from_element)
-                                        self.import_sighting(
-                                            item, from_element["id"], to_id, update
-                                        )
-                                else:
-                                    self.import_sighting(item, from_id, None, update)
+                        if len(to_ids) > 0:
+                            for to_id in to_ids:
+                                self.import_sighting(item, observed_data_ref, to_id, update)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
         self.opencti.log(

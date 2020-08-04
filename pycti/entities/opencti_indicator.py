@@ -505,7 +505,7 @@ class Indicator:
         id = kwargs.get("id", None)
         indicator = kwargs.get("indicator", None)
         stix_cyber_observable_id = kwargs.get("stix_cyber_observable_id", None)
-        if id is not None and stix_observable_id is not None:
+        if id is not None and stix_cyber_observable_id is not None:
             if indicator is None:
                 indicator = self.read(id=id)
             if indicator is None:
@@ -514,13 +514,13 @@ class Indicator:
                     "[opencti_indicator] Cannot add Object Ref, indicator not found",
                 )
                 return False
-            if stix_cyber_observable_id in indicator["observabledIds"]:
+            if stix_cyber_observable_id in indicator["observablesIds"]:
                 return True
             else:
                 self.opencti.log(
                     "info",
                     "Adding Stix-Observable {"
-                    + stix_observable_id
+                    + stix_cyber_observable_id
                     + "} to Indicator {"
                     + id
                     + "}",
