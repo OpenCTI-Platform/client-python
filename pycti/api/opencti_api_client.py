@@ -401,18 +401,10 @@ class OpenCTIApiClient:
             data["edges"] if "edges" in data and data["edges"] is not None else []
         ):
             row = edge["node"]
-            # Handle remote relation ID
-            if (
-                "relation" in edge
-                and edge["relation"] is not None
-                and "id" in edge["relation"]
-            ):
-                row["remote_relation_id"] = edge["relation"]["id"]
             if with_pagination:
                 result["entities"].append(self.process_multiple_fields(row))
             else:
                 result.append(self.process_multiple_fields(row))
-
         if with_pagination and "pageInfo" in data:
             result["pagination"] = data["pageInfo"]
         return result
@@ -444,30 +436,16 @@ class OpenCTIApiClient:
 
         if data is None:
             return data
-        if (
-            "createdBy" in data
-            and data["createdBy"] is not None
-            and "node" in data["createdBy"]
-        ):
-            row = data["createdBy"]["node"]
-            # Handle remote relation ID
-            if "relation" in data["createdBy"]:
-                row["remote_relation_id"] = data["createdBy"]["relation"]["id"]
-            data["createdBy"] = row
-            data["createdById"] = row["id"]
+        if "createdBy" in data and data["createdBy"] is not None:
+            data["createdById"] = data["createdBy"]["id"]
         else:
-            data["createdBy"] = None
             data["createdById"] = None
-        if "markingDefinitions" in data:
-            data["markingDefinitions"] = self.process_multiple(
-                data["markingDefinitions"]
-            )
-            data["markingDefinitionsIds"] = self.process_multiple_ids(
-                data["markingDefinitions"]
-            )
-        if "tags" in data:
-            data["tags"] = self.process_multiple(data["tags"])
-            data["tagsIds"] = self.process_multiple_ids(data["tags"])
+        if "objectMarking" in data:
+            data["objectMarking"] = self.process_multiple(data["objectMarking"])
+            data["objectMarkingIds"] = self.process_multiple_ids(data["objectMarking"])
+        if "objectLabel" in data:
+            data["objectLabel"] = self.process_multiple(data["objectLabel"])
+            data["objectLabelIds"] = self.process_multiple_ids(data["objectLabel"])
         if "reports" in data:
             data["reports"] = self.process_multiple(data["reports"])
             data["reportsIds"] = self.process_multiple_ids(data["reports"])
@@ -489,20 +467,19 @@ class OpenCTIApiClient:
             data["externalReferencesIds"] = self.process_multiple_ids(
                 data["externalReferences"]
             )
-        if "objectRefs" in data:
-            data["objectRefs"] = self.process_multiple(data["objectRefs"])
-            data["objectRefsIds"] = self.process_multiple_ids(data["objectRefs"])
-        if "observableRefs" in data:
-            data["observableRefs"] = self.process_multiple(data["observableRefs"])
-            data["observableRefsIds"] = self.process_multiple_ids(
-                data["observableRefs"]
+        if "objects" in data:
+            data["objects"] = self.process_multiple(data["objects"])
+            data["objectsIds"] = self.process_multiple_ids(data["objectsIds"])
+        if "observables" in data:
+            data["observables"] = self.process_multiple(data["observables"])
+            data["observablesIds"] = self.process_multiple_ids(data["observables"])
+        if "stixCoreRelationships" in data:
+            data["stixCoreRelationships"] = self.process_multiple(
+                data["stixCoreRelationships"]
             )
-        if "relationRefs" in data:
-            data["relationRefs"] = self.process_multiple(data["relationRefs"])
-            data["relationRefsIds"] = self.process_multiple_ids(data["relationRefs"])
-        if "stixRelations" in data:
-            data["stixRelations"] = self.process_multiple(data["stixRelations"])
-            data["stixRelationsIds"] = self.process_multiple_ids(data["stixRelations"])
+            data["stixCoreRelationshipsIds"] = self.process_multiple_ids(
+                data["stixCoreRelationships"]
+            )
         if "indicators" in data:
             data["indicators"] = self.process_multiple(data["indicators"])
             data["indicatorsIds"] = self.process_multiple_ids(data["indicators"])

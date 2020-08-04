@@ -296,7 +296,16 @@ class Indicator:
                         id
                         standard_id
                         entity_type
-                        parent_types                    
+                        parent_types
+                        observables {
+                            edges {
+                                node {
+                                    id
+                                    standard_id
+                                    entity_type
+                                }
+                            }
+                        }
                     }
                 }
             """
@@ -485,7 +494,7 @@ class Indicator:
             )
 
     """
-        Add a Stix-Observable object to Indicator object (observable_refs)
+        Add a Stix-Observable object to Indicator object (based-on)
 
         :param id: the id of the Indicator
         :param entity_id: the id of the Stix-Observable
@@ -495,7 +504,7 @@ class Indicator:
     def add_stix_observable(self, **kwargs):
         id = kwargs.get("id", None)
         indicator = kwargs.get("indicator", None)
-        stix_observable_id = kwargs.get("stix_observable_id", None)
+        stix_cyber_observable_id = kwargs.get("stix_cyber_observable_id", None)
         if id is not None and stix_observable_id is not None:
             if indicator is None:
                 indicator = self.read(id=id)
@@ -505,7 +514,7 @@ class Indicator:
                     "[opencti_indicator] Cannot add Object Ref, indicator not found",
                 )
                 return False
-            if stix_observable_id in indicator["observableRefsIds"]:
+            if stix_cyber_observable_id in indicator["observabledIds"]:
                 return True
             else:
                 self.opencti.log(

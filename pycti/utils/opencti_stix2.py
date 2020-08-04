@@ -557,10 +557,16 @@ class OpenCTIStix2:
             self.mapping_cache[stix_object["id"]] = {
                 "id": stix_object_result["id"],
                 "type": stix_object_result["entity_type"],
+                "observables": stix_object_result["observables"]
+                if "observables" in stix_object_result
+                else [],
             }
             self.mapping_cache[stix_object_result["id"]] = {
                 "id": stix_object_result["id"],
                 "type": stix_object_result["entity_type"],
+                "observables": stix_object_result["observables"]
+                if "observables" in stix_object_result
+                else [],
             }
             # Add reports from external references
             for external_reference_id in external_references_ids:
@@ -591,6 +597,31 @@ class OpenCTIStix2:
                         id=stix_object_result["id"],
                         stixObjectOrStixRelationshipId=object_refs_id,
                     )
+                if (
+                    object_refs_id in self.mapping_cache
+                    and "observables" in self.mapping_cache[object_refs_id]
+                    and self.mapping_cache[object_refs_id] is not None
+                    and self.mapping_cache[object_refs_id]["observables"] is not None
+                    and len(self.mapping_cache[object_refs_id]["observables"]) > 0
+                ):
+                    for observable_ref in self.mapping_cache[object_refs_id][
+                        "observables"
+                    ]:
+                        if stix_object_result["entity_type"] == "Report":
+                            self.opencti.report.add_stix_object_or_stix_relationship(
+                                id=stix_object_result["id"],
+                                stixObjectOrStixRelationshipId=observable_ref["id"],
+                            )
+                        elif stix_object_result["entity_type"] == "?ote":
+                            self.opencti.note.add_stix_object_or_stix_relationship(
+                                id=stix_object_result["id"],
+                                stixObjectOrStixRelationshipId=observable_ref["id"],
+                            )
+                        elif stix_object_result["entity_type"] == "Opinion":
+                            self.opencti.opinion.add_stix_object_or_stix_relationship(
+                                id=stix_object_result["id"],
+                                stixObjectOrStixRelationshipId=observable_ref["id"],
+                            )
             # Add files
             if "x_opencti_files" in stix_object:
                 for file in stix_object["x_opencti_files"]:
@@ -986,49 +1017,21 @@ class OpenCTIStix2:
                 ] = entity_external_reference["modified"]
                 external_references.append(external_reference)
             stix_object["external_references"] = external_references
-        if "objectRefs" in entity and len(entity["objectRefs"]) > 0:
+        if "objects" in entity and len(entity["objects"]) > 0:
             object_refs = []
-            objects_to_get = entity["objectRefs"]
-            for entity_object_ref in entity["objectRefs"]:
-                object_refs.append(entity_object_ref["stix_id"])
-            if "relationRefs" in entity and len(entity["relationRefs"]) > 0:
-                relations_to_get = entity["relationRefs"]
-                for entity_relation_ref in entity["relationRefs"]:
-                    if entity_relation_ref["stix_id"] not in object_refs:
-                        object_refs.append(entity_relation_ref["stix_id"])
+            objects_to_get = entity["objects"]
+            for entity_object in entity["objects"]:
+                object_refs.append(entity_object["standard_id"])
             stix_object["object_refs"] = object_refs
 
-        uuids = [stix_object["id"]]
-        for x in result:
-            uuids.append(x["id"])
-
-        observables_stix_ids = []
-        observable_object_data = None
-        if "observableRefs" in entity and len(entity["observableRefs"]) > 0:
-            observable_object_data = self.export_stix_observables(entity)
-            if observable_object_data is not None:
-                observable_object_bundle = self.filter_objects(
-                    uuids, [observable_object_data["observedData"]]
-                )
-                uuids = uuids + [x["id"] for x in observable_object_bundle]
-                result = result + observable_object_bundle
-                observables_stix_ids = (
-                    observables_stix_ids + observable_object_data["stixIds"]
-                )
-                if stix_object["type"] == "report":
-                    if "object_refs" in stix_object:
-                        stix_object["object_refs"].append(
-                            observable_object_data["observedData"]["id"]
-                        )
-                    else:
-                        stix_object["object_refs"] = [
-                            observable_object_data["observedData"]["id"]
-                        ]
         result.append(stix_object)
 
         if mode == "simple":
             return result
         elif mode == "full":
+            uuids = [stix_object["id"]]
+            for x in result:
+                uuids.append(x["id"])
             # Get extra relations
             stix_relations = self.opencti.stix_relation.list(
                 fromId=entity["id"], forceNatural=True
@@ -1042,10 +1045,6 @@ class OpenCTIStix2:
                     else:
                         other_side_entity = stix_relation["to"]
                     objects_to_get.append(other_side_entity)
-                    if other_side_entity["stix_id"] in observables_stix_ids:
-                        other_side_entity["stix_id"] = observable_object_data[
-                            "observedData"
-                        ]["id"]
                     relation_object_data = self.opencti.stix_relation.to_stix2(
                         entity=stix_relation
                     )
