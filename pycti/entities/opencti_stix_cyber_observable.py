@@ -400,7 +400,7 @@ class StixCyberObservable:
             else kwargs.get("createIndicator", False)
         )
         type = observable_data["type"].capitalize()
-        if type == "File":
+        if type.lower() == "file":
             type = "StixFile"
         if type is not None:
             self.opencti.log(
@@ -567,15 +567,21 @@ class StixCyberObservable:
                 }
             elif type == "Artifact":
                 input_variables["Artifact"] = {
-                    "md5": observable_data["md5"] if "md5" in observable_data else None,
-                    "sha1": observable_data["sha1"]
-                    if "sha1" in observable_data
+                    "md5": observable_data["hashes"]["MD5"]
+                    if "hashes" in observable_data
+                    and "MD5" in observable_data["hashes"]
                     else None,
-                    "sha256": observable_data["sha256"]
-                    if "sha256" in observable_data
+                    "sha1": observable_data["hashes"]["SHA-1"]
+                    if "hashes" in observable_data
+                    and "SHA-1" in observable_data["hashes"]
                     else None,
-                    "sha512": observable_data["sha512"]
-                    if "sha512" in observable_data
+                    "sha256": observable_data["hashes"]["SHA-256"]
+                    if "hashes" in observable_data
+                    and "SHA-256" in observable_data["hashes"]
+                    else None,
+                    "sha512": observable_data["hashes"]["SHA-512"]
+                    if "hashes" in observable_data
+                    and "SHA-512" in observable_data["hashes"]
                     else None,
                     "mime_type": observable_data["mime_type"]
                     if "mime_type" in observable_data
@@ -593,15 +599,21 @@ class StixCyberObservable:
                 }
             elif type == "StixFile":
                 input_variables["StixFile"] = {
-                    "md5": observable_data["md5"] if "md5" in observable_data else None,
-                    "sha1": observable_data["sha1"]
-                    if "sha1" in observable_data
+                    "md5": observable_data["hashes"]["MD5"]
+                    if "hashes" in observable_data
+                    and "MD5" in observable_data["hashes"]
                     else None,
-                    "sha256": observable_data["sha256"]
-                    if "sha256" in observable_data
+                    "sha1": observable_data["hashes"]["SHA-1"]
+                    if "hashes" in observable_data
+                    and "SHA-1" in observable_data["hashes"]
                     else None,
-                    "sha512": observable_data["sha512"]
-                    if "sha512" in observable_data
+                    "sha256": observable_data["hashes"]["SHA-256"]
+                    if "hashes" in observable_data
+                    and "SHA-256" in observable_data["hashes"]
+                    else None,
+                    "sha512": observable_data["hashes"]["SHA-512"]
+                    if "hashes" in observable_data
+                    and "SHA-512" in observable_data["hashes"]
                     else None,
                     "extensions": observable_data["extensions"]
                     if "extensions" in observable_data
@@ -631,7 +643,6 @@ class StixCyberObservable:
                     if "atime" in observable_data
                     else None,
                 }
-
             result = self.opencti.query(query, input_variables)
             return self.opencti.process_multiple_fields(
                 result["data"]["stixCyberObservableAdd"]

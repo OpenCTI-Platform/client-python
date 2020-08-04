@@ -564,7 +564,7 @@ class ObservedData:
                             "id": stix_observable_result["id"],
                             "type": stix_observable_result["entity_type"],
                         }
-
+            return stix_observable_result
         else:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"

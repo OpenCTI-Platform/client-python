@@ -1460,6 +1460,7 @@ class OpenCTIStix2:
                             for from_element in self.mapping_cache[observed_data_ref]:
                                 if len(to_ids) > 0:
                                     for to_id in to_ids:
+                                        print(from_element)
                                         self.import_sighting(
                                             item, from_element["id"], to_id, update
                                         )
