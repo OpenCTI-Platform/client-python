@@ -498,6 +498,7 @@ class StixSightingRelationship:
             first_seen
             last_seen
             x_opencti_negative
+            attribute_count
             confidence
             createdBy {
                 ... on Identity {
