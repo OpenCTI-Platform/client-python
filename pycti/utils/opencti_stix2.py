@@ -571,22 +571,22 @@ class OpenCTIStix2:
                     )
             # Add object refs
             for object_refs_id in object_refs_ids:
-                if stix_object_result["entity_type"] == "report":
+                if stix_object_result["entity_type"] == "Report":
                     self.opencti.report.add_stix_object_or_stix_relationship(
                         id=stix_object_result["id"],
                         stixObjectOrStixRelationshipId=object_refs_id,
                     )
-                elif stix_object_result["entity_type"] == "observed-data":
+                elif stix_object_result["entity_type"] == "Observed-Data":
                     self.opencti.observed_data.add_stix_object_or_stix_relationship(
                         id=stix_object_result["id"],
                         stixObjectOrStixRelationshipId=object_refs_id,
                     )
-                elif stix_object_result["entity_type"] == "note":
+                elif stix_object_result["entity_type"] == "Note":
                     self.opencti.note.add_stix_object_or_stix_relationship(
                         id=stix_object_result["id"],
                         stixObjectOrStixRelationshipId=object_refs_id,
                     )
-                elif stix_object_result["entity_type"] == "opinion":
+                elif stix_object_result["entity_type"] == "Opinion":
                     self.opencti.opinion.add_stix_object_or_stix_relationship(
                         id=stix_object_result["id"],
                         stixObjectOrStixRelationshipId=object_refs_id,
@@ -855,20 +855,20 @@ class OpenCTIStix2:
         relations_to_get = []
         if "createdBy" in entity and entity["createdBy"] is not None:
             entity_created_by = entity["createdBy"]
-            if entity_created_by["entity_type"] == "user":
+            if entity_created_by["entity_type"] == "User":
                 identity_class = "individual"
-            elif entity_created_by["entity_type"] == "sector":
+            elif entity_created_by["entity_type"] == "Sector":
                 identity_class = "class"
             else:
-                identity_class = entity_created_by["entity_type"]
+                identity_class = "organization"
 
             created_by = dict()
             created_by["id"] = entity_created_by["stix_id"]
             created_by["type"] = "identity"
-            created_by["spec_version"] = SPEC_VERSION
+            created_by["spec_version"] = entity_created_by["spec_version"]
             created_by["name"] = entity_created_by["name"]
             created_by["identity_class"] = identity_class
-            if self.opencti.not_empty(entity_created_by["stix_label"]):
+            if self.opencti.not_empty(entity_created_by["labels"]):
                 created_by["labels"] = entity_created_by["stix_label"]
             else:
                 created_by["labels"] = ["identity"]
@@ -1065,27 +1065,32 @@ class OpenCTIStix2:
                     )
             # Export
             exporter = {
-                "identity": self.opencti.identity.to_stix2,
-                "threat-actor": self.opencti.threat_actor.to_stix2,
-                "intrusion-set": self.opencti.intrusion_set.to_stix2,
-                "campaign": self.opencti.campaign.to_stix2,
-                "incident": self.opencti.x_opencti_incident.to_stix2,
-                "malware": self.opencti.malware.to_stix2,
-                "tool": self.opencti.tool.to_stix2,
-                "vulnerability": self.opencti.vulnerability.to_stix2,
-                "attack-pattern": self.opencti.attack_pattern.to_stix2,
-                "course-of-action": self.opencti.course_of_action.to_stix2,
-                "report": self.opencti.report.to_stix2,
-                "note": self.opencti.note.to_stix2,
-                "opinion": self.opencti.opinion.to_stix2,
-                "indicator": self.opencti.indicator.to_stix2,
+                "Attack-Pattern": self.opencti.attack_pattern.to_stix2,
+                "Campaign": self.opencti.campaign.to_stix2,
+                "Note": self.opencti.note.to_stix2,
+                "Observed-Data": self.opencti.observed_data.to_stix2,
+                "Opinion": self.opencti.opinion.to_stix2,
+                "Report": self.opencti.report.to_stix2,
+                "Course-Of-Action": self.opencti.course_of_action.to_stix2,
+                "Identity": self.opencti.identity.to_stix2,
+                "Indicator": self.opencti.indicator.to_stix2,
+                "Infrastructure": self.opencti.infrastructure.to_stix2,
+                "Intrusion-Set": self.opencti.intrusion_set.to_stix2,
+                "Location": self.opencti.location.to_stix2,
+                "Malware": self.opencti.malware.to_stix2,
+                "Threat-Actor": self.opencti.threat_actor.to_stix2,
+                "Tool": self.opencti.tool.to_stix2,
+                "Vulnerability": self.opencti.vulnerability.to_stix2,
+                "X-OpenCTI-Incident": self.opencti.x_opencti_incident.to_stix2,
             }
 
             # Get extra objects
             for entity_object in objects_to_get:
                 # Map types
                 if IdentityTypes.has_value(entity_object["entity_type"]):
-                    entity_object["entity_type"] = "identity"
+                    entity_object["entity_type"] = "Identity"
+                if LocationTypes.has_value(entity_object["entity_type"]):
+                    entity_object["entity_type"] = "Location"
                 do_export = exporter.get(
                     entity_object["entity_type"],
                     lambda **kwargs: self.unknown_type(
@@ -1173,24 +1178,29 @@ class OpenCTIStix2:
         }
         # Map types
         if IdentityTypes.has_value(entity_type):
-            entity_type = "identity"
+            entity_type = "Identity"
+        if LocationTypes.has_value(entity_type):
+            entity_type = "Location"
 
         # Export
         exporter = {
-            "identity": self.opencti.identity.to_stix2,
-            "threat-actor": self.opencti.threat_actor.to_stix2,
-            "intrusion-set": self.opencti.intrusion_set.to_stix2,
-            "campaign": self.opencti.campaign.to_stix2,
-            "incident": self.opencti.x_opencti_incident.to_stix2,
-            "malware": self.opencti.malware.to_stix2,
-            "tool": self.opencti.tool.to_stix2,
-            "vulnerability": self.opencti.vulnerability.to_stix2,
-            "attack-pattern": self.opencti.attack_pattern.to_stix2,
-            "course-of-action": self.opencti.course_of_action.to_stix2,
-            "report": self.opencti.report.to_stix2,
-            "note": self.opencti.note.to_stix2,
-            "opinion": self.opencti.opinion.to_stix2,
-            "indicator": self.opencti.indicator.to_stix2,
+            "Attack-Pattern": self.opencti.attack_pattern.to_stix2,
+            "Campaign": self.opencti.campaign.to_stix2,
+            "Note": self.opencti.note.to_stix2,
+            "Observed-Data": self.opencti.observed_data.to_stix2,
+            "Opinion": self.opencti.opinion.to_stix2,
+            "Report": self.opencti.report.to_stix2,
+            "Course-Of-Action": self.opencti.course_of_action.to_stix2,
+            "Identity": self.opencti.identity.to_stix2,
+            "Indicator": self.opencti.indicator.to_stix2,
+            "Infrastructure": self.opencti.infrastructure.to_stix2,
+            "Intrusion-Set": self.opencti.intrusion_set.to_stix2,
+            "Location": self.opencti.location.to_stix2,
+            "Malware": self.opencti.malware.to_stix2,
+            "Threat-Actor": self.opencti.threat_actor.to_stix2,
+            "Tool": self.opencti.tool.to_stix2,
+            "Vulnerability": self.opencti.vulnerability.to_stix2,
+            "X-OpenCTI-Incident": self.opencti.x_opencti_incident.to_stix2,
         }
         do_export = exporter.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1232,31 +1242,40 @@ class OpenCTIStix2:
                 filters = [{"key": "entity_type", "values": [entity_type]}]
             entity_type = "Identity"
 
-        if IdentityTypes.has_value(entity_type):
+        if LocationTypes.has_value(entity_type):
             if filters is not None:
                 filters.append({"key": "entity_type", "values": [entity_type]})
             else:
                 filters = [{"key": "entity_type", "values": [entity_type]}]
-            entity_type = "Identity"
+            entity_type = "Location"
+
+        if StixCyberObservableTypes.has_value(entity_type):
+            if filters is not None:
+                filters.append({"key": "entity_type", "values": [entity_type]})
+            else:
+                filters = [{"key": "entity_type", "values": [entity_type]}]
+            entity_type = "Stix-Cyber-Observable"
 
         # List
         lister = {
             "Attack-Pattern": self.opencti.attack_pattern.list,
-            "campaign": self.opencti.campaign.list,
-            "note": self.opencti.note.list,
-            "observed-data": self.opencti.observed_data.list,
-            "identity": self.opencti.identity.list,
-            "threat-actor": self.opencti.threat_actor.list,
-            "intrusion-set": self.opencti.intrusion_set.list,
-            "incident": self.opencti.x_opencti_incident.list,
-            "malware": self.opencti.malware.list,
-            "tool": self.opencti.tool.list,
-            "vulnerability": self.opencti.vulnerability.list,
-            "course-of-action": self.opencti.course_of_action.list,
-            "report": self.opencti.report.list,
-            "opinion": self.opencti.opinion.list,
-            "indicator": self.opencti.indicator.list,
-            "stix-observable": self.opencti.stix_observable.list,
+            "Campaign": self.opencti.campaign.list,
+            "Note": self.opencti.note.list,
+            "Observed-Data": self.opencti.observed_data.list,
+            "Opinion": self.opencti.opinion.list,
+            "Report": self.opencti.report.list,
+            "Course-Of-Action": self.opencti.course_of_action.list,
+            "Identity": self.opencti.identity.list,
+            "Indicator": self.opencti.indicator.list,
+            "Infrastructure": self.opencti.infrastructure.list,
+            "Intrusion-Set": self.opencti.intrusion_set.list,
+            "Location": self.opencti.location.list,
+            "Malware": self.opencti.malware.list,
+            "Threat-Actor": self.opencti.threat_actor.list,
+            "Tool": self.opencti.tool.list,
+            "Vulnerability": self.opencti.vulnerability.list,
+            "X-OpenCTI-Incident": self.opencti.x_opencti_incident.list,
+            "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
         }
         do_list = lister.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1273,21 +1292,24 @@ class OpenCTIStix2:
         if entities_list is not None:
             # Export
             exporter = {
-                "identity": self.opencti.identity.to_stix2,
-                "threat-actor": self.opencti.threat_actor.to_stix2,
-                "intrusion-set": self.opencti.intrusion_set.to_stix2,
-                "campaign": self.opencti.campaign.to_stix2,
-                "incident": self.opencti.x_opencti_incident.to_stix2,
-                "malware": self.opencti.malware.to_stix2,
-                "tool": self.opencti.tool.to_stix2,
-                "vulnerability": self.opencti.vulnerability.to_stix2,
-                "attack-pattern": self.opencti.attack_pattern.to_stix2,
-                "course-of-action": self.opencti.course_of_action.to_stix2,
-                "report": self.opencti.report.to_stix2,
-                "note": self.opencti.note.to_stix2,
-                "opinion": self.opencti.opinion.to_stix2,
-                "indicator": self.opencti.indicator.to_stix2,
-                "stix-observable": self.opencti.stix_observable.to_stix2,
+                "Attack-Pattern": self.opencti.attack_pattern.to_stix2,
+                "Campaign": self.opencti.campaign.to_stix2,
+                "Note": self.opencti.note.to_stix2,
+                "Observed-Data": self.opencti.observed_data.to_stix2,
+                "Opinion": self.opencti.opinion.to_stix2,
+                "Report": self.opencti.report.to_stix2,
+                "Course-Of-Action": self.opencti.course_of_action.to_stix2,
+                "Identity": self.opencti.identity.to_stix2,
+                "Indicator": self.opencti.indicator.to_stix2,
+                "Infrastructure": self.opencti.infrastructure.to_stix2,
+                "Intrusion-Set": self.opencti.intrusion_set.to_stix2,
+                "Location": self.opencti.location.to_stix2,
+                "Malware": self.opencti.malware.to_stix2,
+                "Threat-Actor": self.opencti.threat_actor.to_stix2,
+                "Tool": self.opencti.tool.to_stix2,
+                "Vulnerability": self.opencti.vulnerability.to_stix2,
+                "X-OpenCTI-Incident": self.opencti.x_opencti_incident.to_stix2,
+                "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.to_stix2,
             }
             do_export = exporter.get(
                 entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1305,27 +1327,6 @@ class OpenCTIStix2:
                     bundle["objects"] = bundle["objects"] + entity_bundle_filtered
 
         return bundle
-
-    def export_stix_observables(self, entity):
-        stix_ids = []
-        observed_data = dict()
-        observed_data["id"] = "observed-data--" + str(uuid.uuid4())
-        observed_data["type"] = "observed-data"
-        observed_data["number_observed"] = len(entity["observableRefs"])
-        observed_data["objects"] = []
-        for observable in entity["observableRefs"]:
-            stix_observable = dict()
-            stix_observable[CustomProperties.OBSERVABLE_TYPE] = observable[
-                "entity_type"
-            ]
-            stix_observable[CustomProperties.OBSERVABLE_VALUE] = observable[
-                "observable_value"
-            ]
-            stix_observable["type"] = observable["entity_type"]
-            observed_data["objects"].append(stix_observable)
-            stix_ids.append(observable["stix_id"])
-
-        return {"observedData": observed_data, "stixIds": stix_ids}
 
     def import_bundle(self, stix_bundle, update=False, types=None) -> List:
         # Check if the bundle is correctly formatted

@@ -293,7 +293,11 @@ class Opinion:
                 }
             """
             result = self.opencti.query(
-                query, {"id": id, "objectId": stix_object_or_stix_relationship_id}
+                query,
+                {
+                    "id": id,
+                    "stixObjectOrStixRelationshipId": stix_object_or_stix_relationship_id,
+                },
             )
             return result["data"]["opinionContainsStixObjectOrStixRelationship"]
         else:
