@@ -469,7 +469,7 @@ class OpenCTIApiClient:
             )
         if "objects" in data:
             data["objects"] = self.process_multiple(data["objects"])
-            data["objectsIds"] = self.process_multiple_ids(data["objectsIds"])
+            data["objectsIds"] = self.process_multiple_ids(data["objects"])
         if "observables" in data:
             data["observables"] = self.process_multiple(data["observables"])
             data["observablesIds"] = self.process_multiple_ids(data["observables"])
