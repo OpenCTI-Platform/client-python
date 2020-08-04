@@ -654,7 +654,6 @@ class ThreatActor:
             threat_actor["modified"] = self.opencti.stix2.format_date(
                 entity["modified"]
             )
-            threat_actor[CustomProperties.ID] = entity["id"]
             return self.opencti.stix2.prepare_export(
                 entity, threat_actor, mode, max_marking_definition_entity
             )

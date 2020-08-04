@@ -207,9 +207,8 @@ class ExternalReference:
                 modified=modified,
             )
 
-    # TODO Move to ExternalReference
     def delete(self, id):
-        logging.info("Deleting + " + id + "...")
+        self.opencti.log("info", "Deleting + " + id + "...")
         query = """
              mutation ExternalReferenceEdit($id: ID!) {
                  externalReferenceEdit(id: $id) {
@@ -217,4 +216,4 @@ class ExternalReference:
                  }
              }
          """
-        self.query(query, {"id": id})
+        self.opencti.query(query, {"id": id})
