@@ -1463,7 +1463,9 @@ class OpenCTIStix2:
                     for observed_data_ref in item["observed_data_refs"]:
                         if len(to_ids) > 0:
                             for to_id in to_ids:
-                                self.import_sighting(item, observed_data_ref, to_id, update)
+                                self.import_sighting(
+                                    item, observed_data_ref, to_id, update
+                                )
                 imported_elements.append({"id": item["id"], "type": item["type"]})
         end_time = time.time()
         self.opencti.log(
