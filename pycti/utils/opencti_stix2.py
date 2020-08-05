@@ -1038,9 +1038,7 @@ class OpenCTIStix2:
             for x in result:
                 uuids.append(x["id"])
             # Get extra relations
-            stix_relations = self.opencti.stix_relation.list(
-                fromId=entity["id"], forceNatural=True
-            )
+            stix_relations = self.opencti.stix_relation.list(fromId=entity["id"])
             for stix_relation in stix_relations:
                 if self.check_max_marking_definition(
                     max_marking_definition_entity, stix_relation["markingDefinitions"]

@@ -121,7 +121,6 @@ class StixCyberObservableRelation:
         order_mode = kwargs.get("orderMode", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
-        force_natural = kwargs.get("forceNatural", False)
         if get_all:
             first = 500
 
@@ -137,8 +136,8 @@ class StixCyberObservableRelation:
         )
         query = (
             """
-            query StixCyberObservableRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID, $orderBy: StixCyberObservableRelationsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
-                StixCyberObservableRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
+            query StixCyberObservableRelations($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: String, $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $inferred: Boolean, $first: Int, $after: ID, $orderBy: StixCyberObservableRelationsOrdering, $orderMode: OrderingMode) {
+                StixCyberObservableRelations(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, inferred: $inferred, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -175,7 +174,6 @@ class StixCyberObservableRelation:
                 "after": after,
                 "orderBy": order_by,
                 "orderMode": order_mode,
-                "forceNatural": force_natural,
             },
         )
         return self.opencti.process_multiple(

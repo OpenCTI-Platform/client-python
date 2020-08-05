@@ -284,7 +284,6 @@ class StixCoreRelationship:
         order_mode = kwargs.get("orderMode", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
-        force_natural = kwargs.get("forceNatural", False)
         if get_all:
             first = 500
 
@@ -300,8 +299,8 @@ class StixCoreRelationship:
         )
         query = (
             """
-                query StixCoreRelationships($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: String, $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $inferred: Boolean, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode, $forceNatural: Boolean) {
-                    stixCoreRelationships(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, inferred: $inferred, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, forceNatural: $forceNatural) {
+                query StixCoreRelationships($fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: String, $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $inferred: Boolean, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode) {
+                    stixCoreRelationships(fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, inferred: $inferred, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {
                                 """
@@ -338,7 +337,6 @@ class StixCoreRelationship:
                 "after": after,
                 "orderBy": order_by,
                 "orderMode": order_mode,
-                "forceNatural": force_natural,
             },
         )
         return self.opencti.process_multiple(
