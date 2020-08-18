@@ -31,11 +31,21 @@ class ThreatActor:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -597,65 +607,3 @@ class ThreatActor:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )
-
-    def to_stix2(self, **kwargs):
-        """Returns a Stix2 object for a Threat-Actor id
-
-        Takes either an `id` or a Threat-Actor python object via `entity` and
-        returns a stix2 representation of it.
-
-        The to_stix2 method accepts the following \**kwargs.
-
-        :param id: (optional) `id` of the Threat-Actor you want to convert to stix2
-        :param mode: (optional) either `simple` or `full`, default: `simple`
-        :param entity: (optional) Threat-Actor object to convert
-        """
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            threat_actor = dict()
-            threat_actor["id"] = entity["stix_id"]
-            threat_actor["type"] = "threat-actor"
-            threat_actor["spec_version"] = SPEC_VERSION
-            threat_actor["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                threat_actor["labels"] = entity["stix_label"]
-            else:
-                threat_actor["labels"] = ["threat-actor"]
-            if self.opencti.not_empty(entity["alias"]):
-                threat_actor["aliases"] = entity["alias"]
-            if self.opencti.not_empty(entity["description"]):
-                threat_actor["description"] = entity["description"]
-            if self.opencti.not_empty(entity["goal"]):
-                threat_actor["goals"] = entity["goal"]
-            if self.opencti.not_empty(entity["sophistication"]):
-                threat_actor["sophistication"] = entity["sophistication"]
-            if self.opencti.not_empty(entity["resource_level"]):
-                threat_actor["resource_level"] = entity["resource_level"]
-            if self.opencti.not_empty(entity["primary_motivation"]):
-                threat_actor["primary_motivation"] = entity["primary_motivation"]
-            if self.opencti.not_empty(entity["secondary_motivation"]):
-                threat_actor["secondary_motivations"] = entity["secondary_motivation"]
-            if self.opencti.not_empty(entity["first_seen"]):
-                threat_actor["first_seen"] = self.opencti.stix2.format_date(
-                    entity["first_seen"]
-                )
-            if self.opencti.not_empty(entity["last_seen"]):
-                threat_actor["last_seen"] = self.opencti.stix2.format_date(
-                    entity["last_seen"]
-                )
-            threat_actor["created"] = self.opencti.stix2.format_date(entity["created"])
-            threat_actor["modified"] = self.opencti.stix2.format_date(
-                entity["modified"]
-            )
-            return self.opencti.stix2.prepare_export(
-                entity, threat_actor, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

@@ -21,11 +21,21 @@ class XOpenCTIIncident:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -441,52 +451,3 @@ class XOpenCTIIncident:
             self.opencti.log(
                 "error", "[opencti_incident] Missing parameters: stixObject"
             )
-
-    """
-        Export an X-OpenCTI-Incident object in STIX2
-    
-        :param id: the id of the X-OpenCTI-Incident
-        :return X-OpenCTI-Incident object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            incident = dict()
-            incident["id"] = entity["stix_id"]
-            incident["type"] = "x-opencti-incident"
-            incident["spec_version"] = SPEC_VERSION
-            incident["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                incident["labels"] = entity["stix_label"]
-            else:
-                incident["labels"] = ["x-opencti-incident"]
-            if self.opencti.not_empty(entity["alias"]):
-                incident["aliases"] = entity["alias"]
-            if self.opencti.not_empty(entity["description"]):
-                incident["description"] = entity["description"]
-            if self.opencti.not_empty(entity["objective"]):
-                incident["objective"] = entity["objective"]
-            if self.opencti.not_empty(entity["first_seen"]):
-                incident["first_seen"] = self.opencti.stix2.format_date(
-                    entity["first_seen"]
-                )
-            if self.opencti.not_empty(entity["last_seen"]):
-                incident["last_seen"] = self.opencti.stix2.format_date(
-                    entity["last_seen"]
-                )
-            incident["created"] = self.opencti.stix2.format_date(entity["created"])
-            incident["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            incident[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, incident, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

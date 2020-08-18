@@ -21,11 +21,21 @@ class Campaign:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -439,52 +449,3 @@ class Campaign:
             self.opencti.log(
                 "error", "[opencti_campaign] Missing parameters: stixObject"
             )
-
-    """
-        Export an Campaign object in STIX2
-    
-        :param id: the id of the Campaign
-        :return Campaign object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            campaign = dict()
-            campaign["id"] = entity["stix_id"]
-            campaign["type"] = "campaign"
-            campaign["spec_version"] = SPEC_VERSION
-            campaign["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                campaign["labels"] = entity["stix_label"]
-            else:
-                campaign["labels"] = ["campaign"]
-            if self.opencti.not_empty(entity["alias"]):
-                campaign["aliases"] = entity["alias"]
-            if self.opencti.not_empty(entity["description"]):
-                campaign["description"] = entity["description"]
-            if self.opencti.not_empty(entity["objective"]):
-                campaign["objective"] = entity["objective"]
-            if self.opencti.not_empty(entity["first_seen"]):
-                campaign["first_seen"] = self.opencti.stix2.format_date(
-                    entity["first_seen"]
-                )
-            if self.opencti.not_empty(entity["last_seen"]):
-                campaign["last_seen"] = self.opencti.stix2.format_date(
-                    entity["last_seen"]
-                )
-            campaign["created"] = self.opencti.stix2.format_date(entity["created"])
-            campaign["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            campaign[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, campaign, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

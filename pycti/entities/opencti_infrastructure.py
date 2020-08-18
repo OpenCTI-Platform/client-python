@@ -26,11 +26,21 @@ class Infrastructure:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -503,59 +513,3 @@ class Infrastructure:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )
-
-    """
-        Export an Infrastructure object in STIX2
-    
-        :param id: the id of the Infrastructure
-        :return Infrastructure object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            infrastructure = dict()
-            infrastructure["id"] = entity["stix_id"]
-            infrastructure["type"] = "infrastructure"
-            infrastructure["spec_version"] = SPEC_VERSION
-            infrastructure["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                infrastructure["labels"] = entity["stix_label"]
-            else:
-                infrastructure["labels"] = ["infrastructure"]
-            if self.opencti.not_empty(entity["description"]):
-                infrastructure["description"] = entity["description"]
-            infrastructure["pattern"] = entity["infrastructure_pattern"]
-            infrastructure["valid_from"] = self.opencti.stix2.format_date(
-                entity["valid_from"]
-            )
-            infrastructure["valid_until"] = self.opencti.stix2.format_date(
-                entity["valid_until"]
-            )
-            if self.opencti.not_empty(entity["pattern_type"]):
-                infrastructure["pattern_type"] = entity["pattern_type"]
-            else:
-                infrastructure["pattern_type"] = "stix"
-            infrastructure["created"] = self.opencti.stix2.format_date(
-                entity["created"]
-            )
-            infrastructure["modified"] = self.opencti.stix2.format_date(
-                entity["modified"]
-            )
-            if self.opencti.not_empty(entity["alias"]):
-                infrastructure[CustomProperties.ALIASES] = entity["alias"]
-            if self.opencti.not_empty(entity["score"]):
-                infrastructure[CustomProperties.SCORE] = entity["score"]
-            infrastructure[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, infrastructure, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

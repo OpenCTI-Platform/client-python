@@ -232,11 +232,12 @@ class MarkingDefinition:
                 )
 
             # TODO: Compatibility with OpenCTI 3.X to be REMOVED
-            stix_object["x_opencti_order"] = (
-                stix_object["x_opencti_level"]
-                if "x_opencti_level" in stix_object
-                else 0
-            )
+            if "x_opencti_order" not in stix_object:
+                stix_object["x_opencti_order"] = (
+                    stix_object["x_opencti_level"]
+                    if "x_opencti_level" in stix_object
+                    else 0
+                )
 
             return self.opencti.marking_definition.create(
                 stix_id=stix_object["id"],

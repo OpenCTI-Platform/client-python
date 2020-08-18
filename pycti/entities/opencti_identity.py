@@ -22,11 +22,21 @@ class Identity:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -522,65 +532,3 @@ class Identity:
             self.opencti.log(
                 "error", "[opencti_identity] Missing parameters: stixObject"
             )
-
-    """
-        Export an Identity object in STIX2
-    
-        :param id: the id of the Identity
-        :return Identity object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            if entity["entity_type"] == "user":
-                identity_class = "individual"
-            elif entity["entity_type"] == "sector":
-                identity_class = "class"
-            else:
-                identity_class = "organization"
-            identity = dict()
-            identity["id"] = entity["stix_id"]
-            identity["type"] = "identity"
-            identity["spec_version"] = SPEC_VERSION
-            identity["name"] = entity["name"]
-            identity["identity_class"] = identity_class
-            if self.opencti.not_empty(entity["stix_label"]):
-                identity["labels"] = entity["stix_label"]
-            else:
-                identity["labels"] = ["identity"]
-            if self.opencti.not_empty(entity["description"]):
-                identity["description"] = entity["description"]
-            if self.opencti.not_empty(entity["contact_information"]):
-                identity["contact_information"] = entity["contact_information"]
-            identity["created"] = self.opencti.stix2.format_date(entity["created"])
-            identity["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            if self.opencti.not_empty(entity["alias"]):
-                identity["aliases"] = entity["alias"]
-            if entity["entity_type"] == "organization":
-                if "x_opencti_organization_type" in entity and self.opencti.not_empty(
-                    entity["x_opencti_organization_type"]
-                ):
-                    identity[CustomProperties.ORG_CLASS] = entity[
-                        "x_opencti_organization_type"
-                    ]
-                if "x_opencti_reliability" in entity and self.opencti.not_empty(
-                    entity["x_opencti_reliability"]
-                ):
-                    identity[CustomProperties.x_opencti_reliability] = entity[
-                        "x_opencti_reliability"
-                    ]
-            identity[CustomProperties.IDENTITY_TYPE] = entity["entity_type"]
-            identity[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, identity, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

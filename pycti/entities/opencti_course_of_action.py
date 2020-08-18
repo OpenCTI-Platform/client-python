@@ -20,11 +20,21 @@ class CourseOfAction:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -400,46 +410,3 @@ class CourseOfAction:
             self.opencti.log(
                 "error", "[opencti_course_of_action] Missing parameters: stixObject"
             )
-
-    """
-        Export an Course-Of-Action object in STIX2
-    
-        :param id: the id of the Course-Of-Action
-        :return Course-Of-Action object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            course_of_action = dict()
-            course_of_action["id"] = entity["stix_id"]
-            course_of_action["type"] = "course-of-action"
-            course_of_action["spec_version"] = entity["spec_version"]
-            course_of_action["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                course_of_action["labels"] = entity["stix_label"]
-            else:
-                course_of_action["labels"] = ["course-of-action"]
-            if self.opencti.not_empty(entity["description"]):
-                course_of_action["description"] = entity["description"]
-            course_of_action["created"] = self.opencti.stix2.format_date(
-                entity["created"]
-            )
-            course_of_action["modified"] = self.opencti.stix2.format_date(
-                entity["modified"]
-            )
-            if self.opencti.not_empty(entity["alias"]):
-                course_of_action[CustomProperties.ALIASES] = entity["alias"]
-            course_of_action[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, course_of_action, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

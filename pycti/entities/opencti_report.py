@@ -22,11 +22,21 @@ class Report:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -574,6 +584,27 @@ class Report:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
+
+            # TODO: Compatibility with OpenCTI 3.X to be REMOVED
+            if "report_types" not in stix_object:
+                stix_object["report_types"] = (
+                    [stix_object["x_opencti_report_class"]]
+                    if "x_opencti_report_class" in stix_object
+                    else None
+                )
+            if "confidence" not in stix_object:
+                stix_object["confidence"] = (
+                    stix_object["x_opencti_source_confidence_level"]
+                    if "x_opencti_source_confidence_level" in stix_object
+                    else 0
+                )
+            if "x_opencti_report_status" not in stix_object:
+                stix_object["x_opencti_report_status"] = (
+                    stix_object["x_opencti_object_status"]
+                    if "x_opencti_object_status" in stix_object
+                    else 0
+                )
+
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
@@ -615,55 +646,3 @@ class Report:
             )
         else:
             self.opencti.log("error", "[opencti_report] Missing parameters: stixObject")
-
-    """
-        Export an Threat-Actor object in STIX2
-
-        :param id: the id of the Threat-Actor
-        :return Threat-Actor object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            report = dict()
-            report["id"] = entity["stix_id"]
-            report["type"] = "report"
-            report["spec_version"] = SPEC_VERSION
-            report["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                report["labels"] = entity["stix_label"]
-            else:
-                report["labels"] = ["report"]
-            if self.opencti.not_empty(entity["description"]):
-                report["description"] = entity["description"]
-            report["published"] = self.opencti.stix2.format_date(entity["published"])
-            report["created"] = self.opencti.stix2.format_date(entity["created"])
-            report["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            if self.opencti.not_empty(entity["alias"]):
-                report[CustomProperties.ALIASES] = entity["alias"]
-            if self.opencti.not_empty(entity["report_class"]):
-                report[CustomProperties.REPORT_CLASS] = entity["report_class"]
-            if self.opencti.not_empty(entity["object_status"]):
-                report[CustomProperties.OBJECT_STATUS] = entity["object_status"]
-            if self.opencti.not_empty(entity["source_confidence_level"]):
-                report[CustomProperties.SRC_CONF_LEVEL] = entity[
-                    "source_confidence_level"
-                ]
-            if self.opencti.not_empty(entity["x_opencti_graph_data"]):
-                report[CustomProperties.GRAPH_DATA] = entity["x_opencti_graph_data"]
-            report[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, report, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log(
-                "error", "[opencti_report] Missing parameters: id or entity"
-            )

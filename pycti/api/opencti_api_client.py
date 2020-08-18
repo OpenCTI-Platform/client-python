@@ -368,6 +368,8 @@ class OpenCTIApiClient:
                     return True
                 else:
                     return False
+            if isinstance(value, dict):
+                return bool(value)
             if isinstance(value, list):
                 is_not_empty = False
                 for v in value:
@@ -438,6 +440,20 @@ class OpenCTIApiClient:
             return data
         if "createdBy" in data and data["createdBy"] is not None:
             data["createdById"] = data["createdBy"]["id"]
+            if "objectMarking" in data["createdBy"]:
+                data["createdBy"]["objectMarking"] = self.process_multiple(
+                    data["createdBy"]["objectMarking"]
+                )
+                data["createdBy"]["objectMarkingIds"] = self.process_multiple_ids(
+                    data["createdBy"]["objectMarking"]
+                )
+            if "objectLabel" in data["createdBy"]:
+                data["createdBy"]["objectLabel"] = self.process_multiple(
+                    data["createdBy"]["objectLabel"]
+                )
+                data["createdBy"]["objectLabelIds"] = self.process_multiple_ids(
+                    data["createdBy"]["objectLabel"]
+                )
         else:
             data["createdById"] = None
         if "objectMarking" in data:

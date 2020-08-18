@@ -26,10 +26,10 @@ class StixCyberObservableTypes(Enum):
     WINDOWS_REGISTRY_KEY = "Windows-Registry-Key"
     WINDOWS_REGISTRY_VALUE_TYPE = "Windows-Registry-Value-Type"
     X509_V3_EXTENSIONS_TYPE_ = "X509-V3-Extensions-Type"
-    X_OPENCTI_CRYPTOGRAPHIC_KEY = "X-Opencti-Cryptographic-Key"
-    X_OPENCTI_CRYPTOCURRENCY_WALLET = "X-Opencti-Cryptocurrency-Wallet"
-    X_OPENCTI_TEXT = "X-Opencti-Text"
-    X_OPENCTI_USER_AGENT = "X-Opencti-User-Agent"
+    X_OPENCTI_CRYPTOGRAPHIC_KEY = "X-OpenCTI-Cryptographic-Key"
+    X_OPENCTI_CRYPTOCURRENCY_WALLET = "X-OpenCTI-Cryptocurrency-Wallet"
+    X_OPENCTI_TEXT = "X-OpenCTI-Text"
+    X_OPENCTI_USER_AGENT = "X-OpenCTI-User-Agent"
 
     @classmethod
     def has_value(cls, value):

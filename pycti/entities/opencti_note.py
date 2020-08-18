@@ -20,11 +20,21 @@ class Note:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -538,48 +548,3 @@ class Note:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )
-
-    """
-        Export a Note object in STIX2
-
-        :param id: the id of the Note
-        :return Note object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            note = dict()
-            note["id"] = entity["stix_id"]
-            note["type"] = "note"
-            note["spec_version"] = SPEC_VERSION
-            note["content"] = entity["content"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                note["labels"] = entity["stix_label"]
-            else:
-                note["labels"] = ["note"]
-            if self.opencti.not_empty(entity["description"]):
-                note["abstract"] = entity["description"]
-            elif self.opencti.not_empty(entity["name"]):
-                note["abstract"] = entity["name"]
-            note["created"] = self.opencti.stix2.format_date(entity["created"])
-            note["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            if self.opencti.not_empty(entity["alias"]):
-                note[CustomProperties.ALIASES] = entity["alias"]
-            if self.opencti.not_empty(entity["name"]):
-                note[CustomProperties.NAME] = entity["name"]
-            if self.opencti.not_empty(entity["graph_data"]):
-                note[CustomProperties.GRAPH_DATA] = entity["graph_data"]
-            note[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, note, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "[opencti_note] Missing parameters: id or entity")

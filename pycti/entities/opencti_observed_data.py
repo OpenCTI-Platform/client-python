@@ -20,11 +20,21 @@ class ObservedData:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -564,57 +574,8 @@ class ObservedData:
                             "id": stix_observable_result["id"],
                             "type": stix_observable_result["entity_type"],
                         }
-            return stix_observable_result
+            return observed_data_result
         else:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
-            )
-
-    """
-        Export a ObservedData object in STIX2
-
-        :param id: the id of the ObservedData
-        :return ObservedData object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            observedData = dict()
-            observedData["id"] = entity["stix_id"]
-            observedData["type"] = "observedData"
-            observedData["spec_version"] = SPEC_VERSION
-            observedData["content"] = entity["content"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                observedData["labels"] = entity["stix_label"]
-            else:
-                observedData["labels"] = ["observedData"]
-            if self.opencti.not_empty(entity["description"]):
-                observedData["abstract"] = entity["description"]
-            elif self.opencti.not_empty(entity["name"]):
-                observedData["abstract"] = entity["name"]
-            observedData["created"] = self.opencti.stix2.format_date(entity["created"])
-            observedData["modified"] = self.opencti.stix2.format_date(
-                entity["modified"]
-            )
-            if self.opencti.not_empty(entity["alias"]):
-                observedData[CustomProperties.ALIASES] = entity["alias"]
-            if self.opencti.not_empty(entity["name"]):
-                observedData[CustomProperties.NAME] = entity["name"]
-            if self.opencti.not_empty(entity["graph_data"]):
-                observedData[CustomProperties.GRAPH_DATA] = entity["graph_data"]
-            observedData[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, observedData, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log(
-                "error", "[opencti_observedData] Missing parameters: id or entity"
             )

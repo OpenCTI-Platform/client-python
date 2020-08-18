@@ -868,133 +868,48 @@ class OpenCTIStix2:
     # endregion
 
     # region export
-    def prepare_export(
-        self, entity, stix_object, mode="simple", max_marking_definition_entity=None
-    ):
-        if (
-            self.check_max_marking_definition(
-                max_marking_definition_entity, entity["markingDefinitions"]
-            )
-            is False
-        ):
-            self.opencti.log(
-                "info",
-                "Marking definitions of "
-                + stix_object["type"]
-                + ' "'
-                + stix_object["name"]
-                + '" are less than max definition, not exporting.',
-            )
-            return []
-        result = []
-        objects_to_get = []
-        relations_to_get = []
-        if "createdBy" in entity and entity["createdBy"] is not None:
-            entity_created_by = entity["createdBy"]
-            if entity_created_by["entity_type"] == "User":
-                identity_class = "individual"
-            elif entity_created_by["entity_type"] == "Sector":
-                identity_class = "class"
-            else:
-                identity_class = "organization"
+    def generate_export(self, entity):
+        # Handle model deviation
 
-            created_by = dict()
-            created_by["id"] = entity_created_by["stix_id"]
-            created_by["type"] = "identity"
-            created_by["spec_version"] = entity_created_by["spec_version"]
-            created_by["name"] = entity_created_by["name"]
-            created_by["identity_class"] = identity_class
-            if self.opencti.not_empty(entity_created_by["labels"]):
-                created_by["labels"] = entity_created_by["stix_label"]
+        # Identities
+        if IdentityTypes.has_value(entity["entity_type"]):
+            if entity["entity_type"] == "Individual":
+                entity["identity_class"] = "individual"
+            elif entity["entity_type"] == "Sector":
+                entity["identity_class"] = "class"
             else:
-                created_by["labels"] = ["identity"]
-            created_by["created"] = self.format_date(entity_created_by["created"])
-            created_by["modified"] = self.format_date(entity_created_by["modified"])
-            if entity_created_by["entity_type"] == "organization":
-                if (
-                    "x_opencti_organization_type" in entity_created_by
-                    and self.opencti.not_empty(
-                        entity_created_by["x_opencti_organization_type"]
-                    )
-                ):
-                    created_by[CustomProperties.ORG_CLASS] = entity_created_by[
-                        "x_opencti_organization_type"
-                    ]
-                if (
-                    "x_opencti_reliability" in entity_created_by
-                    and self.opencti.not_empty(
-                        entity_created_by["x_opencti_reliability"]
-                    )
-                ):
-                    created_by[
-                        CustomProperties.x_opencti_reliability
-                    ] = entity_created_by["x_opencti_reliability"]
-            if self.opencti.not_empty(entity_created_by["alias"]):
-                created_by[CustomProperties.ALIASES] = entity_created_by["alias"]
-            created_by[CustomProperties.IDENTITY_TYPE] = entity_created_by[
-                "entity_type"
-            ]
-            created_by[CustomProperties.ID] = entity_created_by["id"]
+                entity["identity_class"] = "organization"
+            entity["entity_type"] = "Identity"
 
-            stix_object["created_by"] = created_by["id"]
-            result.append(created_by)
-        if "markingDefinitions" in entity and len(entity["markingDefinitions"]) > 0:
-            marking_definitions = []
-            for entity_marking_definition in entity["markingDefinitions"]:
-                if entity_marking_definition["definition_type"] == "TLP":
-                    created = "2017-01-20T00:00:00.000Z"
-                else:
-                    created = entity_marking_definition["created"]
-                marking_definition = {
-                    "type": "marking-definition",
-                    "spec_version": SPEC_VERSION,
-                    "id": entity_marking_definition["stix_id"],
-                    "created": created,
-                    "definition_type": entity_marking_definition[
-                        "definition_type"
-                    ].lower(),
-                    "name": entity_marking_definition["definition"],
-                    "definition": {
-                        entity_marking_definition["definition_type"]
-                        .lower(): entity_marking_definition["definition"]
-                        .lower()
-                        .replace("tlp:", "")
-                    },
-                }
-                marking_definitions.append(marking_definition["id"])
-                result.append(marking_definition)
-            stix_object["object_marking_refs"] = marking_definitions
-        if "tags" in entity and len(entity["tags"]) > 0:
-            tags = []
-            for entity_tag in entity["tags"]:
-                tag = dict()
-                tag["id"] = entity_tag["id"]
-                tag["tag_type"] = entity_tag["tag_type"]
-                tag["value"] = entity_tag["value"]
-                tag["color"] = entity_tag["color"]
-                tags.append(tag)
-            stix_object[CustomProperties.TAG_TYPE] = tags
+        # Locations
+        if LocationTypes.has_value(entity["entity_type"]):
+            entity["x_opencti_location_type"] = entity["entity_type"]
+            entity["entity_type"] = "Location"
+
+        # Flatten
+        if "objectLabel" in entity and len(entity["objectLabel"]) > 0:
+            entity["labels"] = []
+            for object_label in entity["objectLabel"]:
+                entity["labels"].append(object_label["value"])
+        if "objectLabel" in entity:
+            del entity["objectLabel"]
+            del entity["objectLabelIds"]
         if "killChainPhases" in entity and len(entity["killChainPhases"]) > 0:
-            kill_chain_phases = []
-            for entity_kill_chain_phase in entity["killChainPhases"]:
+            entity["kill_chain_phases"] = []
+            for object_kill_chain_phase in entity["killChainPhases"]:
                 kill_chain_phase = {
-                    "id": entity_kill_chain_phase["stix_id"],
-                    "kill_chain_name": entity_kill_chain_phase["kill_chain_name"],
-                    "phase_name": entity_kill_chain_phase["phase_name"],
-                    CustomProperties.ID: entity_kill_chain_phase["id"],
-                    CustomProperties.PHASE_ORDER: entity_kill_chain_phase[
-                        "phase_order"
-                    ],
-                    CustomProperties.CREATED: entity_kill_chain_phase["created"],
-                    CustomProperties.MODIFIED: entity_kill_chain_phase["modified"],
+                    "kill_chain_name": object_kill_chain_phase["kill_chain_name"],
+                    "phase_name": object_kill_chain_phase["phase_name"],
+                    "x_opencti_order": object_kill_chain_phase["x_opencti_order"],
                 }
-                kill_chain_phases.append(kill_chain_phase)
-            stix_object["kill_chain_phases"] = kill_chain_phases
+                entity["kill_chain_phases"].append(kill_chain_phase)
+        if "killChainPhases" in entity:
+            del entity["killChainPhases"]
+            del entity["killChainPhasesIds"]
         if "externalReferences" in entity and len(entity["externalReferences"]) > 0:
-            external_references = []
+            entity["external_references"] = []
             for entity_external_reference in entity["externalReferences"]:
                 external_reference = dict()
-                external_reference["id"] = entity_external_reference["stix_id"]
                 if self.opencti.not_empty(entity_external_reference["source_name"]):
                     external_reference["source_name"] = entity_external_reference[
                         "source_name"
@@ -1011,45 +926,127 @@ class OpenCTIStix2:
                     external_reference["external_id"] = entity_external_reference[
                         "external_id"
                     ]
-                external_reference[CustomProperties.ID] = entity_external_reference[
-                    "id"
-                ]
-                external_reference[
-                    CustomProperties.CREATED
-                ] = entity_external_reference["created"]
-                external_reference[
-                    CustomProperties.MODIFIED
-                ] = entity_external_reference["modified"]
-                external_references.append(external_reference)
-            stix_object["external_references"] = external_references
+                entity["external_references"].append(external_reference)
+        if "externalReferences" in entity:
+            del entity["externalReferences"]
+            del entity["externalReferencesIds"]
+
+        # Final
+        entity["x_opencti_id"] = entity["id"]
+        entity["id"] = entity["standard_id"]
+        entity["type"] = entity["entity_type"].lower()
+        del entity["standard_id"]
+        del entity["entity_type"]
+        del entity["parent_types"]
+        if "created_at" in entity:
+            del entity["created_at"]
+        if "updated_at" in entity:
+            del entity["updated_at"]
+
+        return {k: v for k, v in entity.items() if self.opencti.not_empty(v)}
+
+    def prepare_export(self, entity, mode="simple", max_marking_definition_entity=None):
+        if (
+            self.check_max_marking_definition(
+                max_marking_definition_entity,
+                entity["objectMarking"] if "objectMarking" in entity else None,
+            )
+            is False
+        ):
+            self.opencti.log(
+                "info",
+                "Marking definitions of "
+                + entity["type"]
+                + " are less than max definition, not exporting.",
+            )
+            return []
+        result = []
+        objects_to_get = []
+        relations_to_get = []
+        # CreatedByRef
+        if "createdBy" in entity and entity["createdBy"] is not None:
+            created_by = self.generate_export(entity["createdBy"])
+            entity["created_by_ref"] = created_by["id"]
+            result.append(created_by)
+        if "createdBy" in entity:
+            del entity["createdBy"]
+            del entity["createdById"]
+
+        # ObjectMarkingRefs
+        if "objectMarking" in entity and len(entity["objectMarking"]) > 0:
+            entity["object_marking_refs"] = []
+            for entity_marking_definition in entity["objectMarking"]:
+                if entity_marking_definition["definition_type"] == "TLP":
+                    created = "2017-01-20T00:00:00.000Z"
+                else:
+                    created = entity_marking_definition["created"]
+                marking_definition = {
+                    "type": "marking-definition",
+                    "spec_version": SPEC_VERSION,
+                    "id": entity_marking_definition["standard_id"],
+                    "created": created,
+                    "definition_type": entity_marking_definition[
+                        "definition_type"
+                    ].lower(),
+                    "name": entity_marking_definition["definition"],
+                    "definition": {
+                        entity_marking_definition["definition_type"]
+                        .lower(): entity_marking_definition["definition"]
+                        .lower()
+                        .replace("tlp:", "")
+                    },
+                }
+                result.append(marking_definition)
+                entity["object_marking_refs"].append(marking_definition["id"])
+        if "objectMarking" in entity:
+            del entity["objectMarking"]
+            del entity["objectMarkingIds"]
+        # ObjectRefs
         if "objects" in entity and len(entity["objects"]) > 0:
-            object_refs = []
+            entity["object_refs"] = []
             objects_to_get = entity["objects"]
             for entity_object in entity["objects"]:
-                object_refs.append(entity_object["standard_id"])
-            stix_object["object_refs"] = object_refs
+                entity["object_refs"].append(entity_object["standard_id"])
+                objects_to_get.append(entity_object["standard_id"])
+        if "objects" in entity:
+            del entity["objects"]
+            del entity["objectsIds"]
+        # Stix Core Relationship
+        if "from" in entity:
+            entity["source_ref"] = entity["from"]["standard_id"]
+            objects_to_get.append(entity["from"]["standard_id"])
+        if "from" in entity:
+            del entity["from"]
+        if "to" in entity:
+            entity["target_ref"] = entity["to"]["standard_id"]
+            objects_to_get.append(entity["to"]["standard_id"])
+        if "to" in entity:
+            del entity["to"]
 
-        result.append(stix_object)
+        result.append(entity)
 
         if mode == "simple":
             return result
         elif mode == "full":
-            uuids = [stix_object["id"]]
+            uuids = [entity["id"]]
             for x in result:
                 uuids.append(x["id"])
-            # Get extra relations
-            stix_relations = self.opencti.stix_relation.list(fromId=entity["id"])
-            for stix_relation in stix_relations:
+            # Get extra relations (from)
+            stix_core_relationships = self.opencti.stix_core_relationship.list(
+                fromId=entity["x_opencti_id"]
+            )
+            for stix_core_relationship in stix_core_relationships:
                 if self.check_max_marking_definition(
-                    max_marking_definition_entity, stix_relation["markingDefinitions"]
+                    max_marking_definition_entity,
+                    stix_core_relationship["objectMarking"]
+                    if "objectMarking" in stix_core_relationship
+                    else None,
                 ):
-                    if stix_relation["to"]["id"] == entity["id"]:
-                        other_side_entity = stix_relation["from"]
-                    else:
-                        other_side_entity = stix_relation["to"]
-                    objects_to_get.append(other_side_entity)
-                    relation_object_data = self.opencti.stix_relation.to_stix2(
-                        entity=stix_relation
+                    objects_to_get.append(stix_core_relationship["to"])
+                    relation_object_data = self.prepare_export(
+                        self.generate_export(stix_core_relationship),
+                        "simple",
+                        max_marking_definition_entity,
                     )
                     relation_object_bundle = self.filter_objects(
                         uuids, relation_object_data
@@ -1060,32 +1057,62 @@ class OpenCTIStix2:
                     self.opencti.log(
                         "info",
                         "Marking definitions of "
-                        + stix_relation["entity_type"]
+                        + stix_core_relationship["entity_type"]
                         + ' "'
-                        + stix_relation["id"]
+                        + stix_core_relationship["id"]
+                        + '" are less than max definition, not exporting the relation AND the target entity.',
+                    )
+            # Get extra relations (to)
+            stix_core_relationships = self.opencti.stix_core_relationship.list(
+                toId=entity["x_opencti_id"]
+            )
+            for stix_core_relationship in stix_core_relationships:
+                if self.check_max_marking_definition(
+                    max_marking_definition_entity,
+                    stix_core_relationship["objectMarking"]
+                    if "objectMarking" in stix_core_relationship
+                    else None,
+                ):
+                    objects_to_get.append(stix_core_relationship["to"])
+                    relation_object_data = self.prepare_export(
+                        self.generate_export(stix_core_relationship),
+                        "simple",
+                        max_marking_definition_entity,
+                    )
+                    relation_object_bundle = self.filter_objects(
+                        uuids, relation_object_data
+                    )
+                    uuids = uuids + [x["id"] for x in relation_object_bundle]
+                    result = result + relation_object_bundle
+                else:
+                    self.opencti.log(
+                        "info",
+                        "Marking definitions of "
+                        + stix_core_relationship["entity_type"]
+                        + ' "'
+                        + stix_core_relationship["id"]
                         + '" are less than max definition, not exporting the relation AND the target entity.',
                     )
             # Export
-            exporter = {
-                "Attack-Pattern": self.opencti.attack_pattern.to_stix2,
-                "Campaign": self.opencti.campaign.to_stix2,
-                "Note": self.opencti.note.to_stix2,
-                "Observed-Data": self.opencti.observed_data.to_stix2,
-                "Opinion": self.opencti.opinion.to_stix2,
-                "Report": self.opencti.report.to_stix2,
-                "Course-Of-Action": self.opencti.course_of_action.to_stix2,
-                "Identity": self.opencti.identity.to_stix2,
-                "Indicator": self.opencti.indicator.to_stix2,
-                "Infrastructure": self.opencti.infrastructure.to_stix2,
-                "Intrusion-Set": self.opencti.intrusion_set.to_stix2,
-                "Location": self.opencti.location.to_stix2,
-                "Malware": self.opencti.malware.to_stix2,
-                "Threat-Actor": self.opencti.threat_actor.to_stix2,
-                "Tool": self.opencti.tool.to_stix2,
-                "Vulnerability": self.opencti.vulnerability.to_stix2,
-                "X-OpenCTI-Incident": self.opencti.x_opencti_incident.to_stix2,
+            reader = {
+                "Attack-Pattern": self.opencti.attack_pattern.read,
+                "Campaign": self.opencti.campaign.read,
+                "Note": self.opencti.note.read,
+                "Observed-Data": self.opencti.observed_data.read,
+                "Opinion": self.opencti.opinion.read,
+                "Report": self.opencti.report.read,
+                "Course-Of-Action": self.opencti.course_of_action.read,
+                "Identity": self.opencti.identity.read,
+                "Indicator": self.opencti.indicator.read,
+                "Infrastructure": self.opencti.infrastructure.read,
+                "Intrusion-Set": self.opencti.intrusion_set.read,
+                "Location": self.opencti.location.read,
+                "Malware": self.opencti.malware.read,
+                "Threat-Actor": self.opencti.threat_actor.read,
+                "Tool": self.opencti.tool.read,
+                "Vulnerability": self.opencti.vulnerability.read,
+                "X-OpenCTI-Incident": self.opencti.x_opencti_incident.read,
             }
-
             # Get extra objects
             for entity_object in objects_to_get:
                 # Map types
@@ -1093,15 +1120,20 @@ class OpenCTIStix2:
                     entity_object["entity_type"] = "Identity"
                 if LocationTypes.has_value(entity_object["entity_type"]):
                     entity_object["entity_type"] = "Location"
-                do_export = exporter.get(
+                do_read = reader.get(
                     entity_object["entity_type"],
                     lambda **kwargs: self.unknown_type(
                         {"type": entity_object["entity_type"]}
                     ),
                 )
-                entity_object_data = do_export(id=entity_object["id"])
+                entity_object_data = do_read(id=entity_object["id"])
+                stix_entity_object = self.prepare_export(
+                    self.generate_export(entity_object_data),
+                    "simple",
+                    max_marking_definition_entity,
+                )
                 # Add to result
-                entity_object_bundle = self.filter_objects(uuids, entity_object_data)
+                entity_object_bundle = self.filter_objects(uuids, stix_entity_object)
                 uuids = uuids + [x["id"] for x in entity_object_bundle]
                 result = result + entity_object_bundle
             for relation_object in relations_to_get:
@@ -1133,22 +1165,22 @@ class OpenCTIStix2:
             """
 
             # Get notes
-            for export_uuid in uuids:
-                if "marking-definition" not in export_uuid:
-                    notes = self.opencti.opencti_stix_object_or_stix_relationship.notes(
-                        id=export_uuid
-                    )
-                    for note in notes:
-                        note_object_data = self.opencti.note.to_stix2(
-                            entity=note,
-                            mode="simple",
-                            max_marking_definition_entity=max_marking_definition_entity,
-                        )
-                        note_object_bundle = self.filter_objects(
-                            uuids, note_object_data
-                        )
-                        uuids = uuids + [x["id"] for x in note_object_bundle]
-                        result = result + note_object_bundle
+            # for export_uuid in uuids:
+            #    if "marking-definition" not in export_uuid:
+            #        notes = self.opencti.opencti_stix_object_or_stix_relationship.notes(
+            #            id=export_uuid
+            #        )
+            #        for note in notes:
+            #            note_object_data = self.opencti.note.to_stix2(
+            #                entity=note,
+            #                mode="simple",
+            #                max_marking_definition_entity=max_marking_definition_entity,
+            #            )
+            #            note_object_bundle = self.filter_objects(
+            #                uuids, note_object_data
+            #            )
+            #            uuids = uuids + [x["id"] for x in note_object_bundle]
+            #            result = result + note_object_bundle
 
             # Refilter all the reports object refs
             final_result = []
@@ -1184,36 +1216,38 @@ class OpenCTIStix2:
         if LocationTypes.has_value(entity_type):
             entity_type = "Location"
 
-        # Export
-        exporter = {
-            "Attack-Pattern": self.opencti.attack_pattern.to_stix2,
-            "Campaign": self.opencti.campaign.to_stix2,
-            "Note": self.opencti.note.to_stix2,
-            "Observed-Data": self.opencti.observed_data.to_stix2,
-            "Opinion": self.opencti.opinion.to_stix2,
-            "Report": self.opencti.report.to_stix2,
-            "Course-Of-Action": self.opencti.course_of_action.to_stix2,
-            "Identity": self.opencti.identity.to_stix2,
-            "Indicator": self.opencti.indicator.to_stix2,
-            "Infrastructure": self.opencti.infrastructure.to_stix2,
-            "Intrusion-Set": self.opencti.intrusion_set.to_stix2,
-            "Location": self.opencti.location.to_stix2,
-            "Malware": self.opencti.malware.to_stix2,
-            "Threat-Actor": self.opencti.threat_actor.to_stix2,
-            "Tool": self.opencti.tool.to_stix2,
-            "Vulnerability": self.opencti.vulnerability.to_stix2,
-            "X-OpenCTI-Incident": self.opencti.x_opencti_incident.to_stix2,
+        # Reader
+        reader = {
+            "Attack-Pattern": self.opencti.attack_pattern.read,
+            "Campaign": self.opencti.campaign.read,
+            "Note": self.opencti.note.read,
+            "Observed-Data": self.opencti.observed_data.read,
+            "Opinion": self.opencti.opinion.read,
+            "Report": self.opencti.report.read,
+            "Course-Of-Action": self.opencti.course_of_action.read,
+            "Identity": self.opencti.identity.read,
+            "Indicator": self.opencti.indicator.read,
+            "Infrastructure": self.opencti.infrastructure.read,
+            "Intrusion-Set": self.opencti.intrusion_set.read,
+            "Location": self.opencti.location.read,
+            "Malware": self.opencti.malware.read,
+            "Threat-Actor": self.opencti.threat_actor.read,
+            "Tool": self.opencti.tool.read,
+            "Vulnerability": self.opencti.vulnerability.read,
+            "X-OpenCTI-Incident": self.opencti.x_opencti_incident.read,
         }
-        do_export = exporter.get(
+        do_read = reader.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
         )
-        objects = do_export(
-            id=entity_id,
-            mode=mode,
-            max_marking_definition_entity=max_marking_definition_entity,
+        entity = do_read(id=entity_id)
+        if entity is None:
+            self.opencti.log("error", "Cannot export entity (not found)")
+            return bundle
+        stix_objects = self.prepare_export(
+            self.generate_export(entity), mode, max_marking_definition_entity
         )
-        if objects is not None:
-            bundle["objects"].extend(objects)
+        if stix_objects is not None:
+            bundle["objects"].extend(stix_objects)
         return bundle
 
     def export_list(
@@ -1292,35 +1326,12 @@ class OpenCTIStix2:
         )
 
         if entities_list is not None:
-            # Export
-            exporter = {
-                "Attack-Pattern": self.opencti.attack_pattern.to_stix2,
-                "Campaign": self.opencti.campaign.to_stix2,
-                "Note": self.opencti.note.to_stix2,
-                "Observed-Data": self.opencti.observed_data.to_stix2,
-                "Opinion": self.opencti.opinion.to_stix2,
-                "Report": self.opencti.report.to_stix2,
-                "Course-Of-Action": self.opencti.course_of_action.to_stix2,
-                "Identity": self.opencti.identity.to_stix2,
-                "Indicator": self.opencti.indicator.to_stix2,
-                "Infrastructure": self.opencti.infrastructure.to_stix2,
-                "Intrusion-Set": self.opencti.intrusion_set.to_stix2,
-                "Location": self.opencti.location.to_stix2,
-                "Malware": self.opencti.malware.to_stix2,
-                "Threat-Actor": self.opencti.threat_actor.to_stix2,
-                "Tool": self.opencti.tool.to_stix2,
-                "Vulnerability": self.opencti.vulnerability.to_stix2,
-                "X-OpenCTI-Incident": self.opencti.x_opencti_incident.to_stix2,
-                "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.to_stix2,
-            }
-            do_export = exporter.get(
-                entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
-            )
             uuids = []
             for entity in entities_list:
-                entity_bundle = do_export(
-                    entity=entity,
-                    max_marking_definition_entity=max_marking_definition_entity,
+                entity_bundle = self.prepare_export(
+                    self.generate_export(entity),
+                    "simple",
+                    max_marking_definition_entity,
                 )
                 if entity_bundle is not None:
                     entity_bundle_filtered = self.filter_objects(uuids, entity_bundle)

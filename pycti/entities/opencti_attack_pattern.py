@@ -20,11 +20,21 @@ class AttackPattern:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -509,6 +519,15 @@ class AttackPattern:
                         or external_reference["source_name"] == "amitt-attack"
                     ):
                         x_mitre_id = external_reference["external_id"]
+
+            # TODO: Compatibility with OpenCTI 3.X to be REMOVED
+            if "x_opencti_order" not in stix_object:
+                stix_object["x_opencti_order"] = (
+                    stix_object["x_opencti_level"]
+                    if "x_opencti_level" in stix_object
+                    else 0
+                )
+
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
@@ -557,57 +576,4 @@ class AttackPattern:
         else:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
-            )
-
-    """
-        Export an Attack-Pattern object in STIX2
-    
-        :param id: the id of the Attack-Pattern
-        :return Attack-Pattern object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            attack_pattern = dict()
-            attack_pattern["id"] = entity["stix_id"]
-            attack_pattern["type"] = "attack-pattern"
-            attack_pattern["spec_version"] = entity["spec_version"]
-            attack_pattern["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                attack_pattern["labels"] = entity["stix_label"]
-            else:
-                attack_pattern["labels"] = ["attack-pattern"]
-            if self.opencti.not_empty(entity["description"]):
-                attack_pattern["description"] = entity["description"]
-            attack_pattern["created"] = self.opencti.stix2.format_date(
-                entity["created"]
-            )
-            attack_pattern["modified"] = self.opencti.stix2.format_date(
-                entity["modified"]
-            )
-            if self.opencti.not_empty(entity["platform"]):
-                attack_pattern["x_mitre_platforms"] = entity["platform"]
-            if self.opencti.not_empty(entity["required_permission"]):
-                attack_pattern["x_mitre_permissions_required"] = entity[
-                    "required_permission"
-                ]
-            if self.opencti.not_empty(entity["external_id"]):
-                attack_pattern[CustomProperties.EXTERNAL_ID] = entity["external_id"]
-            if self.opencti.not_empty(entity["alias"]):
-                attack_pattern[CustomProperties.ALIASES] = entity["alias"]
-            attack_pattern[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, attack_pattern, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log(
-                "error", "[opencti_attack_pattern] Missing parameters: id or entity"
             )

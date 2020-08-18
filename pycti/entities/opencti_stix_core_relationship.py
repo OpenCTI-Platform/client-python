@@ -31,11 +31,21 @@ class StixCoreRelationship:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -976,6 +986,33 @@ class StixCoreRelationship:
         update = kwargs.get("update", False)
         default_date = kwargs.get("defaultDate", False)
         if stix_relation is not None:
+
+            # TODO: Compatibility with OpenCTI 3.X to be REMOVED
+            if "report_types" not in stix_relation:
+                stix_relation["report_types"] = (
+                    [stix_relation["x_opencti_report_class"]]
+                    if "x_opencti_report_class" in stix_relation
+                    else None
+                )
+            if "confidence" not in stix_relation:
+                stix_relation["confidence"] = (
+                    stix_relation["x_opencti_weight"]
+                    if "x_opencti_weight" in stix_relation
+                    else 0
+                )
+            if "start_time" not in stix_relation:
+                stix_relation["start_time"] = (
+                    stix_relation["x_opencti_first_seen"]
+                    if "x_opencti_first_seen" in stix_relation
+                    else None
+                )
+            if "stop_time" not in stix_relation:
+                stix_relation["stop_time"] = (
+                    stix_relation["x_opencti_last_seen"]
+                    if "x_opencti_last_seen" in stix_relation
+                    else None
+                )
+
             return self.create(
                 fromId=stix_relation["source_ref"],
                 toId=stix_relation["target_ref"],

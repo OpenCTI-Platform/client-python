@@ -21,11 +21,21 @@ class Tool:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -439,45 +449,3 @@ class Tool:
             )
         else:
             self.opencti.log("error", "[opencti_tool] Missing parameters: stixObject")
-
-    """
-        Export an Tool object in STIX2
-    
-        :param id: the id of the Tool
-        :return Tool object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            entity = self.read(id=id)
-            tool = dict()
-            tool["id"] = entity["stix_id"]
-            tool["type"] = "tool"
-            tool["spec_version"] = SPEC_VERSION
-            tool["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                tool["labels"] = entity["stix_label"]
-            else:
-                tool["labels"] = ["tool"]
-            if self.opencti.not_empty(entity["description"]):
-                tool["description"] = entity["description"]
-            if self.opencti.not_empty(entity["tool_version"]):
-                tool["tool_version"] = entity["tool_version"]
-            tool["created"] = self.opencti.stix2.format_date(entity["created"])
-            tool["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            if self.opencti.not_empty(entity["alias"]):
-                tool[CustomProperties.ALIASES] = entity["alias"]
-            tool[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, tool, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

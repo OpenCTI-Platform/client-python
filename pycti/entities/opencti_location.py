@@ -21,11 +21,21 @@ class Location:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -458,65 +468,3 @@ class Location:
             self.opencti.log(
                 "error", "[opencti_location] Missing parameters: stixObject"
             )
-
-    """
-        Export an Location object in STIX2
-    
-        :param id: the id of the Location
-        :return Location object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            if entity["entity_type"] == "user":
-                location_class = "individual"
-            elif entity["entity_type"] == "sector":
-                location_class = "class"
-            else:
-                location_class = "organization"
-            location = dict()
-            location["id"] = entity["stix_id"]
-            location["type"] = "location"
-            location["spec_version"] = SPEC_VERSION
-            location["name"] = entity["name"]
-            location["location_class"] = location_class
-            if self.opencti.not_empty(entity["stix_label"]):
-                location["labels"] = entity["stix_label"]
-            else:
-                location["labels"] = ["location"]
-            if self.opencti.not_empty(entity["description"]):
-                location["description"] = entity["description"]
-            if self.opencti.not_empty(entity["contact_information"]):
-                location["contact_information"] = entity["contact_information"]
-            location["created"] = self.opencti.stix2.format_date(entity["created"])
-            location["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            if self.opencti.not_empty(entity["alias"]):
-                location["aliases"] = entity["alias"]
-            if entity["entity_type"] == "organization":
-                if "x_opencti_organization_type" in entity and self.opencti.not_empty(
-                    entity["x_opencti_organization_type"]
-                ):
-                    location[CustomProperties.ORG_CLASS] = entity[
-                        "x_opencti_organization_type"
-                    ]
-                if "x_opencti_reliability" in entity and self.opencti.not_empty(
-                    entity["x_opencti_reliability"]
-                ):
-                    location[CustomProperties.x_opencti_reliability] = entity[
-                        "x_opencti_reliability"
-                    ]
-            location[CustomProperties.IDENTITY_TYPE] = entity["entity_type"]
-            location[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, location, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")

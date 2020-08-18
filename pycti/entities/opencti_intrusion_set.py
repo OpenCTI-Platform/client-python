@@ -22,11 +22,21 @@ class IntrusionSet:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -497,65 +507,4 @@ class IntrusionSet:
         else:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
-            )
-
-    """
-        Export an Intrusion-Set object in STIX2
-    
-        :param id: the id of the Intrusion-Set
-        :return Intrusion-Set object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            intrusion_set = dict()
-            intrusion_set["id"] = entity["stix_id"]
-            intrusion_set["type"] = "intrusion-set"
-            intrusion_set["spec_version"] = SPEC_VERSION
-            intrusion_set["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                intrusion_set["labels"] = entity["stix_label"]
-            else:
-                intrusion_set["labels"] = ["intrusion-set"]
-            if self.opencti.not_empty(entity["alias"]):
-                intrusion_set["aliases"] = entity["alias"]
-            if self.opencti.not_empty(entity["description"]):
-                intrusion_set["description"] = entity["description"]
-            if self.opencti.not_empty(entity["goal"]):
-                intrusion_set["goals"] = entity["goal"]
-            if self.opencti.not_empty(entity["sophistication"]):
-                intrusion_set["sophistication"] = entity["sophistication"]
-            if self.opencti.not_empty(entity["resource_level"]):
-                intrusion_set["resource_level"] = entity["resource_level"]
-            if self.opencti.not_empty(entity["primary_motivation"]):
-                intrusion_set["primary_motivation"] = entity["primary_motivation"]
-            if self.opencti.not_empty(entity["secondary_motivation"]):
-                intrusion_set["secondary_motivations"] = entity["secondary_motivation"]
-            if self.opencti.not_empty(entity["first_seen"]):
-                intrusion_set["first_seen"] = self.opencti.stix2.format_date(
-                    entity["first_seen"]
-                )
-            if self.opencti.not_empty(entity["last_seen"]):
-                intrusion_set["last_seen"] = self.opencti.stix2.format_date(
-                    entity["last_seen"]
-                )
-            intrusion_set["created"] = self.opencti.stix2.format_date(entity["created"])
-            intrusion_set["modified"] = self.opencti.stix2.format_date(
-                entity["modified"]
-            )
-            intrusion_set[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, intrusion_set, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log(
-                "error", "[opencti_intrusion_set] Missing parameters: id or entity"
             )

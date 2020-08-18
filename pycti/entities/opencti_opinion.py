@@ -20,11 +20,21 @@ class Opinion:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -546,51 +556,4 @@ class Opinion:
         else:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
-            )
-
-    """
-        Export a Opinion object in STIX2
-
-        :param id: the id of the Opinion
-        :return Opinion object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            opinion = dict()
-            opinion["id"] = entity["stix_id"]
-            opinion["type"] = "opinion"
-            opinion["spec_version"] = SPEC_VERSION
-            opinion["content"] = entity["content"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                opinion["labels"] = entity["stix_label"]
-            else:
-                opinion["labels"] = ["opinion"]
-            if self.opencti.not_empty(entity["description"]):
-                opinion["abstract"] = entity["description"]
-            elif self.opencti.not_empty(entity["name"]):
-                opinion["abstract"] = entity["name"]
-            opinion["created"] = self.opencti.stix2.format_date(entity["created"])
-            opinion["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            if self.opencti.not_empty(entity["alias"]):
-                opinion[CustomProperties.ALIASES] = entity["alias"]
-            if self.opencti.not_empty(entity["name"]):
-                opinion[CustomProperties.NAME] = entity["name"]
-            if self.opencti.not_empty(entity["graph_data"]):
-                opinion[CustomProperties.GRAPH_DATA] = entity["graph_data"]
-            opinion[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, opinion, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log(
-                "error", "[opencti_opinion] Missing parameters: id or entity"
             )

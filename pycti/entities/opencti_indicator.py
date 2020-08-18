@@ -25,11 +25,21 @@ class Indicator:
                     standard_id
                     entity_type
                     parent_types
+                    spec_version
                     name
                     aliases
                     description
                     created
                     modified
+                    objectLabel {
+                        edges {
+                            node {
+                                id
+                                value
+                                color
+                            }
+                        }
+                    }                    
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -539,10 +549,8 @@ class Indicator:
                     {
                         "id": id,
                         "input": {
-                            "fromRole": "observables_aggregation",
-                            "toId": stix_observable_id,
-                            "toRole": "soo",
-                            "through": "observable_refs",
+                            "toId": stix_cyber_observable_id,
+                            "through": "based-on",
                         },
                     },
                 )
@@ -550,7 +558,7 @@ class Indicator:
         else:
             self.opencti.log(
                 "error",
-                "[opencti_indicator] Missing parameters: id and stix_observable_id",
+                "[opencti_indicator] Missing parameters: id and stix cyber_observable_id",
             )
             return False
 
@@ -629,55 +637,3 @@ class Indicator:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )
-
-    """
-        Export an Indicator object in STIX2
-    
-        :param id: the id of the Indicator
-        :return Indicator object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            indicator = dict()
-            indicator["id"] = entity["stix_id"]
-            indicator["type"] = "indicator"
-            indicator["spec_version"] = SPEC_VERSION
-            indicator["name"] = entity["name"]
-            if self.opencti.not_empty(entity["stix_label"]):
-                indicator["labels"] = entity["stix_label"]
-            else:
-                indicator["labels"] = ["indicator"]
-            if self.opencti.not_empty(entity["description"]):
-                indicator["description"] = entity["description"]
-            indicator["pattern"] = entity["indicator_pattern"]
-            indicator["valid_from"] = self.opencti.stix2.format_date(
-                entity["valid_from"]
-            )
-            indicator["valid_until"] = self.opencti.stix2.format_date(
-                entity["valid_until"]
-            )
-            if self.opencti.not_empty(entity["pattern_type"]):
-                indicator["pattern_type"] = entity["pattern_type"]
-            else:
-                indicator["pattern_type"] = "stix"
-            indicator["created"] = self.opencti.stix2.format_date(entity["created"])
-            indicator["modified"] = self.opencti.stix2.format_date(entity["modified"])
-            if self.opencti.not_empty(entity["alias"]):
-                indicator[CustomProperties.ALIASES] = entity["alias"]
-            if self.opencti.not_empty(entity["score"]):
-                indicator[CustomProperties.SCORE] = entity["score"]
-            indicator[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, indicator, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log("error", "Missing parameters: id or entity")
