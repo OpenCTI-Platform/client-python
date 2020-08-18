@@ -2,7 +2,6 @@
 
 import dateutil.parser
 import datetime
-from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
 class StixCoreRelationship:
@@ -1062,80 +1061,4 @@ class StixCoreRelationship:
         else:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
-            )
-
-    """
-        Export an stix_core_relationship object in STIX2
-
-        :param id: the id of the stix_core_relationship
-        :return stix_core_relationship object
-    """
-
-    def to_stix2(self, **kwargs):
-        id = kwargs.get("id", None)
-        mode = kwargs.get("mode", "simple")
-        max_marking_definition_entity = kwargs.get(
-            "max_marking_definition_entity", None
-        )
-        entity = kwargs.get("entity", None)
-        if id is not None and entity is None:
-            entity = self.read(id=id)
-        if entity is not None:
-            roles = self.opencti.resolve_role(
-                entity["relationship_type"],
-                entity["from"]["entity_type"],
-                entity["to"]["entity_type"],
-            )
-            if roles is not None:
-                final_from_id = entity["from"]["stix_id"]
-                final_to_id = entity["to"]["stix_id"]
-            else:
-                roles = self.opencti.resolve_role(
-                    entity["relationship_type"],
-                    entity["to"]["entity_type"],
-                    entity["from"]["entity_type"],
-                )
-                if roles is not None:
-                    final_from_id = entity["to"]["stix_id"]
-                    final_to_id = entity["from"]["stix_id"]
-
-            stix_core_relationship = dict()
-            stix_core_relationship["id"] = entity["stix_id"]
-            stix_core_relationship["type"] = "relationship"
-            stix_core_relationship["spec_version"] = SPEC_VERSION
-            stix_core_relationship["relationship_type"] = entity["relationship_type"]
-            if self.opencti.not_empty(entity["description"]):
-                stix_core_relationship["description"] = entity["description"]
-            stix_core_relationship["source_ref"] = final_from_id
-            stix_core_relationship["target_ref"] = final_to_id
-            stix_core_relationship[CustomProperties.SOURCE_REF] = final_from_id
-            stix_core_relationship[CustomProperties.TARGET_REF] = final_to_id
-            stix_core_relationship["created"] = self.opencti.stix2.format_date(
-                entity["created"]
-            )
-            stix_core_relationship["modified"] = self.opencti.stix2.format_date(
-                entity["modified"]
-            )
-            if self.opencti.not_empty(entity["start_time"]):
-                stix_core_relationship[
-                    CustomProperties.FIRST_SEEN
-                ] = self.opencti.stix2.format_date(entity["start_time"])
-            if self.opencti.not_empty(entity["stop_time"]):
-                stix_core_relationship[
-                    CustomProperties.LAST_SEEN
-                ] = self.opencti.stix2.format_date(entity["stop_time"])
-            if self.opencti.not_empty(entity["weight"]):
-                stix_core_relationship[CustomProperties.WEIGHT] = entity["weight"]
-            if self.opencti.not_empty(entity["role_played"]):
-                stix_core_relationship[CustomProperties.ROLE_PLAYED] = entity[
-                    "role_played"
-                ]
-            stix_core_relationship[CustomProperties.ID] = entity["id"]
-            return self.opencti.stix2.prepare_export(
-                entity, stix_core_relationship, mode, max_marking_definition_entity
-            )
-        else:
-            self.opencti.log(
-                "error",
-                "[opencti_stix_core_relationship] Missing parameters: id or entity",
             )

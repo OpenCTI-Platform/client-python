@@ -310,7 +310,7 @@ class StixCyberObservableRelation:
                     "created": created,
                     "modified": modified,
                     "createdBy": created_by,
-                    "objectMarking": objectMarking,
+                    "objectMarking": object_marking,
                 }
             },
         )

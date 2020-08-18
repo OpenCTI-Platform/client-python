@@ -1,7 +1,6 @@
 # coding: utf-8
 
 import json
-from pycti.utils.opencti_stix2 import SPEC_VERSION
 
 
 class Infrastructure:
