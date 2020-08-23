@@ -3,7 +3,7 @@
 import json
 
 
-class IntrusionSet:
+class XOpenCTIIncident:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -96,20 +96,17 @@ class IntrusionSet:
             aliases
             first_seen
             last_seen
-            goals
-            resource_level
-            primary_motivation
-            secondary_motivations      
+            objective
         """
 
     """
-        List Intrusion-Set objects
+        List Incident objects
 
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination
-        :return List of Intrusion-Set objects
+        :return List of Incident objects
     """
 
     def list(self, **kwargs):
@@ -126,12 +123,12 @@ class IntrusionSet:
             first = 500
 
         self.opencti.log(
-            "info", "Listing Intrusion-Sets with filters " + json.dumps(filters) + "."
+            "info", "Listing Incidents with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query IntrusionSets($filters: [IntrusionSetsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IntrusionSetsOrdering, $orderMode: OrderingMode) {
-                intrusionSets(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query XOpenCTIIncidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
+                xOpenCTIIncidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -162,15 +159,15 @@ class IntrusionSet:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["intrusionSets"], with_pagination
+            result["data"]["xOpenCTIIncidents"], with_pagination
         )
 
     """
-        Read a Intrusion-Set object
+        Read a X-OpenCTI-Incident object
         
-        :param id: the id of the Intrusion-Set
+        :param id: the id of the X-OpenCTI-Incident
         :param filters: the filters to apply if no id provided
-        :return Intrusion-Set object
+        :return X-OpenCTI-Incident object
     """
 
     def read(self, **kwargs):
@@ -178,11 +175,11 @@ class IntrusionSet:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Intrusion-Set {" + id + "}.")
+            self.opencti.log("info", "Reading Incident {" + id + "}.")
             query = (
                 """
-                query IntrusionSet($id: String!) {
-                    intrusionSet(id: $id) {
+                query XOpenCTIIncident($id: String!) {
+                    xOpenCTIIncident(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -195,7 +192,9 @@ class IntrusionSet:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["intrusionSet"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["xOpenCTIIncident"]
+            )
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -204,15 +203,15 @@ class IntrusionSet:
                 return None
         else:
             self.opencti.log(
-                "error", "[opencti_intrusion_set] Missing parameters: id or filters"
+                "error", "[opencti_incident] Missing parameters: id or filters"
             )
             return None
 
     """
-        Create a Intrusion-Set object
+        Create a Incident object
 
-        :param name: the name of the Intrusion Set
-        :return Intrusion-Set object
+        :param name: the name of the Incident
+        :return Incident object
     """
 
     def create(self, **kwargs):
@@ -231,23 +230,20 @@ class IntrusionSet:
         aliases = kwargs.get("aliases", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
-        goals = kwargs.get("goals", None)
-        resource_level = kwargs.get("resource_level", None)
-        primary_motivation = kwargs.get("primary_motivation", None)
-        secondary_motivations = kwargs.get("secondary_motivations", None)
+        objective = kwargs.get("objective", None)
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Intrusion-Set {" + name + "}.")
+            self.opencti.log("info", "Creating Incident {" + name + "}.")
             query = """
-                mutation IntrusionSetAdd($input: IntrusionSetAddInput) {
-                    intrusionSetAdd(input: $input) {
+                mutation XOpenCTIIncidentAdd($input: XOpenCTIIncidentAddInput) {
+                    xOpenCTIIncidentAdd(input: $input) {
                         id
                         standard_id
                         entity_type
-                        parent_types
+                        parent_types               
                     }
-                }
+               }
             """
             result = self.opencti.query(
                 query,
@@ -268,28 +264,22 @@ class IntrusionSet:
                         "aliases": aliases,
                         "first_seen": first_seen,
                         "last_seen": last_seen,
-                        "goals": goals,
-                        "resource_level": resource_level,
-                        "primary_motivation": primary_motivation,
-                        "secondary_motivations": secondary_motivations,
+                        "objective": objective,
                         "update": update,
                     }
                 },
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["intrusionSetAdd"]
+                result["data"]["xOpenCTIIncidentAdd"]
             )
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_intrusion_set] Missing parameters: name and description",
-            )
+            self.opencti.log("error", "Missing parameters: name and description")
 
     """
-        Import an Intrusion-Set object from a STIX2 object
+        Import a X-OpenCTI-Incident object from a STIX2 object
 
-        :param stixObject: the Stix-Object Intrusion-Set
-        :return Intrusion-Set object
+        :param stixObject: the Stix-Object X-OpenCTI-Incident
+        :return X-OpenCTI-Incident object
     """
 
     def import_from_stix2(self, **kwargs):
@@ -324,26 +314,19 @@ class IntrusionSet:
                 )
                 if "description" in stix_object
                 else "",
-                alias=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                objective=stix_object["objective"]
+                if "objective" in stix_object
+                else None,
                 first_seen=stix_object["first_seen"]
                 if "first_seen" in stix_object
                 else None,
                 last_seen=stix_object["last_seen"]
                 if "last_seen" in stix_object
                 else None,
-                goals=stix_object["goals"] if "goals" in stix_object else None,
-                resource_level=stix_object["resource_level"]
-                if "resource_level" in stix_object
-                else None,
-                primary_motivation=stix_object["primary_motivation"]
-                if "primary_motivation" in stix_object
-                else None,
-                secondary_motivations=stix_object["secondary_motivations"]
-                if "secondary_motivations" in stix_object
-                else None,
                 update=update,
             )
         else:
             self.opencti.log(
-                "error", "[opencti_attack_pattern] Missing parameters: stixObject"
+                "error", "[opencti_incident] Missing parameters: stixObject"
             )

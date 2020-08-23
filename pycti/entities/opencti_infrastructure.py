@@ -3,7 +3,12 @@
 import json
 
 
-class IntrusionSet:
+class Infrastructure:
+    """Main Infrastructure class for OpenCTI
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -93,26 +98,42 @@ class IntrusionSet:
             modified
             name
             description
-            aliases
+            infrastructure_types
             first_seen
             last_seen
-            goals
-            resource_level
-            primary_motivation
-            secondary_motivations      
+            killChainPhases {
+                edges {
+                    node {
+                        id
+                        standard_id                            
+                        entity_type
+                        kill_chain_name
+                        phase_name
+                        x_opencti_order
+                        created
+                        modified
+                    }
+                }
+            }
         """
 
-    """
-        List Intrusion-Set objects
-
-        :param filters: the filters to apply
-        :param search: the search keyword
-        :param first: return the first n rows from the after ID (or the beginning if not set)
-        :param after: ID of the first row for pagination
-        :return List of Intrusion-Set objects
-    """
-
     def list(self, **kwargs):
+        """List Infrastructure objects
+
+        The list method accepts the following \**kwargs:
+
+        :param list filters: (optional) the filters to apply
+        :param str search: (optional) a search keyword to apply for the listing
+        :param int first: (optional) return the first n rows from the `after` ID
+                            or the beginning if not set
+        :param str after: (optional) OpenCTI object ID of the first row for pagination
+        :param str orderBy: (optional) the field to order the response on
+        :param bool orderMode: (optional) either "`asc`" or "`desc`"
+        :param list customAttributes: (optional) list of attributes keys to return
+        :param bool getAll: (optional) switch to return all entries (be careful to use this without any other filters)
+        :param bool withPagination: (optional) switch to use pagination
+        """
+
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         first = kwargs.get("first", 500)
@@ -126,12 +147,12 @@ class IntrusionSet:
             first = 500
 
         self.opencti.log(
-            "info", "Listing Intrusion-Sets with filters " + json.dumps(filters) + "."
+            "info", "Listing Infrastructures with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query IntrusionSets($filters: [IntrusionSetsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IntrusionSetsOrdering, $orderMode: OrderingMode) {
-                intrusionSets(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query Infrastructures($filters: [InfrastructuresFiltering], $search: String, $first: Int, $after: ID, $orderBy: InfrastructuresOrdering, $orderMode: OrderingMode) {
+                infrastructures(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -161,28 +182,56 @@ class IntrusionSet:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
-            result["data"]["intrusionSets"], with_pagination
-        )
 
-    """
-        Read a Intrusion-Set object
-        
-        :param id: the id of the Intrusion-Set
-        :param filters: the filters to apply if no id provided
-        :return Intrusion-Set object
-    """
+        if get_all:
+            final_data = []
+            data = self.opencti.process_multiple(result["data"]["infrastructures"])
+            final_data = final_data + data
+            while result["data"]["infrastructures"]["pageInfo"]["hasNextPage"]:
+                after = result["data"]["infrastructures"]["pageInfo"]["endCursor"]
+                self.opencti.log("info", "Listing Infrastructures after " + after)
+                result = self.opencti.query(
+                    query,
+                    {
+                        "filters": filters,
+                        "search": search,
+                        "first": first,
+                        "after": after,
+                        "orderBy": order_by,
+                        "orderMode": order_mode,
+                    },
+                )
+                data = self.opencti.process_multiple(result["data"]["infrastructures"])
+                final_data = final_data + data
+            return final_data
+        else:
+            return self.opencti.process_multiple(
+                result["data"]["infrastructures"], with_pagination
+            )
 
     def read(self, **kwargs):
+        """Read an Infrastructure object
+
+        read can be either used with a known OpenCTI entity `id` or by using a
+        valid filter to search and return a single Infrastructure entity or None.
+
+        The list method accepts the following \**kwargs.
+
+        Note: either `id` or `filters` is required.
+
+        :param str id: the id of the Threat-Actor
+        :param list filters: the filters to apply if no id provided
+        """
+
         id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Intrusion-Set {" + id + "}.")
+            self.opencti.log("info", "Reading Infrastructure {" + id + "}.")
             query = (
                 """
-                query IntrusionSet($id: String!) {
-                    intrusionSet(id: $id) {
+                query Infrastructure($id: String!) {
+                    infrastructure(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -195,24 +244,26 @@ class IntrusionSet:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["intrusionSet"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["infrastructure"]
+            )
         elif filters is not None:
-            result = self.list(filters=filters)
+            result = self.list(filters=filters, customAttributes=custom_attributes)
             if len(result) > 0:
                 return result[0]
             else:
                 return None
         else:
             self.opencti.log(
-                "error", "[opencti_intrusion_set] Missing parameters: id or filters"
+                "error", "[opencti_infrastructure] Missing parameters: id or filters"
             )
             return None
 
     """
-        Create a Intrusion-Set object
+        Create a Infrastructure object
 
-        :param name: the name of the Intrusion Set
-        :return Intrusion-Set object
+        :param name: the name of the Infrastructure
+        :return Infrastructure object
     """
 
     def create(self, **kwargs):
@@ -227,25 +278,23 @@ class IntrusionSet:
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
-        description = kwargs.get("description", "")
+        description = kwargs.get("description", None)
         aliases = kwargs.get("aliases", None)
+        infrastructure_types = kwargs.get("infrastructure_types", None)
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
-        goals = kwargs.get("goals", None)
-        resource_level = kwargs.get("resource_level", None)
-        primary_motivation = kwargs.get("primary_motivation", None)
-        secondary_motivations = kwargs.get("secondary_motivations", None)
+        kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None:
-            self.opencti.log("info", "Creating Intrusion-Set {" + name + "}.")
+        if name is not None:
+            self.opencti.log("info", "Creating Infrastructure {" + name + "}.")
             query = """
-                mutation IntrusionSetAdd($input: IntrusionSetAddInput) {
-                    intrusionSetAdd(input: $input) {
+                mutation InfrastructureAdd($input: InfrastructureAddInput) {
+                    infrastructureAdd(input: $input) {
                         id
                         standard_id
                         entity_type
-                        parent_types
+                        parent_types                    
                     }
                 }
             """
@@ -266,30 +315,28 @@ class IntrusionSet:
                         "name": name,
                         "description": description,
                         "aliases": aliases,
+                        "infrastructure_types": infrastructure_types,
                         "first_seen": first_seen,
                         "last_seen": last_seen,
-                        "goals": goals,
-                        "resource_level": resource_level,
-                        "primary_motivation": primary_motivation,
-                        "secondary_motivations": secondary_motivations,
+                        "killChainPhases": kill_chain_phases,
                         "update": update,
                     }
                 },
             )
             return self.opencti.process_multiple_fields(
-                result["data"]["intrusionSetAdd"]
+                result["data"]["infrastructureAdd"]
             )
         else:
             self.opencti.log(
                 "error",
-                "[opencti_intrusion_set] Missing parameters: name and description",
+                "[opencti_infrastructure] Missing parameters: name and infrastructure_pattern and main_observable_type",
             )
 
     """
-        Import an Intrusion-Set object from a STIX2 object
+        Import an Infrastructure object from a STIX2 object
 
-        :param stixObject: the Stix-Object Intrusion-Set
-        :return Intrusion-Set object
+        :param stixObject: the Stix-Object Infrastructure
+        :return Infrastructure object
     """
 
     def import_from_stix2(self, **kwargs):
@@ -324,22 +371,18 @@ class IntrusionSet:
                 )
                 if "description" in stix_object
                 else "",
-                alias=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                infrastructure_types=stix_object["infrastructure_types"]
+                if "infrastructure_types" in stix_object
+                else "",
                 first_seen=stix_object["first_seen"]
                 if "first_seen" in stix_object
                 else None,
                 last_seen=stix_object["last_seen"]
                 if "last_seen" in stix_object
                 else None,
-                goals=stix_object["goals"] if "goals" in stix_object else None,
-                resource_level=stix_object["resource_level"]
-                if "resource_level" in stix_object
-                else None,
-                primary_motivation=stix_object["primary_motivation"]
-                if "primary_motivation" in stix_object
-                else None,
-                secondary_motivations=stix_object["secondary_motivations"]
-                if "secondary_motivations" in stix_object
+                killChainPhases=extras["kill_chain_phases_ids"]
+                if "kill_chain_phases_ids" in extras
                 else None,
                 update=update,
             )

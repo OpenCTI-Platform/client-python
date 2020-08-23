@@ -3,7 +3,7 @@
 import json
 
 
-class IntrusionSet:
+class Location:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -93,26 +93,25 @@ class IntrusionSet:
             modified
             name
             description
-            aliases
-            first_seen
-            last_seen
-            goals
-            resource_level
-            primary_motivation
-            secondary_motivations      
+            latitude
+            longitude
+            precision
+            x_opencti_aliases
         """
 
     """
-        List Intrusion-Set objects
+        List Location objects
 
+        :param types: the list of types
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination
-        :return List of Intrusion-Set objects
+        :return List of Location objects
     """
 
     def list(self, **kwargs):
+        types = kwargs.get("types", None)
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         first = kwargs.get("first", 500)
@@ -126,12 +125,12 @@ class IntrusionSet:
             first = 500
 
         self.opencti.log(
-            "info", "Listing Intrusion-Sets with filters " + json.dumps(filters) + "."
+            "info", "Listing Locations with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query IntrusionSets($filters: [IntrusionSetsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IntrusionSetsOrdering, $orderMode: OrderingMode) {
-                intrusionSets(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+            query Locations($types: [String], $filters: [LocationsFiltering], $search: String, $first: Int, $after: ID, $orderBy: LocationsOrdering, $orderMode: OrderingMode) {
+                locations(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
                             """
@@ -153,6 +152,7 @@ class IntrusionSet:
         result = self.opencti.query(
             query,
             {
+                "types": types,
                 "filters": filters,
                 "search": search,
                 "first": first,
@@ -162,15 +162,15 @@ class IntrusionSet:
             },
         )
         return self.opencti.process_multiple(
-            result["data"]["intrusionSets"], with_pagination
+            result["data"]["locations"], with_pagination
         )
 
     """
-        Read a Intrusion-Set object
+        Read a Location object
         
-        :param id: the id of the Intrusion-Set
+        :param id: the id of the Location
         :param filters: the filters to apply if no id provided
-        :return Intrusion-Set object
+        :return Location object
     """
 
     def read(self, **kwargs):
@@ -178,11 +178,11 @@ class IntrusionSet:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Intrusion-Set {" + id + "}.")
+            self.opencti.log("info", "Reading Location {" + id + "}.")
             query = (
                 """
-                query IntrusionSet($id: String!) {
-                    intrusionSet(id: $id) {
+                query Location($id: String!) {
+                    location(id: $id) {
                         """
                 + (
                     custom_attributes
@@ -195,7 +195,7 @@ class IntrusionSet:
              """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["intrusionSet"])
+            return self.opencti.process_multiple_fields(result["data"]["location"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -204,18 +204,19 @@ class IntrusionSet:
                 return None
         else:
             self.opencti.log(
-                "error", "[opencti_intrusion_set] Missing parameters: id or filters"
+                "error", "[opencti_location] Missing parameters: id or filters"
             )
             return None
 
     """
-        Create a Intrusion-Set object
+        Create a Location object
 
-        :param name: the name of the Intrusion Set
-        :return Intrusion-Set object
+        :param name: the name of the Location
+        :return Location object
     """
 
     def create(self, **kwargs):
+        type = kwargs.get("type", None)
         stix_id = kwargs.get("stix_id", None)
         created_by = kwargs.get("createdBy", None)
         object_marking = kwargs.get("objectMarking", None)
@@ -228,20 +229,17 @@ class IntrusionSet:
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
         description = kwargs.get("description", "")
-        aliases = kwargs.get("aliases", None)
-        first_seen = kwargs.get("first_seen", None)
-        last_seen = kwargs.get("last_seen", None)
-        goals = kwargs.get("goals", None)
-        resource_level = kwargs.get("resource_level", None)
-        primary_motivation = kwargs.get("primary_motivation", None)
-        secondary_motivations = kwargs.get("secondary_motivations", None)
+        latitude = kwargs.get("latitude", None)
+        longitude = kwargs.get("longitude", None)
+        precision = kwargs.get("precision", None)
+        x_opencti_aliases = kwargs.get("x_opencti_aliases", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None:
-            self.opencti.log("info", "Creating Intrusion-Set {" + name + "}.")
+        if name is not None:
+            self.opencti.log("info", "Creating Location {" + name + "}.")
             query = """
-                mutation IntrusionSetAdd($input: IntrusionSetAddInput) {
-                    intrusionSetAdd(input: $input) {
+                mutation LocationAdd($input: LocationAddInput) {
+                    locationAdd(input: $input) {
                         id
                         standard_id
                         entity_type
@@ -253,6 +251,7 @@ class IntrusionSet:
                 query,
                 {
                     "input": {
+                        "type": type,
                         "stix_id": stix_id,
                         "createdBy": created_by,
                         "objectMarking": object_marking,
@@ -265,31 +264,23 @@ class IntrusionSet:
                         "modified": modified,
                         "name": name,
                         "description": description,
-                        "aliases": aliases,
-                        "first_seen": first_seen,
-                        "last_seen": last_seen,
-                        "goals": goals,
-                        "resource_level": resource_level,
-                        "primary_motivation": primary_motivation,
-                        "secondary_motivations": secondary_motivations,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "precision": precision,
+                        "x_opencti_aliases": x_opencti_aliases,
                         "update": update,
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(
-                result["data"]["intrusionSetAdd"]
-            )
+            return self.opencti.process_multiple_fields(result["data"]["locationAdd"])
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_intrusion_set] Missing parameters: name and description",
-            )
+            self.opencti.log("error", "Missing parameters: name")
 
     """
-        Import an Intrusion-Set object from a STIX2 object
+        Import an Location object from a STIX2 object
 
-        :param stixObject: the Stix-Object Intrusion-Set
-        :return Intrusion-Set object
+        :param stixObject: the Stix-Object Location
+        :return Location object
     """
 
     def import_from_stix2(self, **kwargs):
@@ -297,14 +288,19 @@ class IntrusionSet:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
+            if "x_opencti_location_type" in stix_object:
+                type = stix_object["x_opencti_location_type"]
+            else:
+                type = "Position"
             return self.create(
+                type=type,
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
                 else None,
                 objectMarking=extras["object_marking_ids"]
                 if "object_marking_ids" in extras
-                else None,
+                else [],
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
                 else [],
@@ -324,26 +320,17 @@ class IntrusionSet:
                 )
                 if "description" in stix_object
                 else "",
-                alias=self.opencti.stix2.pick_aliases(stix_object),
-                first_seen=stix_object["first_seen"]
-                if "first_seen" in stix_object
+                latitude=stix_object["latitude"] if "latitude" in stix_object else None,
+                longitude=stix_object["longitude"]
+                if "longitude" in stix_object
                 else None,
-                last_seen=stix_object["last_seen"]
-                if "last_seen" in stix_object
+                precision=stix_object["precision"]
+                if "precision" in stix_object
                 else None,
-                goals=stix_object["goals"] if "goals" in stix_object else None,
-                resource_level=stix_object["resource_level"]
-                if "resource_level" in stix_object
-                else None,
-                primary_motivation=stix_object["primary_motivation"]
-                if "primary_motivation" in stix_object
-                else None,
-                secondary_motivations=stix_object["secondary_motivations"]
-                if "secondary_motivations" in stix_object
-                else None,
+                x_opencti_aliases=self.opencti.stix2.pick_aliases(stix_object),
                 update=update,
             )
         else:
             self.opencti.log(
-                "error", "[opencti_attack_pattern] Missing parameters: stixObject"
+                "error", "[opencti_location] Missing parameters: stixObject"
             )

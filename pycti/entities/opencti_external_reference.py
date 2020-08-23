@@ -8,17 +8,18 @@ class ExternalReference:
         self.opencti = opencti
         self.properties = """
             id
+            standard_id
             entity_type
-            stix_id_key
+            parent_types
+            created_at
+            updated_at
+            created
+            modified
             source_name
             description
             url
             hash
             external_id
-            created
-            modified
-            created_at
-            updated_at
         """
 
     """
@@ -129,15 +130,15 @@ class ExternalReference:
         :return External Reference object
     """
 
-    def create_raw(self, **kwargs):
+    def create(self, **kwargs):
+        stix_id = kwargs.get("stix_id", None)
+        created = kwargs.get("created", None)
+        modified = kwargs.get("modified", None)
         source_name = kwargs.get("source_name", None)
         url = kwargs.get("url", None)
         external_id = kwargs.get("external_id", None)
         description = kwargs.get("description", None)
-        id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
+        update = kwargs.get("update", False)
 
         if source_name is not None and url is not None:
             self.opencti.log(
@@ -158,14 +159,14 @@ class ExternalReference:
                 query,
                 {
                     "input": {
+                        "stix_id": stix_id,
+                        "created": created,
+                        "modified": modified,
                         "source_name": source_name,
                         "external_id": external_id,
                         "description": description,
                         "url": url,
-                        "internal_id_key": id,
-                        "stix_id_key": stix_id_key,
-                        "created": created,
-                        "modified": modified,
+                        "update": update,
                     }
                 },
             )
@@ -179,33 +180,51 @@ class ExternalReference:
             )
 
     """
-        Create a External Reference object only if it not exists, update it on request
+        Update a External Reference object field
 
-        :param name: the name of the External Reference
-        :return External Reference object
+        :param id: the External Reference id
+        :param key: the key of the field
+        :param value: the value of the field
+        :return The updated External Reference object
     """
 
-    def create(self, **kwargs):
-        source_name = kwargs.get("source_name", None)
-        url = kwargs.get("url", None)
-        external_id = kwargs.get("external_id", None)
-        description = kwargs.get("description", None)
+    def update_field(self, **kwargs):
         id = kwargs.get("id", None)
-        stix_id_key = kwargs.get("stix_id_key", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
-
-        external_reference_result = self.read(filters=[{"key": "url", "values": [url]}])
-        if external_reference_result is not None:
-            return external_reference_result
-        else:
-            return self.create_raw(
-                source_name=source_name,
-                url=url,
-                external_id=external_id,
-                description=description,
-                id=id,
-                stix_id_key=stix_id_key,
-                created=created,
-                modified=modified,
+        key = kwargs.get("key", None)
+        value = kwargs.get("value", None)
+        if id is not None and key is not None and value is not None:
+            self.opencti.log(
+                "info", "Updating External-Reference {" + id + "} field {" + key + "}."
             )
+            query = """
+                    mutation ExternalReferenceEdit($id: ID!, $input: EditInput!) {
+                        externalReferenceEdit(id: $id) {
+                            fieldPatch(input: $input) {
+                                id
+                            }
+                        }
+                    }
+                """
+            result = self.opencti.query(
+                query, {"id": id, "input": {"key": key, "value": value}}
+            )
+            return self.opencti.process_multiple_fields(
+                result["data"]["externalReferenceEdit"]["fieldPatch"]
+            )
+        else:
+            self.opencti.log(
+                "error",
+                "[opencti_external_reference] Missing parameters: id and key and value",
+            )
+            return None
+
+    def delete(self, id):
+        self.opencti.log("info", "Deleting + " + id + "...")
+        query = """
+             mutation ExternalReferenceEdit($id: ID!) {
+                 externalReferenceEdit(id: $id) {
+                     delete
+                 }
+             }
+         """
+        self.opencti.query(query, {"id": id})
