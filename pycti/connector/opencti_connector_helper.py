@@ -281,7 +281,11 @@ class OpenCTIConnectorHelper:
         :return: current datetime for utc
         :rtype: str
         """
-        return datetime.datetime.utcnow().replace(microsecond=0, tzinfo=datetime.timezone.utc).isoformat()
+        return (
+            datetime.datetime.utcnow()
+            .replace(microsecond=0, tzinfo=datetime.timezone.utc)
+            .isoformat()
+        )
 
     # Push Stix2 helper
     def send_stix2_bundle(
