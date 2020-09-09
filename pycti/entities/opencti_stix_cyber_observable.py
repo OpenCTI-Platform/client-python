@@ -454,6 +454,10 @@ class StixCyberObservable:
             type = "IPv4-Addr"
         elif type.lower() == "ipv6-addr":
             type = "IPv6-Addr"
+        elif type.lower() == "x-opencti-hostname":
+            type = "X-OpenCTI-Hostname"
+        elif type.lower() == "x-opencti-cryptocurrency-wallet":
+            type = "X-OpenCTI-Cryptocurrency-Wallet"
 
         x_opencti_description = (
             observable_data["x_opencti_description"]
@@ -540,6 +544,7 @@ class StixCyberObservable:
                     $X509V3ExtensionsType: X509V3ExtensionsTypeAddInput,
                     $XOpenCTICryptographicKey: XOpenCTICryptographicKeyAddInput,
                     $XOpenCTICryptocurrencyWallet: XOpenCTICryptocurrencyWalletAddInput,
+                    $XOpenCTIHostname: XOpenCTIHostnameAddInput
                     $XOpenCTIText: XOpenCTITextAddInput,
                     $XOpenCTIUserAgent: XOpenCTIUserAgentAddInput
                 ) {
@@ -576,6 +581,7 @@ class StixCyberObservable:
                         X509V3ExtensionsType: $X509V3ExtensionsType,
                         XOpenCTICryptographicKey: $XOpenCTICryptographicKey,
                         XOpenCTICryptocurrencyWallet: $XOpenCTICryptocurrencyWallet,
+                        XOpenCTIHostname: $XOpenCTIHostname,
                         XOpenCTIText: $XOpenCTIText,
                         XOpenCTIUserAgent: $XOpenCTIUserAgent
                     ) {
