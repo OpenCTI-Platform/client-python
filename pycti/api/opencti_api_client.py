@@ -534,3 +534,103 @@ class OpenCTIApiClient:
                 "[upload] Missing parameters: file_name or data",
             )
             return None
+
+
+    def upload_file_to_report(self, **kwargs):
+        """upload a file to OpenCTI API linked to report
+
+        :param `**kwargs`: arguments for file upload (required: `file_name`, `data` and report_id)
+        :return: returns the query respons for the file upload
+        :rtype: dict
+        """
+
+        file_name = kwargs.get("file_name", None)
+        data = kwargs.get("data", None)
+        report_id = kwargs.get("report_id", None)
+        mime_type = kwargs.get("mime_type", "text/plain")
+        if file_name is not None and report_id is not None:
+            #Check if report_id is actually valid and convert standard_id to id if required
+            reportAPI = Report(self)
+            reportResults = reportAPI.list(id=report_id)
+            if(len(reportResults) == 1):
+                report_id= reportResults[0]['id']
+            else:
+                self.log(
+                    "error",
+                    "[upload] Parameter Error: report_id either does not exist or truncated",
+                )
+                return None
+
+            self.log("info", "Uploading a file.")
+            query = """
+                mutation FileUploaderEntityMutation($id: ID! $file: Upload!) {
+                  stixDomainObjectEdit(id: $id) {
+                    importPush(file: $file) {
+                      ...FileLine_file
+                      id
+                    }
+                  }
+                }
+
+                fragment FileLine_file on File {
+                  id
+                  name
+                  uploadStatus
+                  lastModified
+                  lastModifiedSinceMin
+                  metaData {
+                    mimetype
+                    list_filters
+                    messages {
+                      timestamp
+                      message
+                    }
+                    errors {
+                      timestamp
+                      message
+                    }
+                  }
+                  ...FileWork_file
+                }
+
+                fragment FileWork_file on File {
+                  id
+                  works {
+                    id
+                    connector {
+                      name
+                      id
+                    }
+                    user {
+                      name
+                      id
+                    }
+                    received_time
+                    tracking {
+                      import_expected_number
+                      import_processed_number
+                    }
+                    messages {
+                      timestamp
+                      message
+                    }
+                    errors {
+                      timestamp
+                      message
+                    }
+                    status
+                    timestamp
+                  }
+                }
+             """
+            if data is None:
+                data = open(file_name, "rb")
+                mime_type = magic.from_file(file_name, mime=True)
+
+            return self.query(query, {"id": report_id, "file": (File(file_name, data, mime_type))})
+        else:
+            self.log(
+                "error",
+                "[upload] Missing parameters: file_name, data or report_id",
+            )
+            return None
