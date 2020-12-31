@@ -174,7 +174,9 @@ class OpenCTIStix2:
             data = json.load(file)
         return self.import_bundle(data, update, types)
 
-    def import_bundle_from_json(self, json_data, update=False, types=None) -> List:
+    def import_bundle_from_json(
+        self, json_data, update=False, types=None, retry_number=None
+    ) -> List:
         """import a stix2 bundle from JSON data
 
         :param json_data: JSON data
@@ -186,8 +188,13 @@ class OpenCTIStix2:
         :return: list of imported stix2 objects
         :rtype: List
         """
+        self.opencti.set_retry_number(retry_number)
         data = json.loads(json_data)
-        return self.import_bundle(data, update, types)
+        return self.import_bundle(
+            data,
+            update,
+            types,
+        )
 
     def resolve_author(self, title):
         if "fireeye" in title.lower() or "mandiant" in title.lower():
@@ -377,12 +384,15 @@ class OpenCTIStix2:
                     except:
                         matches = None
                     published = None
-                    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+                    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
                     default_date = datetime.datetime.fromtimestamp(1)
                     if matches is not None:
                         try:
                             for match in matches:
-                                if match < yesterday:
+                                if (
+                                    match.timestamp() < yesterday.timestamp()
+                                    and len(str(match.year)) == 4
+                                ):
                                     published = match.strftime("%Y-%m-%dT%H:%M:%SZ")
                                     break
                         except:
@@ -558,51 +568,55 @@ class OpenCTIStix2:
                     )
             # Add object refs
             for object_refs_id in object_refs_ids:
-                if stix_object_result["entity_type"] == "Report":
-                    self.opencti.report.add_stix_object_or_stix_relationship(
-                        id=stix_object_result["id"],
-                        stixObjectOrStixRelationshipId=object_refs_id,
-                    )
-                elif stix_object_result["entity_type"] == "Observed-Data":
-                    self.opencti.observed_data.add_stix_object_or_stix_relationship(
-                        id=stix_object_result["id"],
-                        stixObjectOrStixRelationshipId=object_refs_id,
-                    )
-                elif stix_object_result["entity_type"] == "Note":
-                    self.opencti.note.add_stix_object_or_stix_relationship(
-                        id=stix_object_result["id"],
-                        stixObjectOrStixRelationshipId=object_refs_id,
-                    )
-                elif stix_object_result["entity_type"] == "Opinion":
-                    self.opencti.opinion.add_stix_object_or_stix_relationship(
-                        id=stix_object_result["id"],
-                        stixObjectOrStixRelationshipId=object_refs_id,
-                    )
-                if (
-                    object_refs_id in self.mapping_cache
-                    and "observables" in self.mapping_cache[object_refs_id]
-                    and self.mapping_cache[object_refs_id] is not None
-                    and self.mapping_cache[object_refs_id]["observables"] is not None
-                    and len(self.mapping_cache[object_refs_id]["observables"]) > 0
-                ):
-                    for observable_ref in self.mapping_cache[object_refs_id][
-                        "observables"
-                    ]:
-                        if stix_object_result["entity_type"] == "Report":
-                            self.opencti.report.add_stix_object_or_stix_relationship(
-                                id=stix_object_result["id"],
-                                stixObjectOrStixRelationshipId=observable_ref["id"],
-                            )
-                        elif stix_object_result["entity_type"] == "Note":
-                            self.opencti.note.add_stix_object_or_stix_relationship(
-                                id=stix_object_result["id"],
-                                stixObjectOrStixRelationshipId=observable_ref["id"],
-                            )
-                        elif stix_object_result["entity_type"] == "Opinion":
-                            self.opencti.opinion.add_stix_object_or_stix_relationship(
-                                id=stix_object_result["id"],
-                                stixObjectOrStixRelationshipId=observable_ref["id"],
-                            )
+                try:
+                    if stix_object_result["entity_type"] == "Report":
+                        self.opencti.report.add_stix_object_or_stix_relationship(
+                            id=stix_object_result["id"],
+                            stixObjectOrStixRelationshipId=object_refs_id,
+                        )
+                    elif stix_object_result["entity_type"] == "Observed-Data":
+                        self.opencti.observed_data.add_stix_object_or_stix_relationship(
+                            id=stix_object_result["id"],
+                            stixObjectOrStixRelationshipId=object_refs_id,
+                        )
+                    elif stix_object_result["entity_type"] == "Note":
+                        self.opencti.note.add_stix_object_or_stix_relationship(
+                            id=stix_object_result["id"],
+                            stixObjectOrStixRelationshipId=object_refs_id,
+                        )
+                    elif stix_object_result["entity_type"] == "Opinion":
+                        self.opencti.opinion.add_stix_object_or_stix_relationship(
+                            id=stix_object_result["id"],
+                            stixObjectOrStixRelationshipId=object_refs_id,
+                        )
+                    if (
+                        object_refs_id in self.mapping_cache
+                        and "observables" in self.mapping_cache[object_refs_id]
+                        and self.mapping_cache[object_refs_id] is not None
+                        and self.mapping_cache[object_refs_id]["observables"]
+                        is not None
+                        and len(self.mapping_cache[object_refs_id]["observables"]) > 0
+                    ):
+                        for observable_ref in self.mapping_cache[object_refs_id][
+                            "observables"
+                        ]:
+                            if stix_object_result["entity_type"] == "Report":
+                                self.opencti.report.add_stix_object_or_stix_relationship(
+                                    id=stix_object_result["id"],
+                                    stixObjectOrStixRelationshipId=observable_ref["id"],
+                                )
+                            elif stix_object_result["entity_type"] == "Note":
+                                self.opencti.note.add_stix_object_or_stix_relationship(
+                                    id=stix_object_result["id"],
+                                    stixObjectOrStixRelationshipId=observable_ref["id"],
+                                )
+                            elif stix_object_result["entity_type"] == "Opinion":
+                                self.opencti.opinion.add_stix_object_or_stix_relationship(
+                                    id=stix_object_result["id"],
+                                    stixObjectOrStixRelationshipId=observable_ref["id"],
+                                )
+                except:
+                    self.opencti.log("error", "Missing reference " + object_refs_id)
             # Add files
             if "x_opencti_files" in stix_object:
                 for file in stix_object["x_opencti_files"]:
@@ -736,11 +750,14 @@ class OpenCTIStix2:
                 except:
                     matches = None
                 date = None
-                today = datetime.datetime.today()
+                yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
                 if matches is not None:
                     try:
                         for match in matches:
-                            if match < today:
+                            if (
+                                match.timestamp() < yesterday.timestamp()
+                                and len(str(match.year)) == 4
+                            ):
                                 date = match.strftime("%Y-%m-%dT%H:%M:%SZ")
                                 break
                     except:

@@ -69,11 +69,16 @@ class ListenQueue(threading.Thread):
 
     def __init__(self, helper, config: dict, callback):
         threading.Thread.__init__(self)
+        self.pika_credentials = None
+        self.pika_parameters = None
         self.pika_connection = None
         self.channel = None
         self.helper = helper
         self.callback = callback
-        self.uri = config["uri"]
+        self.host = config["connection"]["host"]
+        self.port = config["connection"]["port"]
+        self.user = config["connection"]["user"]
+        self.password = config["connection"]["pass"]
         self.queue_name = config["listen"]
 
     # noinspection PyUnusedLocal
@@ -129,9 +134,11 @@ class ListenQueue(threading.Thread):
         while True:
             try:
                 # Connect the broker
-                self.pika_connection = pika.BlockingConnection(
-                    pika.URLParameters(self.uri)
+                self.pika_credentials = pika.PlainCredentials(self.user, self.password)
+                self.pika_parameters = pika.ConnectionParameters(
+                    self.host, self.port, "/", self.pika_credentials
                 )
+                self.pika_connection = pika.BlockingConnection(self.pika_parameters)
                 self.channel = self.pika_connection.channel()
                 self.channel.basic_consume(
                     queue=self.queue_name, on_message_callback=self._process_message
@@ -260,6 +267,9 @@ class OpenCTIConnectorHelper:
         self.opencti_token = get_config_variable(
             "OPENCTI_TOKEN", ["opencti", "token"], config
         )
+        self.opencti_ssl_verify = get_config_variable(
+            "OPENCTI_SSL_VERIFY", ["opencti", "ssl_verify"], config, False, True
+        )
         # Load connector config
         self.connect_id = get_config_variable(
             "CONNECTOR_ID", ["connector", "id"], config
@@ -305,6 +315,7 @@ class OpenCTIConnectorHelper:
             self.connect_auto,
         )
         connector_configuration = self.api.connector.register(self.connector)
+        logging.info("Connector registered with ID:" + self.connect_id)
         self.connector_id = connector_configuration["id"]
         self.work_id = None
         self.applicant_id = connector_configuration["connector_user"]["id"]
@@ -355,7 +366,9 @@ class OpenCTIConnectorHelper:
         listen_queue = ListenQueue(self, self.config, message_callback)
         listen_queue.start()
 
-    def listen_stream(self, message_callback, url=None, token=None) -> None:
+    def listen_stream(
+        self, message_callback, url=None, token=None, verify=None
+    ) -> None:
         """listen for messages and register callback function
 
         :param message_callback: callback function to process messages
@@ -366,14 +379,25 @@ class OpenCTIConnectorHelper:
 
         # Get the last event ID with the "connected" event msg
         if url is not None and token is not None:
+            opencti_ssl_verify = verify if verify is not None else True
+            logging.info(
+                "Starting listening stream events with SSL verify to: "
+                + str(opencti_ssl_verify)
+            )
             messages = SSEClient(
                 url + "/stream",
                 headers={"Authorization": "Bearer " + token},
+                verify=opencti_ssl_verify,
             )
         else:
+            logging.info(
+                "Starting listening stream events with SSL verify to: "
+                + str(self.opencti_ssl_verify)
+            )
             messages = SSEClient(
                 self.opencti_url + "/stream",
                 headers={"Authorization": "Bearer " + self.opencti_token},
+                verify=self.opencti_ssl_verify,
             )
 
         # Create processor thread
@@ -472,8 +496,6 @@ class OpenCTIConnectorHelper:
         :type entities_types: list, optional
         :param update: whether to updated data in the database, defaults to False
         :type update: bool, optional
-        :param split: whether to split the stix bundle before processing, defaults to True
-        :type split: bool, optional
         :raises ValueError: if the bundle is empty
         :return: list of bundles
         :rtype: list
@@ -481,42 +503,37 @@ class OpenCTIConnectorHelper:
         work_id = kwargs.get("work_id", self.work_id)
         entities_types = kwargs.get("entities_types", None)
         update = kwargs.get("update", False)
-        split = kwargs.get("split", True)
 
         if entities_types is None:
             entities_types = []
-        if split:
-            stix2_splitter = OpenCTIStix2Splitter()
-            bundles = stix2_splitter.split_bundle(bundle)
-            if len(bundles) == 0:
-                raise ValueError("Nothing to import")
-            if work_id is not None:
-                self.api.work.add_expectations(work_id, len(bundles))
-            pika_connection = pika.BlockingConnection(
-                pika.URLParameters(self.config["uri"])
-            )
-            channel = pika_connection.channel()
-            for sequence, bundle in enumerate(bundles, start=1):
-                self._send_bundle(
-                    channel,
-                    bundle,
-                    work_id=work_id,
-                    entities_types=entities_types,
-                    sequence=sequence,
-                    update=update,
-                )
-            channel.close()
-            return bundles
-        else:
-            pika_connection = pika.BlockingConnection(
-                pika.URLParameters(self.config["uri"])
-            )
-            channel = pika_connection.channel()
+        stix2_splitter = OpenCTIStix2Splitter()
+        bundles = stix2_splitter.split_bundle(bundle)
+        if len(bundles) == 0:
+            raise ValueError("Nothing to import")
+        if work_id is not None:
+            self.api.work.add_expectations(work_id, len(bundles))
+        pika_credentials = pika.PlainCredentials(
+            self.config["connection"]["user"], self.config["connection"]["pass"]
+        )
+        pika_parameters = pika.ConnectionParameters(
+            self.config["connection"]["host"],
+            self.config["connection"]["port"],
+            "/",
+            pika_credentials,
+        )
+        pika_connection = pika.BlockingConnection(pika_parameters)
+        channel = pika_connection.channel()
+        for sequence, bundle in enumerate(bundles, start=1):
             self._send_bundle(
-                channel, bundle, entities_types=entities_types, update=update
+                channel,
+                bundle,
+                work_id=work_id,
+                entities_types=entities_types,
+                sequence=sequence,
+                update=update,
             )
-            channel.close()
-            return [bundle]
+        channel.close()
+        return bundles
 
     def _send_bundle(self, channel, bundle, **kwargs) -> None:
         """send a STIX2 bundle to RabbitMQ to be consumed by workers
