@@ -12,7 +12,7 @@ import pytest
 def api_client():
     return OpenCTIApiClient(
         "https://demo.opencti.io",
-        "2b4f29e3-5ea8-4890-8cf5-a76f61f1e2b2",
+        "31018a77-185f-4d86-9117-4f86a4a6be42",
         ssl_verify=True,
     )
 
