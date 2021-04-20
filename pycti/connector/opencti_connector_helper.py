@@ -170,7 +170,7 @@ class ListenQueue(threading.Thread):
                     credentials=self.pika_credentials,
                     ssl_options=pika.SSLOptions(create_ssl_context(), self.host)
                     if self.use_ssl
-                    else None
+                    else None,
                 )
                 self.pika_connection = pika.BlockingConnection(self.pika_parameters)
                 self.channel = self.pika_connection.channel()
@@ -565,23 +565,17 @@ class OpenCTIConnectorHelper:
         pika_credentials = pika.PlainCredentials(
             self.config["connection"]["user"], self.config["connection"]["pass"]
         )
-        if self.config["connection"]["use_ssl"]:
-            context = create_ssl_context()
-            ssl_options = pika.SSLOptions(context, self.config["connection"]["host"])
-            pika_parameters = pika.ConnectionParameters(
-                host=self.config["connection"]["host"],
-                port=self.config["connection"]["port"],
-                virtual_host="/",
-                credentials=pika_credentials,
-                ssl_options=ssl_options,
+        pika_parameters = pika.ConnectionParameters(
+            host=self.config["connection"]["host"],
+            port=self.config["connection"]["port"],
+            virtual_host="/",
+            credentials=pika_credentials,
+            ssl_options=pika.SSLOptions(
+                create_ssl_context(), self.config["connection"]["host"]
             )
-        else:
-            pika_parameters = pika.ConnectionParameters(
-                host=self.config["connection"]["host"],
-                port=self.config["connection"]["port"],
-                virtual_host="/",
-                credentials=pika_credentials,
-            )
+            if self.config["connection"]["use_ssl"]
+            else None,
+        )
 
         pika_connection = pika.BlockingConnection(pika_parameters)
         channel = pika_connection.channel()
