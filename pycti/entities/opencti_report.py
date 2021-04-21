@@ -337,6 +337,9 @@ class Report:
 
     """
         Check if a report already contains a thing (Stix Object or Stix Relationship)
+        
+        :param id: the id of the Report
+        :param stixObjectOrStixRelationshipId: the id of the Stix-Entity
         :return Boolean
     """
 
