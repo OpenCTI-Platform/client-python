@@ -362,7 +362,7 @@ class OpenCTIStix2:
                         "threat-actor",
                         "intrusion-set",
                         "campaign",
-                        "x-opencti-incident",
+                        "incident",
                         "malware",
                         "relationship",
                     ]
@@ -520,7 +520,7 @@ class OpenCTIStix2:
             "threat-actor": self.opencti.threat_actor.import_from_stix2,
             "tool": self.opencti.tool.import_from_stix2,
             "vulnerability": self.opencti.vulnerability.import_from_stix2,
-            "x-opencti-incident": self.opencti.incident.import_from_stix2,
+            "incident": self.opencti.incident.import_from_stix2,
         }
 
         # TODO: Remove this, compatibility with V3
@@ -1231,7 +1231,7 @@ class OpenCTIStix2:
                 "Threat-Actor": self.opencti.threat_actor.read,
                 "Tool": self.opencti.tool.read,
                 "Vulnerability": self.opencti.vulnerability.read,
-                "X-OpenCTI-Incident": self.opencti.incident.read,
+                "Incident": self.opencti.incident.read,
                 "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
                 "stix_core_relationship": self.opencti.stix_core_relationship.read,
             }
@@ -1367,7 +1367,7 @@ class OpenCTIStix2:
             "Threat-Actor": self.opencti.threat_actor.read,
             "Tool": self.opencti.tool.read,
             "Vulnerability": self.opencti.vulnerability.read,
-            "X-OpenCTI-Incident": self.opencti.incident.read,
+            "Incident": self.opencti.incident.read,
         }
         do_read = reader.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1449,7 +1449,7 @@ class OpenCTIStix2:
             "Threat-Actor": self.opencti.threat_actor.list,
             "Tool": self.opencti.tool.list,
             "Vulnerability": self.opencti.vulnerability.list,
-            "X-OpenCTI-Incident": self.opencti.incident.list,
+            "Incident": self.opencti.incident.list,
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
         }
         do_list = lister.get(
