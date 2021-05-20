@@ -1,11 +1,12 @@
 import uuid
+
 from stix2 import (
-    ObjectPath,
-    EqualityComparisonExpression,
-    ObservationExpression,
-    CustomObservable,
     CustomObject,
+    CustomObservable,
+    EqualityComparisonExpression,
     ExternalReference,
+    ObjectPath,
+    ObservationExpression,
     properties,
 )
 
@@ -32,6 +33,7 @@ PATTERN_MAPPING = {
     "User-Account": ["acount_login"],
     "Windows-Registry-Key": ["key"],
     "Windows-Registry-Value-Type": ["name"],
+    "X-OpenCTI-Hostname": ["value"],
 }
 
 
@@ -93,7 +95,7 @@ class SimpleObservable:
 
 
 @CustomObject(
-    "x-opencti-incident",
+    "incident",
     [
         ("name", properties.StringProperty(required=True)),
         ("description", properties.StringProperty()),
@@ -117,5 +119,5 @@ class SimpleObservable:
         ),
     ],
 )
-class StixXOpenCTIIncident:
+class StixIncident:
     pass

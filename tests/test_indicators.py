@@ -1,18 +1,19 @@
 # coding: utf-8
 
 import json
-from dateutil.parser import parse
-from pycti import OpenCTIApiClient
-from stix2 import TLP_WHITE, TLP_GREEN
 
 import pytest
+from dateutil.parser import parse
+from stix2 import TLP_GREEN, TLP_WHITE
+
+from pycti import OpenCTIApiClient
 
 
 @pytest.fixture
 def api_client():
     return OpenCTIApiClient(
         "https://demo.opencti.io",
-        "e9613371-2fcc-4d7a-9ba1-ac93df589e5f",
+        "681b01f9-542d-4c8c-be0c-b6c850b087c8",
         ssl_verify=True,
     )
 

@@ -1,23 +1,19 @@
 # coding: utf-8
 
-import os
-import json
-import uuid
 import base64
 import datetime
+import json
+import os
+import uuid
 from typing import List
 
 import datefinder
 import dateutil.parser
 import pytz
 
+from pycti.utils.constants import IdentityTypes, LocationTypes, StixCyberObservableTypes
 from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
-from pycti.utils.constants import (
-    IdentityTypes,
-    LocationTypes,
-    StixCyberObservableTypes,
-)
 
 datefinder.ValueError = ValueError, OverflowError
 utc = pytz.UTC
@@ -366,7 +362,7 @@ class OpenCTIStix2:
                         "threat-actor",
                         "intrusion-set",
                         "campaign",
-                        "x-opencti-incident",
+                        "incident",
                         "malware",
                         "relationship",
                     ]
@@ -524,7 +520,7 @@ class OpenCTIStix2:
             "threat-actor": self.opencti.threat_actor.import_from_stix2,
             "tool": self.opencti.tool.import_from_stix2,
             "vulnerability": self.opencti.vulnerability.import_from_stix2,
-            "x-opencti-incident": self.opencti.x_opencti_incident.import_from_stix2,
+            "incident": self.opencti.incident.import_from_stix2,
         }
 
         # TODO: Remove this, compatibility with V3
@@ -921,6 +917,10 @@ class OpenCTIStix2:
                 entity["region"] = entity["name"]
             entity["entity_type"] = "Location"
 
+        # Files
+        if entity["entity_type"] == "StixFile":
+            entity["entity_type"] = "File"
+
         # Indicators
         if "pattern" in entity and "x-opencti-hostname" in entity["pattern"]:
             entity["pattern"] = entity["pattern"].replace(
@@ -971,6 +971,9 @@ class OpenCTIStix2:
         if "externalReferences" in entity:
             del entity["externalReferences"]
             del entity["externalReferencesIds"]
+        if "indicators" in entity:
+            del entity["indicators"]
+            del entity["indicatorsIds"]
         if "hashes" in entity:
             hashes = entity["hashes"]
             entity["hashes"] = {}
@@ -1029,7 +1032,6 @@ class OpenCTIStix2:
             del entity["createdById"]
         if "observables" in entity:
             del entity["observables"]
-        if "observablesIds" in entity:
             del entity["observablesIds"]
 
         entity_copy = entity.copy()
@@ -1235,7 +1237,7 @@ class OpenCTIStix2:
                 "Threat-Actor": self.opencti.threat_actor.read,
                 "Tool": self.opencti.tool.read,
                 "Vulnerability": self.opencti.vulnerability.read,
-                "X-OpenCTI-Incident": self.opencti.x_opencti_incident.read,
+                "Incident": self.opencti.incident.read,
                 "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
                 "stix_core_relationship": self.opencti.stix_core_relationship.read,
             }
@@ -1371,7 +1373,7 @@ class OpenCTIStix2:
             "Threat-Actor": self.opencti.threat_actor.read,
             "Tool": self.opencti.tool.read,
             "Vulnerability": self.opencti.vulnerability.read,
-            "X-OpenCTI-Incident": self.opencti.x_opencti_incident.read,
+            "Incident": self.opencti.incident.read,
         }
         do_read = reader.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1453,7 +1455,7 @@ class OpenCTIStix2:
             "Threat-Actor": self.opencti.threat_actor.list,
             "Tool": self.opencti.tool.list,
             "Vulnerability": self.opencti.vulnerability.list,
-            "X-OpenCTI-Incident": self.opencti.x_opencti_incident.list,
+            "Incident": self.opencti.incident.list,
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
         }
         do_list = lister.get(
@@ -1467,7 +1469,6 @@ class OpenCTIStix2:
             types=types,
             getAll=True,
         )
-
         if entities_list is not None:
             uuids = []
             for entity in entities_list:
@@ -1481,7 +1482,6 @@ class OpenCTIStix2:
                     for x in entity_bundle_filtered:
                         uuids.append(x["id"])
                     bundle["objects"] = bundle["objects"] + entity_bundle_filtered
-
         return bundle
 
     def import_bundle(self, stix_bundle, update=False, types=None) -> List:
@@ -1490,18 +1490,30 @@ class OpenCTIStix2:
             raise ValueError("JSON data type is not a STIX2 bundle")
         if "objects" not in stix_bundle or len(stix_bundle["objects"]) == 0:
             raise ValueError("JSON data objects is empty")
+        event_version = (
+            stix_bundle["x_opencti_event_version"]
+            if "x_opencti_event_version" in stix_bundle
+            else None
+        )
 
         stix2_splitter = OpenCTIStix2Splitter()
-        bundles = stix2_splitter.split_bundle(stix_bundle, False)
+        bundles = stix2_splitter.split_bundle(stix_bundle, False, event_version)
         # Import every elements in a specific order
         imported_elements = []
 
         # Marking definitions
         for bundle in bundles:
             for item in bundle["objects"]:
-                if "x_data_update" in item:
-                    self.stix2_update.process_update(item)
-                elif item["type"] == "relationship":
+                if "x_opencti_event_version" in bundle:
+                    if bundle["x_opencti_event_version"] == "1":
+                        if "x_data_update" in item:
+                            self.stix2_update.process_update_v1(item)
+                            continue
+                    elif bundle["x_opencti_event_version"] == "2":
+                        if "x_opencti_patch" in item:
+                            self.stix2_update.process_update_v2(item)
+                            continue
+                if item["type"] == "relationship":
                     self.import_relationship(item, update, types)
                 elif item["type"] == "sighting":
                     # Resolve the to
@@ -1527,9 +1539,35 @@ class OpenCTIStix2:
                                         item, observed_data_ref, to_id, update
                                     )
                 elif StixCyberObservableTypes.has_value(item["type"]):
-                    self.import_observable(item, update, types)
+                    if types is None or len(types) == 0:
+                        self.import_observable(item, update, types)
+                    elif item["type"] in types or "observable" in types:
+                        self.import_observable(item, update, types)
                 else:
-                    self.import_object(item, update, types)
+                    # Check the scope
+                    if (
+                        item["type"] == "marking-definition"
+                        or types is None
+                        or len(types) == 0
+                    ):
+                        self.import_object(item, update, types)
+                    # Handle identity & location if part of the scope
+                    elif item["type"] in types:
+                        self.import_object(item, update, types)
+                    else:
+                        # Specific OpenCTI scopes
+                        if item["type"] == "identity":
+                            if "identity_class" in item:
+                                if ("class" in types or "sector" in types) and item[
+                                    "identity_class"
+                                ] == "class":
+                                    self.import_object(item, update, types)
+                                elif item["identity_class"] in types:
+                                    self.import_object(item, update, types)
+                        elif item["type"] == "location":
+                            if "x_opencti_location_type" in item:
+                                if item["x_opencti_location_type"].lower() in types:
+                                    self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
 
         return imported_elements

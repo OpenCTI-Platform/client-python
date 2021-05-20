@@ -2,6 +2,7 @@
 
 import json
 import os
+
 import magic
 
 
@@ -359,7 +360,7 @@ class StixDomainObject:
                 x_opencti_integrity_impact
                 x_opencti_availability_impact
             }
-            ... on XOpenCTIIncident {
+            ... on Incident {
                 name
                 description
                 aliases
@@ -576,7 +577,10 @@ class StixDomainObject:
         key = kwargs.get("key", None)
         value = kwargs.get("value", None)
         operation = kwargs.get("operation", "replace")
-
+        if isinstance(value, list):
+            value = [str(v) for v in value]
+        else:
+            value = str(value)
         if id is not None and key is not None and value is not None:
             self.opencti.log(
                 "info", "Updating Stix-Domain-Object {" + id + "} field {" + key + "}."
@@ -586,6 +590,8 @@ class StixDomainObject:
                         stixDomainObjectEdit(id: $id) {
                             fieldPatch(input: $input, operation: $operation) {
                                 id
+                                standard_id
+                                entity_type
                             }
                         }
                     }
