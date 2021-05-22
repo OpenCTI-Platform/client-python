@@ -130,7 +130,7 @@ class ListenQueue(threading.Thread):
         logging.info(
             "%s",
             (
-                f"Message (delivery_tag={str(method.delivery_tag)}) processed"
+                f"Message (delivery_tag={method.delivery_tag}) processed"
                 ", thread terminated"
             ),
         )
@@ -280,7 +280,7 @@ class ListenStream(threading.Thread):
                 "%s",
                 (
                     "Starting listening stream events (URL: "
-                    f"{live_stream_url}, SSL verify: {str(opencti_ssl_verify)})"
+                    f"{live_stream_url}, SSL verify: {opencti_ssl_verify})"
                 ),
             )
             messages = SSEClient(
@@ -314,7 +314,7 @@ class ListenStream(threading.Thread):
                 "%s",
                 (
                     f"Starting listening stream events (URL: {live_stream_url}"
-                    f", SSL verify: {str(self.helper.opencti_ssl_verify)})"
+                    f", SSL verify: {self.helper.opencti_ssl_verify})"
                 ),
             )
             messages = SSEClient(
@@ -816,7 +816,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
         bundle = {
             "type": "bundle",
-            "id": f"bundle--{str(uuid.uuid4())}",
+            "id": f"bundle--{uuid.uuid4()}",
             "spec_version": "2.0",
             "objects": items,
         }
