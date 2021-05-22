@@ -24,7 +24,7 @@ FALSY: List[str] = ["no", "false", "False"]
 
 def get_config_variable(
     env_var: str,
-    yaml_path: list,
+    yaml_path: List,
     config: Dict = {},
     isNumber: Optional[bool] = False,
     default=None,
@@ -87,12 +87,12 @@ class ListenQueue(threading.Thread):
     :param helper: instance of a `OpenCTIConnectorHelper` class
     :type helper: OpenCTIConnectorHelper
     :param config: dict containing client config
-    :type config: dict
+    :type config: Dict
     :param callback: callback function to process queue
     :type callback: callable
     """
 
-    def __init__(self, helper, config: dict, callback) -> None:
+    def __init__(self, helper, config: Dict, callback) -> None:
         threading.Thread.__init__(self)
         self.pika_credentials = None
         self.pika_parameters = None
@@ -342,11 +342,11 @@ class ListenStream(threading.Thread):
 class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     """Python API for OpenCTI connector
 
-    :param config: Dict standard config
-    :type config: dict
+    :param config: dict standard config
+    :type config: Dict
     """
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: Dict) -> None:
         # Load API config
         self.opencti_url = get_config_variable(
             "OPENCTI_URL", ["opencti", "url"], config
@@ -442,7 +442,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         """sets the connector state
 
         :param state: state object
-        :type state: dict
+        :type state: Dict
         """
 
         self.connector_state = json.dumps(state)
@@ -457,7 +457,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         try:
             if self.connector_state:
                 state = json.loads(self.connector_state)
-                if isinstance(state, dict) and state:
+                if isinstance(state, Dict) and state:
                     return state
         except:  # pylint: disable=bare-except
             pass
@@ -692,13 +692,13 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
         return bundles
 
-    def stix2_get_embedded_objects(self, item) -> dict:
+    def stix2_get_embedded_objects(self, item) -> Dict:
         """gets created and marking refs for a stix2 item
 
         :param item: valid stix2 item
         :type item:
         :return: returns a dict of created_by of object_marking_refs
-        :rtype: dict
+        :rtype: Dict
         """
         # Marking definitions
         object_marking_refs = []
@@ -830,16 +830,15 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         :type tlp: str
         :param max_tlp: the highest allowed TLP level
         :type max_tlp: str
-        :return: list of allowed TLP levels
+        :return: TLP level in allowed TLPs
         :rtype: bool
         """
 
-        allowed_tlps = ["TLP:WHITE"]
-        if max_tlp == "TLP:RED":
-            allowed_tlps = ["TLP:WHITE", "TLP:GREEN", "TLP:AMBER", "TLP:RED"]
-        elif max_tlp == "TLP:AMBER":
-            allowed_tlps = ["TLP:WHITE", "TLP:GREEN", "TLP:AMBER"]
-        elif max_tlp == "TLP:GREEN":
-            allowed_tlps = ["TLP:WHITE", "TLP:GREEN"]
+        allowed_tlps: Dict[str, List[str]] = {
+            "TLP:RED": ["TLP:WHITE", "TLP:GREEN", "TLP:AMBER", "TLP:RED"],
+            "TLP:AMBER": ["TLP:WHITE", "TLP:GREEN", "TLP:AMBER"],
+            "TLP:GREEN": ["TLP:WHITE", "TLP:GREEN"],
+            "TLP:WHITE": ["TLP:WHITE"],
+        }
 
-        return tlp in allowed_tlps
+        return tlp in allowed_tlps[max_tlp]
