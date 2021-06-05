@@ -61,7 +61,7 @@ class OpenCTIStix2:
         :rtype: datetime
         """
 
-        if isinstance(date, datetime.date):
+        if isinstance(date, datetime.datetime):
             return date.isoformat(timespec="milliseconds").replace("+00:00", "Z")
         if date is not None:
             return (
