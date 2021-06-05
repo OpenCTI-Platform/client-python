@@ -5,7 +5,7 @@ import datetime
 import json
 import os
 import uuid
-from typing import List
+from typing import List, Any
 
 import datefinder
 import dateutil.parser
@@ -52,7 +52,7 @@ class OpenCTIStix2:
 
         return text.replace("<code>", "`").replace("</code>", "`")
 
-    def format_date(self, date):
+    def format_date(self, date: Any = None) -> str:
         """converts multiple input date formats to OpenCTI style dates
 
         :param date: input date
@@ -60,21 +60,16 @@ class OpenCTIStix2:
         :return: OpenCTI style date
         :rtype: datetime
         """
-
         if isinstance(date, datetime.datetime):
-            return date.isoformat(timespec="milliseconds").replace("+00:00", "Z")
-        if date is not None:
-            return (
-                dateutil.parser.parse(date)
-                .isoformat(timespec="milliseconds")
-                .replace("+00:00", "Z")
-            )
+            date_value = date
+        elif isinstance(date, datetime.date):
+            date_value = datetime.datetime.combine(date, datetime.datetime.min.time())
+        elif date is not None:
+            date_value = dateutil.parser.parse(date)
         else:
-            return (
-                datetime.datetime.utcnow()
-                .isoformat(timespec="milliseconds")
-                .replace("+00:00", "Z")
-            )
+            date_value = datetime.datetime.utcnow()
+
+        return date_value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
     def filter_objects(self, uuids: list, objects: list) -> list:
         """filters objects based on UUIDs
