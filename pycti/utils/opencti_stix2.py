@@ -65,8 +65,11 @@ class OpenCTIStix2:
             date_value = date
         elif isinstance(date, datetime.date):
             date_value = datetime.datetime.combine(date, datetime.datetime.min.time())
-        elif date is not None:
-            date_value = dateutil.parser.parse(date)
+        elif isinstance(date, str):
+            try:
+                date_value = dateutil.parser.parse(date)
+            except (dateutil.parser.ParserError, TypeError, OverflowError) as e:
+                raise ValueError(f'{e}: {date} does not contain a valid date string')
         else:
             date_value = datetime.datetime.utcnow()
 
