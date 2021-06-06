@@ -57,9 +57,9 @@ class OpenCTIStix2:
         """converts multiple input date formats to OpenCTI style dates
 
         :param date: input date
-        :type date:
+        :type date: Any [datetime, date, str or none]
         :return: OpenCTI style date
-        :rtype: datetime
+        :rtype: string
         """
         if isinstance(date, datetime.datetime):
             date_value = date
@@ -72,6 +72,10 @@ class OpenCTIStix2:
                 raise ValueError(f'{e}: {date} does not contain a valid date string')
         else:
             date_value = datetime.datetime.utcnow()
+
+        if not date_value.tzinfo:
+            self.opencti.log('No timezone found. Setting to UTC', 'info')
+            date_value = date_value.replace(tzinfo=datetime.timezone.utc)
 
         return date_value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
