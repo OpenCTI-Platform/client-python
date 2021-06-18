@@ -1,5 +1,4 @@
 # coding: utf-8
-import time
 
 from dateutil.parser import parse
 
@@ -58,7 +57,9 @@ for kill_chain_phase_id in ttp1["killChainPhasesIds"]:
 # Create the observable and indicator and indicates to the relation
 # Create the observable
 observable_ttp1 = opencti_api_client.stix_cyber_observable.create(
-    simple_observable_key="Email-Addr.value", simple_observable_value="phishing@mail.com", createIndicator=True
+    simple_observable_key="Email-Addr.value",
+    simple_observable_value="phishing@mail.com",
+    createIndicator=True,
 )
 # Get the indicator
 indicator_ttp1 = observable_ttp1["indicators"][0]
@@ -105,7 +106,9 @@ for kill_chain_phase_id in ttp2["killChainPhasesIds"]:
 # Create the observable and indicator and indicates to the relation
 # Create the observable
 observable_ttp2 = opencti_api_client.stix_cyber_observable.create(
-    simple_observable_key="Windows-Registry-Key.key", simple_observable_value="HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run", createIndicator=True
+    simple_observable_key="Windows-Registry-Key.key",
+    simple_observable_value="HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run",
+    createIndicator=True,
 )
 # Get the indicator
 indicator_ttp2 = observable_ttp2["indicators"][0]

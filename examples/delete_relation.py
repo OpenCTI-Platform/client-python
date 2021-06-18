@@ -1,5 +1,4 @@
 # coding: utf-8
-import datetime
 
 from pycti import OpenCTIApiClient
 
@@ -10,9 +9,7 @@ api_token = "YOUR_TOKEN"
 # OpenCTI initialization
 opencti_api_client = OpenCTIApiClient(api_url, api_token)
 
-intrusion_set = opencti_api_client.intrusion_set.create(
-    name="EvilSET123"
-)
+intrusion_set = opencti_api_client.intrusion_set.create(name="EvilSET123")
 
 malware = opencti_api_client.malware.create(
     name="TheWorm", description="A new evil worm."

@@ -31,7 +31,8 @@ print(observable)
 
 # Exact File name match
 opencti_api_client.stix_cyber_observable.create(
-    simple_observable_key="File.hashes.MD5", simple_observable_value="3aad33e025303dbae12c12b4ec5258c1"
+    simple_observable_key="File.hashes.MD5",
+    simple_observable_value="3aad33e025303dbae12c12b4ec5258c1",
 )
 print("FILE MD5")
 observable = opencti_api_client.stix_cyber_observable.read(
