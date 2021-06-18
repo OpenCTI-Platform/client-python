@@ -13,9 +13,13 @@ tool = opencti_api_client.tool.create(
     name="powashell.exe", description="A new evil tool."
 )
 
+print(tool)
+
 intrusion_set = opencti_api_client.intrusion_set.create(
     name="APT_EVIL"
 )
+
+print(intrusion_set)
 
 # Create the relation
 relation = opencti_api_client.stix_core_relationship.create(
