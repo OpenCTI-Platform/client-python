@@ -26,6 +26,7 @@ class Indicator:
                     entity_type
                     parent_types
                     spec_version
+                    identity_class
                     name
                     description
                     roles
@@ -311,6 +312,7 @@ class Indicator:
         x_opencti_main_observable_type = kwargs.get(
             "x_opencti_main_observable_type", None
         )
+        x_mitre_platforms = kwargs.get("x_mitre_platforms", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
 
@@ -368,6 +370,7 @@ class Indicator:
                         "x_opencti_score": x_opencti_score,
                         "x_opencti_detection": x_opencti_detection,
                         "x_opencti_main_observable_type": x_opencti_main_observable_type,
+                        "x_mitre_platforms": x_mitre_platforms,
                         "killChainPhases": kill_chain_phases,
                         "update": update,
                     }
