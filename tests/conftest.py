@@ -1,59 +1,71 @@
-import json
-import pytest
 from typing import Dict
-from urllib.request import Request
+import pytest
 from pycti import OpenCTIApiClient
-from tests.modules.modules import TestIndicator, TestOrganization, TestAttackPattern
+from tests.modules.modules import (
+    TestIndicator,
+    TestIdentity,
+    TestAttackPattern,
+    TestNote,
+    TestCourseOfAction,
+    TestExternalReference,
+    TestCampaign,
+    TestIncident,
+    TestInfrastructure,
+    TestLocation,
+    TestLabel,
+    TestKillChainPhase,
+    TestIntrusionSet,
+    TestMalware,
+    TestMarkingDefinition,
+    TestObservedData,
+)
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--online",
-        action="store_true",
-        default=False,
-        help="run tests on-line with OpenCTI demo instance",
-    )
+# def pytest_addoption(parser):
+#     parser.addoption(
+#         "--online",
+#         action="store_true",
+#         default=False,
+#         help="run tests on-line with OpenCTI demo instance",
+#     )
 
 
 @pytest.fixture
-def api_client(request, httpserver):
-    live_test = request.config.getoption("online")
-    if live_test:
-        return OpenCTIApiClient(
-            "https://demo.opencti.io",
-            "681b01f9-542d-4c8c-be0c-b6c850b087c8",
-            ssl_verify=False,
-        )
-    else:
-        token = "Dummy key"
-        httpserver.expect_request(
-            "/graphql", method="POST", headers={"Authorization": f"Bearer {token}"}
-        ).respond_with_handler(my_handler)
-        return OpenCTIApiClient(
-            f"http://{httpserver.host}:{str(httpserver.port)}", token
-        )
-
-
-def my_handler(request: Request):
-    # here, examine the request object
-    return json.dumps({"data": {"threatActors": ["foo", "bar"]}})
+def api_client(request):
+    # live_test = request.config.getoption("online")
+    # if live_test:
+    return OpenCTIApiClient(
+        "https://demo.opencti.io",
+        "681b01f9-542d-4c8c-be0c-b6c850b087c8",
+        ssl_verify=True,
+    )
 
 
 @pytest.fixture
 def fruit_bowl(api_client):
     return {
-        "Organization": TestOrganization(api_client),
+        # SDOs which don't create any other SDOs
+        "Identity": TestIdentity(api_client),
         "Attack-Pattern": TestAttackPattern(api_client),
+        "Campaign": TestCampaign(api_client),
+        # TODO note update creates a new ID
+        "Note": TestNote(api_client),
+        "Course-Of-Action": TestCourseOfAction(api_client),
+        "External-Reference": TestExternalReference(api_client),
+        "Incident": TestIncident(api_client),
+        "Infrastructure": TestInfrastructure(api_client),
         "Indicator": TestIndicator(api_client),
+        "IntrusionSet": TestIntrusionSet(api_client),
+        "KillChainPhase": TestKillChainPhase(api_client),
+        "Label": TestLabel(api_client),
+        "Location": TestLocation(api_client),
+        "Malware": TestMalware(api_client),
+        "MarkingDefinition": TestMarkingDefinition(api_client),
+        "ObservedData": TestObservedData(api_client)
         # "Stix-Domain-Object": {
         #     "data": "",
         #     "base_class": api_client.stix_domain_object,
         #     "class": api_client.stix_domain_object,
-        # },
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.attack_pattern,
-        # },
         # "Campaign": {
         #     "data": "",
         #     "base_class": api_client.stix_domain_object,
