@@ -355,12 +355,10 @@ class TestNote(TestEntity):
         return [
             {
                 "type": "Note",
-                # TODO bug? abstract is key attribute_abstract
                 "abstract": "A very short note",
                 "content": "You would like to know that",
                 "confidence": 50,
                 "authors": ["you"],
-                # TODO lang is never present!
                 "lang": "en",
             }
         ]
