@@ -1,13 +1,13 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 
 from stix2 import TLP_GREEN, TLP_WHITE
 
 from pycti import OpenCTIStix2Utils
-from pycti.utils.constants import LocationTypes, IdentityTypes
+from pycti.utils.constants import LocationTypes, IdentityTypes, ContainerTypes
 from tests.utils import get_incident_start_date, get_incident_end_date
 
 
-class TestEntity:
+class EntityTest:
     def __init__(self, api_client):
         self.api_client = api_client
 
@@ -26,8 +26,14 @@ class TestEntity:
     def baseclass(self):
         return self.api_client.stix_domain_object
 
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {"description": "Test"}
 
-class TestIdentity(TestEntity):
+    def get_compare_exception_keys(self) -> List[str]:
+        return ["type", "update", "createdBy"]
+
+
+class IdentityTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -51,7 +57,7 @@ class TestIdentity(TestEntity):
         return self.api_client.identity
 
 
-class TestIndicator(TestEntity):
+class IndicatorTest(EntityTest):
     def setup(self):
         self.marking_definition_green = self.api_client.marking_definition.read(
             id=TLP_GREEN["id"]
@@ -61,7 +67,7 @@ class TestIndicator(TestEntity):
         )
         # Create the organization
         self.organization = self.api_client.identity.create(
-            **TestIdentity(self.api_client).data()[0]
+            **IdentityTest(self.api_client).data()[0]
         )
 
     def data(self) -> List[Dict]:
@@ -97,13 +103,13 @@ class TestIndicator(TestEntity):
         return self.api_client.indicator
 
 
-class TestAttackPattern(TestEntity):
+class AttackPatternTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
                 "type": "AttackPattern",
                 "name": "Evil Pattern",
-                "x_mitre_id": "T1999",
+                # "x_mitre_id": "T1999",
                 "description": "Test Attack Pattern",
             }
         ]
@@ -112,7 +118,7 @@ class TestAttackPattern(TestEntity):
         return self.api_client.attack_pattern
 
 
-class TestCourseOfAction(TestEntity):
+class CourseOfActionTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -126,7 +132,7 @@ class TestCourseOfAction(TestEntity):
         return self.api_client.course_of_action
 
 
-class TestExternalReference(TestEntity):
+class ExternalReferenceTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -145,7 +151,7 @@ class TestExternalReference(TestEntity):
         return self.api_client.external_reference
 
 
-class TestCampaign(TestEntity):
+class CampaignTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -164,7 +170,7 @@ class TestCampaign(TestEntity):
         return self.api_client.campaign
 
 
-class TestIncident(TestEntity):
+class IncidentTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -183,7 +189,7 @@ class TestIncident(TestEntity):
         return self.api_client.incident
 
 
-class TestInfrastructure(TestEntity):
+class InfrastructureTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -200,7 +206,7 @@ class TestInfrastructure(TestEntity):
         return self.api_client.infrastructure
 
 
-class TestIntrusionSet(TestEntity):
+class IntrusionSetTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -216,7 +222,7 @@ class TestIntrusionSet(TestEntity):
         return self.api_client.intrusion_set
 
 
-class TestKillChainPhase(TestEntity):
+class KillChainPhaseTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -233,7 +239,7 @@ class TestKillChainPhase(TestEntity):
         return self.api_client.kill_chain_phase
 
 
-class TestLabel(TestEntity):
+class LabelTest(EntityTest):
     def data(self) -> List[Dict]:
         return [{"type": "Label", "value": "foo", "color": "#c3ff1a"}]
 
@@ -244,7 +250,7 @@ class TestLabel(TestEntity):
         return self.api_client.label
 
 
-class TestLocation(TestEntity):
+class LocationTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -261,7 +267,7 @@ class TestLocation(TestEntity):
                 "latitude": 48.8566,
                 "longitude": 2.3522,
                 "region": "northern-america",
-                "country": "th",
+                "country": "KOR",
                 "administrative_area": "Tak",
                 "postal_code": "63170",
             },
@@ -282,8 +288,11 @@ class TestLocation(TestEntity):
     def ownclass(self):
         return self.api_client.location
 
+    def get_compare_exception_keys(self) -> List[str]:
+        return ["type", "update", "createdBy", "region"]
 
-class TestMalware(TestEntity):
+
+class MalwareTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -299,7 +308,7 @@ class TestMalware(TestEntity):
         return self.api_client.malware
 
 
-class TestMarkingDefinition(TestEntity):
+class MarkingDefinitionTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
@@ -313,8 +322,31 @@ class TestMarkingDefinition(TestEntity):
     def ownclass(self):
         return self.api_client.marking_definition
 
+    def baseclass(self):
+        return self.api_client.marking_definition
 
-class TestObservedData(TestEntity):
+
+class NoteTest(EntityTest):
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "type": ContainerTypes.NOTE.value,
+                "abstract": "A very short note",
+                "content": "You would like to know that",
+                "confidence": 50,
+                "authors": ["you"],
+                "lang": "en",
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.note
+
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {"content": "Test"}
+
+
+class ObservedDataTest(EntityTest):
     def setup(self):
         self.ipv4 = self.api_client.stix_cyber_observable.create(
             simple_observable_id=OpenCTIStix2Utils.generate_random_stix_id(
@@ -334,11 +366,11 @@ class TestObservedData(TestEntity):
     def data(self) -> List[Dict]:
         return [
             {
-                "type": "ObservedData",
-                "first_observed": "2015-12-21T19:00:00Z",
-                "last_observed": "2015-12-21T19:00:00Z",
+                "type": ContainerTypes.OBSERVED_DATA.value,
+                "first_observed": get_incident_start_date(),
+                "last_observed": get_incident_end_date(),
                 "number_observed": 50,
-                "object_refs": [self.ipv4["id"], self.domain["id"]],
+                #                "object_refs": [self.ipv4["id"], self.domain["id"]],
             }
         ]
 
@@ -349,19 +381,250 @@ class TestObservedData(TestEntity):
     def ownclass(self):
         return self.api_client.observed_data
 
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {"number_observed": 30}
 
-class TestNote(TestEntity):
+
+class OpinionTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
             {
-                "type": "Note",
-                "abstract": "A very short note",
-                "content": "You would like to know that",
+                "type": ContainerTypes.OPINION.value,
+                "opinion": "strongly-disagree",
+                "explanation": "This doesn't seem like it is feasible. We've seen how PandaCat has attacked Spanish infrastructure over the last 3 years, so this change in targeting seems too great to be viable. The methods used are more commonly associated with the FlameDragonCrew.",
                 "confidence": 50,
                 "authors": ["you"],
-                "lang": "en",
+                # "lang": "en",
+                # "object_refs": [self.ipv4["id"], self.domain["id"]],
             }
         ]
 
     def ownclass(self):
-        return self.api_client.note
+        return self.api_client.opinion
+
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {"explanation": "Test"}
+
+
+class ReportTest(EntityTest):
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "type": ContainerTypes.REPORT.value,
+                "name": "The Black Vine Cyberespionage Group",
+                "description": "A simple report with an indicator and campaign",
+                "published": "2016-01-20T17:00:00.000Z",
+                "report_types": ["campaign"],
+                # "lang": "en",
+                # "object_refs": [self.ipv4["id"], self.domain["id"]],
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.report
+
+
+class RelationshipTest(EntityTest):
+    def setup(self):
+        self.incident = self.api_client.incident.create(
+            name="My new incident",
+            description="We have been compromised",
+            objective="Espionage",
+        )
+
+        self.ttp1 = self.api_client.attack_pattern.read(
+            filters=[{"key": "x_mitre_id", "values": ["T1193"]}]
+        )
+
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "type": "StixCoreRelationship",
+                "fromId": self.incident["id"],
+                "toId": self.ttp1["id"],
+                "relationship_type": "uses",
+                "description": "We saw the attacker use Spearphishing Attachment.",
+                "start_date": get_incident_start_date(),
+                "stop_date": get_incident_end_date()
+                # "lang": "en",
+                # "object_refs": [self.ipv4["id"], self.domain["id"]],
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.stix_core_relationship
+
+    def baseclass(self):
+        return self.api_client.stix_core_relationship
+
+    def teardown(self):
+        self.api_client.stix_domain_object.delete(id=self.incident["id"])
+
+
+class CyberObservableRelationshipTest(EntityTest):
+    def setup(self):
+        self.ipv4 = self.api_client.stix_cyber_observable.create(
+            simple_observable_id=OpenCTIStix2Utils.generate_random_stix_id(
+                "x-opencti-simple-observable"
+            ),
+            simple_observable_key="IPv4-Addr.value",
+            simple_observable_value="198.51.100.3",
+        )
+        self.domain = self.api_client.stix_cyber_observable.create(
+            simple_observable_id=OpenCTIStix2Utils.generate_random_stix_id(
+                "x-opencti-simple-observable"
+            ),
+            simple_observable_key="Domain-Name.value",
+            simple_observable_value="example.com",
+        )
+
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "fromId": self.domain["id"],
+                "toId": self.ipv4["id"],
+                "relationship_type": "resolves-to",
+                "description": "We saw the attacker use Spearphishing Attachment.",
+                "start_date": get_incident_start_date(),
+                "stop_date": get_incident_end_date()
+                # "lang": "en",
+                # "object_refs": [self.ipv4["id"], self.domain["id"]],
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.stix_cyber_observable_relationship
+
+    def baseclass(self):
+        return self.api_client.stix_cyber_observable_relationship
+
+    def teardown(self):
+        self.api_client.stix_domain_object.delete(id=self.domain["id"])
+        self.api_client.stix_domain_object.delete(id=self.ipv4["id"])
+
+
+class SightingRelationshipTest(EntityTest):
+    def setup(self):
+        self.ttp1 = self.api_client.attack_pattern.read(
+            filters=[{"key": "x_mitre_id", "values": ["T1193"]}]
+        )
+
+        self.location = self.api_client.location.create(
+            **{
+                "type": LocationTypes.COUNTRY.value,
+                "name": "Mars",
+                "description": "A city ",
+                "latitude": 48.8566,
+                "longitude": 2.3522,
+                "region": "northern-america",
+                "country": "th",
+                "administrative_area": "Tak",
+                "postal_code": "63170",
+            },
+        )
+
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "fromId": self.ttp1["id"],
+                "toId": self.location["id"],
+                "description": "We saw the attacker use Spearphishing Attachment.",
+                "start_date": get_incident_start_date(),
+                "stop_date": get_incident_end_date(),
+                "count": 3
+                # "lang": "en",
+                # "object_refs": [self.ipv4["id"], self.domain["id"]],
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.stix_sighting_relationship
+
+    def baseclass(self):
+        return self.api_client.stix_sighting_relationship
+
+    def teardown(self):
+        self.api_client.stix_domain_object.delete(id=self.location["id"])
+
+
+class CyberObservableTest(EntityTest):
+    def data(self) -> List[Dict]:
+        return [
+            # {
+            #     "simple_observable_key": "IPv4-Addr.value",
+            #     "simple_observable_value": "198.51.100.3",
+            # },
+            {
+                "simple_observable_key": "Domain-Name.value",
+                "simple_observable_value": "example.com",
+            },
+            # {
+            #     "simple_observable_key": "Autonomous-System.number",
+            #     "simple_observable_value": 1234,
+            # }
+        ]
+
+    def ownclass(self):
+        return self.api_client.stix_cyber_observable
+
+    def baseclass(self):
+        return self.api_client.stix_cyber_observable
+
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {"simple_observable_value": "google.com"}
+
+
+class ThreatActorTest(EntityTest):
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "type": "ThreatActor",
+                "threat_actor_types": ["crime-syndicate"],
+                "name": "Evil Org",
+                "description": "The Evil Org threat actor group",
+                "aliases": ["Syndicate 1", "Evil Syndicate 99"],
+                "roles": ["director"],
+                "goals": ["Steal bank money", "Steal credit cards"],
+                "sophistication": "advanced",
+                "resource_level": "team",
+                "primary_motivation": "organizational-gain",
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.threat_actor
+
+
+class ToolTest(EntityTest):
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "type": "Tool",
+                "description": "The Evil Org threat actor group",
+                "tool_types": ["remote-access"],
+                "name": "VNC",
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.tool
+
+
+class VulnerabilityTest(EntityTest):
+    def data(self) -> List[Dict]:
+        return [
+            {
+                "type": "Vulnerability",
+                "name": "CVE-2016-1234",
+                "description": "evil evil evil",
+                # "external_references": [
+                #     {
+                #         "source_name": "cve",
+                #         "external_id": "CVE-2016-1234"
+                #     }
+                # ]
+            }
+        ]
+
+    def ownclass(self):
+        return self.api_client.vulnerability
