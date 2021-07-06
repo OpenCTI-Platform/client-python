@@ -1,23 +1,32 @@
-from typing import Dict
 import pytest
+
 from pycti import OpenCTIApiClient
 from tests.modules.modules import (
-    TestIndicator,
-    TestIdentity,
-    TestAttackPattern,
-    TestNote,
-    TestCourseOfAction,
-    TestExternalReference,
-    TestCampaign,
-    TestIncident,
-    TestInfrastructure,
-    TestLocation,
-    TestLabel,
-    TestKillChainPhase,
-    TestIntrusionSet,
-    TestMalware,
-    TestMarkingDefinition,
-    TestObservedData,
+    ThreatActorTest,
+    ToolTest,
+    VulnerabilityTest,
+    SightingRelationshipTest,
+    AttackPatternTest,
+    CampaignTest,
+    CourseOfActionTest,
+    ExternalReferenceTest,
+    IdentityTest,
+    IncidentTest,
+    InfrastructureTest,
+    IndicatorTest,
+    IntrusionSetTest,
+    KillChainPhaseTest,
+    LabelTest,
+    LocationTest,
+    MalwareTest,
+    MarkingDefinitionTest,
+    NoteTest,
+    ObservedDataTest,
+    OpinionTest,
+    ReportTest,
+    RelationshipTest,
+    CyberObservableTest,
+    CyberObservableRelationshipTest,
 )
 
 
@@ -45,113 +54,31 @@ def api_client(request):
 def fruit_bowl(api_client):
     return {
         # SDOs which don't create any other SDOs
-        "Identity": TestIdentity(api_client),
-        "Attack-Pattern": TestAttackPattern(api_client),
-        "Campaign": TestCampaign(api_client),
-        # TODO note update creates a new ID
-        "Note": TestNote(api_client),
-        "Course-Of-Action": TestCourseOfAction(api_client),
-        "External-Reference": TestExternalReference(api_client),
-        "Incident": TestIncident(api_client),
-        "Infrastructure": TestInfrastructure(api_client),
-        "Indicator": TestIndicator(api_client),
-        "IntrusionSet": TestIntrusionSet(api_client),
-        "KillChainPhase": TestKillChainPhase(api_client),
-        "Label": TestLabel(api_client),
-        "Location": TestLocation(api_client),
-        "Malware": TestMalware(api_client),
-        "MarkingDefinition": TestMarkingDefinition(api_client),
-        "ObservedData": TestObservedData(api_client)
-        # "Stix-Domain-Object": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.stix_domain_object,
-        # "Campaign": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.campaign,
-        # },
-        # "Note": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.note,
-        # },
-        # "Observed-Data": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.observed_data,
-        # },
-        # "Opinion": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.opinion,
-        # },
-        # "Report": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.report,
-        # },
-        # "Course-Of-Action": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.course_of_action,
-        # },
-        # "Identity": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.identity,
-        # },
-        # "Infrastructure": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.infrastructure,
-        # },
-        # "Intrusion-Set": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.intrusion_set,
-        # },
-        # "Location": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.location,
-        # },
-        # "Malware": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.malware,
-        # },
-        # "Threat-Actor": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.threat_actor,
-        # },
-        # "Tool": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.tool,
-        # },
-        # "Vulnerability": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.vulnerability,
-        # },
-        # "Incident": {
-        #     "data": "",
-        #     "base_class": api_client.stix_domain_object,
-        #     "class": api_client.incident,
-        # },
-        # "Stix-Cyber-Observable": {
-        #     "data": "",
-        #     "base_class": api_client.stix_cyber_observable,
-        #     "class": api_client.stix_cyber_observable,
-        # },
-    }
-
-
-def organization() -> Dict:
-    return {
-        "type": "Organization",
-        "name": "Testing Inc.",
-        "description": "OpenCTI Test Org",
+        "Attack-Pattern": AttackPatternTest(api_client),
+        "Campaign": CampaignTest(api_client),
+        "Course-Of-Action": CourseOfActionTest(api_client),
+        "External-Reference": ExternalReferenceTest(api_client),
+        "Identity": IdentityTest(api_client),
+        "Incident": IncidentTest(api_client),
+        "Infrastructure": InfrastructureTest(api_client),
+        "Indicator": IndicatorTest(api_client),
+        "IntrusionSet": IntrusionSetTest(api_client),
+        "KillChainPhase": KillChainPhaseTest(api_client),
+        "Label": LabelTest(api_client),
+        "Location": LocationTest(api_client),
+        "Malware": MalwareTest(api_client),
+        "MarkingDefinition": MarkingDefinitionTest(api_client),
+        "Note": NoteTest(api_client),
+        "ObservedData": ObservedDataTest(api_client),
+        "Opinion": OpinionTest(api_client),
+        "Report": ReportTest(api_client),
+        "Relationship": RelationshipTest(api_client),
+        "CyberObservable": CyberObservableTest(api_client),
+        "CyberObservableRelationship": CyberObservableRelationshipTest(api_client),
+        # "StixDomainObject": TODO,
+        # "StixObjectOrStixRelationship": TODO,
+        "StixSightingRelationship": SightingRelationshipTest(api_client),
+        "ThreatActor": ThreatActorTest(api_client),
+        "Tool": ToolTest(api_client),
+        "Vulnerability": VulnerabilityTest(api_client),
     }
