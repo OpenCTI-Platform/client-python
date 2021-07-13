@@ -32,6 +32,9 @@ class EntityTest:
     def get_compare_exception_keys(self) -> List[str]:
         return ["type", "update", "createdBy", "modified"]
 
+    def get_filter(self) -> Dict[str, str]:
+        return {}
+
 
 class IdentityTest(EntityTest):
     def data(self) -> List[Dict]:
@@ -101,6 +104,12 @@ class IndicatorTest(EntityTest):
 
     def ownclass(self):
         return self.api_client.indicator
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+                "key": "name",
+                "values": ["C2 server of the new campaign"],
+            }
 
 
 class AttackPatternTest(EntityTest):

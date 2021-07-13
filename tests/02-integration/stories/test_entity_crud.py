@@ -121,3 +121,27 @@ class Test_entity_crud:
                 ), f"{sdo}: Read returned value '{result}' after delete"
 
             s_class.teardown()
+
+    def test_filter(self, fruit_bowl):
+        for sdo, s_class in fruit_bowl.items():
+            if len(s_class.get_filter()) == 0:
+                continue
+
+            s_class.setup()
+            for class_data in s_class.data():
+                test_indicator = s_class.ownclass().create(**class_data)
+                assert test_indicator is not None, f"{sdo}: Response is NoneType"
+                assert "id" in test_indicator, f"{sdo}: No ID on object"
+                test_indicator = s_class.ownclass().read(filters=s_class.get_filter())
+                self.compare_values(
+                    sdo,
+                    class_data,
+                    test_indicator,
+                    s_class.get_compare_exception_keys(),
+                )
+
+                function_present = getattr(s_class.baseclass(), "delete", None)
+                if function_present:
+                    s_class.baseclass().delete(id=test_indicator["id"])
+
+            s_class.teardown()
