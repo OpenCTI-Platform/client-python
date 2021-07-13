@@ -5,7 +5,7 @@ from tests.modules.modules import (
     ThreatActorTest,
     ToolTest,
     VulnerabilityTest,
-    SightingRelationshipTest,
+    StixSightingRelationshipTest,
     AttackPatternTest,
     CampaignTest,
     CourseOfActionTest,
@@ -24,25 +24,13 @@ from tests.modules.modules import (
     ObservedDataTest,
     OpinionTest,
     ReportTest,
-    RelationshipTest,
-    CyberObservableTest,
-    CyberObservableRelationshipTest,
+    StixCoreRelationshipTest,
+    StixCyberObservableTest,
 )
-
-
-# def pytest_addoption(parser):
-#     parser.addoption(
-#         "--online",
-#         action="store_true",
-#         default=False,
-#         help="run tests on-line with OpenCTI demo instance",
-#     )
 
 
 @pytest.fixture
 def api_client(request):
-    # live_test = request.config.getoption("online")
-    # if live_test:
     return OpenCTIApiClient(
         "https://demo.opencti.io",
         "681b01f9-542d-4c8c-be0c-b6c850b087c8",
@@ -53,7 +41,6 @@ def api_client(request):
 @pytest.fixture
 def fruit_bowl(api_client):
     return {
-        # SDOs which don't create any other SDOs
         "Attack-Pattern": AttackPatternTest(api_client),
         "Campaign": CampaignTest(api_client),
         "Course-Of-Action": CourseOfActionTest(api_client),
@@ -72,12 +59,12 @@ def fruit_bowl(api_client):
         "ObservedData": ObservedDataTest(api_client),
         "Opinion": OpinionTest(api_client),
         "Report": ReportTest(api_client),
-        "Relationship": RelationshipTest(api_client),
-        "CyberObservable": CyberObservableTest(api_client),
-        "CyberObservableRelationship": CyberObservableRelationshipTest(api_client),
+        "Relationship": StixCoreRelationshipTest(api_client),
+        "StixCyberObservable": StixCyberObservableTest(api_client),
+        # "StixCyberObservableRelationship": StixCyberObservableRelationshipTest(api_client),
         # "StixDomainObject": TODO,
         # "StixObjectOrStixRelationship": TODO,
-        "StixSightingRelationship": SightingRelationshipTest(api_client),
+        "StixSightingRelationship": StixSightingRelationshipTest(api_client),
         "ThreatActor": ThreatActorTest(api_client),
         "Tool": ToolTest(api_client),
         "Vulnerability": VulnerabilityTest(api_client),

@@ -17,17 +17,7 @@ class Test_entity_crud:
             if isinstance(value, str):
                 assert (
                     value == compare_data
-                ), f"{sdo}: Key '{key}': {value} does't match {retrieved_data[key]} ({retrieved_data}"
-            # TODO handle dicts in lists
-            # elif isinstance(value, list) and len(value) > 0:
-            #     assert len(value) == len(
-            #         compare_data
-            #     ), f"{sdo}: List '{value}' does not have the same length as '{compare_data}'"
-            #     for value_key in value:
-            #         if isinstance(value_key, str):
-            #             assert (
-            #                     value_key in compare_data
-            #             ), f"{sdo}: List '{compare_data}' does not contain '{value_key}'"
+                ), f"{sdo}: Key '{key}': '{value}' does't match value '{retrieved_data[key]}' ({retrieved_data}"
             elif isinstance(value, dict):
                 assert len(value) == len(
                     compare_data
@@ -44,8 +34,11 @@ class Test_entity_crud:
                 assert test_indicator is not None, f"{sdo}: Response is NoneType"
                 assert "id" in test_indicator, f"{sdo}: No ID on object"
 
-                # assert 'entity_type' in test_indicator, f"{sdo}: No entity_type found"
-                # assert sdo == test_indicator['entity_type'], f"{sdo}: Entity type '{test_indicator['entity_type']}' doesn't match {sdo}"
+                function_present = getattr(s_class.baseclass(), "delete", None)
+                if function_present:
+                    s_class.baseclass().delete(id=test_indicator["id"])
+
+            s_class.teardown()
 
     def test_read(self, fruit_bowl):
         for sdo, s_class in fruit_bowl.items():
@@ -62,6 +55,10 @@ class Test_entity_crud:
                     s_class.get_compare_exception_keys(),
                 )
 
+                function_present = getattr(s_class.baseclass(), "delete", None)
+                if function_present:
+                    s_class.baseclass().delete(id=test_indicator["id"])
+
             s_class.teardown()
 
     def test_update(self, fruit_bowl):
@@ -72,25 +69,35 @@ class Test_entity_crud:
                 assert test_indicator is not None, f"{sdo}: Response is NoneType"
                 assert "id" in test_indicator, f"{sdo}: No ID on object"
 
-                update_field = list(s_class.update_data().keys())[0]
-                update_value = list(s_class.update_data().values())[0]
+                if len(s_class.update_data()) > 0:
+                    function_present = getattr(s_class.ownclass(), "update_field", None)
+                    if function_present:
+                        for update_field, update_value in s_class.update_data().items():
+                            class_data[update_field] = update_value
+                            result = s_class.ownclass().update_field(
+                                id=test_indicator["id"],
+                                key=update_field,
+                                value=update_value,
+                            )
+                    else:
+                        for update_field, update_value in s_class.update_data().items():
+                            class_data[update_field] = update_value
+                        class_data["update"] = True
+                        result = s_class.ownclass().create(**class_data)
 
-                class_data[update_field] = update_value
-                class_data["update"] = True
-                result = s_class.ownclass().create(**class_data)
-                result = s_class.ownclass().read(id=result["id"])
-                assert (
-                    update_field in result
-                ), f"{sdo}: Updated field {update_field} is not present"
-                assert (
-                    result[update_field] == update_value
-                ), f"{sdo}: Updated field {update_field} is not '{update_value}', instead '{result[update_field]}'"
-                assert (
-                    result["id"] == test_indicator["id"]
-                ), f"{sdo}: Updated SDO does not match old ID"
-                self.compare_values(
-                    sdo, class_data, result, s_class.get_compare_exception_keys()
-                )
+                    result = s_class.ownclass().read(id=result["id"])
+                    assert (
+                        result["id"] == test_indicator["id"]
+                    ), f"{sdo}: Updated SDO does not match old ID"
+                    self.compare_values(
+                        sdo, class_data, result, s_class.get_compare_exception_keys()
+                    )
+                else:
+                    result = test_indicator
+
+                function_present = getattr(s_class.baseclass(), "delete", None)
+                if function_present:
+                    s_class.baseclass().delete(id=result["id"])
 
             s_class.teardown()
 
@@ -98,7 +105,7 @@ class Test_entity_crud:
         for sdo, s_class in fruit_bowl.items():
             function_present = getattr(s_class.baseclass(), "delete", None)
             if function_present is None:
-                print(f"{sdo} has no delete function")
+                # print(f"{sdo} has no delete function")
                 continue
 
             s_class.setup()
@@ -114,6 +121,3 @@ class Test_entity_crud:
                 ), f"{sdo}: Read returned value '{result}' after delete"
 
             s_class.teardown()
-
-    def test_import_from_stix2(self, fruit_bowl, api_client):
-        pass

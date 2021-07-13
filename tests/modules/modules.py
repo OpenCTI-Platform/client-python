@@ -30,7 +30,7 @@ class EntityTest:
         return {"description": "Test"}
 
     def get_compare_exception_keys(self) -> List[str]:
-        return ["type", "update", "createdBy"]
+        return ["type", "update", "createdBy", "modified"]
 
 
 class IdentityTest(EntityTest):
@@ -108,9 +108,9 @@ class AttackPatternTest(EntityTest):
         return [
             {
                 "type": "AttackPattern",
-                "name": "Evil Pattern",
+                "name": "Evil Pattern!",
                 # "x_mitre_id": "T1999",
-                "description": "Test Attack Pattern",
+                "description": "Test Attack Pattern!",
             }
         ]
 
@@ -238,16 +238,24 @@ class KillChainPhaseTest(EntityTest):
     def baseclass(self):
         return self.api_client.kill_chain_phase
 
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {}
+
 
 class LabelTest(EntityTest):
     def data(self) -> List[Dict]:
-        return [{"type": "Label", "value": "foo", "color": "#c3ff1a"}]
+        return [{"type": "Label", "value": "fooaaa", "color": "#c3ff1a"}]
 
     def ownclass(self):
         return self.api_client.label
 
     def baseclass(self):
         return self.api_client.label
+
+    # def update_data(self) -> Dict[str, Union[str, int]]:
+    #     return {"color": "#c3ffbb"}
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {}
 
 
 class LocationTest(EntityTest):
@@ -259,22 +267,21 @@ class LocationTest(EntityTest):
                 "description": "A city ",
                 "latitude": 48.8566,
                 "longitude": 2.3522,
+                # "country": "KR",
             },
             {
                 "type": LocationTypes.COUNTRY.value,
                 "name": "Mars",
-                "description": "A city ",
+                "description": "A country ",
                 "latitude": 48.8566,
                 "longitude": 2.3522,
                 "region": "northern-america",
-                "country": "KOR",
-                "administrative_area": "Tak",
-                "postal_code": "63170",
+                "x_opencti_aliases": ["MRS"],
             },
             {
                 "type": LocationTypes.REGION.value,
                 "name": "Mars",
-                "description": "A city ",
+                "description": "A Region ",
                 "latitude": 48.8566,
                 "longitude": 2.3522,
             },
@@ -325,6 +332,11 @@ class MarkingDefinitionTest(EntityTest):
     def baseclass(self):
         return self.api_client.marking_definition
 
+    # def update_data(self) -> Dict[str, Union[str, int]]:
+    #     return {"definition": "Test"}
+    def update_data(self) -> Dict[str, Union[str, int]]:
+        return {}
+
 
 class NoteTest(EntityTest):
     def data(self) -> List[Dict]:
@@ -335,7 +347,7 @@ class NoteTest(EntityTest):
                 "content": "You would like to know that",
                 "confidence": 50,
                 "authors": ["you"],
-                "lang": "en",
+                #    "lang": "en",
             }
         ]
 
@@ -343,7 +355,12 @@ class NoteTest(EntityTest):
         return self.api_client.note
 
     def update_data(self) -> Dict[str, Union[str, int]]:
-        return {"content": "Test"}
+        return {}
+
+    def get_compare_exception_keys(self) -> List[str]:
+        # changes between pycti and opencti naming
+        # abstract = attribute_abstract
+        return ["type", "update", "createdBy", "modified", "abstract"]
 
 
 class ObservedDataTest(EntityTest):
@@ -382,7 +399,8 @@ class ObservedDataTest(EntityTest):
         return self.api_client.observed_data
 
     def update_data(self) -> Dict[str, Union[str, int]]:
-        return {"number_observed": 30}
+        # return {"number_observed": 30}
+        return {}
 
 
 class OpinionTest(EntityTest):
@@ -403,7 +421,8 @@ class OpinionTest(EntityTest):
         return self.api_client.opinion
 
     def update_data(self) -> Dict[str, Union[str, int]]:
-        return {"explanation": "Test"}
+        # return {"explanation": "Test"}
+        return {}
 
 
 class ReportTest(EntityTest):
@@ -424,7 +443,7 @@ class ReportTest(EntityTest):
         return self.api_client.report
 
 
-class RelationshipTest(EntityTest):
+class StixCoreRelationshipTest(EntityTest):
     def setup(self):
         self.incident = self.api_client.incident.create(
             name="My new incident",
@@ -460,8 +479,25 @@ class RelationshipTest(EntityTest):
     def teardown(self):
         self.api_client.stix_domain_object.delete(id=self.incident["id"])
 
+    def get_compare_exception_keys(self) -> List[str]:
+        # changes between pycti and opencti naming
+        # fromId = from
+        # toId = to
+        # start_date = start_time
+        # stop_date = stop_time
+        return [
+            "type",
+            "update",
+            "createdBy",
+            "modified",
+            "fromId",
+            "toId",
+            "start_date",
+            "stop_date",
+        ]
 
-class CyberObservableRelationshipTest(EntityTest):
+
+class StixCyberObservableRelationshipTest(EntityTest):
     def setup(self):
         self.ipv4 = self.api_client.stix_cyber_observable.create(
             simple_observable_id=OpenCTIStix2Utils.generate_random_stix_id(
@@ -483,7 +519,7 @@ class CyberObservableRelationshipTest(EntityTest):
             {
                 "fromId": self.domain["id"],
                 "toId": self.ipv4["id"],
-                "relationship_type": "resolves-to",
+                "relationship_type": "related-to",
                 "description": "We saw the attacker use Spearphishing Attachment.",
                 "start_date": get_incident_start_date(),
                 "stop_date": get_incident_end_date()
@@ -502,8 +538,25 @@ class CyberObservableRelationshipTest(EntityTest):
         self.api_client.stix_domain_object.delete(id=self.domain["id"])
         self.api_client.stix_domain_object.delete(id=self.ipv4["id"])
 
+    def get_compare_exception_keys(self) -> List[str]:
+        # changes between pycti and opencti naming
+        # fromId = from
+        # toId = to
+        # start_date = start_time
+        # stop_date = stop_time
+        return [
+            "type",
+            "update",
+            "createdBy",
+            "modified",
+            "fromId",
+            "toId",
+            "start_date",
+            "stop_date",
+        ]
 
-class SightingRelationshipTest(EntityTest):
+
+class StixSightingRelationshipTest(EntityTest):
     def setup(self):
         self.ttp1 = self.api_client.attack_pattern.read(
             filters=[{"key": "x_mitre_id", "values": ["T1193"]}]
@@ -546,22 +599,44 @@ class SightingRelationshipTest(EntityTest):
     def teardown(self):
         self.api_client.stix_domain_object.delete(id=self.location["id"])
 
+    def get_compare_exception_keys(self) -> List[str]:
+        # changes between pycti and opencti naming
+        # fromId = from
+        # toId = to
+        # start_date = start_time
+        # stop_date = stop_time
+        # count = attribute_count
+        return [
+            "type",
+            "update",
+            "createdBy",
+            "modified",
+            "fromId",
+            "toId",
+            "start_date",
+            "stop_date",
+            "count",
+        ]
 
-class CyberObservableTest(EntityTest):
+
+class StixCyberObservableTest(EntityTest):
     def data(self) -> List[Dict]:
         return [
-            # {
-            #     "simple_observable_key": "IPv4-Addr.value",
-            #     "simple_observable_value": "198.51.100.3",
-            # },
+            {
+                "simple_observable_key": "IPv4-Addr.value",
+                "simple_observable_value": "198.51.100.3",
+                "x_opencti_score": 30,
+            },
             {
                 "simple_observable_key": "Domain-Name.value",
                 "simple_observable_value": "example.com",
+                "x_opencti_score": 30,
             },
-            # {
-            #     "simple_observable_key": "Autonomous-System.number",
-            #     "simple_observable_value": 1234,
-            # }
+            {
+                "simple_observable_key": "Autonomous-System.number",
+                "simple_observable_value": 1234,
+                "x_opencti_score": 30,
+            },
         ]
 
     def ownclass(self):
@@ -571,7 +646,22 @@ class CyberObservableTest(EntityTest):
         return self.api_client.stix_cyber_observable
 
     def update_data(self) -> Dict[str, Union[str, int]]:
-        return {"simple_observable_value": "google.com"}
+        return {"x_opencti_score": 50}
+
+    def get_compare_exception_keys(self) -> List[str]:
+        # changes between pycti and opencti naming
+        # fromId = from
+        # toId = to
+        # simple_observable_key = entity_type
+        # simple_observable_value = observable_value & value
+        return [
+            "type",
+            "update",
+            "createdBy",
+            "modified",
+            "simple_observable_key",
+            "simple_observable_value",
+        ]
 
 
 class ThreatActorTest(EntityTest):
