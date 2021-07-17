@@ -18,6 +18,23 @@ class Test_entity_crud:
                 assert (
                     value == compare_data
                 ), f"{sdo}: Key '{key}': '{value}' does't match value '{retrieved_data[key]}' ({retrieved_data}"
+            elif key == "objects" and isinstance(value, list):
+                assert isinstance(compare_data, list), f"{sdo}: Key '{key}': is not a list"
+                original_ids = set()
+                for elem in value:
+                    if isinstance(elem, dict):
+                        original_ids.add(elem.get('id', None))
+                    elif isinstance(elem, str):
+                        original_ids.add(elem)
+
+                retrieved_ids = set()
+                for elem in compare_data:
+                    if isinstance(elem, dict):
+                        retrieved_ids.add(elem.get('id', None))
+                    elif isinstance(elem, str):
+                        original_ids.add(elem)
+
+                assert original_ids == retrieved_ids, f"{sdo}: Key '{key}': '{value}' does't match value '{compare_data}'"
             elif isinstance(value, dict):
                 assert len(value) == len(
                     compare_data
