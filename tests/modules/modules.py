@@ -396,7 +396,7 @@ class ObservedDataTest(EntityTest):
                 "first_observed": get_incident_start_date(),
                 "last_observed": get_incident_end_date(),
                 "number_observed": 50,
-                #                "object_refs": [self.ipv4["id"], self.domain["id"]],
+                "objects": [self.ipv4["id"], self.domain["id"]],
             }
         ]
 
