@@ -195,9 +195,10 @@ class PingAlive(threading.Thread):
         self.api = api
         self.get_state = get_state
         self.set_state = set_state
+        self.exit_event = threading.Event()
 
     def ping(self) -> None:
-        while True:
+        while not self.exit_event.is_set():
             try:
                 initial_state = self.get_state()
                 result = self.api.connector.ping(self.connector_id, initial_state)
@@ -221,11 +222,15 @@ class PingAlive(threading.Thread):
             except Exception:  # pylint: disable=broad-except
                 self.in_error = True
                 logging.error("Error pinging the API")
-            time.sleep(40)
+            self.exit_event.wait(40)
 
     def run(self) -> None:
         logging.info("Starting ping alive thread")
         self.ping()
+
+    def stop(self) -> None:
+        logging.info("Preparing for clean shutdown")
+        self.exit_event.set()
 
 
 class ListenStream(threading.Thread):
@@ -431,6 +436,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.connector.id, self.api, self.get_state, self.set_state
         )
         self.ping.start()
+
+    def stop(self) -> None:
+        self.ping.stop()
 
     def get_name(self) -> Optional[Union[bool, int, str]]:
         return self.connect_name
