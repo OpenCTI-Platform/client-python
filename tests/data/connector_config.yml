@@ -1,0 +1,9 @@
+connector:
+  id: '7f175acc-869b-465d-8a07-47ef08b92394'
+  type: 'EXTERNAL_IMPORT'
+  name: 'TestExternalImport'
+  scope: 'identity,vulnerability'
+  auto: true # Enable/disable auto-import of file
+  only_contextual: false # Only extract data related to an entity (a report, a threat actor, etc.)
+  confidence_level: 15 # From 0 (Unknown) to 100 (Fully trusted)
+  log_level: 'debug'

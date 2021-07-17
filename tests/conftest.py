@@ -1,6 +1,6 @@
 import pytest
 
-from pycti import OpenCTIApiClient
+from pycti import OpenCTIApiClient, OpenCTIApiConnector
 from tests.modules.modules import (
     ThreatActorTest,
     ToolTest,
@@ -25,7 +25,7 @@ from tests.modules.modules import (
     OpinionTest,
     ReportTest,
     StixCoreRelationshipTest,
-    StixCyberObservableTest,
+    StixCyberObservableTest, SimpleConnectorTest,
 )
 
 
@@ -36,6 +36,17 @@ def api_client(request):
         "681b01f9-542d-4c8c-be0c-b6c850b087c8",
         ssl_verify=True,
     )
+
+
+@pytest.fixture
+def api_connector(api_client):
+    return OpenCTIApiConnector(api_client)
+
+
+@pytest.fixture
+def simple_connector() -> SimpleConnectorTest:
+    return SimpleConnectorTest()
+
 
 
 @pytest.fixture
