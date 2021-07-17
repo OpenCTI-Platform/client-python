@@ -25,7 +25,8 @@ from tests.modules.modules import (
     OpinionTest,
     ReportTest,
     StixCoreRelationshipTest,
-    StixCyberObservableTest, SimpleConnectorTest,
+    StixCyberObservableTest,
+    SimpleConnectorTest,
 )
 
 
@@ -46,7 +47,6 @@ def api_connector(api_client):
 @pytest.fixture
 def simple_connector() -> SimpleConnectorTest:
     return SimpleConnectorTest()
-
 
 
 @pytest.fixture

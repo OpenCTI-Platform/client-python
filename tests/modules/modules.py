@@ -732,10 +732,10 @@ class VulnerabilityTest(EntityTest):
 class SimpleConnectorTest:
     def data(self) -> Dict:
         return {
-            'connector_id': 'a5d89a53-3101-4ebe-8915-bd0480f488b3',
-            'connector_name': 'TestConnector',
-            'connector_type': 'EXTERNAL_IMPORT',
-            'scope': 'vulnerability',
-            'auto': True,
-            'only_contextual': False
+            "connector_id": "a5d89a53-3101-4ebe-8915-bd0480f488b3",
+            "connector_name": "TestConnector",
+            "connector_type": "EXTERNAL_IMPORT",
+            "scope": "vulnerability",
+            "auto": True,
+            "only_contextual": False,
         }
