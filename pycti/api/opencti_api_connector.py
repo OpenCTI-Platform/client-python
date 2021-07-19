@@ -105,7 +105,7 @@ class OpenCTIApiConnector:
         """unregister a connector with OpenCTI
 
         :param _id: `OpenCTIConnector` connector id
-        :type str: string
+        :type _id: string
         :return: the response registerConnector data dict
         :rtype: dict
         """
