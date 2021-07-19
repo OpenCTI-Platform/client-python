@@ -439,6 +439,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def stop(self) -> None:
         self.ping.stop()
+        self.api.connector.unregister(self.connector_id)
 
     def get_name(self) -> Optional[Union[bool, int, str]]:
         return self.connect_name
