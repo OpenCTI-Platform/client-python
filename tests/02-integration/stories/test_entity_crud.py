@@ -1,143 +1,135 @@
 from typing import Dict, List
 
+from pytest_cases import parametrize_with_cases
 
-class Test_entity_crud:
-    @staticmethod
-    def compare_values(
-        sdo: str, original_data: Dict, retrieved_data: Dict, exception_keys: List
-    ):
-        for key, value in original_data.items():
-            # Attributes which aren't present in the final Stix objects
-            if key in exception_keys:
-                continue
+from tests.conftest import EntityTestCases
 
-            assert key in retrieved_data, f"{sdo}: Key {key} is not in retrieved_data"
 
-            compare_data = retrieved_data.get(key, None)
-            if isinstance(value, str):
-                assert (
-                    value == compare_data
-                ), f"{sdo}: Key '{key}': '{value}' does't match value '{retrieved_data[key]}' ({retrieved_data}"
-            elif isinstance(value, dict):
-                assert len(value) == len(
-                    compare_data
-                ), f"{sdo}: Dict '{value}' does not have the same length as '{compare_data}'"
-                assert (
-                    value == compare_data
-                ), f"{sdo}: Dict '{value}' does not have the same content as'{compare_data}'"
+def compare_values(original_data: Dict, retrieved_data: Dict, exception_keys: List):
+    for key, value in original_data.items():
+        # Attributes which aren't present in the final Stix objects
+        if key in exception_keys:
+            continue
 
-    def test_create(self, fruit_bowl):
-        for sdo, s_class in fruit_bowl.items():
-            s_class.setup()
-            for class_data in s_class.data():
-                test_indicator = s_class.ownclass().create(**class_data)
-                assert test_indicator is not None, f"{sdo}: Response is NoneType"
-                assert "id" in test_indicator, f"{sdo}: No ID on object"
+        assert key in retrieved_data, f"Key {key} is not in retrieved_data"
 
-                function_present = getattr(s_class.baseclass(), "delete", None)
-                if function_present:
-                    s_class.baseclass().delete(id=test_indicator["id"])
+        compare_data = retrieved_data.get(key, None)
+        if isinstance(value, str):
+            assert (
+                value == compare_data
+            ), f"Key '{key}': '{value}' does't match value '{retrieved_data[key]}' ({retrieved_data}"
+        elif isinstance(value, dict):
+            assert len(value) == len(
+                compare_data
+            ), f"Dict '{value}' does not have the same length as '{compare_data}'"
+            assert (
+                value == compare_data
+            ), f"Dict '{value}' does not have the same content as'{compare_data}'"
 
-            s_class.teardown()
 
-    def test_read(self, fruit_bowl):
-        for sdo, s_class in fruit_bowl.items():
-            s_class.setup()
-            for class_data in s_class.data():
-                test_indicator = s_class.ownclass().create(**class_data)
-                assert test_indicator is not None, f"{sdo}: Response is NoneType"
-                assert "id" in test_indicator, f"{sdo}: No ID on object"
-                test_indicator = s_class.ownclass().read(id=test_indicator["id"])
-                self.compare_values(
-                    sdo,
-                    class_data,
-                    test_indicator,
-                    s_class.get_compare_exception_keys(),
-                )
+@parametrize_with_cases("entity_class", cases=EntityTestCases)
+def test_entity_create(entity_class):
+    entity_class.setup()
+    for class_data in entity_class.data():
+        test_indicator = entity_class.ownclass().create(**class_data)
+        assert test_indicator is not None, "Response is NoneType"
+        assert "id" in test_indicator, "No ID on object"
 
-                function_present = getattr(s_class.baseclass(), "delete", None)
-                if function_present:
-                    s_class.baseclass().delete(id=test_indicator["id"])
+        entity_class.baseclass().delete(id=test_indicator["id"])
 
-            s_class.teardown()
+    entity_class.teardown()
 
-    def test_update(self, fruit_bowl):
-        for sdo, s_class in fruit_bowl.items():
-            s_class.setup()
-            for class_data in s_class.data():
-                test_indicator = s_class.ownclass().create(**class_data)
-                assert test_indicator is not None, f"{sdo}: Response is NoneType"
-                assert "id" in test_indicator, f"{sdo}: No ID on object"
 
-                if len(s_class.update_data()) > 0:
-                    function_present = getattr(s_class.ownclass(), "update_field", None)
-                    if function_present:
-                        for update_field, update_value in s_class.update_data().items():
-                            class_data[update_field] = update_value
-                            result = s_class.ownclass().update_field(
-                                id=test_indicator["id"],
-                                key=update_field,
-                                value=update_value,
-                            )
-                    else:
-                        for update_field, update_value in s_class.update_data().items():
-                            class_data[update_field] = update_value
-                        class_data["update"] = True
-                        result = s_class.ownclass().create(**class_data)
+@parametrize_with_cases("entity_class", cases=EntityTestCases)
+def test_read(entity_class):
+    entity_class.setup()
+    for class_data in entity_class.data():
+        test_indicator = entity_class.ownclass().create(**class_data)
+        assert test_indicator is not None, "Response is NoneType"
+        assert "id" in test_indicator, "No ID on object"
+        test_indicator = entity_class.ownclass().read(id=test_indicator["id"])
+        compare_values(
+            class_data,
+            test_indicator,
+            entity_class.get_compare_exception_keys(),
+        )
 
-                    result = s_class.ownclass().read(id=result["id"])
-                    assert (
-                        result["id"] == test_indicator["id"]
-                    ), f"{sdo}: Updated SDO does not match old ID"
-                    self.compare_values(
-                        sdo, class_data, result, s_class.get_compare_exception_keys()
+        entity_class.baseclass().delete(id=test_indicator["id"])
+
+    entity_class.teardown()
+
+
+@parametrize_with_cases("entity_class", cases=EntityTestCases)
+def test_update(entity_class):
+    entity_class.setup()
+    for class_data in entity_class.data():
+        test_indicator = entity_class.ownclass().create(**class_data)
+        assert test_indicator is not None, "Response is NoneType"
+        assert "id" in test_indicator, "No ID on object"
+
+        if len(entity_class.update_data()) > 0:
+            function_present = getattr(entity_class.ownclass(), "update_field", None)
+            if function_present:
+                for update_field, update_value in entity_class.update_data().items():
+                    class_data[update_field] = update_value
+                    result = entity_class.ownclass().update_field(
+                        id=test_indicator["id"],
+                        key=update_field,
+                        value=update_value,
                     )
-                else:
-                    result = test_indicator
+            else:
+                for update_field, update_value in entity_class.update_data().items():
+                    class_data[update_field] = update_value
+                class_data["update"] = True
+                result = entity_class.ownclass().create(**class_data)
 
-                function_present = getattr(s_class.baseclass(), "delete", None)
-                if function_present:
-                    s_class.baseclass().delete(id=result["id"])
+            result = entity_class.ownclass().read(id=result["id"])
+            assert (
+                result["id"] == test_indicator["id"]
+            ), "Updated SDO does not match old ID"
+            compare_values(
+                class_data, result, entity_class.get_compare_exception_keys()
+            )
+        else:
+            result = test_indicator
 
-            s_class.teardown()
+        entity_class.baseclass().delete(id=result["id"])
 
-    def test_delete(self, fruit_bowl):
-        for sdo, s_class in fruit_bowl.items():
+    entity_class.teardown()
 
-            s_class.setup()
-            for class_data in s_class.data():
-                test_indicator = s_class.ownclass().create(**class_data)
-                assert test_indicator is not None, f"{sdo}: Response is NoneType"
-                assert "id" in test_indicator, f"{sdo}: No ID on object"
-                result = s_class.baseclass().delete(id=test_indicator["id"])
-                assert result is None, f"{sdo}: Delete returned value '{result}'"
-                result = s_class.ownclass().read(id=test_indicator["id"])
-                assert (
-                    result is None
-                ), f"{sdo}: Read returned value '{result}' after delete"
 
-            s_class.teardown()
+@parametrize_with_cases("entity_class", cases=EntityTestCases)
+def test_delete(entity_class):
+    entity_class.setup()
+    for class_data in entity_class.data():
+        test_indicator = entity_class.ownclass().create(**class_data)
+        assert test_indicator is not None, "Response is NoneType"
+        assert "id" in test_indicator, "No ID on object"
+        result = entity_class.baseclass().delete(id=test_indicator["id"])
+        assert result is None, f"Delete returned value '{result}'"
+        result = entity_class.ownclass().read(id=test_indicator["id"])
+        assert result is None, f"Read returned value '{result}' after delete"
 
-    def test_filter(self, fruit_bowl):
-        for sdo, s_class in fruit_bowl.items():
-            if len(s_class.get_filter()) == 0:
-                continue
+    entity_class.teardown()
 
-            s_class.setup()
-            for class_data in s_class.data():
-                test_indicator = s_class.ownclass().create(**class_data)
-                assert test_indicator is not None, f"{sdo}: Response is NoneType"
-                assert "id" in test_indicator, f"{sdo}: No ID on object"
-                test_indicator = s_class.ownclass().read(filters=s_class.get_filter())
-                self.compare_values(
-                    sdo,
-                    class_data,
-                    test_indicator,
-                    s_class.get_compare_exception_keys(),
-                )
 
-                function_present = getattr(s_class.baseclass(), "delete", None)
-                if function_present:
-                    s_class.baseclass().delete(id=test_indicator["id"])
+@parametrize_with_cases("entity_class", cases=EntityTestCases)
+def test_filter(entity_class):
+    if len(entity_class.get_filter()) == 0:
+        return
 
-            s_class.teardown()
+    entity_class.setup()
+    for class_data in entity_class.data():
+        test_indicator = entity_class.ownclass().create(**class_data)
+        assert test_indicator is not None, "Response is NoneType"
+        assert "id" in test_indicator, "No ID on object"
+        test_indicator = entity_class.ownclass().read(filters=entity_class.get_filter())
+        compare_values(
+            class_data,
+            test_indicator,
+            entity_class.get_compare_exception_keys(),
+        )
+
+        entity_class.baseclass().delete(id=test_indicator["id"])
+
+    entity_class.teardown()
