@@ -93,7 +93,7 @@ class EntityTestCases:
         return MalwareTest(api_client)
 
     @staticmethod
-    def case_marking_defintion(api_client):
+    def case_marking_definition(api_client):
         return MarkingDefinitionTest(api_client)
 
     @staticmethod
