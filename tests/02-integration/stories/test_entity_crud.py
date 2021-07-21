@@ -103,10 +103,6 @@ class Test_entity_crud:
 
     def test_delete(self, fruit_bowl):
         for sdo, s_class in fruit_bowl.items():
-            function_present = getattr(s_class.baseclass(), "delete", None)
-            if function_present is None:
-                # print(f"{sdo} has no delete function")
-                continue
 
             s_class.setup()
             for class_data in s_class.data():
