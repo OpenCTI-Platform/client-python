@@ -1,5 +1,5 @@
 from typing import Dict, List
-from pytest_cases import parametrize_with_cases
+from pytest_cases import parametrize_with_cases, fixture
 from tests.modules.entities import EntityTestCases
 
 
@@ -44,21 +44,24 @@ def compare_values(original_data: Dict, retrieved_data: Dict, exception_keys: Li
             ), f"Dict '{value}' does not have the same content as'{compare_data}'"
 
 
-@parametrize_with_cases("entity_class", cases=EntityTestCases)
+@fixture
+@parametrize_with_cases("entity", cases=EntityTestCases)
+def entity_class(entity):
+    entity.setup()
+    yield entity
+    entity.teardown()
+
+
 def test_entity_create(entity_class):
-    entity_class.setup()
     class_data = entity_class.data()
     test_indicator = entity_class.ownclass().create(**class_data)
     assert test_indicator is not None, "Response is NoneType"
     assert "id" in test_indicator, "No ID on object"
 
     entity_class.baseclass().delete(id=test_indicator["id"])
-    entity_class.teardown()
 
 
-@parametrize_with_cases("entity_class", cases=EntityTestCases)
 def test_read(entity_class):
-    entity_class.setup()
     class_data = entity_class.data()
     test_indicator = entity_class.ownclass().create(**class_data)
     assert test_indicator is not None, "Response is NoneType"
@@ -71,13 +74,9 @@ def test_read(entity_class):
     )
 
     entity_class.baseclass().delete(id=test_indicator["id"])
-    entity_class.teardown()
 
 
-@parametrize_with_cases("entity_class", cases=EntityTestCases)
 def test_update(entity_class):
-    entity_class.setup()
-
     class_data = entity_class.data()
     test_indicator = entity_class.ownclass().create(**class_data)
     assert test_indicator is not None, "Response is NoneType"
@@ -106,12 +105,9 @@ def test_update(entity_class):
         result = test_indicator
 
     entity_class.baseclass().delete(id=result["id"])
-    entity_class.teardown()
 
 
-@parametrize_with_cases("entity_class", cases=EntityTestCases)
 def test_delete(entity_class):
-    entity_class.setup()
     class_data = entity_class.data()
     test_indicator = entity_class.ownclass().create(**class_data)
     assert test_indicator is not None, "Response is NoneType"
@@ -121,15 +117,11 @@ def test_delete(entity_class):
     result = entity_class.ownclass().read(id=test_indicator["id"])
     assert result is None, f"Read returned value '{result}' after delete"
 
-    entity_class.teardown()
 
-
-@parametrize_with_cases("entity_class", cases=EntityTestCases)
 def test_filter(entity_class):
     if len(entity_class.get_filter()) == 0:
         return
 
-    entity_class.setup()
     class_data = entity_class.data()
     test_indicator = entity_class.ownclass().create(**class_data)
     assert test_indicator is not None, "Response is NoneType"
@@ -142,4 +134,3 @@ def test_filter(entity_class):
     )
 
     entity_class.baseclass().delete(id=test_indicator["id"])
-    entity_class.teardown()
