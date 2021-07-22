@@ -1756,7 +1756,7 @@ class StixCyberObservable:
             }
             """
 
-        result = self.opencti.query(
+        self.opencti.query(
             query,
             {
                 "id": id,
