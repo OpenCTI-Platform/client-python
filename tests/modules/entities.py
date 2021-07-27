@@ -157,7 +157,10 @@ class EntityTest:
         return ["type", "update", "createdBy", "modified"]
 
     def get_filter(self) -> Dict[str, str]:
-        return {}
+        return {
+            "key": "name",
+            "values": self.data()["name"],
+        }
 
 
 class IdentityTest(EntityTest):
@@ -235,12 +238,6 @@ class IndicatorTest(EntityTest):
     def ownclass(self):
         return self.api_client.indicator
 
-    def get_filter(self) -> Dict[str, str]:
-        return {
-            "key": "name",
-            "values": ["C2 server of the new campaign"],
-        }
-
 
 class AttackPatternTest(EntityTest):
     def data(self) -> Dict:
@@ -282,6 +279,12 @@ class ExternalReferenceTest(EntityTest):
 
     def baseclass(self):
         return self.api_client.external_reference
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "external_id",
+            "values": self.data()["external_id"],
+        }
 
 
 class CampaignTest(EntityTest):
@@ -364,6 +367,12 @@ class KillChainPhaseTest(EntityTest):
     def update_data(self) -> Dict[str, Union[str, int]]:
         return {}
 
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "kill_chain_name",
+            "values": self.data()["kill_chain_name"],
+        }
+
 
 class LabelTest(EntityTest):
     def data(self) -> Dict:
@@ -379,6 +388,12 @@ class LabelTest(EntityTest):
     #     return {"color": "#c3ffbb"}
     def update_data(self) -> Dict[str, Union[str, int]]:
         return {}
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "value",
+            "values": self.data()["value"],
+        }
 
 
 class LocationTest(EntityTest):
@@ -468,6 +483,12 @@ class MarkingDefinitionTest(EntityTest):
     def update_data(self) -> Dict[str, Union[str, int]]:
         return {}
 
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "definition",
+            "values": self.data()["definition"],
+        }
+
 
 class NoteTest(EntityTest):
     def data(self) -> Dict:
@@ -490,6 +511,12 @@ class NoteTest(EntityTest):
         # changes between pycti and opencti naming
         # abstract = attribute_abstract
         return ["type", "update", "createdBy", "modified", "abstract"]
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "attribute_abstract",
+            "values": self.data()["abstract"],
+        }
 
 
 class ObservedDataTest(EntityTest):
@@ -529,6 +556,9 @@ class ObservedDataTest(EntityTest):
         # return {"number_observed": 30}
         return {}
 
+    def get_filter(self) -> Dict[str, str]:
+        return {}
+
 
 class OpinionTest(EntityTest):
     def data(self) -> Dict:
@@ -547,6 +577,12 @@ class OpinionTest(EntityTest):
     def update_data(self) -> Dict[str, Union[str, int]]:
         # return {"explanation": "Test"}
         return {}
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "explanation",
+            "values": self.data()["explanation"],
+        }
 
 
 class ReportTest(EntityTest):
@@ -615,6 +651,9 @@ class StixCoreRelationshipTest(EntityTest):
             "stop_date",
         ]
 
+    def get_filter(self) -> Dict[str, str]:
+        return {}
+
 
 class StixCyberObservableRelationshipTest(EntityTest):
     def setup(self):
@@ -671,6 +710,9 @@ class StixCyberObservableRelationshipTest(EntityTest):
             "start_date",
             "stop_date",
         ]
+
+    def get_filter(self) -> Dict[str, str]:
+        return {}
 
 
 class StixSightingRelationshipTest(EntityTest):
@@ -732,6 +774,13 @@ class StixSightingRelationshipTest(EntityTest):
             "count",
         ]
 
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            # TODO figure out why this test fails
+            # "key": "description",
+            # "values": self.data()["description"],
+        }
+
 
 class StixCyberObservableTest(EntityTest):
     def ownclass(self):
@@ -757,6 +806,12 @@ class StixCyberObservableTest(EntityTest):
             "simple_observable_key",
             "simple_observable_value",
         ]
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "value",
+            "values": self.data()["simple_observable_value"],
+        }
 
 
 class StixCyberObservableIPv4Test(StixCyberObservableTest):
@@ -784,6 +839,9 @@ class StixCyberObservableASTest(StixCyberObservableTest):
             "simple_observable_value": 1234,
             "x_opencti_score": 30,
         }
+
+    def get_filter(self) -> Dict[str, str]:
+        return {}
 
 
 class ThreatActorTest(EntityTest):
