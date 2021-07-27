@@ -164,7 +164,5 @@ class Label:
              """
             self.opencti.query(query, {"id": id})
         else:
-            self.opencti.log(
-                "error", "[opencti_label] Missing parameters: id"
-            )
+            self.opencti.log("error", "[opencti_label] Missing parameters: id")
             return None
