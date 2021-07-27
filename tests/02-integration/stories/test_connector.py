@@ -1,17 +1,44 @@
-import os
 import time
+
 import pika.exceptions
-from pytest_cases import parametrize_with_cases
+import pytest
+from pytest_cases import parametrize_with_cases, fixture
+
 from pycti import OpenCTIConnector
-from pycti.utils.constants import IdentityTypes
-from tests.modules.connectors import ExternalEnrichmentConnector, SimpleConnectorTest
+from tests.modules.connectors import (
+    ExternalImportConnector,
+    SimpleConnectorTest,
+    InternalEnrichmentConnector,
+    ExternalImportConnectorTest,
+    InternalEnrichmentConnectorTest,
+    InternalImportConnectorTest,
+    InternalImportConnector,
+)
+from tests.utils import (
+    get_connector_id,
+    get_new_connector_work,
+    wait_connector_finish,
+    get_new_work_id,
+)
 
 
-@parametrize_with_cases("simple_connector", cases=SimpleConnectorTest)
-def test_register_simple_connector(api_connector, simple_connector):
-    connector = OpenCTIConnector(**simple_connector)
+@fixture
+@parametrize_with_cases("connector", cases=SimpleConnectorTest)
+def simple_connector(connector, api_connector):
+    connector = OpenCTIConnector(**connector)
     api_connector.register(connector)
-    my_connector_id = connector.to_input()["input"]["id"]
+    yield connector
+    # Unregistering twice just to make sure
+    try:
+        api_connector.unregister(connector.to_input()["input"]["id"])
+    except ValueError:
+        # Ignore "Can't find element to delete" error
+        pass
+
+
+@pytest.mark.connectors
+def test_register_simple_connector(simple_connector, api_connector):
+    my_connector_id = simple_connector.to_input()["input"]["id"]
 
     test_connector = ""
     registered_connectors = api_connector.list()
@@ -21,8 +48,8 @@ def test_register_simple_connector(api_connector, simple_connector):
             break
 
     assert (
-        test_connector == simple_connector["connector_id"]
-    ), f"No registered connector with id '{simple_connector['connector_id']}' found"
+        test_connector == my_connector_id
+    ), f"No registered connector with id '{my_connector_id}' found"
 
     api_connector.unregister(test_connector)
 
@@ -36,56 +63,171 @@ def test_register_simple_connector(api_connector, simple_connector):
     assert test_connector == "", "Connector is still registered"
 
 
-def test_external_enrichment_connector(api_connector, api_client):
-    # set OPENCTI settings from fixture
-    os.environ["OPENCTI_URL"] = api_client.api_url
-    os.environ["OPENCTI_TOKEN"] = api_client.api_token
-    os.environ["OPENCTI_SSL_VERIFY"] = str(api_client.ssl_verify)
+@fixture
+@parametrize_with_cases("data", cases=ExternalImportConnectorTest)
+def external_import_connector_data(data, api_client, api_connector):
+    connector = ExternalImportConnector(data["config"], api_client, data["data"])
+    connector.run()
+    yield data["data"]
+    connector.stop()
 
-    config_file_path = "tests/data/connector_config.yml"
-    data = {
-        "api": {
-            "type": IdentityTypes.ORGANIZATION.value,
-            "name": "Testing aaaaaa",
-            "description": "OpenCTI Test Org",
-        },
-        "bundle": {
-            "type": "Vulnerability",
-            "name": "CVE-1980-1234",
-            "description": "evil evil evil",
-        },
-    }
 
-    connector = ExternalEnrichmentConnector(config_file_path, api_client, data)
+@pytest.mark.connectors
+def test_external_import_connector(
+    external_import_connector_data, api_client, api_connector
+):
+    connector_name = "TestExternalImport"
+    connector_id = get_connector_id(connector_name, api_connector)
+    assert connector_id != "", f"{connector_name} could not be found!"
+
+    # TODO there is an issue with the OpenCTI message registration, doing only sleep now
+    # Wait until new work is registered
+    # work_id = get_new_work_id(api_client, connector_id, [])
+    # Wait for opencti to finish processing task
+    # wait_connector_finish(api_client, connector_id, work_id)
+    #
+    # status_msg = get_new_connector_work(api_client, connector_id, work_id)[0]
+    # assert status_msg['tracking'][
+    #            'import_expected_number'] == 2, f"Unexpected number of 'import_expected_number'. Expected 2, Actual {status_msg['tracking']['import_expected_number']}"
+    # assert status_msg['tracking'][
+    #            'import_processed_number'] == 2, f"Unexpected number of 'import_processed_number'. Expected 2, Actual {status_msg['tracking']['import_processed_number']}"
+
+    cnt = 0
+    finished = False
+    while not finished:
+        time.sleep(1)
+        cnt += 1
+
+        assert cnt < 160, "Connector wasn't able to finish. Elapsed time 160s"
+
+        for elem in external_import_connector_data:
+            sdo = api_client.stix_domain_object.read(
+                filters=[{"key": "name", "values": elem["name"]}]
+            )
+            if sdo is None:
+                continue
+            assert (
+                sdo is not None
+            ), f"Connector was unable to create {elem['type']} via the Bundle"
+            assert (
+                sdo["entity_type"] == elem["type"]
+            ), f"A different {elem['type']} type was created"
+
+            api_client.stix_domain_object.delete(id=sdo["id"])
+
+            finished = True
+
+
+@fixture
+@parametrize_with_cases("data", cases=InternalEnrichmentConnectorTest)
+def internal_enrichment_connector_data(data, api_client, api_connector):
+    enrichment_connector = InternalEnrichmentConnector(
+        data["config"], api_client, data["data"]
+    )
+
     try:
-        connector.run()
+        enrichment_connector.start()
     except pika.exceptions.AMQPConnectionError:
-        connector.stop()
+        enrichment_connector.stop()
         raise ValueError("Connector was not able to establish the connection to pika")
 
-    # Find identity
-    identity = api_client.identity.read(
-        filters=[{"key": "name", "values": data["api"]["name"]}]
+    observable = api_client.stix_cyber_observable.create(**data["data"])
+    yield observable["id"]
+
+    api_client.stix_cyber_observable.delete(id=observable["id"])
+    enrichment_connector.stop()
+
+
+@pytest.mark.connectors
+def test_internal_enrichment_connector(
+    internal_enrichment_connector_data, api_connector, api_client
+):
+    # Rename variable
+    observable_id = internal_enrichment_connector_data
+    observable = api_client.stix_cyber_observable.read(id=observable_id)
+    assert (
+        observable["x_opencti_score"] == 30
+    ), f"Score of {observable['value']} is not 30. Instead {observable['x_opencti_score']}"
+
+    connector_name = "SetScore100Enrichment"
+    connector_id = get_connector_id(connector_name, api_connector)
+    assert connector_id != "", f"{connector_name} could not be found!"
+
+    api_client.stix_cyber_observable.ask_for_enrichment(
+        id=observable_id, connector_id=connector_id
     )
-    assert identity is not None, "Connector was unable to create Identity via the API"
+
+    # Wait for enrichment to finish
+    time.sleep(3)
+
+    observable = api_client.stix_cyber_observable.read(id=observable_id)
     assert (
-        identity["entity_type"] == data["api"]["type"]
-    ), "A different identity type was created"
+        observable["x_opencti_score"] == 100
+    ), f"Score of {observable['value']} is not 100. Instead {observable['x_opencti_score']}"
 
-    # Find vulnerability
-    # Sleep timer to wait for bundle import finishing up
-    # TODO find a better solution than a stupid sleep
-    time.sleep(10)
 
-    vulnerability = api_client.vulnerability.read(
-        filters=[{"key": "name", "values": data["bundle"]["name"]}]
+@fixture
+@parametrize_with_cases("data", cases=InternalImportConnectorTest)
+def internal_import_connector_data(data, api_client, api_connector):
+    import_connector = InternalImportConnector(
+        data["config"], api_client, data["observable"]
     )
-    assert (
-        vulnerability is not None
-    ), "Connector was unable to create Vulnerability via bundle import"
-    assert (
-        vulnerability["entity_type"] == data["bundle"]["type"]
-    ), "A different vulnerability type was created"
+    import_connector.start()
 
-    api_client.stix_domain_object.delete(id=identity["id"])
-    api_client.stix_domain_object.delete(id=vulnerability["id"])
+    report = api_client.report.create(**data["report"])
+
+    yield report["id"], data
+
+    api_client.stix_domain_object.delete(id=report["id"])
+    import_connector.stop()
+
+
+@pytest.mark.connectors
+def test_internal_import_connector(
+    internal_import_connector_data, api_connector, api_client
+):
+    # Rename variable
+    report_id, data = internal_import_connector_data
+    observable_data = data["observable"]
+    file_data = data["import_file"]
+
+    connector_name = "ParseFileTest"
+    connector_id = get_connector_id(connector_name, api_connector)
+    assert connector_id != "", f"{connector_name} could not be found!"
+
+    old_works = get_new_connector_work(api_client, connector_id)
+
+    api_client.stix_domain_object.add_file(
+        id=report_id,
+        file_name=file_data,
+    )
+
+    # Wait until new work is registered
+    work_id = get_new_work_id(api_client, connector_id, old_works)
+    # Wait for opencti to finish processing task
+    wait_connector_finish(api_client, connector_id, work_id)
+
+    status_msg = get_new_connector_work(api_client, connector_id, work_id)[0]
+    assert (
+        status_msg["tracking"]["import_expected_number"] == 2
+    ), f"Unexpected number of 'import_expected_number'. Expected 2, Actual {status_msg['tracking']['import_expected_number']}"
+    assert (
+        status_msg["tracking"]["import_processed_number"] == 2
+    ), f"Unexpected number of 'import_processed_number'. Expected 2, Actual {status_msg['tracking']['import_processed_number']}"
+
+    report = api_client.report.read(id=report_id)
+    assert (
+        len(report["objects"]) == 1
+    ), f"Unexpected referenced objects to report. Expected: 1, Actual: {len(report['objects'])}"
+
+    observable_id = report["objects"][0]["id"]
+    observable = api_client.stix_cyber_observable.read(id=observable_id)
+    observable_type = observable_data["simple_observable_key"].split(".")[0]
+    assert (
+        observable["entity_type"] == observable_type
+    ), f"Unexpected Observable type, received {observable_type}"
+    assert (
+        observable["value"] == observable_data["simple_observable_value"]
+    ), f"Unexpected Observable value, received {observable['value']}"
+
+    api_client.stix_cyber_observable.delete(id=observable_id)
