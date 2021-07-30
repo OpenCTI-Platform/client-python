@@ -113,11 +113,8 @@ def get_connector_works(
     return sorted(return_value, key=lambda i: i["timestamp"])
 
 
-def get_new_work_id(
-    api_client: OpenCTIApiClient, connector_id: str
-) -> str:
+def get_new_work_id(api_client: OpenCTIApiClient, connector_id: str) -> str:
     new_works = get_connector_works(api_client, connector_id)
-    current_job = []
     cnt = 0
     while len(new_works) == 0:
         time.sleep(1)
