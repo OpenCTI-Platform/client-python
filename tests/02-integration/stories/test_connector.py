@@ -16,9 +16,10 @@ from tests.modules.connectors import (
 )
 from tests.utils import (
     get_connector_id,
-    get_new_connector_work,
+    get_connector_works,
     wait_connector_finish,
     get_new_work_id,
+    delete_work,
 )
 
 
@@ -71,6 +72,11 @@ def external_import_connector_data(data, api_client, api_connector):
     yield data["data"]
     connector.stop()
 
+    # Cleanup finished works
+    works = get_connector_works(api_client, connector.helper.connector_id)
+    for work in works:
+        delete_work(api_client, work["id"])
+
 
 @pytest.mark.connectors
 def test_external_import_connector(
@@ -80,42 +86,33 @@ def test_external_import_connector(
     connector_id = get_connector_id(connector_name, api_connector)
     assert connector_id != "", f"{connector_name} could not be found!"
 
-    # TODO there is an issue with the OpenCTI message registration, doing only sleep now
     # Wait until new work is registered
-    # work_id = get_new_work_id(api_client, connector_id, [])
+    work_id = get_new_work_id(api_client, connector_id)
     # Wait for opencti to finish processing task
-    # wait_connector_finish(api_client, connector_id, work_id)
-    #
-    # status_msg = get_new_connector_work(api_client, connector_id, work_id)[0]
-    # assert status_msg['tracking'][
-    #            'import_expected_number'] == 2, f"Unexpected number of 'import_expected_number'. Expected 2, Actual {status_msg['tracking']['import_expected_number']}"
-    # assert status_msg['tracking'][
-    #            'import_processed_number'] == 2, f"Unexpected number of 'import_processed_number'. Expected 2, Actual {status_msg['tracking']['import_processed_number']}"
+    wait_connector_finish(api_client, connector_id, work_id)
 
-    cnt = 0
-    finished = False
-    while not finished:
-        time.sleep(1)
-        cnt += 1
+    status_msg = get_connector_works(api_client, connector_id, work_id)[0]
+    assert (
+        status_msg["tracking"]["import_expected_number"] == 2
+    ), f"Unexpected number of 'import_expected_number'. Expected 2, Actual {status_msg['tracking']['import_expected_number']}"
+    assert (
+        status_msg["tracking"]["import_processed_number"] == 2
+    ), f"Unexpected number of 'import_processed_number'. Expected 2, Actual {status_msg['tracking']['import_processed_number']}"
 
-        assert cnt < 160, "Connector wasn't able to finish. Elapsed time 160s"
+    for elem in external_import_connector_data:
+        sdo = api_client.stix_domain_object.read(
+            filters=[{"key": "name", "values": elem["name"]}]
+        )
+        if sdo is None:
+            continue
+        assert (
+            sdo is not None
+        ), f"Connector was unable to create {elem['type']} via the Bundle"
+        assert (
+            sdo["entity_type"] == elem["type"]
+        ), f"A different {elem['type']} type was created"
 
-        for elem in external_import_connector_data:
-            sdo = api_client.stix_domain_object.read(
-                filters=[{"key": "name", "values": elem["name"]}]
-            )
-            if sdo is None:
-                continue
-            assert (
-                sdo is not None
-            ), f"Connector was unable to create {elem['type']} via the Bundle"
-            assert (
-                sdo["entity_type"] == elem["type"]
-            ), f"A different {elem['type']} type was created"
-
-            api_client.stix_domain_object.delete(id=sdo["id"])
-
-            finished = True
+        api_client.stix_domain_object.delete(id=sdo["id"])
 
 
 @fixture
@@ -136,6 +133,11 @@ def internal_enrichment_connector_data(data, api_client, api_connector):
 
     api_client.stix_cyber_observable.delete(id=observable["id"])
     enrichment_connector.stop()
+
+    # Cleanup finished works
+    works = get_connector_works(api_client, enrichment_connector.helper.connector_id)
+    for work in works:
+        delete_work(api_client, work["id"])
 
 
 @pytest.mark.connectors
@@ -181,6 +183,11 @@ def internal_import_connector_data(data, api_client, api_connector):
     api_client.stix_domain_object.delete(id=report["id"])
     import_connector.stop()
 
+    # Cleanup finished works
+    works = get_connector_works(api_client, import_connector.helper.connector_id)
+    for work in works:
+        delete_work(api_client, work["id"])
+
 
 @pytest.mark.connectors
 def test_internal_import_connector(
@@ -195,19 +202,17 @@ def test_internal_import_connector(
     connector_id = get_connector_id(connector_name, api_connector)
     assert connector_id != "", f"{connector_name} could not be found!"
 
-    old_works = get_new_connector_work(api_client, connector_id)
-
     api_client.stix_domain_object.add_file(
         id=report_id,
         file_name=file_data,
     )
 
     # Wait until new work is registered
-    work_id = get_new_work_id(api_client, connector_id, old_works)
+    work_id = get_new_work_id(api_client, connector_id)
     # Wait for opencti to finish processing task
     wait_connector_finish(api_client, connector_id, work_id)
 
-    status_msg = get_new_connector_work(api_client, connector_id, work_id)[0]
+    status_msg = get_connector_works(api_client, connector_id, work_id)[0]
     assert (
         status_msg["tracking"]["import_expected_number"] == 2
     ), f"Unexpected number of 'import_expected_number'. Expected 2, Actual {status_msg['tracking']['import_expected_number']}"
