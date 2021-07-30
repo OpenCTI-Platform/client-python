@@ -1,6 +1,6 @@
 import datetime
 import time
-from typing import List
+from typing import List, Dict
 
 from dateutil.parser import parse
 
@@ -39,9 +39,9 @@ def get_connector_id(connector_name: str, api_connector: OpenCTIApiConnector) ->
     return connector_id
 
 
-def get_new_connector_work(
+def get_connector_works(
     api_client: OpenCTIApiClient, connector_id: str, work_id: str = ""
-):
+) -> List[Dict]:
     query = """
     query ConnectorWorksQuery(
           $count: Int
@@ -113,13 +113,13 @@ def get_new_connector_work(
     return sorted(return_value, key=lambda i: i["timestamp"])
 
 
-def get_new_work_id(api_client: OpenCTIApiClient, connector_id: str, old_works: List):
-    new_works = get_new_connector_work(api_client, connector_id)
+def get_new_work_id(
+    api_client: OpenCTIApiClient, connector_id: str
+) -> str:
+    new_works = get_connector_works(api_client, connector_id)
     current_job = []
     cnt = 0
-    while len(current_job) == 0:
-        current_job = [x for x in new_works if x not in old_works]
-
+    while len(new_works) == 0:
         time.sleep(1)
         # wait 20 seconds for new work to be registered
         cnt += 1
@@ -128,10 +128,10 @@ def get_new_work_id(api_client: OpenCTIApiClient, connector_id: str, old_works: 
                 cnt != cnt
             ), "Connector hasn't registered new work yet. Elapsed time 20s"
 
-    assert (
-        len(current_job) == 1
-    ), f"Too many jobs were created. Expected 1, Actual: {len(current_job)}"
-    return current_job[0]["id"]
+        assert (
+            len(new_works) == 1
+        ), f"Too many jobs were created. Expected 1, Actual: {len(new_works)}"
+    return new_works[0]["id"]
 
 
 def wait_connector_finish(
@@ -140,7 +140,7 @@ def wait_connector_finish(
     status = ""
     cnt = 0
     while status != "complete":
-        states = get_new_connector_work(api_client, connector_id, work_id)
+        states = get_connector_works(api_client, connector_id, work_id)
         if len(states) > 0:
             assert (
                 len(states) == 1
@@ -155,3 +155,16 @@ def wait_connector_finish(
         cnt += 1
         if cnt > 160:
             assert cnt != cnt, "Connector wasn't able to finish. Elapsed time 160s"
+
+
+def delete_work(api_client: OpenCTIApiClient, work_id: str):
+    query = """
+    mutation ConnectorWorksMutation($workId: ID!) {
+        workEdit(id: $workId) {
+            delete
+        }
+    }"""
+    api_client.query(
+        query,
+        {"workId": work_id},
+    )
