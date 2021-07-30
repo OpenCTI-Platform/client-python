@@ -1,4 +1,6 @@
 import os
+import time
+from datetime import datetime
 from typing import Dict
 
 import pika.exceptions
@@ -76,6 +78,13 @@ class ExternalImportConnector:
         return int(self.interval)
 
     def run(self):
+        now = datetime.utcfromtimestamp(time.time())
+        now_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        friendly_name = f"{self.helper.connect_name} run @ {now_time}"
+        work_id = self.helper.api.work.initiate_work(
+            self.helper.connect_id, friendly_name
+        )
+
         bundle_objects = []
         for elem in self.data:
             sdo = elem["class"](
@@ -88,7 +97,17 @@ class ExternalImportConnector:
         # create stix bundle
         bundle = Bundle(objects=bundle_objects).serialize()
         # send data
-        self.helper.send_stix2_bundle(bundle=bundle)
+        self.helper.send_stix2_bundle(
+            bundle=bundle,
+            entities_types=self.helper.connect_scope,
+            update=True,
+            work_id=work_id,
+        )
+
+        message = "Connector successfully run, storing last_run as " + str(now_time)
+        self.helper.log_info(message)
+        time.sleep(10)
+        self.helper.api.work.to_processed(work_id, message)
 
     def stop(self):
         self.helper.stop()
