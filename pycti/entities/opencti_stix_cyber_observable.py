@@ -1738,13 +1738,13 @@ class StixCyberObservable:
             },
         )
 
-    def ask_for_enrichment(self, **kwargs):
+    def ask_for_enrichment(self, **kwargs) -> str:
         id = kwargs.get("id", None)
         connector_id = kwargs.get("connector_id", None)
 
         if id is None or connector_id is None:
             self.opencti.log("error", "Missing parameters: id and connector_id")
-            return False
+            return ""
 
         query = """
             mutation StixCoreObjectEnrichmentLinesMutation($id: ID!, $connectorId: ID!) {
@@ -1756,11 +1756,12 @@ class StixCyberObservable:
             }
             """
 
-        self.opencti.query(
+        result = self.opencti.query(
             query,
             {
                 "id": id,
                 "connectorId": connector_id,
             },
         )
-        return True
+        # return work_id
+        return result["data"]["stixCoreObjectEdit"]["askEnrichment"]["id"]
