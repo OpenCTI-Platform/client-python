@@ -1,6 +1,6 @@
 import pytest
 from pytest_cases import fixture
-from pycti import OpenCTIApiClient, OpenCTIApiConnector
+from pycti import OpenCTIApiClient, OpenCTIApiConnector, OpenCTIApiWork
 
 
 @fixture(scope="session")
@@ -15,6 +15,11 @@ def api_client():
 @fixture(scope="session")
 def api_connector(api_client):
     return OpenCTIApiConnector(api_client)
+
+
+@fixture(scope="session")
+def api_work(api_client):
+    return OpenCTIApiWork(api_client)
 
 
 def pytest_addoption(parser):
