@@ -4,3 +4,4 @@ pre-commit~=2.13
 wheel~=0.36
 pytest~=6.2
 pytest-cov~=2.12
+pytest-cases~=3.6
