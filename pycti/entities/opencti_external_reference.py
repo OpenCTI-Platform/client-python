@@ -1,11 +1,14 @@
 # coding: utf-8
 
 import json
+import os
+import magic
 
 
 class ExternalReference:
-    def __init__(self, opencti):
+    def __init__(self, opencti, file):
         self.opencti = opencti
+        self.file = file
         self.properties = """
             id
             standard_id
@@ -20,6 +23,15 @@ class ExternalReference:
             url
             hash
             external_id
+            importFiles {
+                edges {
+                    node {
+                        id
+                        name
+                        size
+                    }
+                }
+            }
         """
 
     """
@@ -138,6 +150,7 @@ class ExternalReference:
         url = kwargs.get("url", None)
         external_id = kwargs.get("external_id", None)
         description = kwargs.get("description", None)
+        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
         if source_name is not None and url is not None:
@@ -166,6 +179,7 @@ class ExternalReference:
                         "external_id": external_id,
                         "description": description,
                         "url": url,
+                        "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
                 },
@@ -180,24 +194,77 @@ class ExternalReference:
             )
 
     """
+        Upload a file in this External-Reference
+
+        :param id: the Stix-Domain-Object id
+        :param file_name
+        :param data
+        :return void
+    """
+
+    def add_file(self, **kwargs):
+        id = kwargs.get("id", None)
+        file_name = kwargs.get("file_name", None)
+        data = kwargs.get("data", None)
+        mime_type = kwargs.get("mime_type", "text/plain")
+        if id is not None and file_name is not None:
+            external_reference = self.read(id=id)
+            if external_reference is None:
+                self.opencti.log("error", "Cannot add File, entity not found")
+                return False
+            final_file_name = os.path.basename(file_name)
+            current_files = {}
+            for file in external_reference["importFiles"]:
+                current_files[file["name"]] = file
+            if final_file_name in current_files:
+                return current_files[final_file_name]
+            else:
+                self.opencti.log(
+                    "info", "Uploading a file in Stix-Domain-Object {" + id + "}."
+                )
+                query = """
+                    mutation ExternalReferenceEdit($id: ID!, $file: Upload!) {
+                        externalReferenceEdit(id: $id) {
+                            importPush(file: $file) {
+                                id
+                                name
+                            }
+                        }
+                    }
+                 """
+                if data is None:
+                    data = open(file_name, "rb")
+                    if file_name.endswith(".json"):
+                        mime_type = "application/json"
+                    else:
+                        mime_type = magic.from_file(file_name, mime=True)
+
+                return self.opencti.query(
+                    query,
+                    {"id": id, "file": (self.file(final_file_name, data, mime_type))},
+                )
+        else:
+            self.opencti.log(
+                "error",
+                "[opencti_stix_domain_object] Missing parameters: id or file_name",
+            )
+            return None
+
+    """
         Update a External Reference object field
 
         :param id: the External Reference id
-        :param key: the key of the field
-        :param value: the value of the field
+        :param input: the input of the field
         :return The updated External Reference object
     """
 
     def update_field(self, **kwargs):
         id = kwargs.get("id", None)
-        key = kwargs.get("key", None)
-        value = kwargs.get("value", None)
-        if id is not None and key is not None and value is not None:
-            self.opencti.log(
-                "info", "Updating External-Reference {" + id + "} field {" + key + "}."
-            )
+        input = kwargs.get("input", None)
+        if id is not None and input is not None:
+            self.opencti.log("info", "Updating External-Reference {" + id + "}.")
             query = """
-                    mutation ExternalReferenceEdit($id: ID!, $input: EditInput!) {
+                    mutation ExternalReferenceEdit($id: ID!, $input: [EditInput]!) {
                         externalReferenceEdit(id: $id) {
                             fieldPatch(input: $input) {
                                 id
@@ -205,9 +272,7 @@ class ExternalReference:
                         }
                     }
                 """
-            result = self.opencti.query(
-                query, {"id": id, "input": {"key": key, "value": value}}
-            )
+            result = self.opencti.query(query, {"id": id, "input": input})
             return self.opencti.process_multiple_fields(
                 result["data"]["externalReferenceEdit"]["fieldPatch"]
             )

@@ -269,6 +269,7 @@ class AttackPattern:
         x_mitre_detection = kwargs.get("x_mitre_detection", None)
         x_mitre_id = kwargs.get("x_mitre_id", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
+        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
@@ -305,6 +306,7 @@ class AttackPattern:
                         "x_mitre_detection": x_mitre_detection,
                         "x_mitre_id": x_mitre_id,
                         "killChainPhases": kill_chain_phases,
+                        "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
                 },
@@ -400,9 +402,28 @@ class AttackPattern:
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
                 else None,
+                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
+                if "x_opencti_stix_ids" in stix_object
+                else None,
                 update=update,
             )
         else:
             self.opencti.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )
+
+    def delete(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.log("info", "Deleting Attack Pattern {" + id + "}.")
+            query = """
+                 mutation AttackPatternEdit($id: ID!) {
+                     attackPatternEdit(id: $id) {
+                         delete
+                     }
+                 }
+             """
+            self.opencti.query(query, {"id": id})
+        else:
+            self.opencti.log("error", "[attack_pattern] Missing parameters: id")
+            return None
