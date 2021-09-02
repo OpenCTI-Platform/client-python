@@ -130,6 +130,9 @@ class StixCoreRelationship:
                 ... on Sector {
                     name
                 }
+                ... on System {
+                    name
+                }
                 ... on Indicator {
                     name
                 }
@@ -209,6 +212,9 @@ class StixCoreRelationship:
                     name
                 }
                 ... on Sector {
+                    name
+                }
+                ... on System {
                     name
                 }
                 ... on Indicator {
@@ -527,26 +533,20 @@ class StixCoreRelationship:
         Update a stix_core_relationship object field
 
         :param id: the stix_core_relationship id
-        :param key: the key of the field
-        :param value: the value of the field
+        :param input: the input of the field
         :return The updated stix_core_relationship object
     """
 
     def update_field(self, **kwargs):
         id = kwargs.get("id", None)
-        key = kwargs.get("key", None)
-        value = kwargs.get("value", None)
-        if isinstance(value, list):
-            value = [str(v) for v in value]
-        else:
-            value = str(value)
-        if id is not None and key is not None and value is not None:
+        input = kwargs.get("input", None)
+        if id is not None and input is not None:
             self.opencti.log(
                 "info",
-                "Updating stix_core_relationship {" + id + "} field {" + key + "}.",
+                "Updating stix_core_relationship {" + id + "}",
             )
             query = """
-                    mutation StixCoreRelationshipEdit($id: ID!, $input: EditInput!) {
+                    mutation StixCoreRelationshipEdit($id: ID!, $input: [EditInput]!) {
                         stixCoreRelationshipEdit(id: $id) {
                             fieldPatch(input: $input) {
                                 id
@@ -557,7 +557,11 @@ class StixCoreRelationship:
                     }
                 """
             result = self.opencti.query(
-                query, {"id": id, "input": {"key": key, "value": value}}
+                query,
+                {
+                    "id": id,
+                    "input": input,
+                },
             )
             return self.opencti.process_multiple_fields(
                 result["data"]["stixCoreRelationshipEdit"]["fieldPatch"]
@@ -1068,16 +1072,8 @@ class StixCoreRelationship:
                 stix_relation["relationship_type"] = "part-of"
             elif stix_relation["relationship_type"] == "localization":
                 stix_relation["relationship_type"] = "located-at"
-            source_ref = (
-                stix_relation["x_opencti_source_ref"]
-                if "x_opencti_source_ref" in stix_relation
-                else stix_relation["source_ref"]
-            )
-            target_ref = (
-                stix_relation["x_opencti_target_ref"]
-                if "x_opencti_target_ref" in stix_relation
-                else stix_relation["target_ref"]
-            )
+            source_ref = stix_relation["source_ref"]
+            target_ref = stix_relation["target_ref"]
             return self.create(
                 fromId=source_ref,
                 toId=target_ref,

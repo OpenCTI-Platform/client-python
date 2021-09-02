@@ -138,6 +138,7 @@ class MarkingDefinition:
         definition = kwargs.get("definition", None)
         x_opencti_order = kwargs.get("x_opencti_order", 0)
         x_opencti_color = kwargs.get("x_opencti_color", None)
+        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
         if definition is not None and definition_type is not None:
@@ -163,6 +164,7 @@ class MarkingDefinition:
                         "stix_id": stix_id,
                         "created": created,
                         "modified": modified,
+                        "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
                 },
@@ -175,6 +177,47 @@ class MarkingDefinition:
                 "error",
                 "[opencti_marking_definition] Missing parameters: definition and definition_type",
             )
+
+    """
+        Update a Marking definition object field
+
+        :param id: the Marking definition id
+        :param input: the input of the field
+        :return The updated Marking definition object
+    """
+
+    def update_field(self, **kwargs):
+        id = kwargs.get("id", None)
+        input = kwargs.get("input", None)
+        if id is not None and input is not None:
+            self.opencti.log("info", "Updating Marking Definition {" + id + "}")
+            query = """
+                    mutation MarkingDefinitionEdit($id: ID!, $input: [EditInput]!) {
+                        markingDefinitionEdit(id: $id) {
+                            fieldPatch(input: $input) {
+                                id
+                                standard_id
+                                entity_type
+                            }
+                        }
+                    }
+                """
+            result = self.opencti.query(
+                query,
+                {
+                    "id": id,
+                    "input": input,
+                },
+            )
+            return self.opencti.process_multiple_fields(
+                result["data"]["markingDefinitionEdit"]["fieldPatch"]
+            )
+        else:
+            self.opencti.log(
+                "error",
+                "[opencti_marking_definition] Missing parameters: id and key and value",
+            )
+            return None
 
     """
         Import an Marking Definition object from a STIX2 object
@@ -213,6 +256,9 @@ class MarkingDefinition:
                 else 0,
                 x_opencti_color=stix_object["x_opencti_color"]
                 if "x_opencti_color" in stix_object
+                else None,
+                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
+                if "x_opencti_stix_ids" in stix_object
                 else None,
             )
         else:

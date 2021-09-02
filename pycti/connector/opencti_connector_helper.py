@@ -211,7 +211,8 @@ class PingAlive(threading.Thread):
                 result = self.api.connector.ping(self.connector_id, initial_state)
                 remote_state = (
                     json.loads(result["connector_state"])
-                    if len(result["connector_state"]) > 0
+                    if result["connector_state"] is not None
+                    and len(result["connector_state"]) > 0
                     else None
                 )
                 if initial_state != remote_state:
@@ -242,7 +243,7 @@ class PingAlive(threading.Thread):
 
 class ListenStream(threading.Thread):
     def __init__(
-        self, helper, callback, url, token, verify_ssl, start_timestamp
+        self, helper, callback, url, token, verify_ssl, start_timestamp, live_stream_id
     ) -> None:
         threading.Thread.__init__(self)
         self.helper = helper
@@ -251,7 +252,8 @@ class ListenStream(threading.Thread):
         self.token = token
         self.verify_ssl = verify_ssl
         self.start_timestamp = start_timestamp
-        self.exit_event = threading.Event()
+        self.live_stream_id = live_stream_id
+        self.exit = False
 
     def run(self) -> None:  # pylint: disable=too-many-branches
         current_state = self.helper.get_state()
@@ -266,13 +268,17 @@ class ListenStream(threading.Thread):
         # If URL and token are provided, likely consuming a remote stream
         if self.url is not None and self.token is not None:
             # If a live stream ID, appending the URL
-            live_stream_uri = (
-                f"/{self.helper.connect_live_stream_id}"
-                if self.helper.connect_live_stream_id is not None
-                else ""
-            )
+            if self.live_stream_id is not None:
+                live_stream_uri = f"/{self.live_stream_id}"
+            elif self.helper.connect_live_stream_id is not None:
+                live_stream_uri = f"/{self.helper.connect_live_stream_id}"
+            else:
+                live_stream_uri = ""
             # Live stream "from" should be empty if start from the beginning
-            if self.helper.connect_live_stream_id is not None:
+            if (
+                self.live_stream_id is not None
+                or self.helper.connect_live_stream_id is not None
+            ):
                 live_stream_from = (
                     f"?from={current_state['connectorLastEventId']}"
                     if current_state["connectorLastEventId"] != "-"
@@ -335,8 +341,10 @@ class ListenStream(threading.Thread):
                 headers={"authorization": "Bearer " + self.helper.opencti_token},
                 verify=self.helper.opencti_ssl_verify,
             )
-
+        # Iter on stream messages
         for msg in messages:
+            if self.exit:
+                break
             if msg.event == "heartbeat" or msg.event == "connected":
                 continue
             if msg.event == "sync":
@@ -350,6 +358,9 @@ class ListenStream(threading.Thread):
                     state = self.helper.get_state()
                     state["connectorLastEventId"] = str(msg.id)
                     self.helper.set_state(state)
+
+    def stop(self):
+        self.exit = True
 
 
 class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
@@ -504,16 +515,24 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         token=None,
         verify_ssl=None,
         start_timestamp=None,
-    ) -> None:
+        live_stream_id=None,
+    ) -> ListenStream:
         """listen for messages and register callback function
 
         :param message_callback: callback function to process messages
         """
 
         self.listen_stream = ListenStream(
-            self, message_callback, url, token, verify_ssl, start_timestamp
+            self,
+            message_callback,
+            url,
+            token,
+            verify_ssl,
+            start_timestamp,
+            live_stream_id,
         )
         self.listen_stream.start()
+        return self.listen_stream
 
     def get_opencti_url(self) -> Optional[Union[bool, int, str]]:
         return self.opencti_url

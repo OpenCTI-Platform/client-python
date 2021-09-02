@@ -145,7 +145,6 @@ class StixObjectOrStixRelationship:
                 description
                 report_types
                 published
-                x_opencti_report_status
             }
             ... on CourseOfAction {
                 name
@@ -169,6 +168,12 @@ class StixObjectOrStixRelationship:
                 x_opencti_reliability
             }
             ... on Sector {
+                name
+                description
+                contact_information
+                x_opencti_aliases
+            }
+            ... on System {
                 name
                 description
                 contact_information

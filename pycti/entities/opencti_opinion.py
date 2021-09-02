@@ -132,6 +132,9 @@ class Opinion:
                         ... on Sector {
                             name
                         }
+                        ... on System {
+                            name
+                        }
                         ... on Indicator {
                             name
                         }
@@ -363,6 +366,7 @@ class Opinion:
         explanation = kwargs.get("explanation", None)
         authors = kwargs.get("authors", None)
         opinion = kwargs.get("opinion", None)
+        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
         if opinion is not None:
@@ -394,6 +398,7 @@ class Opinion:
                         "explanation": explanation,
                         "authors": authors,
                         "opinion": opinion,
+                        "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
                 },
@@ -527,10 +532,10 @@ class Opinion:
                 else None,
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
-                else [],
+                else None,
                 externalReferences=extras["external_references_ids"]
                 if "external_references_ids" in extras
-                else [],
+                else None,
                 revoked=stix_object["revoked"] if "revoked" in stix_object else None,
                 confidence=stix_object["confidence"]
                 if "confidence" in stix_object
@@ -542,10 +547,13 @@ class Opinion:
                     stix_object["explanation"]
                 )
                 if "explanation" in stix_object
-                else "",
+                else None,
                 authors=self.opencti.stix2.convert_markdown(stix_object["authors"])
                 if "authors" in stix_object
-                else "",
+                else None,
+                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
+                if "x_opencti_stix_ids" in stix_object
+                else None,
                 opinion=stix_object["opinion"] if "opinion" in stix_object else None,
                 update=update,
             )

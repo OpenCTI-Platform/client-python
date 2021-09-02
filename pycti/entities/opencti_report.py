@@ -98,8 +98,6 @@ class Report:
             description
             report_types
             published
-            x_opencti_graph_data
-            x_opencti_report_status
             objects {
                 edges {
                     node {
@@ -135,6 +133,9 @@ class Report:
                             name
                         }
                         ... on Sector {
+                            name
+                        }
+                        ... on System {
                             name
                         }
                         ... on Indicator {
@@ -399,8 +400,7 @@ class Report:
         description = kwargs.get("description", "")
         report_types = kwargs.get("report_types", None)
         published = kwargs.get("published", None)
-        x_opencti_graph_data = kwargs.get("x_opencti_graph_data", None)
-        x_opencti_report_status = kwargs.get("x_opencti_report_status", None)
+        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
         if name is not None and description is not None and published is not None:
@@ -433,8 +433,7 @@ class Report:
                         "description": description,
                         "report_types": report_types,
                         "published": published,
-                        "x_opencti_graph_data": x_opencti_graph_data,
-                        "x_opencti_report_status": x_opencti_report_status,
+                        "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
                 },
@@ -568,12 +567,6 @@ class Report:
                     if "x_opencti_source_confidence_level" in stix_object
                     else 0
                 )
-            if "x_opencti_report_status" not in stix_object:
-                stix_object["x_opencti_report_status"] = (
-                    stix_object["x_opencti_object_status"]
-                    if "x_opencti_object_status" in stix_object
-                    else 0
-                )
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -605,12 +598,11 @@ class Report:
                 report_types=stix_object["report_types"]
                 if "report_types" in stix_object
                 else None,
-                published=stix_object["published"],
-                x_opencti_graph_data=stix_object["x_opencti_graph_data"]
-                if "x_opencti_graph_data" in stix_object
+                published=stix_object["published"]
+                if "published" in stix_object
                 else None,
-                x_opencti_report_status=stix_object["x_opencti_report_status"]
-                if "x_opencti_report_status" in stix_object
+                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
+                if "x_opencti_stix_ids" in stix_object
                 else None,
                 update=update,
             )

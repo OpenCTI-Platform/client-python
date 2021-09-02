@@ -121,6 +121,7 @@ class Label:
         stix_id = kwargs.get("stix_id", None)
         value = kwargs.get("value", None)
         color = kwargs.get("color", None)
+        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
 
         if value is not None:
             query = (
@@ -141,6 +142,7 @@ class Label:
                         "stix_id": stix_id,
                         "value": value,
                         "color": color,
+                        "x_opencti_stix_ids": x_opencti_stix_ids,
                     }
                 },
             )
@@ -150,6 +152,47 @@ class Label:
                 "error",
                 "[opencti_label] Missing parameters: value",
             )
+
+    """
+        Update a Label object field
+
+        :param id: the Label id
+        :param input: the input of the field
+        :return The updated Label object
+    """
+
+    def update_field(self, **kwargs):
+        id = kwargs.get("id", None)
+        input = kwargs.get("input", None)
+        if id is not None and input is not None:
+            self.opencti.log("info", "Updating Label {" + id + "}.")
+            query = """
+                    mutation LabelEdit($id: ID!, $input: [EditInput]!) {
+                        labelEdit(id: $id) {
+                            fieldPatch(input: $input) {
+                                id
+                                standard_id
+                                entity_type
+                            }
+                        }
+                    }
+                """
+            result = self.opencti.query(
+                query,
+                {
+                    "id": id,
+                    "input": input,
+                },
+            )
+            return self.opencti.process_multiple_fields(
+                result["data"]["labelEdit"]["fieldPatch"]
+            )
+        else:
+            self.opencti.log(
+                "error",
+                "[opencti_label] Missing parameters: id and key and value",
+            )
+            return None
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)

@@ -169,6 +169,47 @@ class KillChainPhase:
                 "[opencti_kill_chain_phase] Missing parameters: kill_chain_name and phase_name",
             )
 
+    """
+        Update a Kill chain object field
+
+        :param id: the Kill chain id
+        :param input: the input of the field
+        :return The updated Kill chain object
+    """
+
+    def update_field(self, **kwargs):
+        id = kwargs.get("id", None)
+        input = kwargs.get("input", None)
+        if id is not None and input is not None:
+            self.opencti.log("info", "Updating Kill chain {" + id + "}.")
+            query = """
+                    mutation KillChainPhaseEdit($id: ID!, $input: [EditInput]!) {
+                        killChainPhaseEdit(id: $id) {
+                            fieldPatch(input: $input) {
+                                id
+                                standard_id
+                                entity_type
+                            }
+                        }
+                    }
+                """
+            result = self.opencti.query(
+                query,
+                {
+                    "id": id,
+                    "input": input,
+                },
+            )
+            return self.opencti.process_multiple_fields(
+                result["data"]["killChainPhaseEdit"]["fieldPatch"]
+            )
+        else:
+            self.opencti.log(
+                "error",
+                "[opencti_kill_chain] Missing parameters: id and key and value",
+            )
+            return None
+
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
