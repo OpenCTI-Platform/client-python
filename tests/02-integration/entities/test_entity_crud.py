@@ -1,6 +1,6 @@
 from typing import Dict, List
 from pytest_cases import parametrize_with_cases, fixture
-from tests.modules.entities import EntityTestCases
+from tests.cases.entities import EntityTestCases
 
 
 def compare_values(original_data: Dict, retrieved_data: Dict, exception_keys: List):

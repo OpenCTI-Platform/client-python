@@ -365,7 +365,7 @@ class KillChainPhaseTest(EntityTest):
         return self.api_client.kill_chain_phase
 
     def update_data(self) -> Dict[str, Union[str, int]]:
-        return {}
+        return {"kill_chain_name": "test"}
 
     def get_filter(self) -> Dict[str, str]:
         return {
@@ -384,10 +384,8 @@ class LabelTest(EntityTest):
     def baseclass(self):
         return self.api_client.label
 
-    # def update_data(self) -> Dict[str, Union[str, int]]:
-    #     return {"color": "#c3ffbb"}
     def update_data(self) -> Dict[str, Union[str, int]]:
-        return {}
+        return {"color": "#c3ffbb"}
 
     def get_filter(self) -> Dict[str, str]:
         return {
@@ -478,10 +476,8 @@ class MarkingDefinitionTest(EntityTest):
     def baseclass(self):
         return self.api_client.marking_definition
 
-    # def update_data(self) -> Dict[str, Union[str, int]]:
-    #     return {"definition": "Test"}
     def update_data(self) -> Dict[str, Union[str, int]]:
-        return {}
+        return {"definition": "Test"}
 
     def get_filter(self) -> Dict[str, str]:
         return {
@@ -553,8 +549,7 @@ class ObservedDataTest(EntityTest):
         return self.api_client.observed_data
 
     def update_data(self) -> Dict[str, Union[str, int]]:
-        # return {"number_observed": 30}
-        return {}
+        return {"number_observed": 30}
 
     def get_filter(self) -> Dict[str, str]:
         return {}

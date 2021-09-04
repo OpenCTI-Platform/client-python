@@ -2,7 +2,7 @@ import pika.exceptions
 import pytest
 from pytest_cases import parametrize_with_cases, fixture
 from pycti import OpenCTIConnector
-from tests.modules.connectors import (
+from tests.cases.connectors import (
     ExternalImportConnector,
     SimpleConnectorTest,
     InternalEnrichmentConnector,
@@ -83,9 +83,9 @@ def test_external_import_connector(
     # Wait until new work is registered
     work_id = get_new_work_id(api_client, connector_id)
     # Wait for opencti to finish processing task
-    api_work.wait_for_work_to_finish(connector_id, work_id)
+    api_work.wait_for_work_to_finish(work_id)
 
-    status_msg = api_work.get_connector_works(connector_id, work_id)[0]
+    status_msg = api_work.get_work(work_id)
     assert (
         status_msg["tracking"]["import_expected_number"] == 2
     ), f"Unexpected number of 'import_expected_number'. Expected 2, Actual {status_msg['tracking']['import_expected_number']}"
@@ -154,7 +154,7 @@ def test_internal_enrichment_connector(
     )
 
     # Wait for enrichment to finish
-    api_work.wait_for_work_to_finish(connector_id=connector_id, work_id=work_id)
+    api_work.wait_for_work_to_finish(work_id)
 
     observable = api_client.stix_cyber_observable.read(id=observable_id)
     assert (
@@ -204,9 +204,9 @@ def test_internal_import_connector(
     # Wait until new work is registered
     work_id = get_new_work_id(api_client, connector_id)
     # Wait for opencti to finish processing task
-    api_work.wait_for_work_to_finish(connector_id, work_id)
+    api_work.wait_for_work_to_finish(work_id)
 
-    status_msg = api_work.get_connector_works(connector_id, work_id)[0]
+    status_msg = api_work.get_work(work_id)
     assert (
         status_msg["tracking"]["import_expected_number"] == 2
     ), f"Unexpected number of 'import_expected_number'. Expected 2, Actual {status_msg['tracking']['import_expected_number']}"
