@@ -40,7 +40,7 @@ work_id = opencti_api_client.stix_cyber_observable.ask_for_enrichment(
     id=observable["id"], connector_id=connector_id
 )
 # Wait for connector to finish
-opencti_api_work.wait_for_work_to_finish(connector_id=connector_id, work_id=work_id)
+opencti_api_work.wait_for_work_to_finish(work_id)
 
 # Read the observable
 obs = opencti_api_client.stix_cyber_observable.read(id=observable["id"])

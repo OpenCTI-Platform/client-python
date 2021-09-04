@@ -88,49 +88,83 @@ class OpenCTIApiWork:
         )
         return work["data"]
 
-    def wait_for_work_to_finish(self, connector_id: str, work_id: str):
+    def wait_for_work_to_finish(self, work_id: str):
         status = ""
         cnt = 0
         while status != "complete":
-            states = self.get_connector_works(
-                connector_id=connector_id, work_id=work_id
-            )
-            if len(states) > 0:
-                status = states[0]["status"]
+            state = self.get_work(work_id=work_id)
+            if len(state) > 0:
+                status = state["status"]
 
-                if states[0]["errors"]:
+                if state["errors"]:
                     self.api.log(
-                        "error", f"Unexpected connector error {states[0]['errors']}"
+                        "error", f"Unexpected connector error {state['errors']}"
                     )
                     return ""
 
             time.sleep(1)
             cnt += 1
 
-    def get_connector_works(self, connector_id: str, work_id: str = "") -> List[Dict]:
-        if connector_id == "" and work_id == "":
-            self.api.log("error", "Missing argument: connector_id or work_id")
-            return [{}]
-
+    def get_work(self, work_id: str) -> Dict:
         query = """
-            query ConnectorWorksQuery(
-                  $count: Int
-                  $orderBy: WorksOrdering
-                  $orderMode: OrderingMode
-                  $filters: [WorksFiltering]
-                ) {
-                  works(
-                    first: $count
-                    orderBy: $orderBy
-                    orderMode: $orderMode
-                    filters: $filters
-                  ) {
-                    edges {
-                      node {
+        query WorkQuery($id: ID!) {
+            work(id: $id) {
+                id
+                name
+                user {
+                    name
+                }
+                timestamp
+                status
+                event_source_id
+                received_time
+                processed_time
+                completed_time
+                tracking {
+                    import_expected_number
+                    import_processed_number
+                }
+                messages {
+                    timestamp
+                    message
+                    sequence
+                    source
+                }
+                errors {
+                    timestamp
+                    message
+                    sequence
+                    source
+                }
+            }
+        }
+        """
+        result = self.api.query(
+            query,
+            {"id": work_id},
+        )
+        return result["data"]["work"]
+
+    def get_connector_works(self, connector_id: str) -> List[Dict]:
+        query = """
+        query ConnectorWorksQuery(
+            $count: Int
+            $orderBy: WorksOrdering
+            $orderMode: OrderingMode
+            $filters: [WorksFiltering]
+        ) {
+            works(
+                first: $count
+                orderBy: $orderBy
+                orderMode: $orderMode
+                filters: $filters
+            ) {
+                edges {
+                    node {
                         id
                         name
                         user {
-                          name
+                            name
                         }
                         timestamp
                         status
@@ -139,26 +173,26 @@ class OpenCTIApiWork:
                         processed_time
                         completed_time
                         tracking {
-                          import_expected_number
-                          import_processed_number
+                            import_expected_number
+                            import_processed_number
                         }
                         messages {
-                          timestamp
-                          message
-                          sequence
-                          source
+                            timestamp
+                            message
+                            sequence
+                            source
                         }
                         errors {
-                          timestamp
-                          message
-                          sequence
-                          source
+                            timestamp
+                            message
+                            sequence
+                            source
                         }
-                      }
                     }
-                  }
                 }
-                """
+            }
+        }
+        """
         result = self.api.query(
             query,
             {
@@ -172,10 +206,6 @@ class OpenCTIApiWork:
         return_value = []
         for node in result:
             node = node["node"]
-            if work_id != "":
-                if node["id"] == work_id:
-                    return_value.append(node)
-            else:
-                return_value.append(node)
+            return_value.append(node)
 
         return sorted(return_value, key=lambda i: i["timestamp"])
