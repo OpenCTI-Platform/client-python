@@ -157,7 +157,8 @@ class InternalEnrichmentConnector:
         observable = self.helper.api.stix_cyber_observable.read(id=entity_id)
 
         self.helper.api.stix_cyber_observable.update_field(
-            id=observable["standard_id"], input={'key': "x_opencti_score", 'value': ['100']}
+            id=observable["standard_id"],
+            input={"key": "x_opencti_score", "value": ["100"]},
         )
 
         # now = datetime.utcfromtimestamp(time.time())

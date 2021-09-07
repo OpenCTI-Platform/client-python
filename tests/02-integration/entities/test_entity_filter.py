@@ -16,14 +16,14 @@ def test_filter(entity_class):
         return
 
     class_data = entity_class.data()
-    test_indicator = entity_class.ownclass().create(**class_data)
+    test_indicator = entity_class.own_class().create(**class_data)
     assert test_indicator is not None, "Response is NoneType"
     assert "id" in test_indicator, "No ID on object"
-    test_indicator = entity_class.ownclass().read(filters=entity_class.get_filter())
+    test_indicator = entity_class.own_class().read(filters=entity_class.get_filter())
     compare_values(
         class_data,
         test_indicator,
         entity_class.get_compare_exception_keys(),
     )
 
-    entity_class.baseclass().delete(id=test_indicator["id"])
+    entity_class.base_class().delete(id=test_indicator["id"])

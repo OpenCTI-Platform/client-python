@@ -1,5 +1,5 @@
 from typing import List, Dict, Union
-from stix2 import TLP_GREEN, TLP_WHITE, Identity, AttackPattern
+from stix2 import TLP_GREEN, TLP_WHITE, AttackPattern
 from pycti import OpenCTIStix2Utils
 from pycti.utils.constants import LocationTypes, IdentityTypes, ContainerTypes
 from tests.utils import get_incident_start_date, get_incident_end_date
@@ -144,10 +144,10 @@ class EntityTest:
     def data(self) -> Dict:
         pass
 
-    def ownclass(self):
+    def own_class(self):
         pass
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.stix_domain_object
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -162,12 +162,12 @@ class EntityTest:
             "values": self.data()["name"],
         }
 
-    def stixclass(self):
+    def stix_class(self):
         pass
 
 
 class IdentityTest(EntityTest):
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.identity
 
 
@@ -238,7 +238,7 @@ class IndicatorTest(EntityTest):
     def teardown(self):
         self.api_client.stix_domain_object.delete(id=self.organization["id"])
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.indicator
 
 
@@ -251,10 +251,10 @@ class AttackPatternTest(EntityTest):
             "description": "Test Attack Pattern!",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.attack_pattern
 
-    def stixclass(self):
+    def stix_class(self):
         return AttackPattern
 
 
@@ -266,7 +266,7 @@ class CourseOfActionTest(EntityTest):
             "description": "Test Attack Pattern",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.course_of_action
 
 
@@ -280,10 +280,10 @@ class ExternalReferenceTest(EntityTest):
             "url": "https://github.com/vz-risk/VCDB/blob/125307638178efddd3ecfe2c267ea434667a4eea/data/json/validated/0001AA7F-C601-424A-B2B8-BE6C9F5164E7.json",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.external_reference
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.external_reference
 
     def get_filter(self) -> Dict[str, str]:
@@ -306,7 +306,7 @@ class CampaignTest(EntityTest):
             "objective": "World dominance",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.campaign
 
 
@@ -323,7 +323,7 @@ class IncidentTest(EntityTest):
             "objective": "World dominance",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.incident
 
 
@@ -338,7 +338,7 @@ class InfrastructureTest(EntityTest):
             "infrastructure_types": ["command-and-control"],
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.infrastructure
 
 
@@ -352,7 +352,7 @@ class IntrusionSetTest(EntityTest):
             "goals": ["acquisition-theft", "harassment", "damage"],
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.intrusion_set
 
 
@@ -364,10 +364,10 @@ class KillChainPhaseTest(EntityTest):
             "phase_name": "pre-attack",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.kill_chain_phase
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.kill_chain_phase
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -384,10 +384,10 @@ class LabelTest(EntityTest):
     def data(self) -> Dict:
         return {"type": "Label", "value": "fooaaa", "color": "#c3ff1a"}
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.label
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.label
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -401,7 +401,7 @@ class LabelTest(EntityTest):
 
 
 class LocationTest(EntityTest):
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.location
 
     def get_compare_exception_keys(self) -> List[str]:
@@ -463,7 +463,7 @@ class MalwareTest(EntityTest):
             "is_family": False,
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.malware
 
 
@@ -476,10 +476,10 @@ class MarkingDefinitionTest(EntityTest):
             "definition": "Copyright 2019, Example Corp",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.marking_definition
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.marking_definition
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -503,7 +503,7 @@ class NoteTest(EntityTest):
             #    "lang": "en",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.note
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -551,7 +551,7 @@ class ObservedDataTest(EntityTest):
         self.api_client.stix_cyber_observable.delete(id=self.ipv4["id"])
         self.api_client.stix_cyber_observable.delete(id=self.domain["id"])
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.observed_data
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -572,7 +572,7 @@ class OpinionTest(EntityTest):
             # "lang": "en",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.opinion
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -598,7 +598,7 @@ class ReportTest(EntityTest):
             # "object_refs": [self.ipv4["id"], self.domain["id"]],
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.report
 
 
@@ -626,10 +626,10 @@ class StixCoreRelationshipTest(EntityTest):
             # "lang": "en",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.stix_core_relationship
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.stix_core_relationship
 
     def teardown(self):
@@ -685,10 +685,10 @@ class StixCyberObservableRelationshipTest(EntityTest):
             # "object_refs": [self.ipv4["id"], self.domain["id"]],
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.stix_cyber_observable_relationship
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.stix_cyber_observable_relationship
 
     def teardown(self):
@@ -747,10 +747,10 @@ class StixSightingRelationshipTest(EntityTest):
             # "lang": "en",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.stix_sighting_relationship
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.stix_sighting_relationship
 
     def teardown(self):
@@ -784,10 +784,10 @@ class StixSightingRelationshipTest(EntityTest):
 
 
 class StixCyberObservableTest(EntityTest):
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.stix_cyber_observable
 
-    def baseclass(self):
+    def base_class(self):
         return self.api_client.stix_cyber_observable
 
     def update_data(self) -> Dict[str, Union[str, int]]:
@@ -860,7 +860,7 @@ class ThreatActorTest(EntityTest):
             "primary_motivation": "organizational-gain",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.threat_actor
 
 
@@ -873,7 +873,7 @@ class ToolTest(EntityTest):
             "name": "VNC",
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.tool
 
 
@@ -891,5 +891,5 @@ class VulnerabilityTest(EntityTest):
             # ]
         }
 
-    def ownclass(self):
+    def own_class(self):
         return self.api_client.vulnerability
