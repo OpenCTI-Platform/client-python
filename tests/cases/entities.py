@@ -1,5 +1,5 @@
 from typing import List, Dict, Union
-from stix2 import TLP_GREEN, TLP_WHITE
+from stix2 import TLP_GREEN, TLP_WHITE, Identity, AttackPattern
 from pycti import OpenCTIStix2Utils
 from pycti.utils.constants import LocationTypes, IdentityTypes, ContainerTypes
 from tests.utils import get_incident_start_date, get_incident_end_date
@@ -162,6 +162,9 @@ class EntityTest:
             "values": self.data()["name"],
         }
 
+    def stixclass(self):
+        pass
+
 
 class IdentityTest(EntityTest):
     def ownclass(self):
@@ -210,7 +213,7 @@ class IndicatorTest(EntityTest):
 
     def data(self) -> Dict:
         return {
-            "type": "Indicator",
+            "type": "indicator",
             "name": "C2 server of the new campaign",
             "description": "This is the C2 server of the campaign",
             "pattern_type": "stix",
@@ -242,7 +245,7 @@ class IndicatorTest(EntityTest):
 class AttackPatternTest(EntityTest):
     def data(self) -> Dict:
         return {
-            "type": "AttackPattern",
+            "type": "attack-pattern",
             "name": "Evil Pattern!",
             # "x_mitre_id": "T1999",
             "description": "Test Attack Pattern!",
@@ -250,6 +253,9 @@ class AttackPatternTest(EntityTest):
 
     def ownclass(self):
         return self.api_client.attack_pattern
+
+    def stixclass(self):
+        return AttackPattern
 
 
 class CourseOfActionTest(EntityTest):
