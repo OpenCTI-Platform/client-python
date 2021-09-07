@@ -1,5 +1,7 @@
 import datetime
 import time
+from typing import Dict, List
+
 from dateutil.parser import parse
 from pycti import OpenCTIApiConnector, OpenCTIApiClient, OpenCTIApiWork
 
@@ -53,3 +55,44 @@ def get_new_work_id(api_client: OpenCTIApiClient, connector_id: str) -> str:
             len(new_works) == 1
         ), f"Too many jobs were created. Expected 1, Actual: {len(new_works)}"
     return new_works[0]["id"]
+
+
+def compare_values(original_data: Dict, retrieved_data: Dict, exception_keys: List):
+    for key, value in original_data.items():
+        # Attributes which aren't present in the final Stix objects
+        if key in exception_keys:
+            continue
+
+        assert key in retrieved_data, f"Key {key} is not in retrieved_data"
+
+        compare_data = retrieved_data.get(key, None)
+        if isinstance(value, str):
+            assert (
+                value == compare_data
+            ), f"Key '{key}': '{value}' does't match value '{retrieved_data[key]}' ({retrieved_data}"
+        elif key == "objects" and isinstance(value, list):
+            assert isinstance(compare_data, list), f"Key '{key}': is not a list"
+            original_ids = set()
+            for elem in value:
+                if isinstance(elem, dict):
+                    original_ids.add(elem.get("id", None))
+                elif isinstance(elem, str):
+                    original_ids.add(elem)
+
+            retrieved_ids = set()
+            for elem in compare_data:
+                if isinstance(elem, dict):
+                    retrieved_ids.add(elem.get("id", None))
+                elif isinstance(elem, str):
+                    original_ids.add(elem)
+
+            assert (
+                original_ids == retrieved_ids
+            ), f"Key '{key}': '{value}' does't match value '{compare_data}'"
+        elif isinstance(value, dict):
+            assert len(value) == len(
+                compare_data
+            ), f"Dict '{value}' does not have the same length as '{compare_data}'"
+            assert (
+                value == compare_data
+            ), f"Dict '{value}' does not have the same content as'{compare_data}'"
