@@ -1,12 +1,14 @@
 # coding: utf-8
-
 import datetime
 import io
 import json
 import logging
+import os
 from typing import Union
+import sys
 
 import magic
+from pythonjsonlogger import jsonlogger
 import requests
 import urllib3
 
@@ -48,6 +50,19 @@ from pycti.entities.opencti_vulnerability import Vulnerability
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+class CustomJsonFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
+        if not log_record.get('timestamp'):
+            # This doesn't use record.created, so it is slightly off
+            now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            log_record['timestamp'] = now
+        if log_record.get('level'):
+            log_record['level'] = log_record['level'].upper()
+        else:
+            log_record['level'] = record.levelname
 
 
 class File:
@@ -94,7 +109,15 @@ class OpenCTIApiClient:
         numeric_level = getattr(logging, self.log_level.upper(), None)
         if not isinstance(numeric_level, int):
             raise ValueError("Invalid log level: " + self.log_level)
-        logging.basicConfig(level=numeric_level)
+
+        if bool(os.getenv("OPENCTI_JSON_LOGGING", "False").lower() == "true"):
+            log_handler = logging.StreamHandler()
+            log_handler.setLevel(self.log_level.upper())
+            formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(name)s %(message)s')
+            log_handler.setFormatter(formatter)
+            logging.basicConfig(handlers=[log_handler], level=numeric_level, force=True)
+        else:
+            logging.basicConfig(level=numeric_level)
 
         # Define API
         self.api_token = token
