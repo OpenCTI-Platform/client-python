@@ -3,9 +3,7 @@ import datetime
 import io
 import json
 import logging
-import os
 from typing import Union
-import sys
 
 import magic
 from pythonjsonlogger import jsonlogger
@@ -55,14 +53,14 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
     def add_fields(self, log_record, record, message_dict):
         super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
-        if not log_record.get('timestamp'):
+        if not log_record.get("timestamp"):
             # This doesn't use record.created, so it is slightly off
-            now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-            log_record['timestamp'] = now
-        if log_record.get('level'):
-            log_record['level'] = log_record['level'].upper()
+            now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            log_record["timestamp"] = now
+        if log_record.get("level"):
+            log_record["level"] = log_record["level"].upper()
         else:
-            log_record['level'] = record.levelname
+            log_record["level"] = record.levelname
 
 
 class File:
@@ -91,9 +89,19 @@ class OpenCTIApiClient:
             "https: "http://my_proxy:8080"
         }
         ```
+    :param json_logging: format the logs as json if set to True
+    :type json_logging: bool, optional
     """
 
-    def __init__(self, url, token, log_level="info", ssl_verify=False, proxies={}):
+    def __init__(
+        self,
+        url,
+        token,
+        log_level="info",
+        ssl_verify=False,
+        proxies={},
+        json_logging=False,
+    ):
         """Constructor method"""
 
         # Check configuration
@@ -110,10 +118,12 @@ class OpenCTIApiClient:
         if not isinstance(numeric_level, int):
             raise ValueError("Invalid log level: " + self.log_level)
 
-        if bool(os.getenv("OPENCTI_JSON_LOGGING", "False").lower() == "true"):
+        if json_logging:
             log_handler = logging.StreamHandler()
             log_handler.setLevel(self.log_level.upper())
-            formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(name)s %(message)s')
+            formatter = CustomJsonFormatter(
+                "%(timestamp)s %(level)s %(name)s %(message)s"
+            )
             log_handler.setFormatter(formatter)
             logging.basicConfig(handlers=[log_handler], level=numeric_level, force=True)
         else:
