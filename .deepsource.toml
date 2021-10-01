@@ -1,1 +1,13 @@
 version = 1
+
+[[analyzers]]
+name = "python"
+enabled = true
+dependency_file_paths = [
+  "requirements.txt",
+  "test_requirements.txt",
+]
+
+[[transformers]]
+name = "black"
+enabled = true
