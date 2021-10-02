@@ -63,7 +63,7 @@ class ExternalImportConnector:
         os.environ["OPENCTI_JSON_LOGGING"] = "true"
 
         config = (
-            yaml.load(open(config_file_path), Loader=yaml.FullLoader)
+            yaml.load(open(config_file_path), Loader=yaml.SafeLoader)
             if os.path.isfile(config_file_path)
             else {}
         )
@@ -144,7 +144,7 @@ class InternalEnrichmentConnector:
         os.environ["OPENCTI_SSL_VERIFY"] = str(api_client.ssl_verify)
 
         config = (
-            yaml.load(open(config_file_path), Loader=yaml.FullLoader)
+            yaml.load(open(config_file_path), Loader=yaml.SafeLoader)
             if os.path.isfile(config_file_path)
             else {}
         )
@@ -237,7 +237,7 @@ class InternalImportConnector:
         os.environ["OPENCTI_SSL_VERIFY"] = str(api_client.ssl_verify)
 
         config = (
-            yaml.load(open(config_file_path), Loader=yaml.FullLoader)
+            yaml.load(open(config_file_path), Loader=yaml.SafeLoader)
             if os.path.isfile(config_file_path)
             else {}
         )
