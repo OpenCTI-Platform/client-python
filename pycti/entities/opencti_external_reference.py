@@ -106,10 +106,10 @@ class ExternalReference:
     """
 
     def read(self, **kwargs):
-        id = kwargs.get("id", None)
+        _id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
-        if id is not None:
-            self.opencti.log("info", "Reading External-Reference {" + id + "}.")
+        if _id is not None:
+            self.opencti.log("info", "Reading External-Reference {" + _id + "}.")
             query = (
                 """
                 query ExternalReference($id: String!) {
@@ -121,7 +121,7 @@ class ExternalReference:
                 }
             """
             )
-            result = self.opencti.query(query, {"id": id})
+            result = self.opencti.query(query, {"id": _id})
             return self.opencti.process_multiple_fields(
                 result["data"]["externalReference"]
             )

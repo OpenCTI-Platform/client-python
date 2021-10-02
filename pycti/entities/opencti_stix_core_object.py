@@ -16,13 +16,13 @@ class StixCoreObject:
     """
 
     def merge(self, **kwargs):
-        id = kwargs.get("id", None)
+        _id = kwargs.get("id", None)
         stix_core_objects_ids = kwargs.get("object_ids", None)
-        if id is not None and stix_core_objects_ids is not None:
+        if _id is not None and stix_core_objects_ids is not None:
             self.opencti.log(
                 "info",
                 "Merging Core object {"
-                + id
+                + _id
                 + "} with {"
                 + ",".join(stix_core_objects_ids)
                 + "}.",
@@ -41,7 +41,7 @@ class StixCoreObject:
             result = self.opencti.query(
                 query,
                 {
-                    "id": id,
+                    "id": _id,
                     "stixCoreObjectsIds": stix_core_objects_ids,
                 },
             )
