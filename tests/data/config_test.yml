@@ -1,0 +1,18 @@
+opencti:
+  url: 'http://localhost:8080'
+  token: '1717C3B8-01B2-4C52-8DD4-301F4D9F7D0A'
+
+connector:
+  id: 'ChangeMe'
+  type: 'EXTERNAL_IMPORT'
+  name: 'ConnectorABC'
+  scope: 'abc'
+  confidence_level: 15 # From 0 (Unknown) to 100 (Fully trusted)
+  update_existing_data: false
+  log_level: 'info'
+  expose_metrics: true
+  metrics_port: 9102
+
+connectorabc:
+  api_key: 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
+  interval_sec: 6400

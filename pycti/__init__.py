@@ -6,6 +6,7 @@ from .connector.opencti_connector import ConnectorType, OpenCTIConnector
 from .connector.opencti_connector_helper import (
     OpenCTIConnectorHelper,
     get_config_variable,
+    load_config,
 )
 from .entities.opencti_attack_pattern import AttackPattern
 from .entities.opencti_campaign import Campaign
@@ -52,6 +53,7 @@ __all__ = [
     "OpenCTIConnector",
     "OpenCTIConnectorHelper",
     "get_config_variable",
+    "load_config",
     "Label",
     "MarkingDefinition",
     "ExternalReference",

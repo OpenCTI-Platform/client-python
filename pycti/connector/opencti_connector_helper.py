@@ -3,12 +3,14 @@ import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import ssl
 import sys
 import threading
 import time
-import uuid
 from typing import Callable, Dict, List, Optional, Union
+import uuid
+import yaml
 
 import pika
 from pika.exceptions import NackError, UnroutableError
@@ -79,6 +81,31 @@ def create_ssl_context() -> ssl.SSLContext:
         ssl_context.options |= option
 
     return ssl_context
+
+
+def load_config(path: Path) -> dict[str, dict[str, str]]:
+    """
+    Load the configuration.
+
+    The main configuration is taken from the yaml file, at the given path.
+    If some environment variables are set, they will override the variables
+    from the config file.
+
+    :param path: Path to the configuration file (yaml).
+    :type path: Path
+    :return: A dictionary containing the final configuration.
+    :rtype: dict
+    """
+    if path.is_file():
+        with path.open() as f:
+            config = yaml.safe_load(f)
+    else:
+        config = {}
+
+    for section, values in config.items():
+        for k, v in values.items():
+            config[section][k] = os.getenv(f"{section}_{k}".upper(), v)
+    return config
 
 
 class ListenQueue(threading.Thread):
