@@ -721,6 +721,15 @@ class OpenCTIStix2:
                 update=update,
             )
         if stix_observable_result is not None:
+            # Add files
+            if "x_opencti_files" in stix_object:
+                for file in stix_object["x_opencti_files"]:
+                    self.opencti.stix_cyber_observable.add_file(
+                        id=stix_observable_result["id"],
+                        file_name=file["name"],
+                        data=base64.b64decode(file["data"]),
+                        mime_type=file["mime_type"],
+                    )
             if "id" in stix_object:
                 self.mapping_cache[stix_object["id"]] = {
                     "id": stix_observable_result["id"],
@@ -1001,7 +1010,10 @@ class OpenCTIStix2:
                     external_reference["external_id"] = entity_external_reference[
                         "external_id"
                     ]
-                if "importFiles" in entity_external_reference:
+                if (
+                    "importFiles" in entity_external_reference
+                    and len(entity_external_reference["importFiles"]) > 0
+                ):
                     external_reference["x_opencti_files"] = []
                     for file in entity_external_reference["importFiles"]:
                         url = (
@@ -1016,6 +1028,7 @@ class OpenCTIStix2:
                                 "name": file["name"],
                                 "data": data,
                                 "mime_type": file["metaData"]["mimetype"],
+                                "version": file["metaData"]["version"],
                             }
                         )
                 entity["external_references"].append(external_reference)
@@ -1198,7 +1211,7 @@ class OpenCTIStix2:
             if file:
                 entity["payload_bin"] = file
         # Files
-        if "importFiles" in entity:
+        if "importFiles" in entity and len(entity["importFiles"]) > 0:
             entity["x_opencti_files"] = []
             for file in entity["importFiles"]:
                 url = (
@@ -1210,6 +1223,7 @@ class OpenCTIStix2:
                         "name": file["name"],
                         "data": data,
                         "mime_type": file["metaData"]["mimetype"],
+                        "version": file["metaData"]["version"],
                     }
                 )
             del entity["importFiles"]
