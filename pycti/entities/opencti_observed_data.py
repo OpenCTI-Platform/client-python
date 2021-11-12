@@ -536,18 +536,20 @@ class ObservedData:
         if "objects" in stix_object:
             stix_observable_results = []
             for key, observable_item in stix_object["objects"].items():
-                stix_observable_results.append(self.opencti.stix_cyber_observable.create(
-                    observableData=observable_item,
-                    createdBy=extras["created_by_id"]
-                    if "created_by_id" in extras
-                    else None,
-                    objectMarking=extras["object_marking_ids"]
-                    if "object_marking_ids" in extras
-                    else None,
-                    objectLabel=extras["object_label_ids"]
-                    if "object_label_ids" in extras
-                    else [],
-                ))
+                stix_observable_results.append(
+                    self.opencti.stix_cyber_observable.create(
+                        observableData=observable_item,
+                        createdBy=extras["created_by_id"]
+                        if "created_by_id" in extras
+                        else None,
+                        objectMarking=extras["object_marking_ids"]
+                        if "object_marking_ids" in extras
+                        else None,
+                        objectLabel=extras["object_label_ids"]
+                        if "object_label_ids" in extras
+                        else [],
+                    )
+                )
                 refs = []
                 for item in stix_observable_results:
                     refs.append(item["standard_id"])
