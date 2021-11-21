@@ -124,11 +124,21 @@ class ListenQueue(threading.Thread):
         """
 
         json_data = json.loads(body)
+        channel.basic_ack(delivery_tag=method.delivery_tag)
         self.thread = threading.Thread(target=self._data_handler, args=[json_data])
         self.thread.start()
+        five_minutes = 60 * 5
+        time_wait = 0
         while self.thread.is_alive():  # Loop while the thread is processing
-            assert self.pika_connection is not None
-            self.pika_connection.sleep(1.0)
+            if (
+                self.helper.work_id is not None and time_wait > five_minutes
+            ):  # Ping every 5 minutes
+                self.helper.api.work.ping(self.helper.work_id)
+                time_wait = 0
+            else:
+                time_wait += 1
+            time.sleep(1)
+
         logging.info(
             "%s",
             (
@@ -136,7 +146,6 @@ class ListenQueue(threading.Thread):
                 ", thread terminated"
             ),
         )
-        channel.basic_ack(delivery_tag=method.delivery_tag)
 
     def _data_handler(self, json_data) -> None:
         # Set the API headers
