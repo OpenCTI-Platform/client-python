@@ -2,9 +2,6 @@ import pytest
 from pytest_cases import fixture
 from pycti import (
     OpenCTIApiClient,
-    OpenCTIApiConnector,
-    OpenCTIApiWork,
-    OpenCTIStix2,
     OpenCTIStix2Splitter,
 )
 
@@ -19,23 +16,22 @@ def api_client():
 
 
 @fixture(scope="session")
-def api_connector(api_client):
-    return OpenCTIApiConnector(api_client)
-
-
-@fixture(scope="session")
-def api_work(api_client):
-    return OpenCTIApiWork(api_client)
-
-
-@fixture(scope="session")
-def api_stix(api_client):
-    return OpenCTIStix2(api_client)
-
-
-@fixture(scope="session")
 def opencti_splitter():
     return OpenCTIStix2Splitter()
+
+
+@fixture(scope="session")
+def httpserver_listen_address():
+    return "localhost", 8888
+
+
+@fixture(scope="session")
+def rabbit_mq_config():
+    return {'host': 'rabbitmq',
+            'pass': '11111111111',
+            'port': 5672,
+            'use_ssl': False,
+            'user': '2222222222222'}
 
 
 def pytest_addoption(parser):
