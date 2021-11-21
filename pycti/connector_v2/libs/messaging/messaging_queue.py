@@ -1,18 +1,16 @@
 import threading
+from typing import List, Callable
 
 
 class MessagingQueue(threading.Thread):
     def __init__(self):
         pass
 
-    def run(self):
+    def listen(self, callback_function: Callable):
         pass
 
     def stop(self):
         pass
 
-    def callback(self):
-        pass
-
-    def push(self, msg: str, connector_id: str):
+    def send(self, msg: str, connector_id: str, work_id: str, bundles: List):
         pass

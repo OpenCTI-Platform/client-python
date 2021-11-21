@@ -50,7 +50,7 @@ class ExternalImportConnectorTest:
                     "id": OpenCTIStix2Utils.generate_random_stix_id("vulnerability"),
                 },
             ],
-            "config": "tests/data/external_import_config.yml",
+            "config": "tests/e2e/support_data/external_import_config.yml",
         }
 
 
@@ -132,7 +132,7 @@ class InternalEnrichmentConnectorTest:
                 "simple_observable_value": "198.51.100.3",
                 "x_opencti_score": 30,
             },
-            "config": "tests/data/internal_enrichment_config.yml",
+            "config": "tests/e2e/support_data/internal_enrichment_config.yml",
         }
 
 
@@ -210,8 +210,8 @@ class InternalImportConnectorTest:
     @staticmethod
     def case_txt_import() -> Dict:
         return {
-            "import_file": "tests/data/internal_import_data.txt",
-            "config": "tests/data/internal_import_config.yml",
+            "import_file": "tests/e2e/support_data/internal_import_data.txt",
+            "config": "tests/e2e/support_data/internal_import_config.yml",
             "observable": {
                 "simple_observable_key": "IPv4-Addr.value",
                 "simple_observable_value": "198.51.100.3",
