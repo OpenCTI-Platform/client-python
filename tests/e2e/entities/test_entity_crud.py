@@ -1,5 +1,5 @@
 from pytest_cases import parametrize_with_cases, fixture
-from tests.cases.entities import EntityTestCases
+from tests.e2e.support_cases.entities import EntityTestCases
 from tests.utils import compare_values
 
 

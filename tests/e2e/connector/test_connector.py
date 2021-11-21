@@ -2,7 +2,7 @@ import pika.exceptions
 import pytest
 from pytest_cases import parametrize_with_cases, fixture
 from pycti import OpenCTIConnector
-from tests.cases.connectors import (
+from tests.e2e.support_cases.connectors import (
     ExternalImportConnector,
     SimpleConnectorTest,
     InternalEnrichmentConnector,

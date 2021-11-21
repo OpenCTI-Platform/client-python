@@ -34,7 +34,7 @@ import json
 
 
 def test_indicator_stix_marshall(api_client):
-    with open("tests/data/indicator_stix.json", "r") as content_file:
+    with open("tests/e2e/support_data/indicator_stix.json", "r") as content_file:
         content = content_file.read()
 
     json_data = json.loads(content)
