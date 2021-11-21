@@ -32,8 +32,13 @@ class OpenCTIApiConnector:
                             user
                             pass
                         }
+                        listen_exchange
                         listen
+                        push_exchange
                         push
+                    }
+                    connector_user {
+                        id
                     }
                 }
             }
