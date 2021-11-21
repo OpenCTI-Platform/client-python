@@ -1,5 +1,7 @@
 from typing import List, Dict, Union
+
 from stix2 import TLP_GREEN, TLP_WHITE, AttackPattern
+
 from pycti import OpenCTIStix2Utils
 from pycti.utils.constants import LocationTypes, IdentityTypes, ContainerTypes
 from tests.utils import get_incident_start_date, get_incident_end_date
@@ -610,8 +612,10 @@ class StixCoreRelationshipTest(EntityTest):
             objective="Espionage",
         )
 
-        self.ttp1 = self.api_client.attack_pattern.read(
-            filters=[{"key": "x_mitre_id", "values": ["T1193"]}]
+        self.ttp1 = self.api_client.attack_pattern.create(
+            name="Phishing: Spearphishing Attachment",
+            description="Adversaries may send spearphishing emails with a malicious attachment in an attempt to gain access to victim systems. Spearphishing attachment is a specific variant of spearphishing. Spearphishing attachment is different from other forms of spearphishing in that it employs the use of malware attached to an email. All forms of spearphishing are electronically delivered social engineering targeted at a specific individual, company, or industry. In this scenario, adversaries attach a file to the spearphishing email and usually rely upon User Execution to gain execution. Spearphishing may also involve social engineering techniques, such as posing as a trusted source.",
+            x_mitre_id="T1566.001"
         )
 
     def data(self) -> Dict:
@@ -634,6 +638,7 @@ class StixCoreRelationshipTest(EntityTest):
 
     def teardown(self):
         self.api_client.stix_domain_object.delete(id=self.incident["id"])
+        self.api_client.stix_domain_object.delete(id=self.ttp1["id"])
 
     def get_compare_exception_keys(self) -> List[str]:
         # changes between pycti and opencti naming
@@ -718,8 +723,10 @@ class StixCyberObservableRelationshipTest(EntityTest):
 
 class StixSightingRelationshipTest(EntityTest):
     def setup(self):
-        self.ttp1 = self.api_client.attack_pattern.read(
-            filters=[{"key": "x_mitre_id", "values": ["T1193"]}]
+        self.ttp1 = self.api_client.attack_pattern.create(
+            name="Phishing: Spearphishing Attachment",
+            description="Adversaries may send spearphishing emails with a malicious attachment in an attempt to gain access to victim systems. Spearphishing attachment is a specific variant of spearphishing. Spearphishing attachment is different from other forms of spearphishing in that it employs the use of malware attached to an email. All forms of spearphishing are electronically delivered social engineering targeted at a specific individual, company, or industry. In this scenario, adversaries attach a file to the spearphishing email and usually rely upon User Execution to gain execution. Spearphishing may also involve social engineering techniques, such as posing as a trusted source.",
+            x_mitre_id="T1566.001"
         )
 
         self.location = self.api_client.location.create(
@@ -755,6 +762,7 @@ class StixSightingRelationshipTest(EntityTest):
 
     def teardown(self):
         self.api_client.stix_domain_object.delete(id=self.location["id"])
+        self.api_client.stix_domain_object.delete(id=self.ttp1["id"])
 
     def get_compare_exception_keys(self) -> List[str]:
         # changes between pycti and opencti naming
