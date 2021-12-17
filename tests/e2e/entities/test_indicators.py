@@ -2,6 +2,7 @@
 
 import json
 
+
 # Commented out since OpenCTI requires at least 100 indicators
 # for this test to work
 #
@@ -44,3 +45,16 @@ def test_indicator_stix_marshall(api_client):
             stixObject=indic, update=True
         )
         assert imported_indicator is not None
+
+
+def test_import_stix_2_0(api_client):
+    api_client.stix2.import_bundle_from_file("tests/e2e/support_data/stix_2_0.json")
+
+    observable = api_client.stix_cyber_observable.read(
+        filters={
+            "key": "name",
+            "values": ["C:\\Users\\<USER>\\AppData\\Local\\libcqppj\\cmd.exe"],
+        }
+    )
+    assert observable is not None
+    assert "id" in observable
