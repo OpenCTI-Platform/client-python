@@ -20,6 +20,7 @@ def test_filter(entity_class):
     assert test_indicator is not None, "Response is NoneType"
     assert "id" in test_indicator, "No ID on object"
     test_indicator = entity_class.own_class().read(filters=entity_class.get_filter())
+    assert test_indicator is not None, "Response is NoneType"
     compare_values(
         class_data,
         test_indicator,
