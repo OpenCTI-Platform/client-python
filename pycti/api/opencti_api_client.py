@@ -131,8 +131,9 @@ class OpenCTIApiClient:
             logging.basicConfig(level=numeric_level)
 
         # Define API
+        self.opencti_url = url
         self.api_token = token
-        self.api_url = url + "/graphql"
+        self.api_url = f"{self.opencti_url}/graphql"
         self.request_headers = {"Authorization": "Bearer " + token}
         self.session = requests.session()
 
