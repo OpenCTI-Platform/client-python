@@ -37,13 +37,10 @@ class ExternalImportConnector(Connector):
             )
             self.stop()
 
-        # TODO add while loop
         work_id = None
         try:
             timestamp = int(time.time())
             now = datetime.utcfromtimestamp(timestamp)
-            # TODO get last run and interval
-            # check if difference is bigger than interval
 
             work_id = self.api.work.initiate_work(
                 self.config.connector.id,

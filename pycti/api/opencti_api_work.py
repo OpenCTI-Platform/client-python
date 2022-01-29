@@ -105,13 +105,13 @@ class OpenCTIApiWork:
         while status != "complete":
             state = self.get_work(work_id=work_id)
             if len(state) > 0:
-                status = state["status"]
-
                 if state["errors"]:
                     self.api.log(
                         "error", f"Unexpected connector error {state['errors']}"
                     )
-                    return ""
+                    return
+
+                status = state["status"]
 
             time.sleep(1)
             cnt += 1

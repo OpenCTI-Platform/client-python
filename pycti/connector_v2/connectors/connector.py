@@ -3,35 +3,43 @@ import logging
 import threading
 from typing import List, Dict, Union, Optional, Any, Callable, Type
 
+from celery import Task
 from pydantic import create_model, BaseSettings
 
 from pycti import OpenCTIApiClient, OpenCTIStix2Splitter
 from pycti.connector_v2.libs.pika_broker import PikaBroker
 from pycti.connector_v2.libs.connector_utils import get_logger, ConnectorType
 
+class ConnectorSettings(BaseSettings):
+    opencti_url: str
+    opencti_ssl_verify: bool = True
+    connector_id: str
+    connector_name: str
+
+
 
 class OpenCTIBaseSettings(BaseSettings):
-    url: str
-    token: str
-    ssl_verify: bool = True
+    opencti_url: str
+    opencti_token: str
+    opencti_ssl_verify: bool = True
 
-    class Config:
-        env_prefix = "opencti_"
-
-
-class ConnectorBaseSettings(BaseSettings):
-    id: str
-    name: str
-    type: str
-    json_logging: bool = False
-    log_level: str = "INFO"
+#     class Config:
+#         env_prefix = "opencti_"
+#
+#
+# class ConnectorBaseSettings(BaseSettings):
+    connector_id: str
+    connector_name: str
+    connector_type: str
+    connector_json_logging: bool = False
+    connector_log_level: str = "INFO"
     # TODO possible removal in the future
-    only_contextual: bool = False
-    auto: bool = False
-    scope: str = ""
+    connector_only_contextual: bool = False
+    connector_auto: bool = False
+    connector_scope: str = ""
 
-    class Config:
-        env_prefix = "connector_"
+    # class Config:
+    #     env_prefix = "connector_"
 
 
 # Scope definition
@@ -47,7 +55,11 @@ class ApplicationSettings(BaseSettings):
         env_prefix = "app_"
 
 
-class Connector(object):
+# TODO OpenCTI, Connector and APP settings come via constructor
+# TODO only value getting from env/yaml is the celery scheduler location (hmm and maybe more, opencti token?)
+# TODO for worker and connector manager create minimal "NakedConnector" Class
+
+class Connector(Task):
     def __init__(
         self,
         connector_model: Type[ConnectorBaseSettings],
@@ -118,29 +130,6 @@ class Connector(object):
         self.connector_state = connector_configuration["connector_state"]
         self.logger.info(f"Connector registered with ID: {self.config.connector.id}")
 
-        # Register send broker
-        try:
-            self.messaging_broker = PikaBroker(
-                connector_configuration["config"],
-                self.config.connector.id,
-                connector_configuration["connector_user"]["id"],
-                self.api,
-            )
-        except ConnectionResetError as e:
-            self.logger.error(e)
-            self.stop()
-            return
-
-        # Start ping thread
-        self.ping = ConnectorPingHandler(
-            self.config.connector.id,
-            self.graphql_connector,
-            self.get_state,
-            self.set_state,
-            self.logger,
-        )
-        self.ping.start()
-
         self.logger.debug("Finished setting up connector")
 
     def _stop(self):
@@ -149,9 +138,9 @@ class Connector(object):
     def stop(self) -> None:
         self.logger.info("Shutting down!")
         self._stop()
-        self.ping.stop()
+        # self.ping.stop()
+        # self.messaging_broker.stop()
         self._unregister_connector()
-        self.messaging_broker.stop()
         self.logger.info("Connector stopped")
 
     # def _run(self) -> None:
@@ -406,57 +395,3 @@ class ConnectorGraphQLHandler:
                 }
             """
         return self.api.query(query, {"id": self.connector_id})
-
-
-class ConnectorPingHandler(threading.Thread):
-    def __init__(
-        self,
-        connector_id: str,
-        graphql_connector: ConnectorGraphQLHandler,
-        get_state: Callable,
-        set_state: Callable,
-        logger: logging.Logger,
-    ) -> None:
-        threading.Thread.__init__(self)
-        self.connector_id = connector_id
-        self.in_error = False
-        self.graphql_connector = graphql_connector
-        self.get_state = get_state
-        self.set_state = set_state
-        self.exit_event = threading.Event()
-        self.logger = logger
-
-    def ping(self) -> None:
-        while not self.exit_event.is_set():
-            try:
-                initial_state = self.get_state()
-                result = self.graphql_connector.ping(initial_state)
-                remote_state = (
-                    json.loads(result["connector_state"])
-                    if result["connector_state"] and len(result["connector_state"]) > 0
-                    else None
-                )
-                if initial_state != remote_state:
-                    self.set_state(result["connector_state"])
-                    self.logger.info(
-                        "%s",
-                        (
-                            "Connector state has been remotely reset to: "
-                            f'"{self.get_state()}"'
-                        ),
-                    )
-                if self.in_error:
-                    self.in_error = False
-                    self.logger.error("API Ping back to normal")
-            except Exception as e:
-                self.in_error = True
-                self.logger.error(f"Error pinging the API {e}")
-            self.exit_event.wait(40)
-
-    def run(self) -> None:
-        self.logger.info("Starting ping alive thread")
-        self.ping()
-
-    def stop(self) -> None:
-        self.logger.info("Preparing ping for clean shutdown")
-        self.exit_event.set()

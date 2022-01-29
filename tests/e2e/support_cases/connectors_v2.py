@@ -25,7 +25,13 @@ class ExternalImportConnectorv2(ExternalImportConnector, HttpMixin):
         ] = "https://github.com/oasis-open/cti-stix-common-objects/raw/main/objects/marking-definition/marking-definition--62fd3f9b-15f3-4ebc-802c-91fce9536bcf.json"
 
     def test_teardown(self, api_client):
-        api_client.marking_definition.delete(id="marking-definition--62fd3f9b-15f3-4ebc-802c-91fce9536bcf")
+        api_client.marking_definition.delete(
+            id="marking-definition--62fd3f9b-15f3-4ebc-802c-91fce9536bcf"
+        )
+
+    def test_verify(self, api_client):
+        # TODO
+        pass
 
     def _run(self):
         self.logger.info(self.config.app.url)
@@ -46,13 +52,7 @@ class ImportReportFileConnectorv2(InternalImportFileConnector):
     def __init__(self):
         super().__init__(ApplicationSettings)
 
-    def test_setup(self, api_client):
-        api_client.upload_file(
-            file_name="./tests/e2e/support_data/test_location.json",
-        )
-
-    def test_teardown(self, api_client):
-        api_client.stix_domain_object.delete(id="location--011a9d8e-75eb-475a-a861-6998e9968287")
+    ### Connector stuff
 
     def _run(self, data: Dict) -> str:
         file_content = self._download_import_file(data)
@@ -66,9 +66,29 @@ class ImportReportFileConnectorv2(InternalImportFileConnector):
         file_fetch = data["file_fetch"]
         file_uri = self.get_opencti_url() + file_fetch
         # file_name = os.path.basename(file_fetch)
-        file_content = self.api.fetch_opencti_file(file_uri, True)
+        self.logger.info(f"Importing the file {file_uri}")
+
+        file_content = self.api.fetch_opencti_file(file_uri)
 
         return file_content
+
+    ### TEST stuff
+
+    def test_setup(self, api_client):
+        api_client.upload_file(
+            file_name="./tests/e2e/support_data/test_location.json",
+        )
+
+    def test_teardown(self, api_client):
+        api_client.stix_domain_object.delete(
+            id="location--011a9d8e-75eb-475a-a861-6998e9968287"
+        )
+
+    def test_verify(self, api_client):
+        location = api_client.location.read(
+            id="location--011a9d8e-75eb-475a-a861-6998e9968287"
+        )
+        assert location, "Location was not found"
 
 
 class TestInternalImportFileConnectors:

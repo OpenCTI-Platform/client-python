@@ -167,6 +167,9 @@ class EntityTest:
     def stix_class(self):
         pass
 
+    def get_advanced_read_filter(self) -> Dict[str, str]:
+        return {}
+
 
 class IdentityTest(EntityTest):
     def own_class(self):
@@ -615,7 +618,7 @@ class StixCoreRelationshipTest(EntityTest):
         self.ttp1 = self.api_client.attack_pattern.create(
             name="Phishing: Spearphishing Attachment",
             description="Adversaries may send spearphishing emails with a malicious attachment in an attempt to gain access to victim systems. Spearphishing attachment is a specific variant of spearphishing. Spearphishing attachment is different from other forms of spearphishing in that it employs the use of malware attached to an email. All forms of spearphishing are electronically delivered social engineering targeted at a specific individual, company, or industry. In this scenario, adversaries attach a file to the spearphishing email and usually rely upon User Execution to gain execution. Spearphishing may also involve social engineering techniques, such as posing as a trusted source.",
-            x_mitre_id="T1566.001"
+            x_mitre_id="T1566.001",
         )
 
     def data(self) -> Dict:
@@ -718,7 +721,13 @@ class StixCyberObservableRelationshipTest(EntityTest):
         ]
 
     def get_filter(self) -> Dict[str, str]:
-        return {}
+        return {
+            "key": "fromId",
+            "values": [self.domain["id"]],
+        }
+
+    def get_advanced_read_filter(self) -> Dict[str, str]:
+        return {"fromId": self.ipv4["id"]}
 
 
 class StixSightingRelationshipTest(EntityTest):
@@ -726,7 +735,7 @@ class StixSightingRelationshipTest(EntityTest):
         self.ttp1 = self.api_client.attack_pattern.create(
             name="Phishing: Spearphishing Attachment",
             description="Adversaries may send spearphishing emails with a malicious attachment in an attempt to gain access to victim systems. Spearphishing attachment is a specific variant of spearphishing. Spearphishing attachment is different from other forms of spearphishing in that it employs the use of malware attached to an email. All forms of spearphishing are electronically delivered social engineering targeted at a specific individual, company, or industry. In this scenario, adversaries attach a file to the spearphishing email and usually rely upon User Execution to gain execution. Spearphishing may also involve social engineering techniques, such as posing as a trusted source.",
-            x_mitre_id="T1566.001"
+            x_mitre_id="T1566.001",
         )
 
         self.location = self.api_client.location.create(
@@ -784,11 +793,7 @@ class StixSightingRelationshipTest(EntityTest):
         ]
 
     def get_filter(self) -> Dict[str, str]:
-        return {
-            # TODO figure out why this test fails
-            # "key": "description",
-            # "values": self.data()["description"],
-        }
+        return {}
 
 
 class StixCyberObservableTest(EntityTest):
@@ -871,6 +876,12 @@ class ThreatActorTest(EntityTest):
     def own_class(self):
         return self.api_client.threat_actor
 
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "name",
+            "values": ["Evil Org"],
+        }
+
 
 class ToolTest(EntityTest):
     def data(self) -> Dict:
@@ -883,6 +894,12 @@ class ToolTest(EntityTest):
 
     def own_class(self):
         return self.api_client.tool
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "name",
+            "values": ["VNC"],
+        }
 
 
 class VulnerabilityTest(EntityTest):
@@ -901,3 +918,9 @@ class VulnerabilityTest(EntityTest):
 
     def own_class(self):
         return self.api_client.vulnerability
+
+    def get_filter(self) -> Dict[str, str]:
+        return {
+            "key": "name",
+            "values": ["CVE-2016-1234"],
+        }
