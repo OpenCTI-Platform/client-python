@@ -1,5 +1,6 @@
 black==20.8b1
 build
+isort
 pre-commit~=2.13
 pytest~=6.2
 pytest-cases~=3.6

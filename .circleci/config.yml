@@ -19,6 +19,9 @@ jobs:
           name: confirm black version
           command: black --version
       - run:
+          name: run isort check
+          command: isort --check-only .
+      - run:
           name: run black check
           command: black --check .
       - slack/notify:
@@ -134,11 +137,19 @@ workflows:
             tags:
               only: /.*/
       - tests:
+          name: tests_37
+          filters:
+            tags:
+              only: /.*/
+          version: "3.7"
+      - tests:
           name: tests_38
           filters:
             tags:
               only: /.*/
           version: "3.8"
+          requires:
+            - tests_37
       - tests:
           name: tests_39
           filters:
