@@ -68,7 +68,8 @@ jobs:
           command: pip3 install -r requirements.txt --user
       - run:
           name: build
-          command: python3 setup.py sdist bdist_wheel
+          command: >
+            SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)" python3 -m build
       - slack/notify:
           event: fail
           template: basic_fail_1
