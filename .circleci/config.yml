@@ -108,10 +108,9 @@ jobs:
           command: pip3 install twine
       - run:
           name: init .pypirc
-          command: |
-            echo -e "[pypi]" >> ~/.pypirc
-            echo -e "username = opencti" >> ~/.pypirc
-            echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
+          command: >
+            printf "[pypi]\nusername = opencti\npassword = %s\n"
+            "${PYPI_PASSWORD}" >> ~/.pypirc
       - run:
           name: upload to pypi
           command: twine upload dist/*
