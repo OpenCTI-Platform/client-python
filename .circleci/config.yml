@@ -1,5 +1,6 @@
+---
 version: 2.1
-orbs: 
+orbs:
   slack: circleci/slack@4.7.1
 jobs:
   ensure_formatting:
@@ -22,7 +23,7 @@ jobs:
           command: black --check .
       - slack/notify:
           event: fail
-          template: basic_fail_1          
+          template: basic_fail_1
   linter:
     docker:
       - image: alpine/flake8
@@ -34,7 +35,7 @@ jobs:
           command: flake8 --ignore=E,W ~/repo
       - slack/notify:
           event: fail
-          template: basic_fail_1          
+          template: basic_fail_1
   tests:
     parameters:
       version:
@@ -55,7 +56,7 @@ jobs:
           command: python3 -m pytest --cov=pycti
       - slack/notify:
           event: fail
-          template: basic_fail_1             
+          template: basic_fail_1
   build:
     working_directory: ~/opencti-client
     docker:
@@ -70,7 +71,7 @@ jobs:
           command: python3 setup.py sdist bdist_wheel
       - slack/notify:
           event: fail
-          template: basic_fail_1          
+          template: basic_fail_1
       - persist_to_workspace:
           root: ~/opencti-client
           paths:
@@ -103,17 +104,17 @@ jobs:
           command: twine upload dist/*
       - slack/notify:
           event: fail
-          template: basic_fail_1          
+          template: basic_fail_1
   notify_rolling:
     docker:
-      - image: 'cimg/base:stable'
+      - image: "cimg/base:stable"
     steps:
       - slack/notify:
           event: pass
           template: basic_success_1
   notify:
     docker:
-      - image: 'cimg/base:stable'
+      - image: "cimg/base:stable"
     steps:
       - slack/notify:
           event: pass
@@ -126,11 +127,11 @@ workflows:
       - ensure_formatting:
           filters:
             tags:
-              only: /.*/    
+              only: /.*/
       - linter:
           filters:
             tags:
-              only: /.*/    
+              only: /.*/
       - tests:
           name: tests_38
           filters:
@@ -174,4 +175,4 @@ workflows:
             - build
       - notify:
           requires:
-            - deploy    
+            - deploy
