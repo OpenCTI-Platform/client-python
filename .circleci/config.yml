@@ -25,6 +25,7 @@ jobs:
           name: run black check
           command: black --check .
       - slack/notify:
+          branch_pattern: master
           event: fail
           template: basic_fail_1
   linter:
@@ -37,6 +38,7 @@ jobs:
           name: flake8
           command: flake8 --ignore=E,W ~/repo
       - slack/notify:
+          branch_pattern: master
           event: fail
           template: basic_fail_1
   tests:
@@ -58,6 +60,7 @@ jobs:
           name: run pytest
           command: python3 -m pytest --cov=pycti
       - slack/notify:
+          branch_pattern: master
           event: fail
           template: basic_fail_1
   build:
@@ -83,6 +86,7 @@ jobs:
           command: >
             SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)" python3 -m build
       - slack/notify:
+          branch_pattern: master
           event: fail
           template: basic_fail_1
       - persist_to_workspace:
@@ -115,6 +119,7 @@ jobs:
           name: upload to pypi
           command: twine upload dist/*
       - slack/notify:
+          branch_pattern: master
           event: fail
           template: basic_fail_1
   notify_rolling:
