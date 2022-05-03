@@ -911,9 +911,7 @@ class OpenCTIStix2:
 
         # Indicators
         if "pattern" in entity and "hostname" in entity["pattern"]:
-            entity["pattern"] = entity["pattern"].replace(
-                "hostname", "domain-name"
-            )
+            entity["pattern"] = entity["pattern"].replace("hostname", "domain-name")
 
         # Flatten
         if "objectLabel" in entity and len(entity["objectLabel"]) > 0:

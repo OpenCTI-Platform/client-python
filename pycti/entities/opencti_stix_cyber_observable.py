@@ -1117,7 +1117,10 @@ class StixCyberObservable:
                     if "value" in observable_data
                     else None,
                 }
-            elif type == "Cryptocurrency-Wallet" or type == "X-OpenCTI-Cryptocurrency-Wallet":
+            elif (
+                type == "Cryptocurrency-Wallet"
+                or type == "X-OpenCTI-Cryptocurrency-Wallet"
+            ):
                 input_variables["CryptocurrencyWallet"] = {
                     "value": observable_data["value"]
                     if "value" in observable_data
