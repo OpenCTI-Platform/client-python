@@ -9,12 +9,9 @@ from pycti import (
 @fixture(scope="session")
 def api_client():
     return OpenCTIApiClient(
-        # "https://demo.opencti.io",
-        # "d1b42111-a7fb-4830-846a-6a91c16b0084",
-        # ssl_verify=True,
-        "https://opencti.ssh.local",
-        "18bd74e5-404c-4216-ac74-23de6249d690",
-        ssl_verify=False,
+        "https://demo.opencti.io",
+        "d1b42111-a7fb-4830-846a-6a91c16b0084",
+        ssl_verify=True,
     )
 
 @fixture(scope="session")
@@ -29,17 +26,6 @@ def opencti_splitter():
 @fixture(scope="session")
 def httpserver_listen_address():
     return "localhost", 8888
-
-
-@fixture(scope="session")
-def rabbit_mq_config():
-    return {
-        "host": "rabbitmq",
-        "pass": "EVOCuAGfhOEYmmt",
-        "port": 5672,
-        "use_ssl": False,
-        "user": "SjIHMjmnYyRtuDf",
-    }
 
 
 def pytest_addoption(parser):
