@@ -10,8 +10,8 @@ class ConnectorArguments:
 
 
 class ExecutionTypeEnum(str, Enum):
-    scheduled = 'scheduled'
-    triggered = 'triggered'
+    scheduled = "scheduled"
+    triggered = "triggered"
 
 
 # ---- Connector ----
@@ -35,15 +35,16 @@ class Connector(ConnectorBase):
 
 # ---- Connector State ----
 
+
 class State(str, Enum):
-    pending = 'pending'
-    running = 'running'
-    finished = 'finished'
+    pending = "pending"
+    running = "running"
+    finished = "finished"
 
 
 class Result(str, Enum):
-    success = 'success'
-    fail = 'fail'
+    success = "success"
+    fail = "fail"
 
 
 class ConnectorState(BaseModel):
@@ -68,6 +69,7 @@ class ConfigCreate(ConfigBase):
 class Config(ConfigBase):
     id: str
 
+
 # ---- Instance ----
 
 
@@ -80,6 +82,7 @@ class InstanceBase(BaseModel):
         json_encoders = {
             datetime: lambda v: v.timestamp(),
         }
+
 
 class Instance(InstanceBase):
     id: str
@@ -105,6 +108,7 @@ class Workflow(BaseModel):
 
 
 # ---- Run -----
+
 
 class JobStatus(BaseModel):
     id: str
@@ -148,4 +152,3 @@ class RunContainer(BaseModel):
     applicant_id: Optional[str]
     work_id: Optional[str]
     run_id: str
-

@@ -257,7 +257,6 @@ class OpenCTIStix2Splitter:
         return bundles
 
     @staticmethod
-
     def stix2_create_bundle(bundle_id, bundle_seq, items, use_json, event_version=None):
         """create a stix2 bundle with items
 

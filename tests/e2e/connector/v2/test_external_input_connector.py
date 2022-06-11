@@ -41,7 +41,6 @@ def external_import_connector(api_client, connector):
     x = threading.Thread(target=connector.process_broker_message, daemon=True)
     x.start()
 
-
     work_id = get_new_work_id(api_client, connector_id)
     api_client.work.wait_for_work_to_finish(work_id)
 

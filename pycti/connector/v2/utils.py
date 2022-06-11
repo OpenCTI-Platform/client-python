@@ -11,10 +11,10 @@ class ConnectorBaseConfig(BaseSettings):
     class Config:
         @classmethod
         def customise_sources(
-                cls,
-                init_settings,
-                env_settings,
-                file_secret_settings,
+            cls,
+            init_settings,
+            env_settings,
+            file_secret_settings,
         ):
             return (
                 init_settings,
@@ -27,14 +27,10 @@ class ConnectorBaseConfig(BaseSettings):
 
 def yml_config_setting(settings: BaseSettings) -> Dict[str, Any]:
     encoding = settings.__config__.env_file_encoding
-    path = Path('config.yml')
+    path = Path("config.yml")
     content = {}
     if path.exists():
-        with open(
-                path,
-                'r',
-                encoding=encoding
-        ) as f:
+        with open(path, "r", encoding=encoding) as f:
             content = yaml.safe_load(f)
     return content
 

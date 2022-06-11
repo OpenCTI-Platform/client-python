@@ -15,9 +15,11 @@ def api_client():
         ssl_verify=True,
     )
 
+
 @fixture(scope="session")
 def schedule_server():
     return "http://localhost:5000"
+
 
 @fixture(scope="session")
 def opencti_splitter():

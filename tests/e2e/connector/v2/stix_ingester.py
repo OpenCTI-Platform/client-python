@@ -32,9 +32,7 @@ class StixWorker(Connector):
     def run(self, bundle: Bundle, config: StixRunConfig) -> Bundle:
         print("Started stix worker")
         api = OpenCTIApiClient(
-            self.environment_config['opencti'],
-            config.token,
-            self.base_config.log_level
+            self.environment_config["opencti"], config.token, self.base_config.log_level
         )
         bundel = {
             "type": "bundle",
@@ -50,7 +48,7 @@ class StixWorker(Connector):
                     "pattern": "[file:hashes.md5 = 'd41d8cd98f00b204e9800998ecf8427e']",
                     "pattern_type": "stix",
                     "pattern_version": "2.1",
-                    "valid_from": "2020-06-24T15:04:40.048932Z"
+                    "valid_from": "2020-06-24T15:04:40.048932Z",
                 },
                 {
                     "type": "malware",
@@ -59,7 +57,7 @@ class StixWorker(Connector):
                     "created": "2020-06-24T14:53:20.156644Z",
                     "modified": "2020-06-24T14:53:20.156644Z",
                     "name": "Poison Ivy",
-                    "is_family": False
+                    "is_family": False,
                 },
                 {
                     "type": "relationship",
@@ -69,13 +67,11 @@ class StixWorker(Connector):
                     "modified": "2020-06-24T15:05:18.250605Z",
                     "relationship_type": "indicates",
                     "source_ref": "indicator--a862ff86-68d9-42e5-8095-cd80c040e112",
-                    "target_ref": "malware--389c934c-258c-44fb-ae4b-14c6c12270f6"
-                }
-            ]
+                    "target_ref": "malware--389c934c-258c-44fb-ae4b-14c6c12270f6",
+                },
+            ],
         }
-        api.stix2.import_bundle_from_json(
-            json.dumps(bundel), True
-        )
+        api.stix2.import_bundle_from_json(json.dumps(bundel), True)
         return bundle
 
 
@@ -93,7 +89,6 @@ class TestExternalImport(Connector):
             type=ConnectorType.EXTERNAL_IMPORT.value,
             queue="queue_test_external_import",
             config_schema=self.TestExternalImportRunConfig,
-
         )
         super().__init__(settings)
 

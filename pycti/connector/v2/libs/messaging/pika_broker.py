@@ -12,14 +12,16 @@ class PikaBroker(threading.Thread):
         threading.Thread.__init__(self)
         self.callback_function = callback_function
         self.broker_settings = broker_settings
-        pika_credentials = pika.PlainCredentials(broker_settings['user'], broker_settings['password'])
+        pika_credentials = pika.PlainCredentials(
+            broker_settings["user"], broker_settings["password"]
+        )
 
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
-                host=broker_settings['host'],
-                port=broker_settings['port'],
+                host=broker_settings["host"],
+                port=broker_settings["port"],
                 virtual_host="/",
-                credentials=pika_credentials
+                credentials=pika_credentials,
             )
         )
 
@@ -28,7 +30,9 @@ class PikaBroker(threading.Thread):
 
         self.channel.queue_declare(queue=queue, durable=True)
         self.channel.basic_qos(prefetch_count=1)
-        self.channel.basic_consume(queue=queue, on_message_callback=self.callback, auto_ack=True)
+        self.channel.basic_consume(
+            queue=queue, on_message_callback=self.callback, auto_ack=True
+        )
         try:
             self.channel.start_consuming()
             # self.channel.close()
