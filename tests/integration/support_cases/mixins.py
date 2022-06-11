@@ -2,7 +2,7 @@ from typing import List
 
 from pytest_httpserver import HTTPServer
 
-from pycti.connector_v2.libs.mixins.http import HttpMixin
+from pycti.connector.v2.libs.mixins.http import HttpMixin
 
 
 class SuccessMixinTests:
@@ -39,7 +39,7 @@ class HttpMixin404Test:
         return 404
 
     @staticmethod
-    def run(httpserver):
+    def run(httpserver: HTTPServer):
         http_mixin = HttpMixin()
 
         endpoint = "/en"
