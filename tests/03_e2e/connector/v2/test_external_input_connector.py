@@ -38,7 +38,7 @@ def external_import_connector(api_client, connector):
     # wait for worker to register thread
     time.sleep(60)
 
-    x = threading.Thread(target=connector.run, daemon=True)
+    x = threading.Thread(target=connector.process_broker_message, daemon=True)
     x.start()
 
 
@@ -48,7 +48,7 @@ def external_import_connector(api_client, connector):
     yield connector
 
     # Cleanup finished works
-    works = api_client.work.get_connector_works(connector.config.connector.id)
+    works = api_client.work.get_connector_works(connector.base_config.connector.id)
     for work in works:
         api_client.work.delete_work(work["id"])
 
@@ -84,7 +84,7 @@ def import_file_connector(api_client, connector):
     os.environ["CONNECTOR_EXTERNAL_IDENTITY"] = "123456789"
 
     connector = connector()
-    x = threading.Thread(target=connector.run, daemon=True)
+    x = threading.Thread(target=connector.process_broker_message, daemon=True)
     x.start()
 
     # wait for worker to register thread
@@ -102,7 +102,7 @@ def import_file_connector(api_client, connector):
     connector.test_teardown(api_client)
 
     # Cleanup finished works
-    works = api_client.work.get_connector_works(connector.config.connector.id)
+    works = api_client.work.get_connector_works(connector.base_config.connector.id)
     for work in works:
         api_client.work.delete_work(work["id"])
 

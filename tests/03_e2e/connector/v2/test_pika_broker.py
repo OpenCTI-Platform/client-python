@@ -3,7 +3,7 @@
 # import pytest
 # from unittest.mock import MagicMock
 # import pika
-# from pycti.connector_v2.libs.pika_broker import PikaBroker
+# from pycti.connector.v2.libs.pika_broker import PikaBroker
 #
 #
 # class GenericConsumer(object):
