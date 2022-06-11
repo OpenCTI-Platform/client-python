@@ -21,7 +21,7 @@ class ConnectorType(Enum):
 
 
 def get_logger(
-    name: str, logging_level: int = 20, logging_format: str = LOG_FORMAT
+    name: str, logging_level: str = "INFO", logging_format: str = LOG_FORMAT
 ) -> Any:
     logger = logging.getLogger(name)
     logger.setLevel(logging_level)
