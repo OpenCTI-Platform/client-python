@@ -1,17 +1,19 @@
 import os
 from typing import Dict, Any
 
-from pycti.connector_v2.connectors.connector import ApplicationSettings
-from pycti.connector_v2.connectors.external_import_connector import (
+# from pycti.connector.v2.connectors.connector import ApplicationSettings
+from pydantic import BaseModel
+
+from pycti.connector.v2.connectors.external_import_connector import (
     ExternalImportConnector,
 )
-from pycti.connector_v2.connectors.import_file_connector import (
+from pycti.connector.v2.connectors.import_file_connector import (
     InternalImportFileConnector,
 )
-from pycti.connector_v2.libs.mixins.http import HttpMixin
+from pycti.connector.v2.libs.mixins.http import HttpMixin
 
 
-class EIModel(ApplicationSettings):
+class EIModel(BaseModel):
     url: str
 
 
@@ -34,8 +36,8 @@ class ExternalImportConnectorv2(ExternalImportConnector, HttpMixin):
         pass
 
     def _run(self):
-        self.logger.info(self.config.app.url)
-        url = self.config.app.url
+        self.logger.info(self.base_config.app.url)
+        url = self.base_config.app.url
         content = self.get(url)
 
         # send data
@@ -44,7 +46,7 @@ class ExternalImportConnectorv2(ExternalImportConnector, HttpMixin):
 
 class TestExternalImportConnectors:
     @staticmethod
-    def case_external_import_connector_v2():
+    def case_external_import_connector():
         return ExternalImportConnectorv2
 
 
@@ -93,5 +95,5 @@ class ImportReportFileConnectorv2(InternalImportFileConnector):
 
 class TestInternalImportFileConnectors:
     @staticmethod
-    def case_internal_file_import_connector_v2():
+    def case_internal_file_import_connector():
         return ImportReportFileConnectorv2
