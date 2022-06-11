@@ -25,13 +25,12 @@ class StixCyberObservableTypes(Enum):
     USER_ACCOUNT = "User-Account"
     WINDOWS_REGISTRY_KEY = "Windows-Registry-Key"
     WINDOWS_REGISTRY_VALUE_TYPE = "Windows-Registry-Value-Type"
-    X509_V3_EXTENSIONS_TYPE = "X509-V3-Extensions-Type"
-    X_OPENCTI_HOSTNAME = "X-OpenCTI-Hostname"
-    X_OPENCTI_CRYPTOGRAPHIC_KEY = "X-OpenCTI-Cryptographic-Key"
-    X_OPENCTI_CRYPTOCURRENCY_WALLET = "X-OpenCTI-Cryptocurrency-Wallet"
-    X_OPENCTI_TEXT = "X-OpenCTI-Text"
-    X_OPENCTI_USER_AGENT = "X-OpenCTI-User-Agent"
-    X_OPENCTI_SIMPLE_OBSERVABLE = "X-OpenCTI-Simple-Observable"
+    HOSTNAME = "Hostname"
+    CRYPTOGRAPHIC_KEY = "Cryptographic-Key"
+    CRYPTOCURRENCY_WALLET = "Cryptocurrency-Wallet"
+    TEXT = "Text"
+    USER_AGENT = "User-Agent"
+    SIMPLE_OBSERVABLE = "Simple-Observable"
 
     @classmethod
     def has_value(cls, value):
@@ -79,7 +78,28 @@ class StixMetaTypes(Enum):
     MARKING_DEFINITION = "Marking-Definition"
     LABEL = "Label"
     EXTERNAL_REFERENCE = "External-Reference"
-    KILL_CHAIN_PHASE = "kill-chain-phase"
+    KILL_CHAIN_PHASE = "Kill-Chain-Phase"
+
+    @classmethod
+    def has_value(cls, value):
+        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
+        return value.lower() in lower_attr
+
+
+class MultipleStixCyberObservableRelationship(Enum):
+    OPERATING_SYSTEM = "operating-system"
+    CONTAINS = "contains"
+    RESOLVES_TO = "obs_resolves-to"
+    BELONGS_TO = "obs_belongs-to"
+    TO = "to"
+    CC = "cc"
+    BCC = "bcc"
+    ENCAPSULATES = "encapsulates"
+    OPENED_CONNECTION = "opened-connection"
+    CHILD = "child"
+    BODY_MULTIPART = "body-multipart"
+    VALUES = "values"
+    LINKED = "x_opencti_linked-to"
 
     @classmethod
     def has_value(cls, value):

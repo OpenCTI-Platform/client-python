@@ -1,0 +1,29 @@
+{
+  "objects": [
+    {
+      "first_observed": "2021-11-09T15:44:22.65Z" ,
+      "last_observed": "2021-11-09T15:44:23.65Z" ,
+      "number_observed": 1 ,
+      "objects": {
+        "0": {
+          "hashes": {
+            "MD5": "ad7b9c14083b52bc532fba5948342b98" ,
+            "SHA-1": "ee8cbf12d87c4d388f09b4f69bed2e91682920b5" ,
+            "SHA-256": "17f746d82695fa9b35493b41859d39d786d32b23a9d2e00f4011dec7a02402ae"
+          } ,
+          "name": "C:\\Users\\<USER>\\AppData\\Local\\libcqppj\\cmd.exe" ,
+          "size": 302592 ,
+          "mime_type": "application/octet-stream" ,
+          "type": "file"
+        }
+      } ,
+      "type": "observed-data" ,
+      "id": "observed-data--2a4ef65d-3ec8-4d52-b104-e7ca228246f9" ,
+      "created": "2021-11-09T15:44:22.659Z" ,
+      "modified": "2021-11-09T15:44:22.659Z"
+    }
+  ] ,
+  "type": "bundle" ,
+  "id": "bundle--a2b9a267-b457-424d-8696-834607976438" ,
+  "spec_version": "2.0"
+}

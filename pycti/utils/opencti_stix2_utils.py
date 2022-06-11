@@ -1,14 +1,25 @@
-import uuid
+from stix2 import EqualityComparisonExpression, ObjectPath, ObservationExpression
 
-from stix2 import (
-    CustomObject,
-    CustomObservable,
-    EqualityComparisonExpression,
-    ExternalReference,
-    ObjectPath,
-    ObservationExpression,
-    properties,
-)
+STIX_CYBER_OBSERVABLE_MAPPING = {
+    "autonomous-system": "Autonomous-System",
+    "directory": "Directory",
+    "domain-name": "Domain-Name",
+    "email-addr": "Email-Addr",
+    "file": "StixFile",
+    "email-message": "Email-Message",
+    "ipv4-addr": "IPv4-Addr",
+    "ipv6-addr": "IPv6-Addr",
+    "mac-addr": "Mac-Addr",
+    "mutex": "Mutex",
+    "network-traffic": "Network-Traffic",
+    "process": "Process",
+    "software": "Software",
+    "url": "Url",
+    "user-account": "User-Account",
+    "windows-registry-key": "Windows-Registry-Key",
+    "windows-registry-value-type": "Windows-Registry-Value-Type",
+    "hostname": "Hostname",
+}
 
 PATTERN_MAPPING = {
     "Autonomous-System": ["number"],
@@ -33,7 +44,7 @@ PATTERN_MAPPING = {
     "User-Account": ["acount_login"],
     "Windows-Registry-Key": ["key"],
     "Windows-Registry-Value-Type": ["name"],
-    "X-OpenCTI-Hostname": ["value"],
+    "Hostname": ["value"],
 }
 
 OBSERVABLES_VALUE_INT = [
@@ -44,6 +55,13 @@ OBSERVABLES_VALUE_INT = [
 
 
 class OpenCTIStix2Utils:
+    @staticmethod
+    def stix_observable_opencti_type(observable_type):
+        if observable_type in STIX_CYBER_OBSERVABLE_MAPPING:
+            return STIX_CYBER_OBSERVABLE_MAPPING[observable_type]
+        else:
+            return "Unknown"
+
     @staticmethod
     def create_stix_pattern(observable_type, observable_value):
         if observable_type in PATTERN_MAPPING:
@@ -68,62 +86,6 @@ class OpenCTIStix2Utils:
 
     @staticmethod
     def generate_random_stix_id(stix_type):
-        new_uuid = str(uuid.uuid1())
-        return stix_type + "--" + new_uuid
-
-
-@CustomObservable(
-    "x-opencti-simple-observable",
-    [
-        ("key", properties.StringProperty(required=True)),
-        ("value", properties.StringProperty(required=True)),
-        ("description", properties.StringProperty()),
-        (
-            "created_by_ref",
-            properties.ReferenceProperty(valid_types="identity", spec_version="2.1"),
-        ),
-        ("x_opencti_score", properties.IntegerProperty()),
-        ("x_opencti_create_indicator", properties.BooleanProperty()),
-        ("labels", properties.ListProperty(properties.StringProperty)),
-        ("external_references", properties.ListProperty(ExternalReference)),
-        (
-            "object_marking_refs",
-            properties.ListProperty(
-                properties.ReferenceProperty(
-                    valid_types="marking-definition", spec_version="2.1"
-                )
-            ),
-        ),
-    ],
-)
-class SimpleObservable:
-    pass
-
-
-@CustomObject(
-    "incident",
-    [
-        ("name", properties.StringProperty(required=True)),
-        ("description", properties.StringProperty()),
-        ("aliases", properties.ListProperty(contained=properties.StringProperty())),
-        ("first_seen", properties.TimestampProperty()),
-        ("last_seen", properties.TimestampProperty()),
-        ("objective", properties.StringProperty()),
-        (
-            "created_by_ref",
-            properties.ReferenceProperty(valid_types="identity", spec_version="2.1"),
-        ),
-        ("labels", properties.ListProperty(properties.StringProperty)),
-        ("external_references", properties.ListProperty(ExternalReference)),
-        (
-            "object_marking_refs",
-            properties.ListProperty(
-                properties.ReferenceProperty(
-                    valid_types="marking-definition", spec_version="2.1"
-                )
-            ),
-        ),
-    ],
-)
-class StixIncident:
-    pass
+        raise ValueError(
+            "This function should not be used anymore, please use the generate_id function for SDO or proper SCO constructor"
+        )

@@ -1,5 +1,10 @@
 # coding: utf-8
 
+import datetime
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
+
 
 class StixCoreRelationship:
     def __init__(self, opencti):
@@ -44,7 +49,7 @@ class StixCoreRelationship:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -181,10 +186,10 @@ class StixCoreRelationship:
                 }
                 ... on Incident {
                     name
-                }         
+                }
                 ... on StixCyberObservable {
                     observable_value
-                }                       
+                }
                 ... on StixCoreRelationship {
                     standard_id
                     spec_version
@@ -268,7 +273,7 @@ class StixCoreRelationship:
                 }
                 ... on StixCyberObservable {
                     observable_value
-                }                
+                }
                 ... on StixCoreRelationship {
                     standard_id
                     spec_version
@@ -277,6 +282,32 @@ class StixCoreRelationship:
                 }
             }
         """
+
+    @staticmethod
+    def generate_id(
+        relationship_type, source_ref, target_ref, start_time=None, stop_time=None
+    ):
+        if isinstance(start_time, datetime.datetime):
+            start_time = start_time.isoformat()
+        if isinstance(stop_time, datetime.datetime):
+            stop_time = stop_time.isoformat()
+        if start_time is not None and stop_time is not None:
+            data = {
+                "relationship_type": relationship_type,
+                "source_ref": source_ref,
+                "target_ref": target_ref,
+                "start_time": start_time,
+                "stop_time": stop_time,
+            }
+        else:
+            data = {
+                "relationship_type": relationship_type,
+                "source_ref": source_ref,
+                "target_ref": target_ref,
+            }
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "relationship--" + id
 
     """
         List stix_core_relationship objects
@@ -327,7 +358,7 @@ class StixCoreRelationship:
         )
         query = (
             """
-                query StixCoreRelationships($elementId: String, $fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode) {
+                query StixCoreRelationships($elementId: [String], $fromId: [String], $fromTypes: [String], $toId: [String], $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode) {
                     stixCoreRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {
@@ -501,7 +532,13 @@ class StixCoreRelationship:
 
         self.opencti.log(
             "info",
-            "Creating stix_core_relationship {" + from_id + ", " + to_id + "}.",
+            "Creating stix_core_relationship '"
+            + relationship_type
+            + "' {"
+            + from_id
+            + ", "
+            + to_id
+            + "}.",
         )
         query = """
                 mutation StixCoreRelationshipAdd($input: StixCoreRelationshipAddInput!) {

@@ -5,17 +5,25 @@ import datetime
 import json
 import os
 import uuid
-from typing import List, Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import datefinder
 import dateutil.parser
 import pytz
 
 from pycti.entities.opencti_identity import Identity
-from pycti.utils.constants import IdentityTypes, LocationTypes, StixCyberObservableTypes
+from pycti.utils.constants import (
+    IdentityTypes,
+    LocationTypes,
+    MultipleStixCyberObservableRelationship,
+    StixCyberObservableTypes,
+)
 from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
-from pycti.utils.opencti_stix2_utils import OBSERVABLES_VALUE_INT
+from pycti.utils.opencti_stix2_utils import (
+    OBSERVABLES_VALUE_INT,
+    STIX_CYBER_OBSERVABLE_MAPPING,
+)
 
 datefinder.ValueError = ValueError, OverflowError
 utc = pytz.UTC
@@ -194,12 +202,12 @@ class OpenCTIStix2:
         :return: list of imported stix2 objects
         :rtype: List
         """
-        self.opencti.set_retry_number(retry_number)
         data = json.loads(json_data)
         return self.import_bundle(
             data,
             update,
             types,
+            retry_number,
         )
 
     def resolve_author(self, title: str) -> Optional[Identity]:
@@ -274,6 +282,13 @@ class OpenCTIStix2:
             created_by_id = stix_object["created_by_ref"]
         elif "x_opencti_created_by_ref" in stix_object:
             created_by_id = stix_object["x_opencti_created_by_ref"]
+        elif (
+            self.opencti.get_attribute_in_extension("created_by_ref", stix_object)
+            is not None
+        ):
+            created_by_id = self.opencti.get_attribute_in_extension(
+                "created_by_ref", stix_object
+            )
         # Object Marking Refs
         object_marking_ids = (
             stix_object["object_marking_refs"]
@@ -285,29 +300,41 @@ class OpenCTIStix2:
         if "labels" in stix_object:
             for label in stix_object["labels"]:
                 if "label_" + label in self.mapping_cache:
-                    label_id = self.mapping_cache["label_" + label]
+                    label_data = self.mapping_cache["label_" + label]
                 else:
-                    label_id = self.opencti.label.create(value=label)["id"]
-                if label_id is not None:
-                    object_label_ids.append(label_id)
+                    label_data = self.opencti.label.create(value=label)
+                if label_data is not None and "id" in label_data:
+                    self.mapping_cache["label_" + label] = label_data
+                    object_label_ids.append(label_data["id"])
         elif "x_opencti_labels" in stix_object:
             for label in stix_object["x_opencti_labels"]:
                 if "label_" + label in self.mapping_cache:
-                    label_id = self.mapping_cache["label_" + label]
+                    label_data = self.mapping_cache["label_" + label]
                 else:
-                    label_id = self.opencti.label.create(value=label)["id"]
-                if label_id is not None:
-                    object_label_ids.append(label_id)
+                    label_data = self.opencti.label.create(value=label)
+                if label_data is not None and "id" in label_data:
+                    self.mapping_cache["label_" + label] = label_data
+                    object_label_ids.append(label_data["id"])
+        elif self.opencti.get_attribute_in_extension("labels", stix_object) is not None:
+            for label in self.opencti.get_attribute_in_extension("labels", stix_object):
+                if "label_" + label in self.mapping_cache:
+                    label_data = self.mapping_cache["label_" + label]
+                else:
+                    label_data = self.opencti.label.create(value=label)
+                if label_data is not None and "id" in label_data:
+                    self.mapping_cache["label_" + label] = label_data
+                    object_label_ids.append(label_data["id"])
         elif "x_opencti_tags" in stix_object:
             for tag in stix_object["x_opencti_tags"]:
                 label = tag["value"]
                 color = tag["color"] if "color" in tag else None
                 if "label_" + label in self.mapping_cache:
-                    label_id = self.mapping_cache["label_" + label]
+                    label_data = self.mapping_cache["label_" + label]
                 else:
-                    label_id = self.opencti.label.create(value=label, color=color)["id"]
-                if label_id is not None:
-                    object_label_ids.append(label_id)
+                    label_data = self.opencti.label.create(value=label, color=color)
+                if label_data is not None and "id" in label_data:
+                    self.mapping_cache["label_" + label] = label_data
+                    object_label_ids.append(label_data["id"])
         # Kill Chain Phases
         kill_chain_phases_ids = []
         if "kill_chain_phases" in stix_object:
@@ -321,10 +348,68 @@ class OpenCTIStix2:
                         + kill_chain_phase["phase_name"]
                     ]
                 else:
+                    if (
+                        "x_opencti_order" not in kill_chain_phase
+                        and self.opencti.get_attribute_in_extension(
+                            "order", kill_chain_phase
+                        )
+                        is not None
+                    ):
+                        kill_chain_phase[
+                            "x_opencti_order"
+                        ] = self.opencti.get_attribute_in_extension(
+                            "order", kill_chain_phase
+                        )
                     kill_chain_phase = self.opencti.kill_chain_phase.create(
                         kill_chain_name=kill_chain_phase["kill_chain_name"],
                         phase_name=kill_chain_phase["phase_name"],
-                        phase_order=kill_chain_phase["x_opencti_order"]
+                        x_opencti_order=kill_chain_phase["x_opencti_order"]
+                        if "x_opencti_order" in kill_chain_phase
+                        else 0,
+                        stix_id=kill_chain_phase["id"]
+                        if "id" in kill_chain_phase
+                        else None,
+                    )
+                    self.mapping_cache[
+                        kill_chain_phase["kill_chain_name"]
+                        + kill_chain_phase["phase_name"]
+                    ] = {
+                        "id": kill_chain_phase["id"],
+                        "type": kill_chain_phase["entity_type"],
+                    }
+                kill_chain_phases_ids.append(kill_chain_phase["id"])
+        elif (
+            self.opencti.get_attribute_in_extension("kill_chain_phases", stix_object)
+            is not None
+        ):
+            for kill_chain_phase in self.opencti.get_attribute_in_extension(
+                "kill_chain_phases", stix_object
+            ):
+                if (
+                    kill_chain_phase["kill_chain_name"] + kill_chain_phase["phase_name"]
+                    in self.mapping_cache
+                ):
+                    kill_chain_phase = self.mapping_cache[
+                        kill_chain_phase["kill_chain_name"]
+                        + kill_chain_phase["phase_name"]
+                    ]
+                else:
+                    if (
+                        "x_opencti_order" not in kill_chain_phase
+                        and self.opencti.get_attribute_in_extension(
+                            "order", kill_chain_phase
+                        )
+                        is not None
+                    ):
+                        kill_chain_phase[
+                            "x_opencti_order"
+                        ] = self.opencti.get_attribute_in_extension(
+                            "order", kill_chain_phase
+                        )
+                    kill_chain_phase = self.opencti.kill_chain_phase.create(
+                        kill_chain_name=kill_chain_phase["kill_chain_name"],
+                        phase_name=kill_chain_phase["phase_name"],
+                        x_opencti_order=kill_chain_phase["x_opencti_order"]
                         if "x_opencti_order" in kill_chain_phase
                         else 0,
                         stix_id=kill_chain_phase["id"]
@@ -348,20 +433,29 @@ class OpenCTIStix2:
         external_references_ids = []
         if "external_references" in stix_object:
             for external_reference in stix_object["external_references"]:
-                if "url" in external_reference and "source_name" in external_reference:
-                    url = external_reference["url"]
-                    source_name = external_reference["source_name"]
-                else:
+                url = external_reference["url"] if "url" in external_reference else None
+                source_name = (
+                    external_reference["source_name"]
+                    if "source_name" in external_reference
+                    else None
+                )
+                external_id = (
+                    external_reference["external_id"]
+                    if "external_id" in external_reference
+                    else None
+                )
+                generated_ref_id = self.opencti.external_reference.generate_id(
+                    url, source_name, external_id
+                )
+                if generated_ref_id is None:
                     continue
-                if url in self.mapping_cache:
-                    external_reference_id = self.mapping_cache[url]["id"]
+                if generated_ref_id in self.mapping_cache:
+                    external_reference_id = self.mapping_cache[generated_ref_id]
                 else:
                     external_reference_id = self.opencti.external_reference.create(
                         source_name=source_name,
                         url=url,
-                        external_id=external_reference["external_id"]
-                        if "external_id" in external_reference
-                        else None,
+                        external_id=external_id,
                         description=external_reference["description"]
                         if "description" in external_reference
                         else None,
@@ -374,20 +468,29 @@ class OpenCTIStix2:
                             data=base64.b64decode(file["data"]),
                             mime_type=file["mime_type"],
                         )
-                self.mapping_cache[url] = {"id": external_reference_id}
-                external_references_ids.append(external_reference_id)
                 if (
-                    stix_object["type"]
-                    in [
-                        "threat-actor",
-                        "intrusion-set",
-                        "campaign",
-                        "incident",
-                        "malware",
-                        "relationship",
-                    ]
-                    and (types is not None and "external-reference-as-report" in types)
+                    self.opencti.get_attribute_in_extension("files", external_reference)
+                    is not None
                 ):
+                    for file in self.opencti.get_attribute_in_extension(
+                        "files", external_reference
+                    ):
+                        self.opencti.external_reference.add_file(
+                            id=external_reference_id,
+                            file_name=file["name"],
+                            data=base64.b64decode(file["data"]),
+                            mime_type=file["mime_type"],
+                        )
+                self.mapping_cache[generated_ref_id] = generated_ref_id
+                external_references_ids.append(external_reference_id)
+                if stix_object["type"] in [
+                    "threat-actor",
+                    "intrusion-set",
+                    "campaign",
+                    "incident",
+                    "malware",
+                    "relationship",
+                ] and (types is not None and "external-reference-as-report" in types):
                     # Add a corresponding report
                     # Extract date
                     try:
@@ -543,14 +646,6 @@ class OpenCTIStix2:
             "vulnerability": self.opencti.vulnerability.import_from_stix2,
             "incident": self.opencti.incident.import_from_stix2,
         }
-
-        # TODO: Remove this, compatibility with V3
-        if "x_opencti_identity_type" in stix_object and LocationTypes.has_value(
-            stix_object["x_opencti_identity_type"]
-        ):
-            stix_object["id"] = stix_object["id"].replace("identity", "location")
-            stix_object["type"] = "location"
-
         do_import = importer.get(
             stix_object["type"],
             lambda **kwargs: self.unknown_type(stix_object),
@@ -587,57 +682,6 @@ class OpenCTIStix2:
                         id=reports[external_reference_id]["id"],
                         stixObjectOrStixRelationshipId=stix_object_result["id"],
                     )
-            # Add object refs
-            for object_refs_id in object_refs_ids:
-                try:
-                    if stix_object_result["entity_type"] == "Report":
-                        self.opencti.report.add_stix_object_or_stix_relationship(
-                            id=stix_object_result["id"],
-                            stixObjectOrStixRelationshipId=object_refs_id,
-                        )
-                    elif stix_object_result["entity_type"] == "Observed-Data":
-                        self.opencti.observed_data.add_stix_object_or_stix_relationship(
-                            id=stix_object_result["id"],
-                            stixObjectOrStixRelationshipId=object_refs_id,
-                        )
-                    elif stix_object_result["entity_type"] == "Note":
-                        self.opencti.note.add_stix_object_or_stix_relationship(
-                            id=stix_object_result["id"],
-                            stixObjectOrStixRelationshipId=object_refs_id,
-                        )
-                    elif stix_object_result["entity_type"] == "Opinion":
-                        self.opencti.opinion.add_stix_object_or_stix_relationship(
-                            id=stix_object_result["id"],
-                            stixObjectOrStixRelationshipId=object_refs_id,
-                        )
-                    if (
-                        object_refs_id in self.mapping_cache
-                        and "observables" in self.mapping_cache[object_refs_id]
-                        and self.mapping_cache[object_refs_id] is not None
-                        and self.mapping_cache[object_refs_id]["observables"]
-                        is not None
-                        and len(self.mapping_cache[object_refs_id]["observables"]) > 0
-                    ):
-                        for observable_ref in self.mapping_cache[object_refs_id][
-                            "observables"
-                        ]:
-                            if stix_object_result["entity_type"] == "Report":
-                                self.opencti.report.add_stix_object_or_stix_relationship(
-                                    id=stix_object_result["id"],
-                                    stixObjectOrStixRelationshipId=observable_ref["id"],
-                                )
-                            elif stix_object_result["entity_type"] == "Note":
-                                self.opencti.note.add_stix_object_or_stix_relationship(
-                                    id=stix_object_result["id"],
-                                    stixObjectOrStixRelationshipId=observable_ref["id"],
-                                )
-                            elif stix_object_result["entity_type"] == "Opinion":
-                                self.opencti.opinion.add_stix_object_or_stix_relationship(
-                                    id=stix_object_result["id"],
-                                    stixObjectOrStixRelationshipId=observable_ref["id"],
-                                )
-                except:
-                    self.opencti.log("error", "Missing reference " + object_refs_id)
             # Add files
             if "x_opencti_files" in stix_object:
                 for file in stix_object["x_opencti_files"]:
@@ -647,7 +691,19 @@ class OpenCTIStix2:
                         data=base64.b64decode(file["data"]),
                         mime_type=file["mime_type"],
                     )
-
+            if (
+                self.opencti.get_attribute_in_extension("files", stix_object)
+                is not None
+            ):
+                for file in self.opencti.get_attribute_in_extension(
+                    "files", stix_object
+                ):
+                    self.opencti.stix_domain_object.add_file(
+                        id=stix_object_result["id"],
+                        file_name=file["name"],
+                        data=base64.b64decode(file["data"]),
+                        mime_type=file["mime_type"],
+                    )
         return stix_object_results
 
     def import_observable(
@@ -673,7 +729,7 @@ class OpenCTIStix2:
             "external_references_ids": external_references_ids,
             "reports": reports,
         }
-        if stix_object["type"] == "x-opencti-simple-observable":
+        if stix_object["type"] == "simple-observable":
             stix_observable_result = self.opencti.stix_cyber_observable.create(
                 simple_observable_id=stix_object["id"],
                 simple_observable_key=stix_object["key"],
@@ -730,6 +786,19 @@ class OpenCTIStix2:
                         data=base64.b64decode(file["data"]),
                         mime_type=file["mime_type"],
                     )
+            if (
+                self.opencti.get_attribute_in_extension("files", stix_object)
+                is not None
+            ):
+                for file in self.opencti.get_attribute_in_extension(
+                    "files", stix_object
+                ):
+                    self.opencti.stix_cyber_observable.add_file(
+                        id=stix_observable_result["id"],
+                        file_name=file["name"],
+                        data=base64.b64decode(file["data"]),
+                        mime_type=file["mime_type"],
+                    )
             if "id" in stix_object:
                 self.mapping_cache[stix_object["id"]] = {
                     "id": stix_observable_result["id"],
@@ -739,6 +808,28 @@ class OpenCTIStix2:
                 "id": stix_observable_result["id"],
                 "type": stix_observable_result["entity_type"],
             }
+            # Iterate over refs to create appropriate relationships
+            for key in stix_object.keys():
+                if key not in [
+                    "created_by_ref",
+                    "object_marking_refs",
+                    "x_opencti_created_by_ref",
+                ]:
+                    if key.endswith("_ref"):
+                        relationship_type = key.replace("_ref", "").replace("_", "-")
+                        self.opencti.stix_cyber_observable_relationship.create(
+                            fromId=stix_observable_result["id"],
+                            toId=stix_object[key],
+                            relationship_type=relationship_type,
+                        )
+                    elif key.endswith("_refs"):
+                        relationship_type = key.replace("_refs", "").replace("_", "-")
+                        for value in stix_object[key]:
+                            self.opencti.stix_cyber_observable_relationship.create(
+                                fromId=stix_observable_result["id"],
+                                toId=value,
+                                relationship_type=relationship_type,
+                            )
         else:
             return None
 
@@ -895,6 +986,14 @@ class OpenCTIStix2:
                     )
                     return None
         date = datetime.datetime.today().strftime("%Y-%m-%dT%H:%M:%SZ")
+        if (
+            "x_opencti_negative" not in stix_sighting
+            and self.opencti.get_attribute_in_extension("negative", stix_sighting)
+            is not None
+        ):
+            stix_sighting[
+                "x_opencti_negative"
+            ] = self.opencti.get_attribute_in_extension("negative", stix_sighting)
         stix_sighting_result = self.opencti.stix_sighting_relationship.create(
             fromId=final_from_id,
             toId=final_to_id,
@@ -965,10 +1064,8 @@ class OpenCTIStix2:
             entity["entity_type"] = "File"
 
         # Indicators
-        if "pattern" in entity and "x-opencti-hostname" in entity["pattern"]:
-            entity["pattern"] = entity["pattern"].replace(
-                "x-opencti-hostname", "domain-name"
-            )
+        if "pattern" in entity and "hostname" in entity["pattern"]:
+            entity["pattern"] = entity["pattern"].replace("hostname", "domain-name")
 
         # Flatten
         if "objectLabel" in entity and len(entity["objectLabel"]) > 0:
@@ -1105,7 +1202,6 @@ class OpenCTIStix2:
             for key in entity_copy.keys():
                 if key.startswith("x_opencti_"):
                     del entity[key]
-
         # ObjectMarkingRefs
         if (
             not no_custom_attributes
@@ -1229,6 +1325,41 @@ class OpenCTIStix2:
             del entity["importFiles"]
             del entity["importFilesIds"]
 
+        # StixCyberObservable
+        if entity["type"] in STIX_CYBER_OBSERVABLE_MAPPING:
+            stix_observable_relationships = (
+                self.opencti.stix_cyber_observable_relationship.list(
+                    fromId=entity["x_opencti_id"]
+                )
+            )
+            for stix_observable_relationship in stix_observable_relationships:
+                if "standard_id" in stix_observable_relationship["to"]:
+                    if MultipleStixCyberObservableRelationship.has_value(
+                        stix_observable_relationship["relationship_type"]
+                    ):
+                        key = (
+                            stix_observable_relationship["relationship_type"]
+                            .replace("obs_", "")
+                            .replace("-", "_")
+                            + "_refs"
+                        )
+                        if key in entity:
+                            entity[key].append(
+                                stix_observable_relationship["to"]["standard_id"]
+                            )
+                        else:
+                            entity[key] = [
+                                stix_observable_relationship["to"]["standard_id"]
+                            ]
+                    else:
+                        key = (
+                            stix_observable_relationship["relationship_type"]
+                            .replace("obs_", "")
+                            .replace("-", "_")
+                            + "_ref"
+                        )
+                        entity[key] = stix_observable_relationship["to"]["standard_id"]
+
         result.append(entity)
 
         if mode == "simple":
@@ -1237,6 +1368,30 @@ class OpenCTIStix2:
             uuids = [entity["id"]]
             for x in result:
                 uuids.append(x["id"])
+            # Get extra refs
+            for key in entity.keys():
+                if entity["type"] in STIX_CYBER_OBSERVABLE_MAPPING:
+                    if key.endswith("_ref"):
+                        type = entity[key].split("--")[0]
+                        if type in STIX_CYBER_OBSERVABLE_MAPPING:
+                            objects_to_get.append(
+                                {
+                                    "id": entity[key],
+                                    "entity_type": "Stix-Cyber-Observable",
+                                    "parent_types": ["Styx-Cyber-Observable"],
+                                }
+                            )
+                    elif key.endswith("_refs"):
+                        for value in entity[key]:
+                            type = value.split("--")[0]
+                            if type in STIX_CYBER_OBSERVABLE_MAPPING:
+                                objects_to_get.append(
+                                    {
+                                        "id": value,
+                                        "entity_type": "Stix-Cyber-Observable",
+                                        "parent_types": ["Styx-Cyber-Observable"],
+                                    }
+                                )
             # Get extra relations (from)
             stix_core_relationships = self.opencti.stix_core_relationship.list(
                 elementId=entity["x_opencti_id"]
@@ -1308,6 +1463,7 @@ class OpenCTIStix2:
                         + stix_sighting_relationship["id"]
                         + '" are less than max definition, not exporting the relation AND the target entity.',
                     )
+
             # Export
             reader = {
                 "Attack-Pattern": self.opencti.attack_pattern.read,
@@ -1328,21 +1484,29 @@ class OpenCTIStix2:
                 "Vulnerability": self.opencti.vulnerability.read,
                 "Incident": self.opencti.incident.read,
                 "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
-                "stix_core_relationship": self.opencti.stix_core_relationship.read,
+                "stix-core-relationship": self.opencti.stix_core_relationship.read,
+                "stix-sighting-relationship": self.opencti.stix_sighting_relationship.read,
             }
             # Get extra objects
             for entity_object in objects_to_get:
                 # Map types
                 if entity_object["entity_type"] == "StixFile":
                     entity_object["entity_type"] = "File"
+
                 if IdentityTypes.has_value(entity_object["entity_type"]):
                     entity_object["entity_type"] = "Identity"
-                if LocationTypes.has_value(entity_object["entity_type"]):
+                elif LocationTypes.has_value(entity_object["entity_type"]):
                     entity_object["entity_type"] = "Location"
-                if StixCyberObservableTypes.has_value(entity_object["entity_type"]):
+                elif StixCyberObservableTypes.has_value(entity_object["entity_type"]):
                     entity_object["entity_type"] = "Stix-Cyber-Observable"
-                if "relationship_type" in entity_object:
-                    entity_object["entity_type"] = "stix_core_relationship"
+                elif "stix-core-relationship" in entity_object["parent_types"]:
+                    entity_object["entity_type"] = "stix-core-relationship"
+                elif (
+                    "stix-cyber-observable-relationship"
+                    in entity_object["parent_types"]
+                ):
+                    entity_object["entity_type"] = "stix-cyber-observable-relationship"
+
                 do_read = reader.get(
                     entity_object["entity_type"],
                     lambda **kwargs: self.unknown_type(
@@ -1464,6 +1628,7 @@ class OpenCTIStix2:
             "Vulnerability": self.opencti.vulnerability.read,
             "Incident": self.opencti.incident.read,
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
+            "stix-core-relationship": self.opencti.stix_core_relationship.read,
         }
         if StixCyberObservableTypes.has_value(entity_type):
             entity_type = "Stix-Cyber-Observable"
@@ -1493,6 +1658,10 @@ class OpenCTIStix2:
         order_mode: str = None,
         max_marking_definition: Dict = None,
         types: List = None,
+        fromId: str = None,
+        toId: str = None,
+        fromTypes: [str] = None,
+        toTypes: [str] = None,
     ) -> Dict:
         max_marking_definition_entity = (
             self.opencti.marking_definition.read(id=max_marking_definition)
@@ -1549,6 +1718,8 @@ class OpenCTIStix2:
             "Vulnerability": self.opencti.vulnerability.list,
             "Incident": self.opencti.incident.list,
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
+            "stix-sighting-relationship": self.opencti.stix_sighting_relationship.list,
+            "stix-core-relationship": self.opencti.stix_core_relationship.list,
         }
         do_list = lister.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1560,6 +1731,10 @@ class OpenCTIStix2:
             orderMode=order_mode,
             types=types,
             getAll=True,
+            fromId=fromId,
+            toId=toId,
+            fromTypes=fromTypes,
+            toTypes=toTypes,
         )
         if entities_list is not None:
             uuids = []
@@ -1577,7 +1752,11 @@ class OpenCTIStix2:
         return bundle
 
     def import_bundle(
-        self, stix_bundle: Dict, update: bool = False, types: List = None
+        self,
+        stix_bundle: Dict,
+        update: bool = False,
+        types: List = None,
+        retry_number: int = None,
     ) -> List:
         # Check if the bundle is correctly formatted
         if "type" not in stix_bundle or stix_bundle["type"] != "bundle":
@@ -1589,9 +1768,13 @@ class OpenCTIStix2:
             if "x_opencti_event_version" in stix_bundle
             else None
         )
-
+        if retry_number is not None:
+            self.opencti.set_retry_number(retry_number)
         stix2_splitter = OpenCTIStix2Splitter()
-        bundles = stix2_splitter.split_bundle(stix_bundle, False, event_version)
+        try:
+            bundles = stix2_splitter.split_bundle(stix_bundle, False, event_version)
+        except RecursionError:
+            bundles = [stix_bundle]
         # Import every elements in a specific order
         imported_elements = []
 
@@ -1625,11 +1808,41 @@ class OpenCTIStix2:
                                         item, observed_data_ref, to_id, update
                                     )
                 elif item["type"] == "label":
-                    self.opencti.label.create(**item)
+                    stix_ids = self.opencti.get_attribute_in_extension("stix_ids", item)
+                    self.opencti.label.create(
+                        stix_id=item["id"],
+                        value=item["value"],
+                        color=item["color"],
+                        x_opencti_stix_ids=stix_ids,
+                        update=update,
+                    )
                 elif item["type"] == "external-reference":
-                    self.opencti.external_reference.create(**item)
+                    stix_ids = self.opencti.get_attribute_in_extension("stix_ids", item)
+                    self.opencti.external_reference.create(
+                        stix_id=item["id"],
+                        source_name=item["source_name"]
+                        if "source_name" in item
+                        else None,
+                        url=item["url"] if "url" in item else None,
+                        external_id=item["external_id"]
+                        if "external_id" in item
+                        else None,
+                        description=item["description"]
+                        if "description" in item
+                        else None,
+                        x_opencti_stix_ids=stix_ids,
+                        update=update,
+                    )
                 elif item["type"] == "kill-chain-phase":
-                    self.opencti.kill_chain_phase.create(**item)
+                    stix_ids = self.opencti.get_attribute_in_extension("stix_ids", item)
+                    self.opencti.kill_chain_phase.create(
+                        stix_id=item["id"],
+                        kill_chain_name=item["kill_chain_name"],
+                        phase_name=item["phase_name"],
+                        x_opencti_order=item["order"] if "order" in item else 0,
+                        x_opencti_stix_ids=stix_ids,
+                        update=update,
+                    )
                 elif StixCyberObservableTypes.has_value(item["type"]):
                     if types is None or len(types) == 0:
                         self.import_observable(item, update, types)
@@ -1659,6 +1872,19 @@ class OpenCTIStix2:
                         elif item["type"] == "location":
                             if "x_opencti_location_type" in item:
                                 if item["x_opencti_location_type"].lower() in types:
+                                    self.import_object(item, update, types)
+                            elif (
+                                self.opencti.get_attribute_in_extension(
+                                    "location_type", item
+                                )
+                                is not None
+                            ):
+                                if (
+                                    self.opencti.get_attribute_in_extension(
+                                        "location_type", item
+                                    ).lower()
+                                    in types
+                                ):
                                     self.import_object(item, update, types)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
 

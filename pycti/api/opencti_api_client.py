@@ -1,15 +1,15 @@
 # coding: utf-8
+import base64
 import datetime
 import io
 import json
 import logging
-import base64
 from typing import Union
 
 import magic
-from pythonjsonlogger import jsonlogger
 import requests
 import urllib3
+from pythonjsonlogger import jsonlogger
 
 from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_work import OpenCTIApiWork
@@ -519,6 +519,9 @@ class OpenCTIApiClient:
         if "opinions" in data:
             data["opinions"] = self.process_multiple(data["opinions"])
             data["opinionsIds"] = self.process_multiple_ids(data["opinions"])
+        if "observedData" in data:
+            data["observedData"] = self.process_multiple(data["observedData"])
+            data["observedDataIds"] = self.process_multiple_ids(data["observedData"])
         if "killChainPhases" in data:
             data["killChainPhases"] = self.process_multiple(data["killChainPhases"])
             data["killChainPhasesIds"] = self.process_multiple_ids(
@@ -587,3 +590,103 @@ class OpenCTIApiClient:
                 "[upload] Missing parameters: file_name or data",
             )
             return None
+
+    def upload_pending_file(self, **kwargs):
+        """upload a file to OpenCTI API
+
+        :param `**kwargs`: arguments for file upload (required: `file_name` and `data`)
+        :return: returns the query respons for the file upload
+        :rtype: dict
+        """
+
+        file_name = kwargs.get("file_name", None)
+        data = kwargs.get("data", None)
+        mime_type = kwargs.get("mime_type", "text/plain")
+        entity_id = kwargs.get("entity_id", None)
+
+        if file_name is not None:
+            self.log("info", "Uploading a file.")
+            query = """
+                    mutation UploadPending($file: Upload!, $entityId: String) {
+                        uploadPending(file: $file, entityId: $entityId) {
+                            id
+                            name
+                        }
+                    }
+                 """
+            if data is None:
+                data = open(file_name, "rb")
+                if file_name.endswith(".json"):
+                    mime_type = "application/json"
+                else:
+                    mime_type = magic.from_file(file_name, mime=True)
+            return self.query(
+                query,
+                {"file": (File(file_name, data, mime_type)), "entityId": entity_id},
+            )
+        else:
+            self.log(
+                "error",
+                "[upload] Missing parameters: file_name or data",
+            )
+            return None
+
+    def get_stix_content(self, id):
+        """get the STIX content of any entity
+
+        return: the STIX content in JSON
+        rtype: dict
+        """
+
+        logging.info("Entity in JSON " + id)
+        query = """
+            query StixQuery($id: String!) {
+                stix(id: $id)
+            }
+        """
+        result = self.query(query, {"id": id})
+        return json.loads(result["data"]["stix"])
+
+    @staticmethod
+    def get_attribute_in_extension(key, object) -> any:
+        if (
+            "extensions" in object
+            and "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+            in object["extensions"]
+            and key
+            in object["extensions"][
+                "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+            ]
+        ):
+            return object["extensions"][
+                "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+            ][key]
+        elif (
+            "extensions" in object
+            and "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
+            in object["extensions"]
+            and key
+            in object["extensions"][
+                "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
+            ]
+        ):
+            return object["extensions"][
+                "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
+            ][key]
+        return None
+
+    @staticmethod
+    def get_attribute_in_mitre_extension(key, object) -> any:
+        if (
+            "extensions" in object
+            and "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
+            in object["extensions"]
+            and key
+            in object["extensions"][
+                "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
+            ]
+        ):
+            return object["extensions"][
+                "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
+            ][key]
+        return None

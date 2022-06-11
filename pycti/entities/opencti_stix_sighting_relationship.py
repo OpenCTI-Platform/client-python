@@ -1,5 +1,10 @@
 # coding: utf-8
 
+import datetime
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
+
 
 class StixSightingRelationship:
     def __init__(self, opencti):
@@ -42,7 +47,7 @@ class StixSightingRelationship:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -166,10 +171,10 @@ class StixSightingRelationship:
                 }
                 ... on Incident {
                     name
-                }           
+                }
                 ... on StixCyberObservable {
                     observable_value
-                }                     
+                }
                 ... on StixCoreRelationship {
                     standard_id
                     spec_version
@@ -263,6 +268,29 @@ class StixSightingRelationship:
             }
         """
 
+    @staticmethod
+    def generate_id(source_ref, target_ref, first_seen=None, last_seen=None):
+        if isinstance(first_seen, datetime.datetime):
+            first_seen = first_seen.isoformat()
+        if isinstance(last_seen, datetime.datetime):
+            last_seen = last_seen.isoformat()
+
+        if first_seen is not None and last_seen is not None:
+            data = {
+                "source_ref": source_ref,
+                "target_ref": target_ref,
+                "first_seen": first_seen,
+                "last_seen": last_seen,
+            }
+        else:
+            data = {
+                "source_ref": source_ref,
+                "target_ref": target_ref,
+            }
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "sighting--" + id
+
     """
         List stix_sightings objects
 
@@ -292,6 +320,7 @@ class StixSightingRelationship:
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
         if get_all:
@@ -312,7 +341,7 @@ class StixSightingRelationship:
                         edges {
                             node {
                                 """
-            + self.properties
+            + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
                     }

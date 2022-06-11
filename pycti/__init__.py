@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__version__ = "5.3.5"
+
 from .api.opencti_api_client import OpenCTIApiClient
 from .api.opencti_api_connector import OpenCTIApiConnector
 from .api.opencti_api_work import OpenCTIApiWork
@@ -38,53 +40,56 @@ from .entities.opencti_stix_sighting_relationship import StixSightingRelationshi
 from .entities.opencti_threat_actor import ThreatActor
 from .entities.opencti_tool import Tool
 from .entities.opencti_vulnerability import Vulnerability
-from .utils.constants import StixCyberObservableTypes, StixMetaTypes
+from .utils.constants import (
+    MultipleStixCyberObservableRelationship,
+    StixCyberObservableTypes,
+    StixMetaTypes,
+)
 from .utils.opencti_stix2 import OpenCTIStix2
 from .utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 from .utils.opencti_stix2_update import OpenCTIStix2Update
-from .utils.opencti_stix2_utils import OpenCTIStix2Utils, SimpleObservable, StixIncident
+from .utils.opencti_stix2_utils import OpenCTIStix2Utils
 
 __all__ = [
+    "AttackPattern",
+    "Campaign",
+    "ConnectorType",
+    "CourseOfAction",
+    "ExternalReference",
+    "Identity",
+    "Incident",
+    "Indicator",
+    "Infrastructure",
+    "IntrusionSet",
+    "KillChainPhase",
+    "Label",
+    "Location",
+    "Malware",
+    "MarkingDefinition",
+    "Note",
+    "ObservedData",
     "OpenCTIApiClient",
     "OpenCTIApiConnector",
     "OpenCTIApiWork",
-    "ConnectorType",
     "OpenCTIConnector",
     "OpenCTIConnectorHelper",
-    "get_config_variable",
-    "Label",
-    "MarkingDefinition",
-    "ExternalReference",
-    "KillChainPhase",
-    "StixObjectOrStixRelationship",
-    "StixDomainObject",
-    "StixCyberObservable",
-    "StixCoreRelationship",
-    "StixSightingRelationship",
-    "StixCyberObservableRelationship",
-    "Identity",
-    "Location",
-    "ThreatActor",
-    "IntrusionSet",
-    "Infrastructure",
-    "Campaign",
-    "Incident",
-    "Malware",
-    "Tool",
-    "Vulnerability",
-    "AttackPattern",
-    "CourseOfAction",
-    "Report",
-    "Note",
-    "ObservedData",
-    "Opinion",
-    "Indicator",
     "OpenCTIStix2",
     "OpenCTIStix2Splitter",
     "OpenCTIStix2Update",
     "OpenCTIStix2Utils",
+    "Opinion",
+    "Report",
+    "StixCoreRelationship",
+    "StixCyberObservable",
+    "StixCyberObservableRelationship",
     "StixCyberObservableTypes",
+    "StixDomainObject",
     "StixMetaTypes",
-    "SimpleObservable",
-    "StixIncident",
+    "MultipleStixCyberObservableRelationship",
+    "StixObjectOrStixRelationship",
+    "StixSightingRelationship",
+    "ThreatActor",
+    "Tool",
+    "Vulnerability",
+    "get_config_variable",
 ]

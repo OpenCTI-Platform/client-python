@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import json
+import uuid
 
 
 class Note:
@@ -37,7 +38,7 @@ class Note:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -147,7 +148,7 @@ class Note:
                         }
                         ... on System {
                             name
-                        }                        
+                        }
                         ... on Indicator {
                             name
                         }
@@ -183,7 +184,7 @@ class Note:
                         }
                         ... on Incident {
                             name
-                        }                
+                        }
                         ... on StixCoreRelationship {
                             standard_id
                             spec_version
@@ -208,6 +209,10 @@ class Note:
                 }
             }
         """
+
+    @staticmethod
+    def generate_id():
+        return "note--" + str(uuid.uuid4())
 
     """
         List Note objects
@@ -252,7 +257,7 @@ class Note:
                         hasNextPage
                         hasPreviousPage
                         globalCount
-                    }                    
+                    }
                 }
             }
         """
@@ -334,7 +339,7 @@ class Note:
 
     """
         Check if a note already contains a STIX entity
-        
+
         :return Boolean
     """
 
@@ -381,6 +386,7 @@ class Note:
     def create(self, **kwargs):
         stix_id = kwargs.get("stix_id", None)
         created_by = kwargs.get("createdBy", None)
+        objects = kwargs.get("objects", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
         external_references = kwargs.get("externalReferences", None)
@@ -403,7 +409,7 @@ class Note:
                         id
                         standard_id
                         entity_type
-                        parent_types                    
+                        parent_types
                     }
                 }
             """
@@ -415,6 +421,7 @@ class Note:
                         "createdBy": created_by,
                         "objectMarking": object_marking,
                         "objectLabel": object_label,
+                        "objects": objects,
                         "externalReferences": external_references,
                         "revoked": revoked,
                         "confidence": confidence,
@@ -548,6 +555,13 @@ class Note:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
+
+            # Search in extensions
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
@@ -559,6 +573,7 @@ class Note:
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
                 else [],
+                objects=extras["object_ids"] if "object_ids" in extras else [],
                 externalReferences=extras["external_references_ids"]
                 if "external_references_ids" in extras
                 else [],

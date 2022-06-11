@@ -1,8 +1,11 @@
 # coding: utf-8
 
+import datetime
 import json
+import uuid
 
 from dateutil.parser import parse
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Report:
@@ -39,7 +42,7 @@ class Report:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -186,13 +189,19 @@ class Report:
                         }
                         ... on Incident {
                             name
-                        }                
+                        }
                         ... on StixCoreRelationship {
                             standard_id
                             spec_version
                             created_at
                             updated_at
                             relationship_type
+                        }
+                       ... on StixSightingRelationship {
+                            standard_id
+                            spec_version
+                            created_at
+                            updated_at
                         }
                     }
                 }
@@ -211,6 +220,16 @@ class Report:
                 }
             }
         """
+
+    @staticmethod
+    def generate_id(name, published):
+        name = name.lower().strip()
+        if isinstance(published, datetime.datetime):
+            published = published.isoformat()
+        data = {"name": name, "published": published}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "report--" + id
 
     """
         List Report objects
@@ -365,7 +384,7 @@ class Report:
 
     """
         Check if a report already contains a thing (Stix Object or Stix Relationship)
-        
+
         :param id: the id of the Report
         :param stixObjectOrStixRelationshipId: the id of the Stix-Entity
         :return Boolean
@@ -414,6 +433,7 @@ class Report:
     def create(self, **kwargs):
         stix_id = kwargs.get("stix_id", None)
         created_by = kwargs.get("createdBy", None)
+        objects = kwargs.get("objects", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
         external_references = kwargs.get("externalReferences", None)
@@ -437,7 +457,7 @@ class Report:
                         id
                         standard_id
                         entity_type
-                        parent_types            
+                        parent_types
                     }
                 }
             """
@@ -449,6 +469,7 @@ class Report:
                         "createdBy": created_by,
                         "objectMarking": object_marking,
                         "objectLabel": object_label,
+                        "objects": objects,
                         "externalReferences": external_references,
                         "revoked": revoked,
                         "confidence": confidence,
@@ -580,19 +601,11 @@ class Report:
         update = kwargs.get("update", False)
         if stix_object is not None:
 
-            # TODO: Compatibility with OpenCTI 3.X to be REMOVED
-            if "report_types" not in stix_object:
-                stix_object["report_types"] = (
-                    [stix_object["x_opencti_report_class"]]
-                    if "x_opencti_report_class" in stix_object
-                    else None
-                )
-            if "confidence" not in stix_object:
-                stix_object["confidence"] = (
-                    stix_object["x_opencti_source_confidence_level"]
-                    if "x_opencti_source_confidence_level" in stix_object
-                    else 0
-                )
+            # Search in extensions
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -605,6 +618,7 @@ class Report:
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
                 else [],
+                objects=extras["object_ids"] if "object_ids" in extras else [],
                 externalReferences=extras["external_references_ids"]
                 if "external_references_ids" in extras
                 else [],

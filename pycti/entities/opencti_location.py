@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Location:
@@ -37,7 +40,7 @@ class Location:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -126,6 +129,17 @@ class Location:
             }
         """
 
+    @staticmethod
+    def generate_id(name, x_opencti_location_type, latitude=None, longitude=None):
+        name = name.lower().strip()
+        if x_opencti_location_type == "position":
+            data = {"name": name, "latitude": latitude, "longitude": longitude}
+        else:
+            data = {"name": name, "x_opencti_location_type": x_opencti_location_type}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "location--" + id
+
     """
         List Location objects
 
@@ -194,7 +208,7 @@ class Location:
 
     """
         Read a Location object
-        
+
         :param id: the id of the Location
         :param filters: the filters to apply if no id provided
         :return Location object
@@ -329,6 +343,8 @@ class Location:
             return
         if "x_opencti_location_type" in stix_object:
             type = stix_object["x_opencti_location_type"]
+        elif self.opencti.get_attribute_in_extension("type", stix_object) is not None:
+            type = self.opencti.get_attribute_in_extension("type", stix_object)
         else:
             if "city" in stix_object:
                 type = "City"
@@ -339,6 +355,17 @@ class Location:
             else:
                 type = "Position"
         if stix_object is not None:
+
+            # Search in extensions
+            if "x_opencti_aliases" not in stix_object:
+                stix_object[
+                    "x_opencti_aliases"
+                ] = self.opencti.get_attribute_in_extension("aliases", stix_object)
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+
             return self.create(
                 type=type,
                 stix_id=stix_object["id"],

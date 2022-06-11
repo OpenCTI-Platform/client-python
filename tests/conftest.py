@@ -1,5 +1,6 @@
 import pytest
 from pytest_cases import fixture
+
 from pycti import (
     OpenCTIApiClient,
     OpenCTIStix2Splitter,
@@ -10,7 +11,7 @@ from pycti import (
 def api_client():
     return OpenCTIApiClient(
         "https://demo.opencti.io",
-        "d1b42111-a7fb-4830-846a-6a91c16b0084",
+        "7e663f91-d048-4a8b-bdfa-cdb55597942b",
         ssl_verify=True,
     )
 

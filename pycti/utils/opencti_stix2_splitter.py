@@ -223,10 +223,14 @@ class OpenCTIStix2Splitter:
                 raise Exception("File data is not a valid JSON")
         else:
             bundle_data = bundle
-            if "objects" not in bundle_data:
-                raise Exception("File data is not a valid bundle")
+
+        if "objects" not in bundle_data:
+            raise Exception("File data is not a valid bundle")
+        if "id" not in bundle_data:
+            bundle_data["id"] = "bundle--" + str(uuid.uuid4())
 
         raw_data = {}
+
         # Build flat list of elements
         for item in bundle_data["objects"]:
             raw_data[item["id"]] = item
@@ -241,11 +245,20 @@ class OpenCTIStix2Splitter:
 
         self.elements.sort(key=by_dep_size)
         for entity in self.elements:
-            bundles.append(self.stix2_create_bundle([entity], use_json, event_version))
+            bundles.append(
+                self.stix2_create_bundle(
+                    bundle_data["id"],
+                    entity["nb_deps"],
+                    [entity],
+                    use_json,
+                    event_version,
+                )
+            )
         return bundles
 
     @staticmethod
-    def stix2_create_bundle(items: List, use_json: bool = True, event_version=None):
+
+    def stix2_create_bundle(bundle_id, bundle_seq, items, use_json, event_version=None):
         """create a stix2 bundle with items
 
         :param items: valid stix2 items
@@ -258,8 +271,9 @@ class OpenCTIStix2Splitter:
 
         bundle = {
             "type": "bundle",
-            "id": "bundle--" + str(uuid.uuid4()),
+            "id": bundle_id,
             "spec_version": "2.1",
+            "x_opencti_seq": bundle_seq,
             "objects": items,
         }
         if event_version is not None:

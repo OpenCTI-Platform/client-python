@@ -3,10 +3,12 @@ import datetime
 import json
 import logging
 import os
+import signal
 import ssl
 import sys
 import threading
 import time
+import traceback
 import uuid
 from typing import Callable, Dict, List, Optional, Union
 
@@ -20,6 +22,16 @@ from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 
 TRUTHY: List[str] = ["yes", "true", "True"]
 FALSY: List[str] = ["no", "false", "False"]
+
+logging.getLogger("pika").setLevel(logging.ERROR)
+
+
+def killProgramHook(etype, value, tb):
+    traceback.print_exception(etype, value, tb)
+    os.kill(os.getpid(), signal.SIGKILL)
+
+
+sys.excepthook = killProgramHook
 
 
 def get_config_variable(
@@ -252,7 +264,18 @@ class PingAlive(threading.Thread):
 
 class ListenStream(threading.Thread):
     def __init__(
-        self, helper, callback, url, token, verify_ssl, start_timestamp, live_stream_id
+        self,
+        helper,
+        callback,
+        url,
+        token,
+        verify_ssl,
+        start_timestamp,
+        live_stream_id,
+        listen_delete,
+        no_dependencies,
+        recover_iso_date,
+        with_inferences,
     ) -> None:
         threading.Thread.__init__(self)
         self.helper = helper
@@ -262,114 +285,162 @@ class ListenStream(threading.Thread):
         self.verify_ssl = verify_ssl
         self.start_timestamp = start_timestamp
         self.live_stream_id = live_stream_id
+        self.listen_delete = listen_delete if listen_delete is not None else True
+        self.no_dependencies = no_dependencies if no_dependencies is not None else False
+        self.recover_iso_date = recover_iso_date
+        self.with_inferences = with_inferences if with_inferences is not None else False
+        self.exit_event = threading.Event()
         self.exit = False
 
     def run(self) -> None:  # pylint: disable=too-many-branches
-        current_state = self.helper.get_state()
-        if current_state is None:
-            current_state = {
-                "connectorLastEventId": f"{self.start_timestamp}-0"
-                if self.start_timestamp is not None and len(self.start_timestamp) > 0
-                else "-"
-            }
-            self.helper.set_state(current_state)
+        try:
+            current_state = self.helper.get_state()
+            if current_state is None:
+                current_state = {
+                    "connectorStartTime": self.helper.date_now_z(),
+                    "connectorLastEventId": f"{self.start_timestamp}-0"
+                    if self.start_timestamp is not None
+                    and len(self.start_timestamp) > 0
+                    else "-",
+                }
+                self.helper.set_state(current_state)
 
-        # If URL and token are provided, likely consuming a remote stream
-        if self.url is not None and self.token is not None:
-            # If a live stream ID, appending the URL
-            if self.live_stream_id is not None:
-                live_stream_uri = f"/{self.live_stream_id}"
-            elif self.helper.connect_live_stream_id is not None:
-                live_stream_uri = f"/{self.helper.connect_live_stream_id}"
+            # If URL and token are provided, likely consuming a remote stream
+            if self.url is not None and self.token is not None:
+                # If a live stream ID, appending the URL
+                if self.live_stream_id is not None:
+                    live_stream_uri = f"/{self.live_stream_id}"
+                elif self.helper.connect_live_stream_id is not None:
+                    live_stream_uri = f"/{self.helper.connect_live_stream_id}"
+                else:
+                    live_stream_uri = ""
+                # Live stream "from" should be empty if start from the beginning
+                if (
+                    self.live_stream_id is not None
+                    or self.helper.connect_live_stream_id is not None
+                ):
+
+                    live_stream_from = (
+                        f"?from={current_state['connectorLastEventId']}"
+                        if "connectorLastEventId" in current_state
+                        and current_state["connectorLastEventId"] != "-"
+                        else "?from=0-0&recover="
+                        + (
+                            current_state["connectorStartTime"]
+                            if self.recover_iso_date is None
+                            else self.recover_iso_date
+                        )
+                    )
+                # Global stream "from" should be 0 if starting from the beginning
+                else:
+                    live_stream_from = "?from=" + (
+                        current_state["connectorLastEventId"]
+                        if "connectorLastEventId" in current_state
+                        and current_state["connectorLastEventId"] != "-"
+                        else "0-0"
+                    )
+                live_stream_url = (
+                    f"{self.url}/stream{live_stream_uri}{live_stream_from}"
+                )
+                opencti_ssl_verify = (
+                    self.verify_ssl if self.verify_ssl is not None else True
+                )
+                logging.info(
+                    "%s",
+                    (
+                        "Starting listening stream events (URL: "
+                        f"{live_stream_url}, SSL verify: {opencti_ssl_verify}, Listen Delete: {self.listen_delete})"
+                    ),
+                )
+                messages = SSEClient(
+                    live_stream_url,
+                    headers={
+                        "authorization": "Bearer " + self.token,
+                        "listen-delete": "false"
+                        if self.listen_delete is False
+                        else "true",
+                        "no-dependencies": "true"
+                        if self.no_dependencies is True
+                        else "false",
+                        "with-inferences": "true"
+                        if self.helper.connect_live_stream_with_inferences is True
+                        else "false",
+                    },
+                    verify=opencti_ssl_verify,
+                )
             else:
-                live_stream_uri = ""
-            # Live stream "from" should be empty if start from the beginning
-            if (
-                self.live_stream_id is not None
-                or self.helper.connect_live_stream_id is not None
-            ):
-                live_stream_from = (
-                    f"?from={current_state['connectorLastEventId']}"
-                    if current_state["connectorLastEventId"] != "-"
+                live_stream_uri = (
+                    f"/{self.helper.connect_live_stream_id}"
+                    if self.helper.connect_live_stream_id is not None
                     else ""
                 )
-            # Global stream "from" should be 0 if starting from the beginning
-            else:
-                live_stream_from = "?from=" + (
-                    current_state["connectorLastEventId"]
-                    if current_state["connectorLastEventId"] != "-"
-                    else "0"
+                if self.helper.connect_live_stream_id is not None:
+                    live_stream_from = (
+                        f"?from={current_state['connectorLastEventId']}"
+                        if "connectorLastEventId" in current_state
+                        and current_state["connectorLastEventId"] != "-"
+                        else "?from=0-0&recover="
+                        + (
+                            self.helper.date_now_z()
+                            if self.recover_iso_date is None
+                            else self.recover_iso_date
+                        )
+                    )
+                # Global stream "from" should be 0 if starting from the beginning
+                else:
+                    live_stream_from = "?from=" + (
+                        current_state["connectorLastEventId"]
+                        if "connectorLastEventId" in current_state
+                        and current_state["connectorLastEventId"] != "-"
+                        else "0-0"
+                    )
+                live_stream_url = f"{self.helper.opencti_url}/stream{live_stream_uri}{live_stream_from}"
+                logging.info(
+                    "%s",
+                    (
+                        f"Starting listening stream events (URL: {live_stream_url}"
+                        f", SSL verify: {self.helper.opencti_ssl_verify}, Listen Delete: {self.helper.connect_live_stream_listen_delete}, No Dependencies: {self.helper.connect_live_stream_no_dependencies})"
+                    ),
                 )
-            live_stream_url = f"{self.url}/stream{live_stream_uri}{live_stream_from}"
-            opencti_ssl_verify = (
-                self.verify_ssl if self.verify_ssl is not None else True
-            )
-            logging.info(
-                "%s",
-                (
-                    "Starting listening stream events (URL: "
-                    f"{live_stream_url}, SSL verify: {opencti_ssl_verify})"
-                ),
-            )
-            messages = SSEClient(
-                live_stream_url,
-                headers={"authorization": "Bearer " + self.token},
-                verify=opencti_ssl_verify,
-            )
-        else:
-            live_stream_uri = (
-                f"/{self.helper.connect_live_stream_id}"
-                if self.helper.connect_live_stream_id is not None
-                else ""
-            )
-            if self.helper.connect_live_stream_id is not None:
-                live_stream_from = (
-                    f"?from={current_state['connectorLastEventId']}"
-                    if current_state["connectorLastEventId"] != "-"
-                    else ""
+                messages = SSEClient(
+                    live_stream_url,
+                    headers={
+                        "authorization": "Bearer " + self.helper.opencti_token,
+                        "listen-delete": "false"
+                        if self.helper.connect_live_stream_listen_delete is False
+                        else "true",
+                        "no-dependencies": "true"
+                        if self.helper.connect_live_stream_no_dependencies is True
+                        else "false",
+                        "with-inferences": "true"
+                        if self.helper.connect_live_stream_with_inferences is True
+                        else "false",
+                    },
+                    verify=self.helper.opencti_ssl_verify,
                 )
-            # Global stream "from" should be 0 if starting from the beginning
-            else:
-                live_stream_from = "?from=" + (
-                    current_state["connectorLastEventId"]
-                    if current_state["connectorLastEventId"] != "-"
-                    else "0"
-                )
-            live_stream_url = (
-                f"{self.helper.opencti_url}/stream{live_stream_uri}{live_stream_from}"
-            )
-            logging.info(
-                "%s",
-                (
-                    f"Starting listening stream events (URL: {live_stream_url}"
-                    f", SSL verify: {self.helper.opencti_ssl_verify})"
-                ),
-            )
-            messages = SSEClient(
-                live_stream_url,
-                headers={"authorization": "Bearer " + self.helper.opencti_token},
-                verify=self.helper.opencti_ssl_verify,
-            )
-        # Iter on stream messages
-        for msg in messages:
-            if self.exit:
-                break
-            if msg.event == "heartbeat" or msg.event == "connected":
-                continue
-            if msg.event == "sync":
-                if msg.id is not None:
-                    state = self.helper.get_state()
-                    state["connectorLastEventId"] = str(msg.id)
-                    self.helper.set_state(state)
-            else:
-                self.callback(msg)
-                if msg.id is not None:
-                    state = self.helper.get_state()
-                    state["connectorLastEventId"] = str(msg.id)
-                    self.helper.set_state(state)
+            # Iter on stream messages
+            for msg in messages:
+                if self.exit:
+                    break
+                if msg.event == "heartbeat" or msg.event == "connected":
+                    continue
+                if msg.event == "sync":
+                    if msg.id is not None:
+                        state = self.helper.get_state()
+                        state["connectorLastEventId"] = str(msg.id)
+                        self.helper.set_state(state)
+                else:
+                    self.callback(msg)
+                    if msg.id is not None:
+                        state = self.helper.get_state()
+                        state["connectorLastEventId"] = str(msg.id)
+                        self.helper.set_state(state)
+        except:
+            sys.excepthook(*sys.exc_info())
 
     def stop(self):
         self.exit = True
+        self.exit_event.set()
 
 
 class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
@@ -407,6 +478,27 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             False,
             None,
         )
+        self.connect_live_stream_listen_delete = get_config_variable(
+            "CONNECTOR_LIVE_STREAM_LISTEN_DELETE",
+            ["connector", "live_stream_listen_delete"],
+            config,
+            False,
+            True,
+        )
+        self.connect_live_stream_no_dependencies = get_config_variable(
+            "CONNECTOR_LIVE_STREAM_NO_DEPENDENCIES",
+            ["connector", "live_stream_no_dependencies"],
+            config,
+            False,
+            False,
+        )
+        self.connect_live_stream_with_inferences = get_config_variable(
+            "CONNECTOR_LIVE_STREAM_WITH_INFERENCES",
+            ["connector", "live_stream_with_inferences"],
+            config,
+            False,
+            False,
+        )
         self.connect_name = get_config_variable(
             "CONNECTOR_NAME", ["connector", "name"], config
         )
@@ -435,6 +527,13 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         self.connect_run_and_terminate = get_config_variable(
             "CONNECTOR_RUN_AND_TERMINATE",
             ["connector", "run_and_terminate"],
+            config,
+            False,
+            False,
+        )
+        self.connect_validate_before_import = get_config_variable(
+            "CONNECTOR_VALIDATE_BEFORE_IMPORT",
+            ["connector", "validate_before_import"],
             config,
             False,
             False,
@@ -496,6 +595,12 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     def get_only_contextual(self) -> Optional[Union[bool, int, str]]:
         return self.connect_only_contextual
 
+    def get_run_and_terminate(self) -> Optional[Union[bool, int, str]]:
+        return self.connect_run_and_terminate
+
+    def get_validate_before_import(self) -> Optional[Union[bool, int, str]]:
+        return self.connect_validate_before_import
+
     def set_state(self, state) -> None:
         """sets the connector state
 
@@ -517,9 +622,24 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 state = json.loads(self.connector_state)
                 if isinstance(state, Dict) and state:
                     return state
-        except:  # pylint: disable=bare-except
+        except:  # pylint: disable=bare-except  # noqa: E722
             pass
         return None
+
+    def force_ping(self):
+        try:
+            initial_state = self.get_state()
+            result = self.api.connector.ping(self.connector_id, initial_state)
+            remote_state = (
+                json.loads(result["connector_state"])
+                if result["connector_state"] is not None
+                and len(result["connector_state"]) > 0
+                else None
+            )
+            if initial_state != remote_state:
+                self.api.connector.ping(self.connector_id, initial_state)
+        except Exception:  # pylint: disable=broad-except
+            logging.error("Error pinging the API")
 
     def listen(self, message_callback: Callable[[Dict], str]) -> None:
         """listen for messages and register callback function
@@ -539,6 +659,10 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         verify_ssl=None,
         start_timestamp=None,
         live_stream_id=None,
+        listen_delete=True,
+        no_dependencies=False,
+        recover_iso_date=None,
+        with_inferences=False,
     ) -> ListenStream:
         """listen for messages and register callback function
 
@@ -553,6 +677,10 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             verify_ssl,
             start_timestamp,
             live_stream_id,
+            listen_delete,
+            no_dependencies,
+            recover_iso_date,
+            with_inferences,
         )
         self.listen_stream.start()
         return self.listen_stream
@@ -589,6 +717,18 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             .isoformat()
         )
 
+    def date_now_z(self) -> str:
+        """get the current date (UTC)
+        :return: current datetime for utc
+        :rtype: str
+        """
+        return (
+            datetime.datetime.utcnow()
+            .replace(microsecond=0, tzinfo=datetime.timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z")
+        )
+
     # Push Stix2 helper
     def send_stix2_bundle(self, bundle, **kwargs) -> list:
         """send a stix2 bundle to the API
@@ -608,15 +748,38 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         entities_types = kwargs.get("entities_types", None)
         update = kwargs.get("update", False)
         event_version = kwargs.get("event_version", None)
+        bypass_split = kwargs.get("bypass_split", False)
+        bypass_validation = kwargs.get("bypass_validation", False)
+        entity_id = kwargs.get("entity_id", None)
+        file_name = kwargs.get("file_name", None)
+
+        if not file_name and work_id:
+            file_name = f"{work_id}.json"
+
+        if self.connect_validate_before_import and not bypass_validation and file_name:
+            self.api.upload_pending_file(
+                file_name=file_name,
+                data=bundle,
+                mime_type="application/json",
+                entity_id=entity_id,
+            )
+            return []
 
         if entities_types is None:
             entities_types = []
-        stix2_splitter = OpenCTIStix2Splitter()
-        bundles = stix2_splitter.split_bundle(bundle, True, event_version)
+
+        if bypass_split:
+            bundles = [bundle]
+        else:
+            stix2_splitter = OpenCTIStix2Splitter()
+            bundles = stix2_splitter.split_bundle(bundle, True, event_version)
+
         if len(bundles) == 0:
             raise ValueError("Nothing to import")
-        if work_id is not None:
+
+        if work_id:
             self.api.work.add_expectations(work_id, len(bundles))
+
         pika_credentials = pika.PlainCredentials(
             self.config["connection"]["user"], self.config["connection"]["pass"]
         )
@@ -695,68 +858,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                     delivery_mode=2,  # make message persistent
                 ),
             )
-            logging.info("Bundle has been sent")
         except (UnroutableError, NackError) as e:
             logging.error("Unable to send bundle, retry...%s", e)
             self._send_bundle(channel, bundle, **kwargs)
-
-    def split_stix2_bundle(self, bundle) -> list:
-        """splits a valid stix2 bundle into a list of bundles
-
-        :param bundle: valid stix2 bundle
-        :type bundle:
-        :raises Exception: if data is not valid JSON
-        :return: returns a list of bundles
-        :rtype: list
-        """
-
-        self.cache_index = {}
-        self.cache_added = []
-        try:
-            bundle_data = json.loads(bundle)
-        except Exception as e:
-            raise Exception("File data is not a valid JSON") from e
-
-        # validation = validate_parsed_json(bundle_data)
-        # if not validation.is_valid:
-        #     raise ValueError('The bundle is not a valid STIX2 JSON:' + bundle)
-
-        # Index all objects by id
-        for item in bundle_data["objects"]:
-            self.cache_index[item["id"]] = item
-
-        bundles = []
-        # Reports must be handled because of object_refs
-        for item in bundle_data["objects"]:
-            if item["type"] == "report":
-                items_to_send = self.stix2_deduplicate_objects(
-                    self.stix2_get_report_objects(item)
-                )
-                for item_to_send in items_to_send:
-                    self.cache_added.append(item_to_send["id"])
-                bundles.append(self.stix2_create_bundle(items_to_send))
-
-        # Relationships not added in previous reports
-        for item in bundle_data["objects"]:
-            if item["type"] == "relationship" and item["id"] not in self.cache_added:
-                items_to_send = self.stix2_deduplicate_objects(
-                    self.stix2_get_relationship_objects(item)
-                )
-                for item_to_send in items_to_send:
-                    self.cache_added.append(item_to_send["id"])
-                bundles.append(self.stix2_create_bundle(items_to_send))
-
-        # Entities not added in previous reports and relationships
-        for item in bundle_data["objects"]:
-            if item["type"] != "relationship" and item["id"] not in self.cache_added:
-                items_to_send = self.stix2_deduplicate_objects(
-                    self.stix2_get_entity_objects(item)
-                )
-                for item_to_send in items_to_send:
-                    self.cache_added.append(item_to_send["id"])
-                bundles.append(self.stix2_create_bundle(items_to_send))
-
-        return bundles
 
     def stix2_get_embedded_objects(self, item) -> Dict:
         """gets created and marking refs for a stix2 item
@@ -883,7 +987,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         bundle = {
             "type": "bundle",
             "id": f"bundle--{uuid.uuid4()}",
-            "spec_version": "2.0",
+            "spec_version": "2.1",
             "objects": items,
         }
         return json.dumps(bundle)
@@ -908,3 +1012,47 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         }
 
         return tlp in allowed_tlps[max_tlp]
+
+    @staticmethod
+    def get_attribute_in_extension(key, object) -> any:
+        if (
+            "extensions" in object
+            and "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+            in object["extensions"]
+            and key
+            in object["extensions"][
+                "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+            ]
+        ):
+            return object["extensions"][
+                "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+            ][key]
+        elif (
+            "extensions" in object
+            and "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
+            in object["extensions"]
+            and key
+            in object["extensions"][
+                "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
+            ]
+        ):
+            return object["extensions"][
+                "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
+            ][key]
+        return None
+
+    @staticmethod
+    def get_attribute_in_mitre_extension(key, object) -> any:
+        if (
+            "extensions" in object
+            and "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
+            in object["extensions"]
+            and key
+            in object["extensions"][
+                "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
+            ]
+        ):
+            return object["extensions"][
+                "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
+            ][key]
+        return None

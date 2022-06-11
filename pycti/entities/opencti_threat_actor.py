@@ -1,7 +1,10 @@
 # coding: utf-8
 
 import json
+import uuid
 from typing import Union
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class ThreatActor:
@@ -45,7 +48,7 @@ class ThreatActor:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -124,7 +127,7 @@ class ThreatActor:
             sophistication
             resource_level
             primary_motivation
-            secondary_motivations      
+            secondary_motivations
             personal_motivations
             importFiles {
                 edges {
@@ -140,6 +143,14 @@ class ThreatActor:
                 }
             }
         """
+
+    @staticmethod
+    def generate_id(name):
+        name = name.lower().strip()
+        data = {"name": name}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "threat-actor--" + id
 
     def list(self, **kwargs) -> dict:
         """List Threat-Actor objects
@@ -163,6 +174,7 @@ class ThreatActor:
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
         if get_all:
@@ -178,7 +190,7 @@ class ThreatActor:
                     edges {
                         node {
                             """
-            + self.properties
+            + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
                     }
@@ -382,6 +394,13 @@ class ThreatActor:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
+
+            # Search in extensions
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]

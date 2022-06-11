@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Incident:
@@ -37,7 +40,7 @@ class Incident:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -126,6 +129,14 @@ class Incident:
             }
         """
 
+    @staticmethod
+    def generate_id(name):
+        name = name.lower().strip()
+        data = {"name": name}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "incident--" + id
+
     """
         List Incident objects
 
@@ -191,7 +202,7 @@ class Incident:
 
     """
         Read a Incident object
-        
+
         :param id: the id of the Incident
         :param filters: the filters to apply if no id provided
         :return Incident object
@@ -267,7 +278,7 @@ class Incident:
                         id
                         standard_id
                         entity_type
-                        parent_types               
+                        parent_types
                     }
                }
             """
@@ -312,6 +323,13 @@ class Incident:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
+
+            # Search in extensions
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]

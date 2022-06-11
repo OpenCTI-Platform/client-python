@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class CourseOfAction:
@@ -37,7 +40,7 @@ class CourseOfAction:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -124,6 +127,17 @@ class CourseOfAction:
             }
         """
 
+    @staticmethod
+    def generate_id(name, x_mitre_id=None):
+        name = name.lower().strip()
+        if x_mitre_id is not None:
+            data = {"x_mitre_id": x_mitre_id}
+        else:
+            data = {"name": name}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "course-of-action--" + id
+
     """
         List Course-Of-Action objects
 
@@ -190,7 +204,7 @@ class CourseOfAction:
 
     """
         Read a Course-Of-Action object
-        
+
         :param id: the id of the Course-Of-Action
         :param filters: the filters to apply if no id provided
         :return Course-Of-Action object
@@ -318,7 +332,14 @@ class CourseOfAction:
             x_mitre_id = None
             if "x_mitre_id" in stix_object:
                 x_mitre_id = stix_object["x_mitre_id"]
-            if "external_references" in stix_object:
+            elif (
+                self.opencti.get_attribute_in_mitre_extension("id", stix_object)
+                is not None
+            ):
+                x_mitre_id = self.opencti.get_attribute_in_mitre_extension(
+                    "id", stix_object
+                )
+            elif "external_references" in stix_object:
                 for external_reference in stix_object["external_references"]:
                     if (
                         external_reference["source_name"] == "mitre-attack"
@@ -327,6 +348,16 @@ class CourseOfAction:
                         or external_reference["source_name"] == "amitt-attack"
                     ):
                         x_mitre_id = external_reference["external_id"]
+
+            # Search in extensions
+            if "x_opencti_aliases" not in stix_object:
+                stix_object[
+                    "x_opencti_aliases"
+                ] = self.opencti.get_attribute_in_extension("aliases", stix_object)
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],

@@ -66,6 +66,7 @@ class StixCyberObservableRelationship:
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
         if get_all:
@@ -88,7 +89,7 @@ class StixCyberObservableRelationship:
                     edges {
                         node {
                             """
-            + self.properties
+            + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
                     }
@@ -213,9 +214,23 @@ class StixCyberObservableRelationship:
         object_marking = kwargs.get("objectMarking", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
+
+        if relationship_type == "resolves-to":
+            relationship_type = "obs_resolves-to"
+        elif relationship_type == "belongs-to":
+            relationship_type = "obs_belongs-to"
+        elif relationship_type == "content":
+            relationship_type = "obs_content"
+
         self.opencti.log(
             "info",
-            "Creating stix_observable_relationship {" + from_id + ", " + to_id + "}.",
+            "Creating stix_observable_relationship '"
+            + relationship_type
+            + "' {"
+            + from_id
+            + ", "
+            + to_id
+            + "}.",
         )
         query = """
                 mutation StixCyberObservableRelationshipAdd($input: StixCyberObservableRelationshipAddInput!) {

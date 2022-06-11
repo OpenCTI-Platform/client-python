@@ -163,8 +163,8 @@ class StixCyberObservable:
                             size
                         }
                     }
-                }                
-            }        
+                }
+            }
             ... on StixFile {
                 extensions
                 size
@@ -179,7 +179,7 @@ class StixCyberObservable:
                 hashes {
                   algorithm
                   hash
-                }           
+                }
             }
             ... on X509Certificate {
                 is_self_signed
@@ -196,7 +196,7 @@ class StixCyberObservable:
                 hashes {
                   algorithm
                   hash
-                }        
+                }
             }
             ... on IPv4Addr {
                 value
@@ -208,7 +208,7 @@ class StixCyberObservable:
                 value
             }
             ... on Mutex {
-                name            
+                name
             }
             ... on NetworkTraffic {
                 extensions
@@ -270,34 +270,19 @@ class StixCyberObservable:
                 data
                 data_type
             }
-            ... on X509V3ExtensionsType {
-                basic_constraints
-                name_constraints
-                policy_constraints
-                key_usage
-                extended_key_usage
-                subject_key_identifier
-                authority_key_identifier
-                subject_alternative_name
-                issuer_alternative_name
-                subject_directory_attributes
-                crl_distribution_points
-                inhibit_any_policy
-                private_key_usage_period_not_before
-                private_key_usage_period_not_after
-                certificate_policies
-                policy_mappings
-            }
-            ... on XOpenCTICryptographicKey {
+            ... on CryptographicKey {
                 value
             }
-            ... on XOpenCTICryptocurrencyWallet {
+            ... on CryptocurrencyWallet {
                 value
             }
-            ... on XOpenCTIText {
+            ... on Hostname {
                 value
             }
-            ... on XOpenCTIUserAgent {
+            ... on Text {
+                value
+            }
+            ... on UserAgent {
                 value
             }
             importFiles {
@@ -362,7 +347,7 @@ class StixCyberObservable:
                         hasNextPage
                         hasPreviousPage
                         globalCount
-                    }                    
+                    }
                 }
             }
         """
@@ -552,31 +537,42 @@ class StixCyberObservable:
             type = "IPv4-Addr"
         elif type.lower() == "ipv6-addr":
             type = "IPv6-Addr"
-        elif type.lower() == "x-opencti-hostname":
-            type = "X-OpenCTI-Hostname"
-        elif type.lower() == "x-opencti-cryptocurrency-wallet":
-            type = "X-OpenCTI-Cryptocurrency-Wallet"
-        elif type.lower() == "x-opencti-user-agent":
-            type = "X-OpenCTI-User-Agent"
-        elif type.lower() == "x-opencti-cryptographic-key":
-            type = "X-OpenCTI-Cryptographic-Key"
-        elif type.lower() == "x-opencti-text":
-            type = "X-OpenCTI-Text"
+        elif type.lower() == "hostname" or type.lower() == "x-opencti-hostname":
+            type = "Hostname"
+        elif (
+            type.lower() == "cryptocurrency-wallet"
+            or type.lower() == "x-opencti-cryptocurrency-wallet"
+        ):
+            type = "Cryptocurrency-Wallet"
+        elif type.lower() == "user-agent" or type.lower() == "x-opencti-user-agent":
+            type = "User-Agent"
+        elif (
+            type.lower() == "cryptographic-key"
+            or type.lower() == "x-opencti-cryptographic-key"
+        ):
+            type = "Cryptographic-Key"
+        elif type.lower() == "text" or type.lower() == "x-opencti-text":
+            type = "Text"
 
-        x_opencti_description = (
-            observable_data["x_opencti_description"]
-            if "x_opencti_description" in observable_data
-            else None
-        )
+        if "x_opencti_description" in observable_data:
+            x_opencti_description = observable_data["x_opencti_description"]
+        else:
+            x_opencti_description = self.opencti.get_attribute_in_extension(
+                "description", observable_data
+            )
+
         if simple_observable_description is not None:
             x_opencti_description = simple_observable_description
-        x_opencti_score = (
-            observable_data["x_opencti_score"]
-            if "x_opencti_score" in observable_data
-            else x_opencti_score
-        )
-        if simple_observable_description is not None:
-            x_opencti_description = simple_observable_description
+
+        if "x_opencti_score" in observable_data:
+            x_opencti_score = observable_data["x_opencti_score"]
+        elif (
+            self.opencti.get_attribute_in_extension("score", observable_data)
+            is not None
+        ):
+            x_opencti_score = self.opencti.get_attribute_in_extension(
+                "score", observable_data
+            )
 
         stix_id = observable_data["id"] if "id" in observable_data else None
         if simple_observable_id is not None:
@@ -633,7 +629,7 @@ class StixCyberObservable:
                     $createdBy: String,
                     $objectMarking: [String],
                     $objectLabel: [String],
-                    $externalReferences: [String],                    
+                    $externalReferences: [String],
                     $AutonomousSystem: AutonomousSystemAddInput,
                     $Directory: DirectoryAddInput,
                     $DomainName: DomainNameAddInput,
@@ -654,12 +650,11 @@ class StixCyberObservable:
                     $UserAccount: UserAccountAddInput,
                     $WindowsRegistryKey: WindowsRegistryKeyAddInput,
                     $WindowsRegistryValueType: WindowsRegistryValueTypeAddInput,
-                    $X509V3ExtensionsType: X509V3ExtensionsTypeAddInput,
-                    $XOpenCTICryptographicKey: XOpenCTICryptographicKeyAddInput,
-                    $XOpenCTICryptocurrencyWallet: XOpenCTICryptocurrencyWalletAddInput,
-                    $XOpenCTIHostname: XOpenCTIHostnameAddInput
-                    $XOpenCTIText: XOpenCTITextAddInput,
-                    $XOpenCTIUserAgent: XOpenCTIUserAgentAddInput
+                    $CryptographicKey: CryptographicKeyAddInput,
+                    $CryptocurrencyWallet: CryptocurrencyWalletAddInput,
+                    $Hostname: HostnameAddInput
+                    $Text: TextAddInput,
+                    $UserAgent: UserAgentAddInput
                 ) {
                     stixCyberObservableAdd(
                         type: $type,
@@ -670,7 +665,7 @@ class StixCyberObservable:
                         createdBy: $createdBy,
                         objectMarking: $objectMarking,
                         objectLabel: $objectLabel,
-                        externalReferences: $externalReferences,             
+                        externalReferences: $externalReferences,
                         AutonomousSystem: $AutonomousSystem,
                         Directory: $Directory,
                         DomainName: $DomainName,
@@ -691,12 +686,11 @@ class StixCyberObservable:
                         UserAccount: $UserAccount,
                         WindowsRegistryKey: $WindowsRegistryKey,
                         WindowsRegistryValueType: $WindowsRegistryValueType,
-                        X509V3ExtensionsType: $X509V3ExtensionsType,
-                        XOpenCTICryptographicKey: $XOpenCTICryptographicKey,
-                        XOpenCTICryptocurrencyWallet: $XOpenCTICryptocurrencyWallet,
-                        XOpenCTIHostname: $XOpenCTIHostname,
-                        XOpenCTIText: $XOpenCTIText,
-                        XOpenCTIUserAgent: $XOpenCTIUserAgent
+                        CryptographicKey: $CryptographicKey,
+                        CryptocurrencyWallet: $CryptocurrencyWallet,
+                        Hostname: $Hostname,
+                        Text: $Text,
+                        UserAgent: $UserAgent
                     ) {
                         id
                         standard_id
@@ -1043,97 +1037,35 @@ class StixCyberObservable:
                     if "data_type" in observable_data
                     else None,
                 }
-            elif type == "X509-V3-Extensions-Type":
-                input_variables["X509V3ExtensionsType"] = {
-                    "basic_constraints": observable_data["basic_constraints"]
-                    if "basic_constraints" in observable_data
-                    else None,
-                    "name_constraints": observable_data["name_constraints"]
-                    if "name_constraints" in observable_data
-                    else None,
-                    "policy_constraints": observable_data["policy_constraints"]
-                    if "policy_constraints" in observable_data
-                    else None,
-                    "key_usage": observable_data["key_usage"]
-                    if "key_usage" in observable_data
-                    else None,
-                    "extended_key_usage": observable_data["extended_key_usage"]
-                    if "extended_key_usage" in observable_data
-                    else None,
-                    "subject_key_identifier": observable_data["subject_key_identifier"]
-                    if "subject_key_identifier" in observable_data
-                    else None,
-                    "authority_key_identifier": observable_data[
-                        "authority_key_identifier"
-                    ]
-                    if "authority_key_identifier" in observable_data
-                    else None,
-                    "subject_alternative_name": observable_data[
-                        "subject_alternative_name"
-                    ]
-                    if "subject_alternative_name" in observable_data
-                    else None,
-                    "issuer_alternative_name": observable_data[
-                        "issuer_alternative_name"
-                    ]
-                    if "issuer_alternative_name" in observable_data
-                    else None,
-                    "subject_directory_attributes": observable_data[
-                        "subject_directory_attributes"
-                    ]
-                    if "subject_directory_attributes" in observable_data
-                    else None,
-                    "crl_distribution_points": observable_data[
-                        "crl_distribution_points"
-                    ]
-                    if "crl_distribution_points" in observable_data
-                    else None,
-                    "inhibit_any_policy": observable_data["inhibit_any_policy"]
-                    if "inhibit_any_policy" in observable_data
-                    else None,
-                    "private_key_usage_period_not_before": observable_data[
-                        "private_key_usage_period_not_before"
-                    ]
-                    if "private_key_usage_period_not_before" in observable_data
-                    else None,
-                    "private_key_usage_period_not_after": observable_data[
-                        "private_key_usage_period_not_after"
-                    ]
-                    if "private_key_usage_period_not_after" in observable_data
-                    else None,
-                    "certificate_policies": observable_data["certificate_policies"]
-                    if "certificate_policies" in observable_data
-                    else None,
-                    "policy_mappings": observable_data["policy_mappings"]
-                    if "policy_mappings" in observable_data
-                    else None,
-                }
-            elif type == "X-OpenCTI-Cryptographic-Key":
-                input_variables["XOpenCTICryptographicKey"] = {
+            elif type == "Cryptographic-Key":
+                input_variables["CryptographicKey"] = {
                     "value": observable_data["value"]
                     if "value" in observable_data
                     else None,
                 }
-            elif type == "X-OpenCTI-Cryptocurrency-Wallet":
-                input_variables["XOpenCTICryptocurrencyWallet"] = {
+            elif (
+                type == "Cryptocurrency-Wallet"
+                or type == "X-OpenCTI-Cryptocurrency-Wallet"
+            ):
+                input_variables["CryptocurrencyWallet"] = {
                     "value": observable_data["value"]
                     if "value" in observable_data
                     else None,
                 }
-            elif type == "X-OpenCTI-Hostname":
-                input_variables["XOpenCTIHostname"] = {
+            elif type == "Hostname":
+                input_variables["Hostname"] = {
                     "value": observable_data["value"]
                     if "value" in observable_data
                     else None,
                 }
-            elif type == "X-OpenCTI-Text":
-                input_variables["XOpenCTIText"] = {
+            elif type == "Text":
+                input_variables["Text"] = {
                     "value": observable_data["value"]
                     if "value" in observable_data
                     else None,
                 }
-            elif type == "X-OpenCTI-User-Agent":
-                input_variables["XOpenCTIUserAgent"] = {
+            elif type == "User-Agent":
+                input_variables["UserAgent"] = {
                     "value": observable_data["value"]
                     if "value" in observable_data
                     else None,
@@ -1347,6 +1279,46 @@ class StixCyberObservable:
             self.opencti.log(
                 "error",
                 "[opencti_stix_cyber_observable_update_field] Missing parameters: id and input",
+            )
+            return None
+
+    """
+        Promote a Stix-Observable to an Indicator
+
+        :param id: the Stix-Observable id
+        :return void
+    """
+
+    def promote_to_indicator(self, **kwargs):
+        id = kwargs.get("id", None)
+        custom_attributes = kwargs.get("customAttributes", None)
+        if id is not None:
+            self.opencti.log("info", "Promoting Stix-Observable {" + id + "}.")
+            query = (
+                """
+                    mutation StixCyberObservableEdit($id: ID!) {
+                        stixCyberObservableEdit(id: $id) {
+                            promote {
+                                """
+                + (
+                    custom_attributes
+                    if custom_attributes is not None
+                    else self.properties
+                )
+                + """    
+                            }                               
+                        }
+                    }
+             """
+            )
+            result = self.opencti.query(query, {"id": id})
+            return self.opencti.process_multiple_fields(
+                result["data"]["stixCyberObservableEdit"]["promote"]
+            )
+        else:
+            self.opencti.log(
+                "error",
+                "[opencti_stix_cyber_observable_promote] Missing parameters: id",
             )
             return None
 
@@ -1795,7 +1767,7 @@ class StixCyberObservable:
         query = """
             mutation StixCyberObservablesExportPush($file: Upload!, $listFilters: String) {
                 stixCyberObservablesExportPush(file: $file, listFilters: $listFilters)
-            } 
+            }
         """
         self.opencti.query(
             query,
@@ -1832,3 +1804,434 @@ class StixCyberObservable:
         )
         # return work_id
         return result["data"]["stixCoreObjectEdit"]["askEnrichment"]["id"]
+
+    """
+        Get the reports about a Stix-Cyber-Observable object
+
+        :param id: the id of the Stix-Cyber-Observable
+        :return List of reports
+    """
+
+    def reports(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.log(
+                "info",
+                "Getting reports of the Stix-Cyber-Observable {" + id + "}.",
+            )
+            query = """
+                query StixCyberObservable($id: String!) {
+                    stixCyberObservable(id: $id) {
+                        reports {
+                            edges {
+                                node {
+                                    id
+                                    standard_id
+                                    entity_type
+                                    parent_types
+                                    spec_version
+                                    created_at
+                                    updated_at
+                                    createdBy {
+                                        ... on Identity {
+                                            id
+                                            standard_id
+                                            entity_type
+                                            parent_types
+                                            spec_version
+                                            identity_class
+                                            name
+                                            description
+                                            roles
+                                            contact_information
+                                            x_opencti_aliases
+                                            created
+                                            modified
+                                            objectLabel {
+                                                edges {
+                                                    node {
+                                                        id
+                                                        value
+                                                        color
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        ... on Organization {
+                                            x_opencti_organization_type
+                                            x_opencti_reliability
+                                        }
+                                        ... on Individual {
+                                            x_opencti_firstname
+                                            x_opencti_lastname
+                                        }
+                                    }
+                                    objectMarking {
+                                        edges {
+                                            node {
+                                                id
+                                                standard_id
+                                                entity_type
+                                                definition_type
+                                                definition
+                                                created
+                                                modified
+                                                x_opencti_order
+                                                x_opencti_color
+                                            }
+                                        }
+                                    }
+                                    objectLabel {
+                                        edges {
+                                            node {
+                                                id
+                                                value
+                                                color
+                                            }
+                                        }
+                                    }
+                                    externalReferences {
+                                        edges {
+                                            node {
+                                                id
+                                                standard_id
+                                                entity_type
+                                                source_name
+                                                description
+                                                url
+                                                hash
+                                                external_id
+                                                created
+                                                modified
+                                                importFiles {
+                                                    edges {
+                                                        node {
+                                                            id
+                                                            name
+                                                            size
+                                                            metaData {
+                                                                mimetype
+                                                                version
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    revoked
+                                    confidence
+                                    created
+                                    modified
+                                    name
+                                    description
+                                    report_types
+                                    published                                    
+                                }
+                            }
+                        }
+                    }
+                }
+             """
+            result = self.opencti.query(query, {"id": id})
+            processed_result = self.opencti.process_multiple_fields(
+                result["data"]["stixCyberObservable"]
+            )
+            if processed_result:
+                return processed_result["reports"]
+            else:
+                return []
+        else:
+            self.opencti.log("error", "Missing parameters: id")
+            return None
+
+    """
+        Get the notes about a Stix-Cyber-Observable object
+
+        :param id: the id of the Stix-Cyber-Observable
+        :return List of notes
+    """
+
+    def notes(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.log(
+                "info",
+                "Getting notes of the Stix-Cyber-Observable {" + id + "}.",
+            )
+            query = """
+                query StixCyberObservable($id: String!) {
+                    stixCyberObservable(id: $id) {
+                        notes {
+                            edges {
+                                node {
+                                    id
+                                    standard_id
+                                    entity_type
+                                    parent_types
+                                    spec_version
+                                    created_at
+                                    updated_at
+                                    createdBy {
+                                        ... on Identity {
+                                            id
+                                            standard_id
+                                            entity_type
+                                            parent_types
+                                            spec_version
+                                            identity_class
+                                            name
+                                            description
+                                            roles
+                                            contact_information
+                                            x_opencti_aliases
+                                            created
+                                            modified
+                                            objectLabel {
+                                                edges {
+                                                    node {
+                                                        id
+                                                        value
+                                                        color
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        ... on Organization {
+                                            x_opencti_organization_type
+                                            x_opencti_reliability
+                                        }
+                                        ... on Individual {
+                                            x_opencti_firstname
+                                            x_opencti_lastname
+                                        }
+                                    }
+                                    objectMarking {
+                                        edges {
+                                            node {
+                                                id
+                                                standard_id
+                                                entity_type
+                                                definition_type
+                                                definition
+                                                created
+                                                modified
+                                                x_opencti_order
+                                                x_opencti_color
+                                            }
+                                        }
+                                    }
+                                    objectLabel {
+                                        edges {
+                                            node {
+                                                id
+                                                value
+                                                color
+                                            }
+                                        }
+                                    }
+                                    externalReferences {
+                                        edges {
+                                            node {
+                                                id
+                                                standard_id
+                                                entity_type
+                                                source_name
+                                                description
+                                                url
+                                                hash
+                                                external_id
+                                                created
+                                                modified
+                                                importFiles {
+                                                    edges {
+                                                        node {
+                                                            id
+                                                            name
+                                                            size
+                                                            metaData {
+                                                                mimetype
+                                                                version
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    revoked
+                                    confidence
+                                    created
+                                    modified
+                                    attribute_abstract
+                                    content
+                                    authors                                
+                                }
+                            }
+                        }
+                    }
+                }
+             """
+            result = self.opencti.query(query, {"id": id})
+            processed_result = self.opencti.process_multiple_fields(
+                result["data"]["stixCyberObservable"]
+            )
+            if processed_result:
+                return processed_result["notes"]
+            else:
+                return []
+        else:
+            self.opencti.log("error", "Missing parameters: id")
+            return None
+
+    """
+        Get the observed data of a Stix-Cyber-Observable object
+
+        :param id: the id of the Stix-Cyber-Observable
+        :return List of observed data
+    """
+
+    def observed_data(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.log(
+                "info",
+                "Getting Observed-Data of the Stix-Cyber-Observable {" + id + "}.",
+            )
+            query = """
+                    query StixCyberObservable($id: String!) {
+                        stixCyberObservable(id: $id) {
+                            observedData {
+                                edges {
+                                    node {
+                                        id
+                                        standard_id
+                                        entity_type
+                                        parent_types
+                                        spec_version
+                                        created_at
+                                        updated_at
+                                        createdBy {
+                                            ... on Identity {
+                                                id
+                                                standard_id
+                                                entity_type
+                                                parent_types
+                                                spec_version
+                                                identity_class
+                                                name
+                                                description
+                                                roles
+                                                contact_information
+                                                x_opencti_aliases
+                                                created
+                                                modified
+                                                objectLabel {
+                                                    edges {
+                                                        node {
+                                                            id
+                                                            value
+                                                            color
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            ... on Organization {
+                                                x_opencti_organization_type
+                                                x_opencti_reliability
+                                            }
+                                            ... on Individual {
+                                                x_opencti_firstname
+                                                x_opencti_lastname
+                                            }
+                                        }
+                                        objectMarking {
+                                            edges {
+                                                node {
+                                                    id
+                                                    standard_id
+                                                    entity_type
+                                                    definition_type
+                                                    definition
+                                                    created
+                                                    modified
+                                                    x_opencti_order
+                                                    x_opencti_color
+                                                }
+                                            }
+                                        }
+                                        objectLabel {
+                                            edges {
+                                                node {
+                                                    id
+                                                    value
+                                                    color
+                                                }
+                                            }
+                                        }
+                                        externalReferences {
+                                            edges {
+                                                node {
+                                                    id
+                                                    standard_id
+                                                    entity_type
+                                                    source_name
+                                                    description
+                                                    url
+                                                    hash
+                                                    external_id
+                                                    created
+                                                    modified
+                                                    importFiles {
+                                                        edges {
+                                                            node {
+                                                                id
+                                                                name
+                                                                size
+                                                                metaData {
+                                                                    mimetype
+                                                                    version
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        revoked
+                                        confidence
+                                        created
+                                        modified
+                                        first_observed
+                                        last_observed
+                                        number_observed
+                                        importFiles {
+                                            edges {
+                                                node {
+                                                    id
+                                                    name
+                                                    size
+                                                    metaData {
+                                                        mimetype
+                                                        version
+                                                    }
+                                                }
+                                            }
+                                        }    
+                                    }
+                                }
+                            }
+                        }
+                    }
+                 """
+            result = self.opencti.query(query, {"id": id})
+            processed_result = self.opencti.process_multiple_fields(
+                result["data"]["stixCyberObservable"]
+            )
+            if processed_result:
+                return processed_result["observedData"]
+            else:
+                return []
+        else:
+            self.opencti.log("error", "Missing parameters: id")
+            return None

@@ -2,6 +2,7 @@
 
 import json
 import os
+
 import magic
 
 
@@ -40,7 +41,7 @@ class StixDomainObject:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -120,7 +121,7 @@ class StixDomainObject:
                     edges {
                         node {
                             id
-                            standard_id                            
+                            standard_id
                             entity_type
                             kill_chain_name
                             phase_name
@@ -148,13 +149,17 @@ class StixDomainObject:
                         node {
                             ... on BasicObject {
                                 id
+                                entity_type
+                                standard_id
                             }
                             ... on BasicRelationship {
                                 id
-                            } 
+                                entity_type
+                                standard_id
+                            }
                         }
                     }
-                }                
+                }
             }
             ... on ObservedData {
                 first_observed
@@ -165,13 +170,17 @@ class StixDomainObject:
                         node {
                             ... on BasicObject {
                                 id
+                                entity_type
+                                standard_id
                             }
                             ... on BasicRelationship {
                                 id
-                            } 
+                                entity_type
+                                standard_id
+                            }
                         }
                     }
-                }                
+                }
             }
             ... on Opinion {
                 explanation
@@ -182,13 +191,17 @@ class StixDomainObject:
                         node {
                             ... on BasicObject {
                                 id
+                                entity_type
+                                standard_id
                             }
                             ... on BasicRelationship {
                                 id
-                            } 
+                                entity_type
+                                standard_id
+                            }
                         }
                     }
-                }                
+                }
             }
             ... on Report {
                 name
@@ -200,10 +213,14 @@ class StixDomainObject:
                         node {
                             ... on BasicObject {
                                 id
+                                entity_type
+                                standard_id
                             }
                             ... on BasicRelationship {
                                 id
-                            } 
+                                entity_type
+                                standard_id
+                            }
                         }
                     }
                 }
@@ -321,7 +338,7 @@ class StixDomainObject:
                     edges {
                         node {
                             id
-                            standard_id                            
+                            standard_id
                             entity_type
                             kill_chain_name
                             phase_name
@@ -495,7 +512,7 @@ class StixDomainObject:
 
     """
         Read a Stix-Domain-Object object
-        
+
         :param id: the id of the Stix-Domain-Object
         :param types: list of Stix Domain Entity types
         :param filters: the filters to apply if no id provided
@@ -650,7 +667,7 @@ class StixDomainObject:
             return None
 
     """
-        Upload a file in this Stix-Domain-Object 
+        Upload a file in this Stix-Domain-Object
 
         :param id: the Stix-Domain-Object id
         :param file_name
@@ -704,7 +721,7 @@ class StixDomainObject:
         query = """
             mutation StixDomainObjectsExportPush($type: String!, $file: Upload!, $listFilters: String) {
                 stixDomainObjectsExportPush(type: $type, file: $file, listFilters: $listFilters)
-            } 
+            }
         """
         self.opencti.query(
             query,
@@ -721,7 +738,7 @@ class StixDomainObject:
                 stixDomainObjectEdit(id: $id) {
                     exportPush(file: $file)
                 }
-            } 
+            }
         """
         self.opencti.query(
             query, {"id": entity_id, "file": (self.file(file_name, data))}
@@ -1204,7 +1221,7 @@ class StixDomainObject:
         Get the reports about a Stix-Domain-Object object
 
         :param id: the id of the Stix-Domain-Object
-        :return Stix-Domain-Object object
+        :return List of reports
     """
 
     def reports(self, **kwargs):
@@ -1223,72 +1240,74 @@ class StixDomainObject:
                                     id
                                     standard_id
                                     entity_type
+                                    parent_types
                                     spec_version
-                                    
-                                    name
-                                    alias
-                                    description
-                                    report_class
-                                    published
-                                    source_confidence_level
-                                    graph_data
-                                    created
-                                    modified
                                     created_at
                                     updated_at
                                     createdBy {
-                                        node {
+                                        ... on Identity {
                                             id
+                                            standard_id
                                             entity_type
-                                            stix_id
-                                            stix_label
+                                            parent_types
+                                            spec_version
+                                            identity_class
                                             name
-                                            alias
                                             description
+                                            roles
+                                            contact_information
+                                            x_opencti_aliases
                                             created
                                             modified
+                                            objectLabel {
+                                                edges {
+                                                    node {
+                                                        id
+                                                        value
+                                                        color
+                                                    }
+                                                }
+                                            }
                                         }
-                                        relation {
-                                            id
+                                        ... on Organization {
+                                            x_opencti_organization_type
+                                            x_opencti_reliability
+                                        }
+                                        ... on Individual {
+                                            x_opencti_firstname
+                                            x_opencti_lastname
                                         }
                                     }
-                                    markingDefinitions {
+                                    objectMarking {
                                         edges {
                                             node {
                                                 id
+                                                standard_id
                                                 entity_type
-                                                stix_id
                                                 definition_type
                                                 definition
-                                                level
-                                                color
                                                 created
                                                 modified
-                                            }
-                                            relation {
-                                                id
+                                                x_opencti_order
+                                                x_opencti_color
                                             }
                                         }
                                     }
-                                    labels {
+                                    objectLabel {
                                         edges {
                                             node {
                                                 id
-                                                label_type
                                                 value
                                                 color
                                             }
-                                            relation {
-                                                id
-                                            }
                                         }
-                                    }            
+                                    }
                                     externalReferences {
                                         edges {
                                             node {
                                                 id
+                                                standard_id
                                                 entity_type
-                                                stix_id
                                                 source_name
                                                 description
                                                 url
@@ -1296,51 +1315,30 @@ class StixDomainObject:
                                                 external_id
                                                 created
                                                 modified
-                                            }
-                                            relation {
-                                                id
-                                            }
-                                        }
-                                    }
-                                    objectRefs {
-                                        edges {
-                                            node {
-                                                id
-                                                stix_id
-                                                entity_type
-                                            }
-                                            relation {
-                                                id
+                                                importFiles {
+                                                    edges {
+                                                        node {
+                                                            id
+                                                            name
+                                                            size
+                                                            metaData {
+                                                                mimetype
+                                                                version
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
-                                    observableRefs {
-                                        edges {
-                                            node {
-                                                id
-                                                stix_id
-                                                entity_type
-                                                observable_value
-                                            }
-                                            relation {
-                                                id
-                                            }
-                                        }
-                                    }
-                                    relationRefs {
-                                        edges {
-                                            node {
-                                                id
-                                                stix_id
-                                            }
-                                            relation {
-                                                id
-                                            }
-                                        }
-                                    }
-                                }
-                                relation {
-                                    id
+                                    revoked
+                                    confidence
+                                    created
+                                    modified
+                                    name
+                                    description
+                                    report_types
+                                    published                                    
                                 }
                             }
                         }
@@ -1349,7 +1347,7 @@ class StixDomainObject:
              """
             result = self.opencti.query(query, {"id": id})
             processed_result = self.opencti.process_multiple_fields(
-                result["data"]["Stix-Domain-Object"]
+                result["data"]["stixDomainObject"]
             )
             if processed_result:
                 return processed_result["reports"]
@@ -1363,7 +1361,7 @@ class StixDomainObject:
         Get the notes about a Stix-Domain-Object object
 
         :param id: the id of the Stix-Domain-Object
-        :return Stix-Domain-Object object
+        :return List of notes
     """
 
     def notes(self, **kwargs):
@@ -1380,71 +1378,76 @@ class StixDomainObject:
                             edges {
                                 node {
                                     id
-                                    stix_id
+                                    standard_id
                                     entity_type
-                                    stix_label
-                                    name
-                                    alias
-                                    description
-                                    content
-                                    graph_data
-                                    created
-                                    modified
+                                    parent_types
+                                    spec_version
                                     created_at
                                     updated_at
                                     createdBy {
-                                        node {
+                                        ... on Identity {
                                             id
+                                            standard_id
                                             entity_type
-                                            stix_id
-                                            stix_label
+                                            parent_types
+                                            spec_version
+                                            identity_class
                                             name
-                                            alias
                                             description
+                                            roles
+                                            contact_information
+                                            x_opencti_aliases
                                             created
                                             modified
+                                            objectLabel {
+                                                edges {
+                                                    node {
+                                                        id
+                                                        value
+                                                        color
+                                                    }
+                                                }
+                                            }
                                         }
-                                        relation {
-                                            id
+                                        ... on Organization {
+                                            x_opencti_organization_type
+                                            x_opencti_reliability
+                                        }
+                                        ... on Individual {
+                                            x_opencti_firstname
+                                            x_opencti_lastname
                                         }
                                     }
-                                    markingDefinitions {
+                                    objectMarking {
                                         edges {
                                             node {
                                                 id
+                                                standard_id
                                                 entity_type
-                                                stix_id
                                                 definition_type
                                                 definition
-                                                level
-                                                color
                                                 created
                                                 modified
-                                            }
-                                            relation {
-                                                id
+                                                x_opencti_order
+                                                x_opencti_color
                                             }
                                         }
                                     }
-                                    labels {
+                                    objectLabel {
                                         edges {
                                             node {
                                                 id
-                                                label_type
                                                 value
                                                 color
                                             }
-                                            relation {
-                                                id
-                                            }
                                         }
-                                    }            
+                                    }
                                     externalReferences {
                                         edges {
                                             node {
                                                 id
+                                                standard_id
                                                 entity_type
-                                                stix_id
                                                 source_name
                                                 description
                                                 url
@@ -1452,51 +1455,29 @@ class StixDomainObject:
                                                 external_id
                                                 created
                                                 modified
-                                            }
-                                            relation {
-                                                id
-                                            }
-                                        }
-                                    }
-                                    objectRefs {
-                                        edges {
-                                            node {
-                                                id
-                                                stix_id
-                                                entity_type
-                                            }
-                                            relation {
-                                                id
+                                                importFiles {
+                                                    edges {
+                                                        node {
+                                                            id
+                                                            name
+                                                            size
+                                                            metaData {
+                                                                mimetype
+                                                                version
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
-                                    observableRefs {
-                                        edges {
-                                            node {
-                                                id
-                                                stix_id
-                                                entity_type
-                                                observable_value
-                                            }
-                                            relation {
-                                                id
-                                            }
-                                        }
-                                    }
-                                    relationRefs {
-                                        edges {
-                                            node {
-                                                id
-                                                stix_id
-                                            }
-                                            relation {
-                                                id
-                                            }
-                                        }
-                                    }
-                                }
-                                relation {
-                                    id
+                                    revoked
+                                    confidence
+                                    created
+                                    modified
+                                    attribute_abstract
+                                    content
+                                    authors                                  
                                 }
                             }
                         }
@@ -1505,10 +1486,162 @@ class StixDomainObject:
              """
             result = self.opencti.query(query, {"id": id})
             processed_result = self.opencti.process_multiple_fields(
-                result["data"]["Stix-Domain-Object"]
+                result["data"]["stixDomainObject"]
             )
             if processed_result:
                 return processed_result["notes"]
+            else:
+                return []
+        else:
+            self.opencti.log("error", "Missing parameters: id")
+            return None
+
+    """
+        Get the observed data of a Stix-Domain-Object object
+
+        :param id: the id of the Stix-Domain-Object
+        :return List of observed data
+    """
+
+    def observed_data(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.log(
+                "info",
+                "Getting Observed-Data of the Stix-Domain-Object {" + id + "}.",
+            )
+            query = """
+                    query StixDomainObject($id: String!) {
+                        stixDomainObject(id: $id) {
+                            observedData {
+                                edges {
+                                    node {
+                                        id
+                                        standard_id
+                                        entity_type
+                                        parent_types
+                                        spec_version
+                                        created_at
+                                        updated_at
+                                        createdBy {
+                                            ... on Identity {
+                                                id
+                                                standard_id
+                                                entity_type
+                                                parent_types
+                                                spec_version
+                                                identity_class
+                                                name
+                                                description
+                                                roles
+                                                contact_information
+                                                x_opencti_aliases
+                                                created
+                                                modified
+                                                objectLabel {
+                                                    edges {
+                                                        node {
+                                                            id
+                                                            value
+                                                            color
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            ... on Organization {
+                                                x_opencti_organization_type
+                                                x_opencti_reliability
+                                            }
+                                            ... on Individual {
+                                                x_opencti_firstname
+                                                x_opencti_lastname
+                                            }
+                                        }
+                                        objectMarking {
+                                            edges {
+                                                node {
+                                                    id
+                                                    standard_id
+                                                    entity_type
+                                                    definition_type
+                                                    definition
+                                                    created
+                                                    modified
+                                                    x_opencti_order
+                                                    x_opencti_color
+                                                }
+                                            }
+                                        }
+                                        objectLabel {
+                                            edges {
+                                                node {
+                                                    id
+                                                    value
+                                                    color
+                                                }
+                                            }
+                                        }
+                                        externalReferences {
+                                            edges {
+                                                node {
+                                                    id
+                                                    standard_id
+                                                    entity_type
+                                                    source_name
+                                                    description
+                                                    url
+                                                    hash
+                                                    external_id
+                                                    created
+                                                    modified
+                                                    importFiles {
+                                                        edges {
+                                                            node {
+                                                                id
+                                                                name
+                                                                size
+                                                                metaData {
+                                                                    mimetype
+                                                                    version
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        revoked
+                                        confidence
+                                        created
+                                        modified
+                                        first_observed
+                                        last_observed
+                                        number_observed
+                                        importFiles {
+                                            edges {
+                                                node {
+                                                    id
+                                                    name
+                                                    size
+                                                    metaData {
+                                                        mimetype
+                                                        version
+                                                    }
+                                                }
+                                            }
+                                        }    
+                                    }
+                                }
+                            }
+                        }
+                    }
+                 """
+            result = self.opencti.query(query, {"id": id})
+            processed_result = self.opencti.process_multiple_fields(
+                result["data"]["stixDomainObject"]
+            )
+            if processed_result:
+                return processed_result["observedData"]
             else:
                 return []
         else:

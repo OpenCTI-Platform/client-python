@@ -1,18 +1,10 @@
-requests~=2.26.0
-PyYAML~=5.4
-setuptools~=57.0.0
 datefinder~=0.7
-stix2~=2.1.0
 pika~=1.2
-sseclient~=0.0.27
-python_json_logger~=2.0.2
 python-magic~=0.4.24; sys_platform == 'linux' or sys_platform == 'darwin'
 python-magic-bin~=0.4.14; sys_platform == 'win32'
-pycti~=5.0.3
-python-dateutil~=2.8.1
-pytz~=2021.3
-pydantic~=1.8.2
-urllib3~=1.26.7
-celery~=5.2.1
-python-magic~=0.4.24
-APScheduler~=3.8.1
+python_json_logger~=2.0.2
+PyYAML~=6.0
+requests>=2.25
+setuptools>=59.2.0
+sseclient~=0.0.27
+stix2~=3.0.1

@@ -2,7 +2,10 @@
 
 import json
 import os
+import uuid
+
 import magic
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class ExternalReference:
@@ -38,6 +41,18 @@ class ExternalReference:
             }
         """
 
+    @staticmethod
+    def generate_id(url=None, source_name=None, external_id=None):
+        if url is not None:
+            data = {"url": url}
+        elif source_name is not None and external_id is not None:
+            data = {"source_name": source_name, "external_id": external_id}
+        else:
+            return None
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "external-reference--" + id
+
     """
         List External-Reference objects
 
@@ -53,6 +68,7 @@ class ExternalReference:
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
         if get_all:
@@ -69,7 +85,7 @@ class ExternalReference:
                     edges {
                         node {
                             """
-            + self.properties
+            + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
                     }
@@ -157,7 +173,7 @@ class ExternalReference:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
-        if source_name is not None and url is not None:
+        if source_name is not None or url is not None:
             self.opencti.log(
                 "info", "Creating External Reference {" + source_name + "}."
             )

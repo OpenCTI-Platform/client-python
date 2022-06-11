@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class AttackPattern:
@@ -116,7 +119,7 @@ class AttackPattern:
                 edges {
                     node {
                         id
-                        standard_id                            
+                        standard_id
                         entity_type
                         kill_chain_name
                         phase_name
@@ -140,6 +143,17 @@ class AttackPattern:
                 }
             }
         """
+
+    @staticmethod
+    def generate_id(name, x_mitre_id=None):
+        name = name.lower().strip()
+        if x_mitre_id is not None:
+            data = {"x_mitre_id": x_mitre_id}
+        else:
+            data = {"name": name}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "attack-pattern--" + id
 
     """
         List Attack-Pattern objects
@@ -228,7 +242,7 @@ class AttackPattern:
 
     """
         Read a Attack-Pattern object
-        
+
         :param id: the id of the Attack-Pattern
         :param filters: the filters to apply if no id provided
         :return Attack-Pattern object
@@ -288,7 +302,7 @@ class AttackPattern:
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
-        description = kwargs.get("description", "")
+        description = kwargs.get("description", None)
         aliases = kwargs.get("aliases", None)
         x_mitre_platforms = kwargs.get("x_mitre_platforms", None)
         x_mitre_permissions_required = kwargs.get("x_mitre_permissions_required", None)
@@ -298,7 +312,7 @@ class AttackPattern:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None:
+        if name is not None:
             self.opencti.log("info", "Creating Attack-Pattern {" + name + "}.")
             query = """
                 mutation AttackPatternAdd($input: AttackPatternAddInput) {
@@ -362,12 +376,20 @@ class AttackPattern:
             x_mitre_id = None
             if "x_mitre_id" in stix_object:
                 x_mitre_id = stix_object["x_mitre_id"]
+            elif (
+                self.opencti.get_attribute_in_mitre_extension("id", stix_object)
+                is not None
+            ):
+                x_mitre_id = self.opencti.get_attribute_in_mitre_extension(
+                    "id", stix_object
+                )
             elif "external_references" in stix_object:
                 for external_reference in stix_object["external_references"]:
                     if (
                         external_reference["source_name"] == "mitre-attack"
                         or external_reference["source_name"] == "mitre-pre-attack"
                         or external_reference["source_name"] == "mitre-mobile-attack"
+                        or external_reference["source_name"] == "mitre-ics-attack"
                         or external_reference["source_name"] == "amitt-attack"
                     ):
                         x_mitre_id = (
@@ -376,19 +398,37 @@ class AttackPattern:
                             else None
                         )
 
-            # TODO: Compatibility with OpenCTI 3.X to be REMOVED
+            # Search in extensions
             if "x_opencti_order" not in stix_object:
                 stix_object["x_opencti_order"] = (
-                    stix_object["x_opencti_level"]
-                    if "x_opencti_level" in stix_object
+                    self.opencti.get_attribute_in_extension("order", stix_object)
+                    if self.opencti.get_attribute_in_extension("order", stix_object)
+                    is not None
                     else 0
                 )
-            if "x_mitre_id" not in stix_object:
-                stix_object["x_mitre_id"] = (
-                    stix_object["x_opencti_external_id"]
-                    if "x_opencti_external_id" in stix_object
-                    else None
+            if "x_mitre_platforms" not in stix_object:
+                stix_object[
+                    "x_mitre_platforms"
+                ] = self.opencti.get_attribute_in_mitre_extension(
+                    "platforms", stix_object
                 )
+            if "x_mitre_permissions_required" not in stix_object:
+                stix_object[
+                    "x_mitre_permissions_required"
+                ] = self.opencti.get_attribute_in_mitre_extension(
+                    "permissions_required", stix_object
+                )
+            if "x_mitre_detection" not in stix_object:
+                stix_object[
+                    "x_mitre_detection"
+                ] = self.opencti.get_attribute_in_mitre_extension(
+                    "detection", stix_object
+                )
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]

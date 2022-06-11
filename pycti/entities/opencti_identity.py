@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 from pycti.utils.constants import IdentityTypes
 
@@ -39,7 +42,7 @@ class Identity:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -135,6 +138,14 @@ class Identity:
             }
         """
 
+    @staticmethod
+    def generate_id(name, identity_class):
+        name = name.lower().strip()
+        data = {"name": name, "identity_class": identity_class}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "identity--" + id
+
     """
         List Identity objects
 
@@ -203,7 +214,7 @@ class Identity:
 
     """
         Read a Identity object
-        
+
         :param id: the id of the Identity
         :param filters: the filters to apply if no id provided
         :return Identity object
@@ -371,6 +382,41 @@ class Identity:
                     type = "Sector"
                 elif stix_object["identity_class"] == "system":
                     type = "System"
+
+            # Search in extensions
+            if "x_opencti_aliases" not in stix_object:
+                stix_object[
+                    "x_opencti_aliases"
+                ] = self.opencti.get_attribute_in_extension("aliases", stix_object)
+            if "x_opencti_organization_type" not in stix_object:
+                stix_object[
+                    "x_opencti_organization_type"
+                ] = self.opencti.get_attribute_in_extension(
+                    "organization_type", stix_object
+                )
+            if "x_opencti_reliability" not in stix_object:
+                stix_object[
+                    "x_opencti_reliability"
+                ] = self.opencti.get_attribute_in_extension("reliability", stix_object)
+            if "x_opencti_organization_type" not in stix_object:
+                stix_object[
+                    "x_opencti_organization_type"
+                ] = self.opencti.get_attribute_in_extension(
+                    "organization_type", stix_object
+                )
+            if "x_opencti_firstname" not in stix_object:
+                stix_object[
+                    "x_opencti_firstname"
+                ] = self.opencti.get_attribute_in_extension("firstname", stix_object)
+            if "x_opencti_lastname" not in stix_object:
+                stix_object[
+                    "x_opencti_lastname"
+                ] = self.opencti.get_attribute_in_extension("lastname", stix_object)
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+
             return self.create(
                 type=type,
                 stix_id=stix_object["id"],

@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class KillChainPhase:
@@ -20,6 +23,13 @@ class KillChainPhase:
             updated_at
         """
 
+    @staticmethod
+    def generate_id(phase_name, kill_chain_name):
+        data = {"phase_name": phase_name, "kill_chain_name": kill_chain_name}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "kill-chain-phase--" + id
+
     """
         List Kill-Chain-Phase objects
 
@@ -35,6 +45,7 @@ class KillChainPhase:
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
         if get_all:
@@ -50,7 +61,7 @@ class KillChainPhase:
                     edges {
                         node {
                             """
-            + self.properties
+            + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
                     }
@@ -133,6 +144,7 @@ class KillChainPhase:
         kill_chain_name = kwargs.get("kill_chain_name", None)
         phase_name = kwargs.get("phase_name", None)
         x_opencti_order = kwargs.get("x_opencti_order", 0)
+        update = kwargs.get("update", False)
 
         if kill_chain_name is not None and phase_name is not None:
             self.opencti.log("info", "Creating Kill-Chain-Phase {" + phase_name + "}.")
@@ -157,6 +169,7 @@ class KillChainPhase:
                         "kill_chain_name": kill_chain_name,
                         "phase_name": phase_name,
                         "x_opencti_order": x_opencti_order,
+                        "update": update,
                     }
                 },
             )

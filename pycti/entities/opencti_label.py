@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Label:
@@ -14,6 +17,13 @@ class Label:
             updated_at
             standard_id
         """
+
+    @staticmethod
+    def generate_id(value):
+        data = {"value": value}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "label--" + id
 
     """
         List Label objects
@@ -30,6 +40,7 @@ class Label:
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
         if get_all:
@@ -45,7 +56,7 @@ class Label:
                     edges {
                         node {
                             """
-            + self.properties
+            + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
                     }
@@ -55,7 +66,7 @@ class Label:
                         hasNextPage
                         hasPreviousPage
                         globalCount
-                    }                    
+                    }
                 }
             }
         """
@@ -123,8 +134,10 @@ class Label:
         value = kwargs.get("value", None)
         color = kwargs.get("color", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
+        update = kwargs.get("update", False)
 
         if value is not None:
+            self.opencti.log("info", "Creating Label {" + value + "}.")
             query = (
                 """
                 mutation LabelAdd($input: LabelAddInput) {
@@ -144,6 +157,7 @@ class Label:
                         "value": value,
                         "color": color,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
+                        "update": update,
                     }
                 },
             )

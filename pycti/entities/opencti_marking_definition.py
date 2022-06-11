@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class MarkingDefinition:
@@ -21,6 +24,13 @@ class MarkingDefinition:
             updated_at
         """
 
+    @staticmethod
+    def generate_id(definition, definition_type):
+        data = {"definition": definition, "definition_type": definition_type}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "marking-definition--" + id
+
     """
         List Marking-Definition objects
 
@@ -36,6 +46,7 @@ class MarkingDefinition:
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
         if get_all:
@@ -52,7 +63,7 @@ class MarkingDefinition:
                     edges {
                         node {
                             """
-            + self.properties
+            + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
                     }
@@ -62,7 +73,7 @@ class MarkingDefinition:
                         hasNextPage
                         hasPreviousPage
                         globalCount
-                    }                    
+                    }
                 }
             }
         """
@@ -228,22 +239,44 @@ class MarkingDefinition:
 
     def import_from_stix2(self, **kwargs):
         stix_object = kwargs.get("stixObject", None)
+        update = kwargs.get("update", False)
+
         if stix_object is not None:
+            definition = None
             definition_type = stix_object["definition_type"]
-            definition = stix_object["definition"][stix_object["definition_type"]]
             if stix_object["definition_type"] == "tlp":
                 definition_type = definition_type.upper()
-                definition = (
-                    definition_type + ":" + stix_object["definition"]["tlp"].upper()
-                )
+                if "definition" in stix_object:
+                    definition = (
+                        definition_type + ":" + stix_object["definition"]["tlp"].upper()
+                    )
+                elif "name" in stix_object:
+                    definition = stix_object["name"]
+            else:
+                if "definition" in stix_object:
+                    definition = stix_object["definition"][
+                        stix_object["definition_type"]
+                    ]
+                elif "name" in stix_object:
+                    definition = stix_object["name"]
 
-            # TODO: Compatibility with OpenCTI 3.X to be REMOVED
-            if "x_opencti_order" not in stix_object:
-                stix_object["x_opencti_order"] = (
-                    stix_object["x_opencti_level"]
-                    if "x_opencti_level" in stix_object
-                    else 0
-                )
+            # Search in extensions
+            if (
+                "x_opencti_order" not in stix_object
+                and self.opencti.get_attribute_in_extension("order", stix_object)
+                is not None
+            ):
+                stix_object[
+                    "x_opencti_order"
+                ] = self.opencti.get_attribute_in_extension("order", stix_object)
+            if "x_opencti_color" not in stix_object:
+                stix_object[
+                    "x_opencti_color"
+                ] = self.opencti.get_attribute_in_extension("color", stix_object)
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.opencti.marking_definition.create(
                 stix_id=stix_object["id"],
@@ -260,6 +293,7 @@ class MarkingDefinition:
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
+                update=update,
             )
         else:
             self.opencti.log(

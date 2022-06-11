@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Infrastructure:
@@ -42,7 +45,7 @@ class Infrastructure:
                                 color
                             }
                         }
-                    }                    
+                    }
                 }
                 ... on Organization {
                     x_opencti_organization_type
@@ -119,7 +122,7 @@ class Infrastructure:
                 edges {
                     node {
                         id
-                        standard_id                            
+                        standard_id
                         entity_type
                         kill_chain_name
                         phase_name
@@ -143,6 +146,14 @@ class Infrastructure:
                 }
             }
         """
+
+    @staticmethod
+    def generate_id(name):
+        name = name.lower().strip()
+        data = {"name": name}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "infrastructure--" + id
 
     def list(self, **kwargs):
         """List Infrastructure objects
@@ -322,7 +333,7 @@ class Infrastructure:
                         id
                         standard_id
                         entity_type
-                        parent_types                    
+                        parent_types
                     }
                 }
             """
@@ -372,6 +383,13 @@ class Infrastructure:
         stix_object = kwargs.get("stixObject", None)
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
+
+        # Search in extensions
+        if "x_opencti_stix_ids" not in stix_object:
+            stix_object["x_opencti_stix_ids"] = self.opencti.get_attribute_in_extension(
+                "stix_ids", stix_object
+            )
+
         if stix_object is not None:
             return self.create(
                 stix_id=stix_object["id"],

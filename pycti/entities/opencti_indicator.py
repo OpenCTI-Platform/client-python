@@ -1,6 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Indicator:
@@ -126,6 +129,7 @@ class Indicator:
                 edges {
                     node {
                         id
+                        entity_type
                         observable_value
                     }
                 }
@@ -158,6 +162,13 @@ class Indicator:
                 }
             }
         """
+
+    @staticmethod
+    def generate_id(pattern):
+        data = {"pattern": pattern}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "indicator--" + id
 
     def list(self, **kwargs):
         """List Indicator objects
@@ -196,11 +207,11 @@ class Indicator:
         )
         query = (
             """
-            query Indicators($filters: [IndicatorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IndicatorsOrdering, $orderMode: OrderingMode) {
-                indicators(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
+                query Indicators($filters: [IndicatorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IndicatorsOrdering, $orderMode: OrderingMode) {
+                    indicators(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
             + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
@@ -277,9 +288,9 @@ class Indicator:
             self.opencti.log("info", "Reading Indicator {" + id + "}.")
             query = (
                 """
-                query Indicator($id: String!) {
-                    indicator(id: $id) {
-                        """
+                    query Indicator($id: String!) {
+                        indicator(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
@@ -341,6 +352,7 @@ class Indicator:
         x_mitre_platforms = kwargs.get("x_mitre_platforms", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
+        create_observables = kwargs.get("x_opencti_create_observables", False)
         update = kwargs.get("update", False)
 
         if (
@@ -400,6 +412,7 @@ class Indicator:
                         "x_mitre_platforms": x_mitre_platforms,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "killChainPhases": kill_chain_phases,
+                        "createObservables": create_observables,
                         "update": update,
                     }
                 },
@@ -485,6 +498,39 @@ class Indicator:
         extras = kwargs.get("extras", {})
         update = kwargs.get("update", False)
         if stix_object is not None:
+
+            # Search in extensions
+            if "x_opencti_score" not in stix_object:
+                stix_object[
+                    "x_opencti_score"
+                ] = self.opencti.get_attribute_in_extension("score", stix_object)
+            if "x_opencti_detection" not in stix_object:
+                stix_object[
+                    "x_opencti_detection"
+                ] = self.opencti.get_attribute_in_extension("detection", stix_object)
+            if (
+                "x_opencti_main_observable_type" not in stix_object
+                and self.opencti.get_attribute_in_extension(
+                    "main_observable_type", stix_object
+                )
+                is not None
+            ):
+                stix_object[
+                    "x_opencti_main_observable_type"
+                ] = self.opencti.get_attribute_in_extension(
+                    "main_observable_type", stix_object
+                )
+            if "x_opencti_create_observables" not in stix_object:
+                stix_object[
+                    "x_opencti_create_observables"
+                ] = self.opencti.get_attribute_in_extension(
+                    "create_observables", stix_object
+                )
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object[
+                    "x_opencti_stix_ids"
+                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
@@ -547,6 +593,9 @@ class Indicator:
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
+                x_opencti_create_observables=stix_object["x_opencti_create_observables"]
+                if "x_opencti_create_observables" in stix_object
+                else False,
                 update=update,
             )
         else:
