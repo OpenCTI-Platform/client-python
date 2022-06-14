@@ -9,6 +9,7 @@ from .connector.opencti_connector_helper import (
     OpenCTIConnectorHelper,
     get_config_variable,
 )
+from .connector.new import *
 from .entities.opencti_attack_pattern import AttackPattern
 from .entities.opencti_campaign import Campaign
 from .entities.opencti_course_of_action import CourseOfAction
