@@ -9,7 +9,8 @@ from .connector.opencti_connector_helper import (
     OpenCTIConnectorHelper,
     get_config_variable,
 )
-from .connector.new import *
+from .connector.new.libs.orchestrator_schemas import *
+from .connector.new.connector import Connector
 from .entities.opencti_attack_pattern import AttackPattern
 from .entities.opencti_campaign import Campaign
 from .entities.opencti_course_of_action import CourseOfAction
@@ -53,6 +54,7 @@ from .utils.opencti_stix2_utils import OpenCTIStix2Utils
 
 __all__ = [
     "AttackPattern",
+    "Connector",
     "Campaign",
     "ConnectorType",
     "CourseOfAction",
