@@ -4,13 +4,13 @@ from typing import Dict, Any
 # from pycti.connector.v2.connectors.connector import ApplicationSettings
 from pydantic import BaseModel
 
-from pycti.connector.v2.connectors.external_import_connector import (
+from pycti.connector.new.connectors.external_import_connector import (
     ExternalImportConnector,
 )
-from pycti.connector.v2.connectors.import_file_connector import (
+from pycti.connector.new.connectors.import_file_connector import (
     InternalImportFileConnector,
 )
-from pycti.connector.v2.libs.mixins.http import HttpMixin
+from pycti.connector.new.libs.mixins.http import HttpMixin
 
 
 class EIModel(BaseModel):

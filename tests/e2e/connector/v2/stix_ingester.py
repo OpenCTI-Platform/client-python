@@ -3,10 +3,10 @@ import json
 from pydantic import BaseModel, Extra
 
 from pycti import OpenCTIApiClient, ConnectorType
-from pycti.connector.v2.connectors.connector import Connector
+from pycti.connector.new.connectors.connector import Connector
 from stix2 import IPv4Address, Bundle
 
-from pycti.connector.v2.libs.orchestrator_schemas import ConnectorCreate, Config
+from pycti.connector.new.libs.orchestrator_schemas import ConnectorCreate, Config
 
 PROCESSING_COUNT: int = 5
 MAX_PROCESSING_COUNT: int = 30

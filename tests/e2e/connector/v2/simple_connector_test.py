@@ -5,8 +5,8 @@ from typing import List, Optional
 import requests
 from time import sleep
 
-from pycti.connector.v2.connectors.connector import Connector
-from pycti.connector.v2.libs.orchestrator_schemas import (
+from pycti.connector.new.connectors.connector import Connector
+from pycti.connector.new.libs.orchestrator_schemas import (
     WorkflowCreate,
     RunCreate,
     ConfigCreate,

@@ -4,7 +4,7 @@ from typing import Dict, Callable
 import pika
 from pika.exceptions import StreamLostError
 
-from pycti.connector.v2.libs.orchestrator_schemas import RunContainer
+from pycti.connector.new.libs.orchestrator_schemas import RunContainer
 
 
 class PikaBroker(threading.Thread):

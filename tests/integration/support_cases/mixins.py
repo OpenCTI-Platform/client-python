@@ -2,7 +2,7 @@ from typing import List
 
 from pytest_httpserver import HTTPServer
 
-from pycti.connector.v2.libs.mixins.http import HttpMixin
+from pycti.connector.new.libs.mixins.http import HttpMixin
 
 
 class SuccessMixinTests:
