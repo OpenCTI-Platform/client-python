@@ -10,7 +10,7 @@ from pydantic import Json, BaseModel
 from stix2 import Bundle
 from stix2.workbench import parse
 
-from pycti.connector.new.connectors.utils import ConnectorBaseConfig, RunException
+from pycti.connector.new.utils import ConnectorBaseConfig, RunException
 from pycti.connector.new.libs.orchestrator_schemas import (
     ConnectorCreate,
     Connector as ConnectorSchema,
@@ -21,7 +21,7 @@ from pycti.connector.new.libs.orchestrator_schemas import (
     RunUpdate,
 )
 from pycti.connector.new.libs.connector_utils import get_logger
-from pycti.connector.new.libs.pika_broker import PikaBroker
+from pycti.connector.new.libs.messaging.pika_broker import PikaBroker
 
 
 class Connector(object):
