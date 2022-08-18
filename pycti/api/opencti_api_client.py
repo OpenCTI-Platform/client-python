@@ -4,7 +4,7 @@ import datetime
 import io
 import json
 import logging
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
 
 import magic
 import requests
@@ -49,6 +49,8 @@ from pycti.entities.opencti_vulnerability import Vulnerability
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+AnyDict = Dict[str, Any]
 
 
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
@@ -432,126 +434,107 @@ class OpenCTIApiClient:
         else:
             return False
 
-    def process_multiple(self, data: dict, with_pagination=False) -> Union[dict, list]:
-        """processes data returned by the OpenCTI API with multiple entities
-
-        :param data: data to process
-        :param with_pagination: whether to use pagination with the API
-        :returns: returns either a dict or list with the processes entities
+    def process_multiple(
+        self,
+        data: AnyDict,
+        with_pagination: bool = False,
+    ) -> Union[AnyDict, List[AnyDict]]:
         """
+        Process data returned by the OpenCTI API with multiple entities by flattening
+        a connection { edge { node { T } } into a T[]
+        :param data: Data to process
+        :param with_pagination: Whether to use pagination with the API
+        :return: A list of processed entities, inside a dict if with_pagination was enabled
+        """
+
+        if data is None:
+            data = {}
 
         if with_pagination:
             result = {"entities": [], "pagination": {}}
+            edges = data.get("edges") or []
+            for edge in edges:
+                node = edge["node"]
+                result["entities"].append(self.process_multiple_fields(node))
+                result["pagination"] = data["pageInfo"]
         else:
             result = []
-        if data is None:
-            return result
-        for edge in (
-            data["edges"] if "edges" in data and data["edges"] is not None else []
-        ):
-            row = edge["node"]
-            if with_pagination:
-                result["entities"].append(self.process_multiple_fields(row))
-            else:
-                result.append(self.process_multiple_fields(row))
-        if with_pagination and "pageInfo" in data:
-            result["pagination"] = data["pageInfo"]
+            edges = data.get("edges") or []
+            for edge in edges:
+                node = edge["node"]
+                result.append(self.process_multiple_fields(node))
+
         return result
 
-    def process_multiple_ids(self, data) -> list:
-        """processes data returned by the OpenCTI API with multiple ids
+    def process_multiple_ids(self, data: AnyDict) -> List[str]:
+        """
+        Process data returned by the OpenCTI API with multiple ids by extracting all
+        the entity IDs in a list of entities.
 
-        :param data: data to process
-        :return: returns a list of ids
+        :param data: Data to process
+        :return: A list of IDs
         """
 
         result = []
+
         if data is None:
             return result
+
         if isinstance(data, list):
-            for d in data:
-                if isinstance(d, dict) and "id" in d:
-                    result.append(d["id"])
+            for node in data:
+                if isinstance(node, dict) and (id := node.get("id")):
+                    result.append(id)
+
         return result
 
-    def process_multiple_fields(self, data):
-        """processes data returned by the OpenCTI API with multiple fields
+    def process_multiple_fields(self, data: AnyDict) -> Optional[AnyDict]:
+        """
+        Processes data returned by the OpenCTI API with multiple fields by flattening
+        connections and extracting "<name>Ids" fields from lists of entities within.
 
         :param data: data to process
-        :type data: dict
-        :return: returns the data dict with all fields processed
-        :rtype: dict
+        :return: The data dict with all fields processed
         """
 
         if data is None:
             return data
-        if "createdBy" in data and data["createdBy"] is not None:
-            data["createdById"] = data["createdBy"]["id"]
-            if "objectMarking" in data["createdBy"]:
-                data["createdBy"]["objectMarking"] = self.process_multiple(
-                    data["createdBy"]["objectMarking"]
-                )
-                data["createdBy"]["objectMarkingIds"] = self.process_multiple_ids(
-                    data["createdBy"]["objectMarking"]
-                )
-            if "objectLabel" in data["createdBy"]:
-                data["createdBy"]["objectLabel"] = self.process_multiple(
-                    data["createdBy"]["objectLabel"]
-                )
-                data["createdBy"]["objectLabelIds"] = self.process_multiple_ids(
-                    data["createdBy"]["objectLabel"]
-                )
+
+        if (created_by := data.get("createdBy")) is None:
+            data["createdById"] = created_by["id"]
+
+            keys = [
+                "objectMarking",
+                "objectLabel",
+            ]
+
+            for key in keys:
+                if key in created_by:
+                    created_by[key] = self.process_multiple(created_by[key])
+                    created_by[f"{key}Ids"] = self.process_multiple_ids(created_by[key])
         else:
             data["createdById"] = None
-        if "objectMarking" in data:
-            data["objectMarking"] = self.process_multiple(data["objectMarking"])
-            data["objectMarkingIds"] = self.process_multiple_ids(data["objectMarking"])
-        if "objectLabel" in data:
-            data["objectLabel"] = self.process_multiple(data["objectLabel"])
-            data["objectLabelIds"] = self.process_multiple_ids(data["objectLabel"])
-        if "reports" in data:
-            data["reports"] = self.process_multiple(data["reports"])
-            data["reportsIds"] = self.process_multiple_ids(data["reports"])
-        if "notes" in data:
-            data["notes"] = self.process_multiple(data["notes"])
-            data["notesIds"] = self.process_multiple_ids(data["notes"])
-        if "opinions" in data:
-            data["opinions"] = self.process_multiple(data["opinions"])
-            data["opinionsIds"] = self.process_multiple_ids(data["opinions"])
-        if "observedData" in data:
-            data["observedData"] = self.process_multiple(data["observedData"])
-            data["observedDataIds"] = self.process_multiple_ids(data["observedData"])
-        if "killChainPhases" in data:
-            data["killChainPhases"] = self.process_multiple(data["killChainPhases"])
-            data["killChainPhasesIds"] = self.process_multiple_ids(
-                data["killChainPhases"]
-            )
-        if "externalReferences" in data:
-            data["externalReferences"] = self.process_multiple(
-                data["externalReferences"]
-            )
-            data["externalReferencesIds"] = self.process_multiple_ids(
-                data["externalReferences"]
-            )
-        if "objects" in data:
-            data["objects"] = self.process_multiple(data["objects"])
-            data["objectsIds"] = self.process_multiple_ids(data["objects"])
-        if "observables" in data:
-            data["observables"] = self.process_multiple(data["observables"])
-            data["observablesIds"] = self.process_multiple_ids(data["observables"])
-        if "stixCoreRelationships" in data:
-            data["stixCoreRelationships"] = self.process_multiple(
-                data["stixCoreRelationships"]
-            )
-            data["stixCoreRelationshipsIds"] = self.process_multiple_ids(
-                data["stixCoreRelationships"]
-            )
-        if "indicators" in data:
-            data["indicators"] = self.process_multiple(data["indicators"])
-            data["indicatorsIds"] = self.process_multiple_ids(data["indicators"])
-        if "importFiles" in data:
-            data["importFiles"] = self.process_multiple(data["importFiles"])
-            data["importFilesIds"] = self.process_multiple_ids(data["importFiles"])
+
+        keys = [
+            "objectMarking",
+            "objectLabel",
+            "reports",
+            "notes",
+            "opinions",
+            "observedData",
+            "killChainPhases",
+            "externalReferences",
+            "objects",
+            "observables",
+            "stixCoreRelationships",
+            "indicators",
+            "importFiles",
+        ]
+
+        for key in keys:
+            if key in data:
+                data[key] = self.process_multiple(data[key])
+                data[f"{key}Ids"] = self.process_multiple_ids(data[key])
+
         return data
 
     def upload_file(self, **kwargs):
@@ -574,7 +557,7 @@ class OpenCTIApiClient:
                         name
                     }
                 }
-             """
+            """
             if data is None:
                 data = open(file_name, "rb")
                 if file_name.endswith(".json"):
@@ -606,13 +589,13 @@ class OpenCTIApiClient:
         if file_name is not None:
             self.log("info", "Uploading a file.")
             query = """
-                    mutation UploadPending($file: Upload!, $entityId: String) {
-                        uploadPending(file: $file, entityId: $entityId) {
-                            id
-                            name
-                        }
+                mutation UploadPending($file: Upload!, $entityId: String) {
+                    uploadPending(file: $file, entityId: $entityId) {
+                        id
+                        name
                     }
-                 """
+                }
+            """
             if data is None:
                 data = open(file_name, "rb")
                 if file_name.endswith(".json"):
@@ -647,45 +630,42 @@ class OpenCTIApiClient:
         return json.loads(result["data"]["stix"])
 
     @staticmethod
-    def get_attribute_in_extension(key, object) -> any:
-        if (
-            "extensions" in object
-            and "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
-            in object["extensions"]
-            and key
-            in object["extensions"][
-                "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
-            ]
-        ):
-            return object["extensions"][
-                "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
-            ][key]
-        elif (
-            "extensions" in object
-            and "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
-            in object["extensions"]
-            and key
-            in object["extensions"][
-                "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
-            ]
-        ):
-            return object["extensions"][
-                "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
-            ][key]
+    def get_attribute_in_extension(key: str, obj: AnyDict) -> Optional[Any]:
+        """
+        Get an attribute from within an OpenCTI extension.
+
+        :param key: Extension key.
+        :param obj: Stix object.
+        :return: The extension key value or None.
+        """
+        stix_ext_octi = "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+        stix_ext_octi_sco = "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
+
+        if extensions := obj.get("extensions"):
+            if ext := extensions.get(stix_ext_octi):
+                if key in ext:
+                    return ext[key]
+            if ext := extensions.get(stix_ext_octi_sco):
+                if key in ext:
+                    return ext[key]
+
         return None
 
     @staticmethod
-    def get_attribute_in_mitre_extension(key, object) -> any:
-        if (
-            "extensions" in object
-            and "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
-            in object["extensions"]
-            and key
-            in object["extensions"][
-                "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
-            ]
-        ):
-            return object["extensions"][
-                "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
-            ][key]
+    def get_attribute_in_mitre_extension(key: str, obj: AnyDict) -> Optional[Any]:
+        """
+        Get an attribute from within the MITRE extension.
+
+        :param key: Extension key.
+        :param obj: Stix object.
+        :return: The extension key value or None.
+        """
+
+        stix_ext_mitre = "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
+
+        if extensions := obj.get("extensions"):
+            if ext := extensions.get(stix_ext_mitre):
+                if key in ext:
+                    return ext[key]
+
         return None

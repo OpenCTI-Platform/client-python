@@ -52,14 +52,11 @@ class OpenCTIStix2:
         )
 
     def convert_markdown(self, text: str) -> str:
-        """converts input text to markdown style code annotation
-
-        :param text: input text
-        :type text: str
-        :return: sanitized text with markdown style code annotation
-        :rtype: str
         """
-
+        Convert input text to a markdown style code annotation
+        :param text: Input text
+        :return: Sanitized text with markdown style code annotation
+        """
         return text.replace("<code>", "`").replace("</code>", "`")
 
     def format_date(self, date: Any = None) -> str:
