@@ -5,6 +5,10 @@ import json
 from ..api.opencti_api_client import OpenCTIApiClient
 from . import _generate_uuid5
 
+__all__ = [
+    "CourseOfAction",
+]
+
 
 class CourseOfAction:
     """Course-Of-Action domain object"""
@@ -140,7 +144,7 @@ class CourseOfAction:
         """
         Generate a STIX compliant UUID5.
 
-        :param name: Attack-Pattern name
+        :param name: Course-Of-Action name
         :param x_mitre_id: Mitre ID, if present
         :return: A Stix compliant UUID5
         """

@@ -1,20 +1,27 @@
-# coding: utf-8
+"""OpenCTI Indicator operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "Indicator",
+]
 
 
 class Indicator:
-    """Main Indicator class for OpenCTI
+    """Indicator domain object"""
 
-    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
-    """
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
 
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -164,11 +171,16 @@ class Indicator:
         """
 
     @staticmethod
-    def generate_id(pattern):
+    def generate_id(pattern: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param pattern: Indicator pattern
+        :return: A Stix compliant UUID5
+        """
+
         data = {"pattern": pattern}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "indicator--" + id
+        return _generate_uuid5("indicator", data)
 
     def list(self, **kwargs):
         """List Indicator objects
@@ -202,17 +214,21 @@ class Indicator:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Indicators with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-                query Indicators($filters: [IndicatorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IndicatorsOrdering, $orderMode: OrderingMode) {
-                    indicators(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                        edges {
-                            node {
-                                """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                                query Indicators($filters: [IndicatorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IndicatorsOrdering, $orderMode: OrderingMode) {
+                                    indicators(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                        edges {
+                                            node {
+                                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -227,7 +243,7 @@ class Indicator:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -240,12 +256,12 @@ class Indicator:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["indicators"])
+            data = self._api.process_multiple(result["data"]["indicators"])
             final_data = final_data + data
             while result["data"]["indicators"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["indicators"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Indicators after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing Indicators after " + after)
+                result = self._api.query(
                     query,
                     {
                         "filters": filters,
@@ -256,11 +272,11 @@ class Indicator:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["indicators"])
+                data = self._api.process_multiple(result["data"]["indicators"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
+            return self._api.process_multiple(
                 result["data"]["indicators"], with_pagination
             )
 
@@ -285,24 +301,24 @@ class Indicator:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Indicator {" + id + "}.")
+            self._api.log("info", "Reading Indicator {" + id + "}.")
             query = (
                 """
-                    query Indicator($id: String!) {
-                        indicator(id: $id) {
-                            """
+                                    query Indicator($id: String!) {
+                                        indicator(id: $id) {
+                                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["indicator"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["indicator"])
         elif filters is not None:
             result = self.list(filters=filters, customAttributes=custom_attributes)
             if len(result) > 0:
@@ -310,7 +326,7 @@ class Indicator:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_indicator] Missing parameters: id or filters"
             )
             return None
@@ -362,7 +378,7 @@ class Indicator:
         ):
             if x_opencti_main_observable_type == "File":
                 x_opencti_main_observable_type = "StixFile"
-            self.opencti.log("info", "Creating Indicator {" + name + "}.")
+            self._api.log("info", "Creating Indicator {" + name + "}.")
             query = """
                 mutation IndicatorAdd($input: IndicatorAddInput) {
                     indicatorAdd(input: $input) {
@@ -384,7 +400,7 @@ class Indicator:
             """
             if pattern_type is None:
                 pattern_type = "stix2"
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -417,9 +433,9 @@ class Indicator:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["indicatorAdd"])
+            return self._api.process_multiple_fields(result["data"]["indicatorAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_indicator] Missing parameters: name or pattern or x_opencti_main_observable_type",
             )
@@ -441,7 +457,7 @@ class Indicator:
             if indicator is None:
                 indicator = self.read(id=id)
             if indicator is None:
-                self.opencti.log(
+                self._api.log(
                     "error",
                     "[opencti_indicator] Cannot add Object Ref, indicator not found",
                 )
@@ -449,7 +465,7 @@ class Indicator:
             if stix_cyber_observable_id in indicator["observablesIds"]:
                 return True
             else:
-                self.opencti.log(
+                self._api.log(
                     "info",
                     "Adding Stix-Observable {"
                     + stix_cyber_observable_id
@@ -464,7 +480,7 @@ class Indicator:
                         }
                     }
                 """
-                self.opencti.query(
+                self._api.query(
                     query,
                     {
                         "id": id,
@@ -477,7 +493,7 @@ class Indicator:
                 )
                 return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_indicator] Missing parameters: id and stix cyber_observable_id",
             )
@@ -501,35 +517,35 @@ class Indicator:
 
             # Search in extensions
             if "x_opencti_score" not in stix_object:
-                stix_object[
-                    "x_opencti_score"
-                ] = self.opencti.get_attribute_in_extension("score", stix_object)
+                stix_object["x_opencti_score"] = self._api.get_attribute_in_extension(
+                    "score", stix_object
+                )
             if "x_opencti_detection" not in stix_object:
                 stix_object[
                     "x_opencti_detection"
-                ] = self.opencti.get_attribute_in_extension("detection", stix_object)
+                ] = self._api.get_attribute_in_extension("detection", stix_object)
             if (
                 "x_opencti_main_observable_type" not in stix_object
-                and self.opencti.get_attribute_in_extension(
+                and self._api.get_attribute_in_extension(
                     "main_observable_type", stix_object
                 )
                 is not None
             ):
                 stix_object[
                     "x_opencti_main_observable_type"
-                ] = self.opencti.get_attribute_in_extension(
+                ] = self._api.get_attribute_in_extension(
                     "main_observable_type", stix_object
                 )
             if "x_opencti_create_observables" not in stix_object:
                 stix_object[
                     "x_opencti_create_observables"
-                ] = self.opencti.get_attribute_in_extension(
+                ] = self._api.get_attribute_in_extension(
                     "create_observables", stix_object
                 )
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -562,9 +578,7 @@ class Indicator:
                 name=stix_object["name"]
                 if "name" in stix_object
                 else stix_object["pattern"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
                 indicator_types=stix_object["indicator_types"]
@@ -599,6 +613,6 @@ class Indicator:
                 update=update,
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )

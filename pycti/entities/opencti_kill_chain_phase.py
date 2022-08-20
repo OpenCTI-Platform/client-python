@@ -1,15 +1,27 @@
-# coding: utf-8
+"""OpenCTI Kill-Chain-Phase operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "KillChainPhase",
+]
 
 
 class KillChainPhase:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Kill-Chain-Phase operations"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -24,11 +36,20 @@ class KillChainPhase:
         """
 
     @staticmethod
-    def generate_id(phase_name, kill_chain_name):
-        data = {"phase_name": phase_name, "kill_chain_name": kill_chain_name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "kill-chain-phase--" + id
+    def generate_id(phase_name: str, kill_chain_name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param phase_name: Kill-Chain-Phase name
+        :param kill_chain_name: Kill-Chain name
+        :return: A stix compliant UUID5
+        """
+        data = {
+            "phase_name": phase_name,
+            "kill_chain_name": kill_chain_name,
+        }
+
+        return _generate_uuid5("kill-chain-phase", data)
 
     """
         List Kill-Chain-Phase objects
@@ -51,17 +72,21 @@ class KillChainPhase:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Kill-Chain-Phase with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query KillChainPhases($filters: [KillChainPhasesFiltering], $first: Int, $after: ID, $orderBy: KillChainPhasesOrdering, $orderMode: OrderingMode) {
-                killChainPhases(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                                query KillChainPhases($filters: [KillChainPhasesFiltering], $first: Int, $after: ID, $orderBy: KillChainPhasesOrdering, $orderMode: OrderingMode) {
+                                    killChainPhases(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                        edges {
+                                            node {
+                                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -76,7 +101,7 @@ class KillChainPhase:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -86,7 +111,7 @@ class KillChainPhase:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
+        return self._api.process_multiple(
             result["data"]["killChainPhases"], with_pagination
         )
 
@@ -102,22 +127,20 @@ class KillChainPhase:
         id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
         if id is not None:
-            self.opencti.log("info", "Reading Kill-Chain-Phase {" + id + "}.")
+            self._api.log("info", "Reading Kill-Chain-Phase {" + id + "}.")
             query = (
                 """
-                query KillChainPhase($id: String!) {
-                    killChainPhase(id: $id) {
-                        """
-                + self.properties
+                                    query KillChainPhase($id: String!) {
+                                        killChainPhase(id: $id) {
+                                            """
+                + self._default_attributes
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
-                result["data"]["killChainPhase"]
-            )
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["killChainPhase"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -125,7 +148,7 @@ class KillChainPhase:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_kill_chain_phase] Missing parameters: id or filters"
             )
             return None
@@ -147,19 +170,19 @@ class KillChainPhase:
         update = kwargs.get("update", False)
 
         if kill_chain_name is not None and phase_name is not None:
-            self.opencti.log("info", "Creating Kill-Chain-Phase {" + phase_name + "}.")
+            self._api.log("info", "Creating Kill-Chain-Phase {" + phase_name + "}.")
             query = (
                 """
-                mutation KillChainPhaseAdd($input: KillChainPhaseAddInput) {
-                    killChainPhaseAdd(input: $input) {
-                        """
-                + self.properties
+                                    mutation KillChainPhaseAdd($input: KillChainPhaseAddInput) {
+                                        killChainPhaseAdd(input: $input) {
+                                            """
+                + self._default_attributes
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -173,11 +196,11 @@ class KillChainPhase:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["killChainPhaseAdd"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_kill_chain_phase] Missing parameters: kill_chain_name and phase_name",
             )
@@ -194,7 +217,7 @@ class KillChainPhase:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log("info", "Updating Kill chain {" + id + "}.")
+            self._api.log("info", "Updating Kill chain {" + id + "}.")
             query = """
                     mutation KillChainPhaseEdit($id: ID!, $input: [EditInput]!) {
                         killChainPhaseEdit(id: $id) {
@@ -206,18 +229,18 @@ class KillChainPhase:
                         }
                     }
                 """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
                     "input": input,
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["killChainPhaseEdit"]["fieldPatch"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_kill_chain] Missing parameters: id and key and value",
             )
@@ -226,7 +249,7 @@ class KillChainPhase:
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting Kill-Chain-Phase {" + id + "}.")
+            self._api.log("info", "Deleting Kill-Chain-Phase {" + id + "}.")
             query = """
                  mutation KillChainPhaseEdit($id: ID!) {
                      killChainPhaseEdit(id: $id) {
@@ -234,9 +257,7 @@ class KillChainPhase:
                      }
                  }
              """
-            self.opencti.query(query, {"id": id})
+            self._api.query(query, {"id": id})
         else:
-            self.opencti.log(
-                "error", "[opencti_kill_chain_phase] Missing parameters: id"
-            )
+            self._api.log("error", "[opencti_kill_chain_phase] Missing parameters: id")
             return None

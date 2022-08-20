@@ -9,6 +9,10 @@ import magic
 from ..api.opencti_api_client import OpenCTIApiClient
 from . import _generate_uuid5
 
+__all__ = [
+    "ExternalReference",
+]
+
 
 class ExternalReference:
     """External-Reference common object"""

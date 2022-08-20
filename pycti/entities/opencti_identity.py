@@ -7,6 +7,10 @@ from pycti.utils.constants import IdentityTypes
 from ..api.opencti_api_client import OpenCTIApiClient
 from . import _generate_uuid5
 
+__all__ = [
+    "Identity",
+]
+
 
 class Identity:
     """Identity domain object"""
@@ -151,7 +155,7 @@ class Identity:
         """
         Generate a STIX compliant UUID5.
 
-        :param name: Attack-Pattern name
+        :param name: Identity name
         :param identity_class: Identity class vocab type
         :return: A Stix compliant UUID5
         """

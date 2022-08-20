@@ -1,15 +1,27 @@
-# coding: utf-8
+"""OpenCTI Incident operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "Incident",
+]
 
 
 class Incident:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Incident domain object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -130,12 +142,16 @@ class Incident:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "incident--" + id
+    def generate_id(name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Incident name
+        :return: A Stix compliant UUID5
+        """
+
+        data = {"name": name.lower().strip()}
+        return _generate_uuid5("incident", data)
 
     """
         List Incident objects
@@ -160,17 +176,21 @@ class Incident:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Incidents with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-                query Incidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
-                    incidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                        edges {
-                            node {
-                                """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                        query Incidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
+                            incidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                edges {
+                                    node {
+                                        """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -185,7 +205,7 @@ class Incident:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -196,9 +216,7 @@ class Incident:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
-            result["data"]["incidents"], with_pagination
-        )
+        return self._api.process_multiple(result["data"]["incidents"], with_pagination)
 
     """
         Read a Incident object
@@ -213,24 +231,24 @@ class Incident:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Incident {" + id + "}.")
+            self._api.log("info", "Reading Incident {" + id + "}.")
             query = (
                 """
-                    query Incident($id: String!) {
-                        incident(id: $id) {
-                            """
+                            query Incident($id: String!) {
+                                incident(id: $id) {
+                                    """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["incident"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["incident"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -238,7 +256,7 @@ class Incident:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_incident] Missing parameters: id or filters"
             )
             return None
@@ -271,7 +289,7 @@ class Incident:
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Incident {" + name + "}.")
+            self._api.log("info", "Creating Incident {" + name + "}.")
             query = """
                 mutation IncidentAdd($input: IncidentAddInput) {
                     incidentAdd(input: $input) {
@@ -282,7 +300,7 @@ class Incident:
                     }
                }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -307,9 +325,9 @@ class Incident:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["incidentAdd"])
+            return self._api.process_multiple_fields(result["data"]["incidentAdd"])
         else:
-            self.opencti.log("error", "Missing parameters: name and description")
+            self._api.log("error", "Missing parameters: name and description")
 
     """
         Import a Incident object from a STIX2 object
@@ -328,7 +346,7 @@ class Incident:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -352,12 +370,10 @@ class Incident:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self._api.stix2.pick_aliases(stix_object),
                 objective=stix_object["objective"]
                 if "objective" in stix_object
                 else None,
@@ -373,6 +389,4 @@ class Incident:
                 update=update,
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_incident] Missing parameters: stixObject"
-            )
+            self._api.log("error", "[opencti_incident] Missing parameters: stixObject")

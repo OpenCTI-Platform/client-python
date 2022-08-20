@@ -1,15 +1,27 @@
-# coding: utf-8
+"""OpenCTI Location operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "Location",
+]
 
 
 class Location:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Location domain object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_properties = """
             id
             standard_id
             entity_type
@@ -130,15 +142,35 @@ class Location:
         """
 
     @staticmethod
-    def generate_id(name, x_opencti_location_type, latitude=None, longitude=None):
-        name = name.lower().strip()
+    def generate_id(
+        name: str,
+        x_opencti_location_type: str = None,
+        latitude: str = None,
+        longitude: str = None,
+    ) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Location name
+        :param x_opencti_location_type: OpenCTI location type
+        :param latitude: Location latitude
+        :param longitude: Location longitude
+        :return: A Stix compliant UUID5
+        """
+
         if x_opencti_location_type == "position":
-            data = {"name": name, "latitude": latitude, "longitude": longitude}
+            data = {
+                "name": name.lower().strip(),
+                "latitude": latitude,
+                "longitude": longitude,
+            }
         else:
-            data = {"name": name, "x_opencti_location_type": x_opencti_location_type}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "location--" + id
+            data = {
+                "name": name.lower().strip(),
+                "x_opencti_location_type": x_opencti_location_type,
+            }
+
+        return _generate_uuid5("location", data)
 
     """
         List Location objects
@@ -165,17 +197,21 @@ class Location:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Locations with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Locations($types: [String], $filters: [LocationsFiltering], $search: String, $first: Int, $after: ID, $orderBy: LocationsOrdering, $orderMode: OrderingMode) {
-                locations(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                        query Locations($types: [String], $filters: [LocationsFiltering], $search: String, $first: Int, $after: ID, $orderBy: LocationsOrdering, $orderMode: OrderingMode) {
+                            locations(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                edges {
+                                    node {
+                                        """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_properties
+            )
             + """
                         }
                     }
@@ -190,7 +226,7 @@ class Location:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "types": types,
@@ -202,9 +238,7 @@ class Location:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
-            result["data"]["locations"], with_pagination
-        )
+        return self._api.process_multiple(result["data"]["locations"], with_pagination)
 
     """
         Read a Location object
@@ -219,24 +253,24 @@ class Location:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Location {" + id + "}.")
+            self._api.log("info", "Reading Location {" + id + "}.")
             query = (
                 """
-                query Location($id: String!) {
-                    location(id: $id) {
-                        """
+                            query Location($id: String!) {
+                                location(id: $id) {
+                                    """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_properties
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["location"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["location"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -244,7 +278,7 @@ class Location:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_location] Missing parameters: id or filters"
             )
             return None
@@ -278,7 +312,7 @@ class Location:
         update = kwargs.get("update", False)
 
         if name is not None:
-            self.opencti.log("info", "Creating Location {" + name + "}.")
+            self._api.log("info", "Creating Location {" + name + "}.")
             query = """
                 mutation LocationAdd($input: LocationAddInput) {
                     locationAdd(input: $input) {
@@ -289,7 +323,7 @@ class Location:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -315,9 +349,9 @@ class Location:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["locationAdd"])
+            return self._api.process_multiple_fields(result["data"]["locationAdd"])
         else:
-            self.opencti.log("error", "Missing parameters: name")
+            self._api.log("error", "Missing parameters: name")
 
     """
         Import an Location object from a STIX2 object
@@ -339,12 +373,12 @@ class Location:
         elif "region" in stix_object:
             name = stix_object["region"]
         else:
-            self.opencti.log("error", "[opencti_location] Missing name")
+            self._api.log("error", "[opencti_location] Missing name")
             return
         if "x_opencti_location_type" in stix_object:
             type = stix_object["x_opencti_location_type"]
-        elif self.opencti.get_attribute_in_extension("type", stix_object) is not None:
-            type = self.opencti.get_attribute_in_extension("type", stix_object)
+        elif self._api.get_attribute_in_extension("type", stix_object) is not None:
+            type = self._api.get_attribute_in_extension("type", stix_object)
         else:
             if "city" in stix_object:
                 type = "City"
@@ -358,13 +392,13 @@ class Location:
 
             # Search in extensions
             if "x_opencti_aliases" not in stix_object:
-                stix_object[
-                    "x_opencti_aliases"
-                ] = self.opencti.get_attribute_in_extension("aliases", stix_object)
+                stix_object["x_opencti_aliases"] = self._api.get_attribute_in_extension(
+                    "aliases", stix_object
+                )
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 type=type,
@@ -389,9 +423,7 @@ class Location:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=name,
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
                 latitude=stix_object["latitude"] if "latitude" in stix_object else None,
@@ -404,10 +436,8 @@ class Location:
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
-                x_opencti_aliases=self.opencti.stix2.pick_aliases(stix_object),
+                x_opencti_aliases=self._api.stix2.pick_aliases(stix_object),
                 update=update,
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_location] Missing parameters: stixObject"
-            )
+            self._api.log("error", "[opencti_location] Missing parameters: stixObject")

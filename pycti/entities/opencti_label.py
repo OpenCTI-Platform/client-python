@@ -1,15 +1,27 @@
-# coding: utf-8
+"""OpenCTI Label operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "Label",
+]
 
 
 class Label:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Label common object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             value
             color
@@ -19,11 +31,16 @@ class Label:
         """
 
     @staticmethod
-    def generate_id(value):
+    def generate_id(value: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param value: Label value
+        :return: A Stix compliant UUID5
+        """
+
         data = {"value": value}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "label--" + id
+        return _generate_uuid5("label", data)
 
     """
         List Label objects
@@ -46,17 +63,21 @@ class Label:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Labels with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Labels($filters: [LabelsFiltering], $first: Int, $after: ID, $orderBy: LabelsOrdering, $orderMode: OrderingMode) {
-                labels(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                        query Labels($filters: [LabelsFiltering], $first: Int, $after: ID, $orderBy: LabelsOrdering, $orderMode: OrderingMode) {
+                            labels(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                edges {
+                                    node {
+                                        """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -71,7 +92,7 @@ class Label:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -81,7 +102,7 @@ class Label:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(result["data"]["labels"], with_pagination)
+        return self._api.process_multiple(result["data"]["labels"], with_pagination)
 
     """
         Read a Label object
@@ -95,20 +116,20 @@ class Label:
         id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
         if id is not None:
-            self.opencti.log("info", "Reading label {" + id + "}.")
+            self._api.log("info", "Reading label {" + id + "}.")
             query = (
                 """
-                query Label($id: String!) {
-                    label(id: $id) {
-                        """
-                + self.properties
+                            query Label($id: String!) {
+                                label(id: $id) {
+                                    """
+                + self._default_attributes
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["label"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["label"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -116,9 +137,7 @@ class Label:
             else:
                 return None
         else:
-            self.opencti.log(
-                "error", "[opencti_label] Missing parameters: id or filters"
-            )
+            self._api.log("error", "[opencti_label] Missing parameters: id or filters")
             return None
 
     """
@@ -137,19 +156,19 @@ class Label:
         update = kwargs.get("update", False)
 
         if value is not None:
-            self.opencti.log("info", "Creating Label {" + value + "}.")
+            self._api.log("info", "Creating Label {" + value + "}.")
             query = (
                 """
-                mutation LabelAdd($input: LabelAddInput) {
-                    labelAdd(input: $input) {
-                        """
-                + self.properties
+                            mutation LabelAdd($input: LabelAddInput) {
+                                labelAdd(input: $input) {
+                                    """
+                + self._default_attributes
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -161,9 +180,9 @@ class Label:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["labelAdd"])
+            return self._api.process_multiple_fields(result["data"]["labelAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_label] Missing parameters: value",
             )
@@ -180,7 +199,7 @@ class Label:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log("info", "Updating Label {" + id + "}.")
+            self._api.log("info", "Updating Label {" + id + "}.")
             query = """
                     mutation LabelEdit($id: ID!, $input: [EditInput]!) {
                         labelEdit(id: $id) {
@@ -192,18 +211,18 @@ class Label:
                         }
                     }
                 """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
                     "input": input,
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["labelEdit"]["fieldPatch"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_label] Missing parameters: id and key and value",
             )
@@ -212,7 +231,7 @@ class Label:
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting Label {" + id + "}.")
+            self._api.log("info", "Deleting Label {" + id + "}.")
             query = """
                  mutation LabelEdit($id: ID!) {
                      labelEdit(id: $id) {
@@ -220,7 +239,7 @@ class Label:
                      }
                  }
              """
-            self.opencti.query(query, {"id": id})
+            self._api.query(query, {"id": id})
         else:
-            self.opencti.log("error", "[opencti_label] Missing parameters: id")
+            self._api.log("error", "[opencti_label] Missing parameters: id")
             return None
