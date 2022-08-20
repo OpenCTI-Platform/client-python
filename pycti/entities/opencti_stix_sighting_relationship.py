@@ -1,15 +1,24 @@
-# coding: utf-8
+"""OpenCTI Sighting operations"""
 
-import datetime
-import uuid
+from datetime import datetime
+from typing import Union
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
 
 
 class StixSightingRelationship:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Sighting relationship object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             entity_type
             parent_types
@@ -269,27 +278,37 @@ class StixSightingRelationship:
         """
 
     @staticmethod
-    def generate_id(source_ref, target_ref, first_seen=None, last_seen=None):
-        if isinstance(first_seen, datetime.datetime):
+    def generate_id(
+        source_ref: str,
+        target_ref: str,
+        first_seen: Union[str, datetime] = None,
+        last_seen: Union[str, datetime] = None,
+    ):
+        """
+        Generate a STIX compliant UUID5.
+
+        :param source_ref: Relationship source
+        :param target_ref: Relationship target
+        :param first_seen: When the sighting was first seen
+        :param last_seen: When the sighting was last seen
+        :return: A Stix compliant UUID5
+        """
+
+        if isinstance(first_seen, datetime):
             first_seen = first_seen.isoformat()
-        if isinstance(last_seen, datetime.datetime):
+        if isinstance(last_seen, datetime):
             last_seen = last_seen.isoformat()
 
+        data = {
+            "source_ref": source_ref,
+            "target_ref": target_ref,
+        }
+
         if first_seen is not None and last_seen is not None:
-            data = {
-                "source_ref": source_ref,
-                "target_ref": target_ref,
-                "first_seen": first_seen,
-                "last_seen": last_seen,
-            }
-        else:
-            data = {
-                "source_ref": source_ref,
-                "target_ref": target_ref,
-            }
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "sighting--" + id
+            data["first_seen"] = first_seen
+            data["last_seen"] = last_seen
+
+        return _generate_uuid5("sighting", data)
 
     """
         List stix_sightings objects
@@ -326,7 +345,7 @@ class StixSightingRelationship:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Listing stix_sighting with {type: stix_sighting, from_id: "
             + str(from_id)
@@ -336,12 +355,16 @@ class StixSightingRelationship:
         )
         query = (
             """
-                query StixSightingRelationships($elementId: String, $fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $filters: [StixSightingRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixSightingRelationshipsOrdering, $orderMode: OrderingMode) {
-                    stixSightingRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                        edges {
-                            node {
-                                """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                                            query StixSightingRelationships($elementId: String, $fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $firstSeenStart: DateTime, $firstSeenStop: DateTime, $lastSeenStart: DateTime, $lastSeenStop: DateTime, $filters: [StixSightingRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixSightingRelationshipsOrdering, $orderMode: OrderingMode) {
+                                                stixSightingRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, firstSeenStart: $firstSeenStart, firstSeenStop: $firstSeenStop, lastSeenStart: $lastSeenStart, lastSeenStop: $lastSeenStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                                    edges {
+                                                        node {
+                                                            """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -356,7 +379,7 @@ class StixSightingRelationship:
             }
          """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "elementId": element_id,
@@ -377,7 +400,7 @@ class StixSightingRelationship:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(
+            data = self._api.process_multiple(
                 result["data"]["stixSightingRelationships"]
             )
             final_data = final_data + data
@@ -387,10 +410,10 @@ class StixSightingRelationship:
                 after = result["data"]["stixSightingRelationships"]["pageInfo"][
                     "endCursor"
                 ]
-                self.opencti.log(
+                self._api.log(
                     "info", "Listing StixSightingRelationships after " + after
                 )
-                result = self.opencti.query(
+                result = self._api.query(
                     query,
                     {
                         "elementId": element_id,
@@ -409,13 +432,13 @@ class StixSightingRelationship:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(
+                data = self._api.process_multiple(
                     result["data"]["stixSightingRelationships"]
                 )
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
+            return self._api.process_multiple(
                 result["data"]["stixSightingRelationships"], with_pagination
             )
 
@@ -443,24 +466,24 @@ class StixSightingRelationship:
         last_seen_stop = kwargs.get("lastSeenStop", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading stix_sighting {" + id + "}.")
+            self._api.log("info", "Reading stix_sighting {" + id + "}.")
             query = (
                 """
-                    query StixSightingRelationship($id: String!) {
-                        stixSightingRelationship(id: $id) {
-                            """
+                                                query StixSightingRelationship($id: String!) {
+                                                    stixSightingRelationship(id: $id) {
+                                                        """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(
                 result["data"]["stixSightingRelationship"]
             )
         elif from_id is not None and to_id is not None:
@@ -478,7 +501,7 @@ class StixSightingRelationship:
             else:
                 return None
         else:
-            self.opencti.log("error", "Missing parameters: id or from_id and to_id")
+            self._api.log("error", "Missing parameters: id or from_id and to_id")
             return None
 
     """
@@ -507,7 +530,7 @@ class StixSightingRelationship:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Creating stix_sighting {" + from_id + ", " + str(to_id) + "}.",
         )
@@ -521,7 +544,7 @@ class StixSightingRelationship:
                     }
                 }
             """
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "input": {
@@ -545,7 +568,7 @@ class StixSightingRelationship:
                 }
             },
         )
-        return self.opencti.process_multiple_fields(
+        return self._api.process_multiple_fields(
             result["data"]["stixSightingRelationshipAdd"]
         )
 
@@ -561,7 +584,7 @@ class StixSightingRelationship:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log("info", "Updating stix_sighting {" + id + "}")
+            self._api.log("info", "Updating stix_sighting {" + id + "}")
             query = """
                     mutation StixSightingRelationshipEdit($id: ID!, $input: [EditInput]!) {
                         stixSightingRelationshipEdit(id: $id) {
@@ -571,18 +594,18 @@ class StixSightingRelationship:
                         }
                     }
                 """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
                     "input": input,
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["stixSightingRelationshipEdit"]["fieldPatch"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_stix_sighting] Missing parameters: id and key and value",
             )
@@ -622,14 +645,14 @@ class StixSightingRelationship:
                 id=id, customAttributes=custom_attributes
             )
             if stix_core_relationship is None:
-                self.opencti.log(
+                self._api.log(
                     "error", "Cannot add Marking-Definition, entity not found"
                 )
                 return False
             if marking_definition_id in stix_core_relationship["objectMarkingIds"]:
                 return True
             else:
-                self.opencti.log(
+                self._api.log(
                     "info",
                     "Adding Marking-Definition {"
                     + marking_definition_id
@@ -646,7 +669,7 @@ class StixSightingRelationship:
                        }
                    }
                 """
-                self.opencti.query(
+                self._api.query(
                     query,
                     {
                         "id": id,
@@ -658,9 +681,7 @@ class StixSightingRelationship:
                 )
                 return True
         else:
-            self.opencti.log(
-                "error", "Missing parameters: id and marking_definition_id"
-            )
+            self._api.log("error", "Missing parameters: id and marking_definition_id")
             return False
 
     """
@@ -675,7 +696,7 @@ class StixSightingRelationship:
         id = kwargs.get("id", None)
         marking_definition_id = kwargs.get("marking_definition_id", None)
         if id is not None and marking_definition_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing Marking-Definition {"
                 + marking_definition_id
@@ -692,7 +713,7 @@ class StixSightingRelationship:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -702,7 +723,7 @@ class StixSightingRelationship:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -717,7 +738,7 @@ class StixSightingRelationship:
         id = kwargs.get("id", None)
         identity_id = kwargs.get("identity_id", None)
         if id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Updating author of stix_sighting_relationship {"
                 + id
@@ -760,7 +781,7 @@ class StixSightingRelationship:
                         }
                     }
                 """
-                self.opencti.query(
+                self._api.query(
                     query,
                     {
                         "id": id,
@@ -786,9 +807,9 @@ class StixSightingRelationship:
                         "relationship_type": "created-by",
                     },
                 }
-                self.opencti.query(query, variables)
+                self._api.query(query, variables)
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return False
 
     """
@@ -801,7 +822,7 @@ class StixSightingRelationship:
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting stix_sighting {" + id + "}.")
+            self._api.log("info", "Deleting stix_sighting {" + id + "}.")
             query = """
                 mutation StixSightingRelationshipEdit($id: ID!) {
                     stixSightingRelationshipEdit(id: $id) {
@@ -809,7 +830,7 @@ class StixSightingRelationship:
                     }
                 }
             """
-            self.opencti.query(query, {"id": id})
+            self._api.query(query, {"id": id})
         else:
-            self.opencti.log("error", "[opencti_stix_sighting] Missing parameters: id")
+            self._api.log("error", "[opencti_stix_sighting] Missing parameters: id")
             return None

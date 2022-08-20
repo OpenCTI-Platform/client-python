@@ -1,15 +1,23 @@
-# coding: utf-8
+"""OpenCTI Campaign operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
 
 
 class Campaign:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Campaign domain object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -130,12 +138,16 @@ class Campaign:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "campaign--" + id
+    def generate_id(name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Campaign name
+        :return: A Stix compliant UUID5
+        """
+
+        data = {"name": name.lower().strip()}
+        return _generate_uuid5("campaign", data)
 
     """
         List Campaign objects
@@ -160,17 +172,21 @@ class Campaign:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Campaigns with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Campaigns($filters: [CampaignsFiltering], $search: String, $first: Int, $after: ID, $orderBy: CampaignsOrdering, $orderMode: OrderingMode) {
-                campaigns(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                    query Campaigns($filters: [CampaignsFiltering], $search: String, $first: Int, $after: ID, $orderBy: CampaignsOrdering, $orderMode: OrderingMode) {
+                        campaigns(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                            edges {
+                                node {
+                                    """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -185,7 +201,7 @@ class Campaign:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -196,9 +212,7 @@ class Campaign:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
-            result["data"]["campaigns"], with_pagination
-        )
+        return self._api.process_multiple(result["data"]["campaigns"], with_pagination)
 
     """
         Read a Campaign object
@@ -213,24 +227,24 @@ class Campaign:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Campaign {" + id + "}.")
+            self._api.log("info", "Reading Campaign {" + id + "}.")
             query = (
                 """
-                query Campaign($id: String!) {
-                    campaign(id: $id) {
-                        """
+                        query Campaign($id: String!) {
+                            campaign(id: $id) {
+                                """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["campaign"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["campaign"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -238,7 +252,7 @@ class Campaign:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_campaign] Missing parameters: id or filters"
             )
             return None
@@ -271,7 +285,7 @@ class Campaign:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Campaign {" + name + "}.")
+            self._api.log("info", "Creating Campaign {" + name + "}.")
             query = """
                 mutation CampaignAdd($input: CampaignAddInput) {
                     campaignAdd(input: $input) {
@@ -282,7 +296,7 @@ class Campaign:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -307,9 +321,9 @@ class Campaign:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["campaignAdd"])
+            return self._api.process_multiple_fields(result["data"]["campaignAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_campaign] Missing parameters: name and description"
             )
 
@@ -330,7 +344,7 @@ class Campaign:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -354,12 +368,10 @@ class Campaign:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self._api.stix2.pick_aliases(stix_object),
                 objective=stix_object["objective"]
                 if "objective" in stix_object
                 else None,
@@ -375,6 +387,4 @@ class Campaign:
                 update=update,
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_campaign] Missing parameters: stixObject"
-            )
+            self._api.log("error", "[opencti_campaign] Missing parameters: stixObject")

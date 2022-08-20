@@ -1,23 +1,24 @@
-# coding: utf-8
+"""OpenCTI ThreatActor operations"""
 
 import json
-import uuid
 from typing import Union
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
 
 
 class ThreatActor:
-    """Main ThreatActor class for OpenCTI
+    """Threat-Actor domain object"""
 
-    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
-    """
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
 
-    def __init__(self, opencti):
-        """Create an instance of ThreatActor"""
+        :param api: OpenCTI API client
+        """
 
-        self.opencti = opencti
-        self.properties = """
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -145,12 +146,16 @@ class ThreatActor:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "threat-actor--" + id
+    def generate_id(name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Threat-Actor name
+        :return: A Stix compliant UUID5
+        """
+
+        data = {"name": name.lower().strip()}
+        return _generate_uuid5("threat-actor", data)
 
     def list(self, **kwargs) -> dict:
         """List Threat-Actor objects
@@ -180,17 +185,21 @@ class ThreatActor:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Threat-Actors with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query ThreatActors($filters: [ThreatActorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ThreatActorsOrdering, $orderMode: OrderingMode) {
-                threatActors(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                    query ThreatActors($filters: [ThreatActorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ThreatActorsOrdering, $orderMode: OrderingMode) {
+                        threatActors(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                            edges {
+                                node {
+                                    """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -205,7 +214,7 @@ class ThreatActor:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -216,7 +225,7 @@ class ThreatActor:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
+        return self._api.process_multiple(
             result["data"]["threatActors"], with_pagination
         )
 
@@ -238,24 +247,24 @@ class ThreatActor:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Threat-Actor {" + id + "}.")
+            self._api.log("info", "Reading Threat-Actor {" + id + "}.")
             query = (
                 """
-                query ThreatActor($id: String!) {
-                    threatActor(id: $id) {
-                        """
+                        query ThreatActor($id: String!) {
+                            threatActor(id: $id) {
+                                """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["threatActor"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["threatActor"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -263,7 +272,7 @@ class ThreatActor:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_threat_actor] Missing parameters: id or filters"
             )
             return None
@@ -331,7 +340,7 @@ class ThreatActor:
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Threat-Actor {" + name + "}.")
+            self._api.log("info", "Creating Threat-Actor {" + name + "}.")
             query = """
                 mutation ThreatActorAdd($input: ThreatActorAddInput) {
                     threatActorAdd(input: $input) {
@@ -342,7 +351,7 @@ class ThreatActor:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -373,11 +382,9 @@ class ThreatActor:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(
-                result["data"]["threatActorAdd"]
-            )
+            return self._api.process_multiple_fields(result["data"]["threatActorAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_threat_actor] Missing parameters: name and description",
             )
@@ -399,7 +406,7 @@ class ThreatActor:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -423,12 +430,10 @@ class ThreatActor:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self._api.stix2.pick_aliases(stix_object),
                 threat_actor_types=stix_object["threat_actor_types"]
                 if "threat_actor_types" in stix_object
                 else None,
@@ -460,6 +465,6 @@ class ThreatActor:
                 update=update,
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )

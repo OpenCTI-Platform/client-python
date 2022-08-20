@@ -165,11 +165,11 @@ class Incident:
         )
         query = (
             """
-            query Incidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
-                incidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
+                query Incidents($filters: [IncidentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: IncidentsOrdering, $orderMode: OrderingMode) {
+                    incidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
             + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
@@ -216,9 +216,9 @@ class Incident:
             self.opencti.log("info", "Reading Incident {" + id + "}.")
             query = (
                 """
-                query Incident($id: String!) {
-                    incident(id: $id) {
-                        """
+                    query Incident($id: String!) {
+                        incident(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None

@@ -1,16 +1,28 @@
-# coding: utf-8
+"""OpenCTI Stix Domain object operations"""
 
 import json
 import os
+from typing import Type
 
 import magic
 
+from ..api.opencti_api_client import OpenCTIApiClient
+
 
 class StixDomainObject:
-    def __init__(self, opencti, file):
-        self.opencti = opencti
-        self.file = file
-        self.properties = """
+    """Stix domain object"""
+
+    def __init__(self, api: OpenCTIApiClient, file_type: Type):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        :param file_type: File upload class type
+        """
+
+        self._api = api
+        self._file_type = file_type
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -442,7 +454,7 @@ class StixDomainObject:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Listing Stix-Domain-Objects with filters " + json.dumps(filters) + ".",
         )
@@ -453,7 +465,11 @@ class StixDomainObject:
                         edges {
                             node {
                                 """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -468,7 +484,7 @@ class StixDomainObject:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "types": types,
@@ -483,12 +499,12 @@ class StixDomainObject:
 
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["stixDomainObjects"])
+            data = self._api.process_multiple(result["data"]["stixDomainObjects"])
             final_data = final_data + data
             while result["data"]["stixDomainObjects"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["stixDomainObjects"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Stix-Domain-Entities after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing Stix-Domain-Entities after " + after)
+                result = self._api.query(
                     query,
                     {
                         "types": types,
@@ -500,13 +516,11 @@ class StixDomainObject:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(
-                    result["data"]["stixDomainObjects"]
-                )
+                data = self._api.process_multiple(result["data"]["stixDomainObjects"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
+            return self._api.process_multiple(
                 result["data"]["stixDomainObjects"], with_pagination
             )
 
@@ -525,7 +539,7 @@ class StixDomainObject:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Stix-Domain-Object {" + id + "}.")
+            self._api.log("info", "Reading Stix-Domain-Object {" + id + "}.")
             query = (
                 """
                     query StixDomainObject($id: String!) {
@@ -534,17 +548,15 @@ class StixDomainObject:
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
-                result["data"]["stixDomainObject"]
-            )
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["stixDomainObject"])
         elif filters is not None:
             result = self.list(
                 types=types, filters=filters, customAttributes=custom_attributes
@@ -554,7 +566,7 @@ class StixDomainObject:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_stix_domain_object] Missing parameters: id or filters",
             )
@@ -612,7 +624,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log("info", "Updating Stix-Domain-Object {" + id + "}")
+            self._api.log("info", "Updating Stix-Domain-Object {" + id + "}")
             query = """
                     mutation StixDomainObjectEdit($id: ID!, $input: [EditInput]!) {
                         stixDomainObjectEdit(id: $id) {
@@ -624,18 +636,18 @@ class StixDomainObject:
                         }
                     }
                 """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
                     "input": input,
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["stixDomainObjectEdit"]["fieldPatch"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_stix_domain_object] Missing parameters: id and input",
             )
@@ -651,7 +663,7 @@ class StixDomainObject:
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting Stix-Domain-Object {" + id + "}.")
+            self._api.log("info", "Deleting Stix-Domain-Object {" + id + "}.")
             query = """
                  mutation StixDomainObjectEdit($id: ID!) {
                      stixDomainObjectEdit(id: $id) {
@@ -659,9 +671,9 @@ class StixDomainObject:
                      }
                  }
              """
-            self.opencti.query(query, {"id": id})
+            self._api.query(query, {"id": id})
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_stix_domain_object] Missing parameters: id"
             )
             return None
@@ -698,7 +710,7 @@ class StixDomainObject:
                     mime_type = "application/json"
                 else:
                     mime_type = magic.from_file(file_name, mime=True)
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Uploading a file {"
                 + final_file_name
@@ -706,12 +718,12 @@ class StixDomainObject:
                 + id
                 + "}.",
             )
-            return self.opencti.query(
+            return self._api.query(
                 query,
-                {"id": id, "file": (self.file(final_file_name, data, mime_type))},
+                {"id": id, "file": (self._file_type(final_file_name, data, mime_type))},
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_stix_domain_object] Missing parameters: id or file_name",
             )
@@ -723,11 +735,11 @@ class StixDomainObject:
                 stixDomainObjectsExportPush(type: $type, file: $file, listFilters: $listFilters)
             }
         """
-        self.opencti.query(
+        self._api.query(
             query,
             {
                 "type": entity_type,
-                "file": (self.file(file_name, data)),
+                "file": (self._file_type(file_name, data)),
                 "listFilters": list_filters,
             },
         )
@@ -740,8 +752,8 @@ class StixDomainObject:
                 }
             }
         """
-        self.opencti.query(
-            query, {"id": entity_id, "file": (self.file(file_name, data))}
+        self._api.query(
+            query, {"id": entity_id, "file": (self._file_type(file_name, data))}
         )
 
     """
@@ -756,7 +768,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         identity_id = kwargs.get("identity_id", None)
         if id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Updating author of Stix-Domain-Object {"
                 + id
@@ -799,7 +811,7 @@ class StixDomainObject:
                         }
                     }
                 """
-                self.opencti.query(
+                self._api.query(
                     query,
                     {
                         "id": id,
@@ -825,9 +837,9 @@ class StixDomainObject:
                         "relationship_type": "created-by",
                     },
                 }
-                self.opencti.query(query, variables)
+                self._api.query(query, variables)
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return False
 
     """
@@ -862,14 +874,14 @@ class StixDomainObject:
             """
             stix_domain_object = self.read(id=id, customAttributes=custom_attributes)
             if stix_domain_object is None:
-                self.opencti.log(
+                self._api.log(
                     "error", "Cannot add Marking-Definition, entity not found"
                 )
                 return False
             if marking_definition_id in stix_domain_object["objectMarkingIds"]:
                 return True
             else:
-                self.opencti.log(
+                self._api.log(
                     "info",
                     "Adding Marking-Definition {"
                     + marking_definition_id
@@ -886,7 +898,7 @@ class StixDomainObject:
                        }
                    }
                 """
-                self.opencti.query(
+                self._api.query(
                     query,
                     {
                         "id": id,
@@ -898,9 +910,7 @@ class StixDomainObject:
                 )
                 return True
         else:
-            self.opencti.log(
-                "error", "Missing parameters: id and marking_definition_id"
-            )
+            self._api.log("error", "Missing parameters: id and marking_definition_id")
             return False
 
     """
@@ -915,7 +925,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         marking_definition_id = kwargs.get("marking_definition_id", None)
         if id is not None and marking_definition_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing Marking-Definition {"
                 + marking_definition_id
@@ -932,7 +942,7 @@ class StixDomainObject:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -942,7 +952,7 @@ class StixDomainObject:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -958,16 +968,16 @@ class StixDomainObject:
         label_id = kwargs.get("label_id", None)
         label_name = kwargs.get("label_name", None)
         if label_name is not None:
-            label = self.opencti.label.read(
+            label = self._api.label.read(
                 filters=[{"key": "value", "values": [label_name]}]
             )
             if label:
                 label_id = label["id"]
             else:
-                label = self.opencti.label.create(value=label_name)
+                label = self._api.label.create(value=label_name)
                 label_id = label["id"]
         if id is not None and label_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding label {" + label_id + "} to Stix-Domain-Object {" + id + "}",
             )
@@ -980,7 +990,7 @@ class StixDomainObject:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -992,7 +1002,7 @@ class StixDomainObject:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -1008,13 +1018,13 @@ class StixDomainObject:
         label_id = kwargs.get("label_id", None)
         label_name = kwargs.get("label_name", None)
         if label_name is not None:
-            label = self.opencti.label.read(
+            label = self._api.label.read(
                 filters=[{"key": "value", "values": [label_name]}]
             )
             if label:
                 label_id = label["id"]
         if id is not None and label_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing label {" + label_id + "} to Stix-Domain-Object {" + id + "}",
             )
@@ -1027,7 +1037,7 @@ class StixDomainObject:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -1037,7 +1047,7 @@ class StixDomainObject:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -1052,7 +1062,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         external_reference_id = kwargs.get("external_reference_id", None)
         if id is not None and external_reference_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding External-Reference {"
                 + external_reference_id
@@ -1069,7 +1079,7 @@ class StixDomainObject:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -1081,9 +1091,7 @@ class StixDomainObject:
             )
             return True
         else:
-            self.opencti.log(
-                "error", "Missing parameters: id and external_reference_id"
-            )
+            self._api.log("error", "Missing parameters: id and external_reference_id")
             return False
 
     """
@@ -1098,7 +1106,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         external_reference_id = kwargs.get("external_reference_id", None)
         if id is not None and external_reference_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing External-Reference {"
                 + external_reference_id
@@ -1115,7 +1123,7 @@ class StixDomainObject:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -1125,7 +1133,7 @@ class StixDomainObject:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -1140,7 +1148,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         kill_chain_phase_id = kwargs.get("kill_chain_phase_id", None)
         if id is not None and kill_chain_phase_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding Kill-Chain-Phase {"
                 + kill_chain_phase_id
@@ -1157,7 +1165,7 @@ class StixDomainObject:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -1169,7 +1177,7 @@ class StixDomainObject:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and kill_chain_phase_id")
+            self._api.log("error", "Missing parameters: id and kill_chain_phase_id")
             return False
 
     """
@@ -1184,7 +1192,7 @@ class StixDomainObject:
         id = kwargs.get("id", None)
         kill_chain_phase_id = kwargs.get("kill_chain_phase_id", None)
         if id is not None and kill_chain_phase_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing Kill-Chain-Phase {"
                 + kill_chain_phase_id
@@ -1201,7 +1209,7 @@ class StixDomainObject:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -1211,7 +1219,7 @@ class StixDomainObject:
             )
             return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[stix_domain_object] Missing parameters: id and kill_chain_phase_id",
             )
@@ -1227,7 +1235,7 @@ class StixDomainObject:
     def reports(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Getting reports of the Stix-Domain-Object {" + id + "}.",
             )
@@ -1345,8 +1353,8 @@ class StixDomainObject:
                     }
                 }
              """
-            result = self.opencti.query(query, {"id": id})
-            processed_result = self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            processed_result = self._api.process_multiple_fields(
                 result["data"]["stixDomainObject"]
             )
             if processed_result:
@@ -1354,7 +1362,7 @@ class StixDomainObject:
             else:
                 return []
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return None
 
     """
@@ -1367,7 +1375,7 @@ class StixDomainObject:
     def notes(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Getting notes of the Stix-Domain-Object {" + id + "}.",
             )
@@ -1484,8 +1492,8 @@ class StixDomainObject:
                     }
                 }
              """
-            result = self.opencti.query(query, {"id": id})
-            processed_result = self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            processed_result = self._api.process_multiple_fields(
                 result["data"]["stixDomainObject"]
             )
             if processed_result:
@@ -1493,7 +1501,7 @@ class StixDomainObject:
             else:
                 return []
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return None
 
     """
@@ -1506,7 +1514,7 @@ class StixDomainObject:
     def observed_data(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Getting Observed-Data of the Stix-Domain-Object {" + id + "}.",
             )
@@ -1636,8 +1644,8 @@ class StixDomainObject:
                         }
                     }
                  """
-            result = self.opencti.query(query, {"id": id})
-            processed_result = self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            processed_result = self._api.process_multiple_fields(
                 result["data"]["stixDomainObject"]
             )
             if processed_result:
@@ -1645,5 +1653,5 @@ class StixDomainObject:
             else:
                 return []
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return None

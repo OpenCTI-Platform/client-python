@@ -1,10 +1,20 @@
-# coding: utf-8
+"""OpenCTI Stix-Object and Stix-Relationship operations"""
+
+from ..api.opencti_api_client import OpenCTIApiClient
 
 
 class StixObjectOrStixRelationship:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Stix-Object or Stix-Relationship objects"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             ... on StixObject {
                 id
                 standard_id
@@ -478,28 +488,26 @@ class StixObjectOrStixRelationship:
         id = kwargs.get("id", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log(
-                "info", "Reading StixObjectOrStixRelationship {" + id + "}."
-            )
+            self._api.log("info", "Reading StixObjectOrStixRelationship {" + id + "}.")
             query = (
                 """
-                query StixObjectOrStixRelationship($id: String!) {
-                    stixObjectOrStixRelationship(id: $id) {
-                        """
+                                query StixObjectOrStixRelationship($id: String!) {
+                                    stixObjectOrStixRelationship(id: $id) {
+                                        """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(
                 result["data"]["stixObjectOrStixRelationship"]
             )
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return None

@@ -1,4 +1,3 @@
-# coding: utf-8
 import base64
 import datetime
 import io
@@ -8,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import magic
 import requests
-import urllib3
+import urllib3.exceptions
 from pythonjsonlogger import jsonlogger
 
 from pycti.api.opencti_api_connector import OpenCTIApiConnector

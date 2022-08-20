@@ -1,15 +1,23 @@
-# coding: utf-8
+"""OpenCTI Course-Of-Action operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
 
 
 class CourseOfAction:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Course-Of-Action domain object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -128,15 +136,21 @@ class CourseOfAction:
         """
 
     @staticmethod
-    def generate_id(name, x_mitre_id=None):
-        name = name.lower().strip()
+    def generate_id(name: str, x_mitre_id: str = None) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Attack-Pattern name
+        :param x_mitre_id: Mitre ID, if present
+        :return: A Stix compliant UUID5
+        """
+
         if x_mitre_id is not None:
             data = {"x_mitre_id": x_mitre_id}
         else:
-            data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "course-of-action--" + id
+            data = {"name": name.lower().strip()}
+
+        return _generate_uuid5("course-of-action", data)
 
     """
         List Course-Of-Action objects
@@ -161,18 +175,22 @@ class CourseOfAction:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Listing Course-Of-Actions with filters " + json.dumps(filters) + ".",
         )
         query = (
             """
-            query CoursesOfAction($filters: [CoursesOfActionFiltering], $search: String, $first: Int, $after: ID, $orderBy: CoursesOfActionOrdering, $orderMode: OrderingMode) {
-                coursesOfAction(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                    query CoursesOfAction($filters: [CoursesOfActionFiltering], $search: String, $first: Int, $after: ID, $orderBy: CoursesOfActionOrdering, $orderMode: OrderingMode) {
+                        coursesOfAction(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                            edges {
+                                node {
+                                    """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -187,7 +205,7 @@ class CourseOfAction:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -198,7 +216,7 @@ class CourseOfAction:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
+        return self._api.process_multiple(
             result["data"]["coursesOfAction"], with_pagination
         )
 
@@ -215,26 +233,24 @@ class CourseOfAction:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Course-Of-Action {" + id + "}.")
+            self._api.log("info", "Reading Course-Of-Action {" + id + "}.")
             query = (
                 """
-                query CourseOfAction($id: String!) {
-                    courseOfAction(id: $id) {
-                        """
+                        query CourseOfAction($id: String!) {
+                            courseOfAction(id: $id) {
+                                """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
-                result["data"]["courseOfAction"]
-            )
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["courseOfAction"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -242,7 +258,7 @@ class CourseOfAction:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_course_of_action] Missing parameters: id or filters"
             )
             return None
@@ -273,7 +289,7 @@ class CourseOfAction:
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Course Of Action {" + name + "}.")
+            self._api.log("info", "Creating Course Of Action {" + name + "}.")
             query = """
                 mutation CourseOfActionAdd($input: CourseOfActionAddInput) {
                     courseOfActionAdd(input: $input) {
@@ -284,7 +300,7 @@ class CourseOfAction:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -307,11 +323,11 @@ class CourseOfAction:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["courseOfActionAdd"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_course_of_action] Missing parameters: name and description",
             )
@@ -333,10 +349,10 @@ class CourseOfAction:
             if "x_mitre_id" in stix_object:
                 x_mitre_id = stix_object["x_mitre_id"]
             elif (
-                self.opencti.get_attribute_in_mitre_extension("id", stix_object)
+                self._api.get_attribute_in_mitre_extension("id", stix_object)
                 is not None
             ):
-                x_mitre_id = self.opencti.get_attribute_in_mitre_extension(
+                x_mitre_id = self._api.get_attribute_in_mitre_extension(
                     "id", stix_object
                 )
             elif "external_references" in stix_object:
@@ -351,13 +367,13 @@ class CourseOfAction:
 
             # Search in extensions
             if "x_opencti_aliases" not in stix_object:
-                stix_object[
-                    "x_opencti_aliases"
-                ] = self.opencti.get_attribute_in_extension("aliases", stix_object)
+                stix_object["x_opencti_aliases"] = self._api.get_attribute_in_extension(
+                    "aliases", stix_object
+                )
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -381,19 +397,17 @@ class CourseOfAction:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
-                x_opencti_aliases=self.opencti.stix2.pick_aliases(stix_object),
+                x_opencti_aliases=self._api.stix2.pick_aliases(stix_object),
                 x_mitre_id=x_mitre_id,
                 update=update,
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_course_of_action] Missing parameters: stixObject"
             )

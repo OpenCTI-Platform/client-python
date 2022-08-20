@@ -1,7 +1,5 @@
 """OpenCTI Attack-Pattern operations"""
 
-from __future__ import annotations
-
 import json
 import logging
 from datetime import datetime
@@ -174,7 +172,7 @@ class AttackPattern:
     @staticmethod
     def generate_id(name: str, x_mitre_id: str = None) -> str:
         """
-        Generate a STIX complaint UUID5.
+        Generate a STIX compliant UUID5.
 
         :param name: Attack-Pattern name
         :param x_mitre_id: Mitre ID, if present
@@ -436,7 +434,7 @@ class AttackPattern:
         extras: CreateEntityExtras = None,
         update: bool = False,
         **kwargs: Any,
-    ) -> Optional[AttackPattern]:
+    ) -> Optional[AnyDict]:
         """
         Import an Attack-Pattern object from a STIX2 object.
 

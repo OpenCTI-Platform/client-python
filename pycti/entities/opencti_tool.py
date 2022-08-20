@@ -1,15 +1,24 @@
-# coding: utf-8
+"""OpenCTI Tool operations"""
+
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
 
 
 class Tool:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Tool domain object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -143,12 +152,16 @@ class Tool:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "tool--" + id
+    def generate_id(name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Vulnerability name
+        :return: A Stix compliant UUID5
+        """
+
+        data = {"name": name.lower().strip()}
+        return _generate_uuid5("tool", data)
 
     """
         List Tool objects
@@ -173,17 +186,19 @@ class Tool:
         if get_all:
             first = 100
 
-        self.opencti.log(
-            "info", "Listing Tools with filters " + json.dumps(filters) + "."
-        )
+        self._api.log("info", "Listing Tools with filters " + json.dumps(filters) + ".")
         query = (
             """
-            query Tools($filters: [ToolsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ToolsOrdering, $orderMode: OrderingMode) {
-                tools(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                                query Tools($filters: [ToolsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ToolsOrdering, $orderMode: OrderingMode) {
+                                    tools(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                        edges {
+                                            node {
+                                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -198,7 +213,7 @@ class Tool:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -211,12 +226,12 @@ class Tool:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["tools"])
+            data = self._api.process_multiple(result["data"]["tools"])
             final_data = final_data + data
             while result["data"]["tools"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["tools"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Tools after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing Tools after " + after)
+                result = self._api.query(
                     query,
                     {
                         "filters": filters,
@@ -227,13 +242,11 @@ class Tool:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["tools"])
+                data = self._api.process_multiple(result["data"]["tools"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
-                result["data"]["tools"], with_pagination
-            )
+            return self._api.process_multiple(result["data"]["tools"], with_pagination)
 
     """
         Read a Tool object
@@ -248,24 +261,24 @@ class Tool:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Tool {" + id + "}.")
+            self._api.log("info", "Reading Tool {" + id + "}.")
             query = (
                 """
-                query Tool($id: String!) {
-                    tool(id: $id) {
-                        """
+                                    query Tool($id: String!) {
+                                        tool(id: $id) {
+                                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["tool"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["tool"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -273,9 +286,7 @@ class Tool:
             else:
                 return None
         else:
-            self.opencti.log(
-                "error", "[opencti_tool] Missing parameters: id or filters"
-            )
+            self._api.log("error", "[opencti_tool] Missing parameters: id or filters")
             return None
 
     """
@@ -306,7 +317,7 @@ class Tool:
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Tool {" + name + "}.")
+            self._api.log("info", "Creating Tool {" + name + "}.")
             query = """
                 mutation ToolAdd($input: ToolAddInput) {
                     toolAdd(input: $input) {
@@ -317,7 +328,7 @@ class Tool:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -342,9 +353,9 @@ class Tool:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["toolAdd"])
+            return self._api.process_multiple_fields(result["data"]["toolAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_tool] Missing parameters: name and description"
             )
 
@@ -365,9 +376,9 @@ class Tool:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
-            return self.opencti.tool.create(
+            return self._api.tool.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
@@ -389,12 +400,10 @@ class Tool:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self._api.stix2.pick_aliases(stix_object),
                 tool_types=stix_object["tool_types"]
                 if "tool_types" in stix_object
                 else None,
@@ -410,4 +419,4 @@ class Tool:
                 update=update,
             )
         else:
-            self.opencti.log("error", "[opencti_tool] Missing parameters: stixObject")
+            self._api.log("error", "[opencti_tool] Missing parameters: stixObject")
