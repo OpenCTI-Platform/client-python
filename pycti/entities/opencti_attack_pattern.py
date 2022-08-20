@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-import warnings
 from datetime import datetime
 from typing import Any, List, Optional
-from warnings import warn
 
 import stix2
 
