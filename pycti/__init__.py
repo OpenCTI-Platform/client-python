@@ -1,7 +1,5 @@
 __version__ = "5.3.7"
 
-import logging
-
 from .api.opencti_api_client import OpenCTIApiClient
 from .api.opencti_api_connector import OpenCTIApiConnector
 from .api.opencti_api_work import OpenCTIApiWork

@@ -432,7 +432,7 @@ class AttackPattern:
     def import_from_stix2(
         self,
         *,
-        stix_object: AnyDict | stix2.AttackPattern = None,
+        stix_object: stix2.AttackPattern = None,
         extras: CreateEntityExtras = None,
         update: bool = False,
         **kwargs: Any,
