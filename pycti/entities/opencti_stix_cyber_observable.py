@@ -1,15 +1,31 @@
-# coding: utf-8
+"""OpenCTI SCO operations"""
 
 import json
 import os
+from typing import Type
 
 import magic
 
+from ..api.opencti_api_client import OpenCTIApiClient
+
+__all__ = [
+    "StixCyberObservable",
+]
+
 
 class StixCyberObservable:
-    def __init__(self, opencti, file):
-        self.opencti = opencti
-        self.file = file
+    """SCO objects"""
+
+    def __init__(self, api: OpenCTIApiClient, file_type: Type):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        :param file_type: File upload class type
+        """
+
+        self.opencti = api
+        self._file_type = file_type
         self.properties = """
             id
             standard_id
@@ -332,11 +348,11 @@ class StixCyberObservable:
         )
         query = (
             """
-                query StixCyberObservables($types: [String], $filters: [StixCyberObservablesFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixCyberObservablesOrdering, $orderMode: OrderingMode) {
-                    stixCyberObservables(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                        edges {
-                            node {
-                                """
+                    query StixCyberObservables($types: [String], $filters: [StixCyberObservablesFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixCyberObservablesOrdering, $orderMode: OrderingMode) {
+                        stixCyberObservables(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                            edges {
+                                node {
+                                    """
             + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
@@ -410,9 +426,9 @@ class StixCyberObservable:
             self.opencti.log("info", "Reading StixCyberObservable {" + id + "}.")
             query = (
                 """
-                    query StixCyberObservable($id: String!) {
-                        stixCyberObservable(id: $id) {
-                            """
+                        query StixCyberObservable($id: String!) {
+                            stixCyberObservable(id: $id) {
+                                """
                 + (
                     custom_attributes
                     if custom_attributes is not None
@@ -482,7 +498,7 @@ class StixCyberObservable:
             )
             return self.opencti.query(
                 query,
-                {"id": id, "file": (self.file(final_file_name, data, mime_type))},
+                {"id": id, "file": (self._file_type(final_file_name, data, mime_type))},
             )
         else:
             self.opencti.log(
@@ -1240,7 +1256,7 @@ class StixCyberObservable:
             result = self.opencti.query(
                 query,
                 {
-                    "file": (self.file(final_file_name, data, mime_type)),
+                    "file": (self._file_type(final_file_name, data, mime_type)),
                     "x_opencti_description": x_opencti_description,
                     "createdBy": created_by,
                     "objectMarking": object_marking,
@@ -1308,10 +1324,10 @@ class StixCyberObservable:
             self.opencti.log("info", "Promoting Stix-Observable {" + id + "}.")
             query = (
                 """
-                    mutation StixCyberObservableEdit($id: ID!) {
-                        stixCyberObservableEdit(id: $id) {
-                            promote {
-                                """
+                        mutation StixCyberObservableEdit($id: ID!) {
+                            stixCyberObservableEdit(id: $id) {
+                                promote {
+                                    """
                 + (
                     custom_attributes
                     if custom_attributes is not None
@@ -1784,7 +1800,7 @@ class StixCyberObservable:
         self.opencti.query(
             query,
             {
-                "file": (self.file(file_name, data)),
+                "file": (self._file_type(file_name, data)),
                 "listFilters": list_filters,
             },
         )

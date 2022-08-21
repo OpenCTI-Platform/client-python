@@ -1,10 +1,22 @@
-# coding: utf-8
+"""OpenCTI Stix core entity operations"""
+
+from typing import Type
+
+from ..api.opencti_api_client import OpenCTIApiClient
 
 
 class StixCoreObject:
-    def __init__(self, opencti, file):
-        self.opencti = opencti
-        self.file = file
+    """Stix core objects"""
+
+    def __init__(self, api: OpenCTIApiClient, file_type: Type):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        :param file_type: File upload class type
+        """
+        self._api = api
+        self._file_type = file_type
 
     """
         Update a Stix-Domain-Object object field
@@ -19,7 +31,7 @@ class StixCoreObject:
         id = kwargs.get("id", None)
         stix_core_objects_ids = kwargs.get("object_ids", None)
         if id is not None and stix_core_objects_ids is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Merging Core object {"
                 + id
@@ -38,18 +50,18 @@ class StixCoreObject:
                         }
                     }
                 """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
                     "stixCoreObjectsIds": stix_core_objects_ids,
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["stixCoreObjectEdit"]["merge"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_stix_core_object] Missing parameters: id and object_ids",
             )
@@ -57,7 +69,7 @@ class StixCoreObject:
 
     def list_files(self, **kwargs):
         id = kwargs.get("id", None)
-        self.opencti.log(
+        self._api.log(
             "info",
             "Listing files of Stix-Core-Object { " + id + " }",
         )
@@ -80,8 +92,8 @@ class StixCoreObject:
                         }
                     }
                 """
-        result = self.opencti.query(query, {"id": id})
-        entity = self.opencti.process_multiple_fields(result["data"]["stixCoreObject"])
+        result = self._api.query(query, {"id": id})
+        entity = self._api.process_multiple_fields(result["data"]["stixCoreObject"])
         return entity["importFiles"]
 
     """
@@ -94,7 +106,7 @@ class StixCoreObject:
     def reports(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Getting reports of the Stix-Core-Object {" + id + "}.",
             )
@@ -212,8 +224,8 @@ class StixCoreObject:
                     }
                 }
              """
-            result = self.opencti.query(query, {"id": id})
-            processed_result = self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            processed_result = self._api.process_multiple_fields(
                 result["data"]["stixCoreObject"]
             )
             if processed_result:
@@ -221,5 +233,5 @@ class StixCoreObject:
             else:
                 return []
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return None

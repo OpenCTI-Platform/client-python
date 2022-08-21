@@ -1,10 +1,24 @@
-# coding: utf-8
+"""OpenCTI SCO relationship operations"""
+
+from ..api.opencti_api_client import OpenCTIApiClient
+
+__all__ = [
+    "StixCyberObservableRelationship",
+]
 
 
 class StixCyberObservableRelationship:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """SCO relationship objects"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             entity_type
             parent_types
@@ -72,7 +86,7 @@ class StixCyberObservableRelationship:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Listing stix_observable_relationships with {type: "
             + str(relationship_type)
@@ -84,12 +98,16 @@ class StixCyberObservableRelationship:
         )
         query = (
             """
-            query StixCyberObservableRelationships($elementId: String, $fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCyberObservableRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCyberObservableRelationshipsOrdering, $orderMode: OrderingMode) {
-                stixCyberObservableRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                query StixCyberObservableRelationships($elementId: String, $fromId: String, $fromTypes: [String], $toId: String, $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCyberObservableRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCyberObservableRelationshipsOrdering, $orderMode: OrderingMode) {
+                    stixCyberObservableRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -105,7 +123,7 @@ class StixCyberObservableRelationship:
          """
         )
 
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "elementId": element_id,
@@ -125,7 +143,7 @@ class StixCyberObservableRelationship:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
+        return self._api.process_multiple(
             result["data"]["stixCyberObservableRelationships"], with_pagination
         )
 
@@ -156,26 +174,24 @@ class StixCyberObservableRelationship:
         stop_time_stop = kwargs.get("stopTimeStop", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log(
-                "info", "Reading stix_observable_relationship {" + id + "}."
-            )
+            self._api.log("info", "Reading stix_observable_relationship {" + id + "}.")
             query = (
                 """
-                query StixCyberObservableRelationship($id: String!) {
-                    stixCyberObservableRelationship(id: $id) {
-                        """
+                    query StixCyberObservableRelationship($id: String!) {
+                        stixCyberObservableRelationship(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(
                 result["data"]["stixCyberObservableRelationship"]
             )
         else:
@@ -222,7 +238,7 @@ class StixCyberObservableRelationship:
         elif relationship_type == "content":
             relationship_type = "obs_content"
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Creating stix_observable_relationship '"
             + relationship_type
@@ -242,7 +258,7 @@ class StixCyberObservableRelationship:
                     }
                 }
                 """
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "input": {
@@ -261,7 +277,7 @@ class StixCyberObservableRelationship:
                 }
             },
         )
-        return self.opencti.process_multiple_fields(
+        return self._api.process_multiple_fields(
             result["data"]["stixCyberObservableRelationshipAdd"]
         )
 
@@ -277,27 +293,27 @@ class StixCyberObservableRelationship:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Updating stix_observable_relationship {" + id + "}.",
             )
             query = (
                 """
-                mutation StixCyberObservableRelationshipEdit($id: ID!, $input: [EditInput]!) {
-                    stixCyberObservableRelationshipEdit(id: $id) {
-                        fieldPatch(input: $input) {
-                            """
-                + self.properties
+                    mutation StixCyberObservableRelationshipEdit($id: ID!, $input: [EditInput]!) {
+                        stixCyberObservableRelationshipEdit(id: $id) {
+                            fieldPatch(input: $input) {
+                                """
+                + self._default_attributes
                 + """
                         }
                     }
                 }
             """
             )
-            result = self.opencti.query(query, {"id": id, "input": input})
-            return self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id, "input": input})
+            return self._api.process_multiple_fields(
                 result["data"]["stixCyberObservableRelationshipEdit"]["fieldPatch"]
             )
         else:
-            self.opencti.log("error", "Missing parameters: id and key and value")
+            self._api.log("error", "Missing parameters: id and key and value")
             return None

@@ -1,4 +1,4 @@
-"""OpenCTI Stix Domain object operations"""
+"""OpenCTI SDO operations"""
 
 import json
 import os

@@ -1,15 +1,24 @@
-# coding: utf-8
+"""OpenCTI SRO operations"""
 
-import datetime
-import uuid
+from datetime import datetime
+from typing import Union
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
 
 
 class StixCoreRelationship:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """SRO objects"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             entity_type
             parent_types
@@ -285,29 +294,40 @@ class StixCoreRelationship:
 
     @staticmethod
     def generate_id(
-        relationship_type, source_ref, target_ref, start_time=None, stop_time=None
+        relationship_type: str,
+        source_ref: str,
+        target_ref: str,
+        start_time: Union[str, datetime] = None,
+        stop_time: Union[str, datetime] = None,
     ):
-        if isinstance(start_time, datetime.datetime):
+        """
+        Generate a STIX compliant UUID5.
+
+        :param relationship_type: Relationship type ov
+        :param source_ref: Source ID
+        :param target_ref: Target ID
+        :param start_time: Start datetime of the relationship
+        :param stop_time: Stop datetime of the relationship
+        :return: A Stix compliant UUID5
+        """
+
+        if isinstance(start_time, datetime):
             start_time = start_time.isoformat()
-        if isinstance(stop_time, datetime.datetime):
+
+        if isinstance(stop_time, datetime):
             stop_time = stop_time.isoformat()
+
+        data = {
+            "relationship_type": relationship_type,
+            "source_ref": source_ref,
+            "target_ref": target_ref,
+        }
+
         if start_time is not None and stop_time is not None:
-            data = {
-                "relationship_type": relationship_type,
-                "source_ref": source_ref,
-                "target_ref": target_ref,
-                "start_time": start_time,
-                "stop_time": stop_time,
-            }
-        else:
-            data = {
-                "relationship_type": relationship_type,
-                "source_ref": source_ref,
-                "target_ref": target_ref,
-            }
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "relationship--" + id
+            data["start_time"] = start_time
+            data["stop_time"] = stop_time
+
+        return _generate_uuid5("relationship", data)
 
     """
         List stix_core_relationship objects
@@ -346,7 +366,7 @@ class StixCoreRelationship:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Listing stix_core_relationships with {type: "
             + str(relationship_type)
@@ -358,12 +378,16 @@ class StixCoreRelationship:
         )
         query = (
             """
-                query StixCoreRelationships($elementId: [String], $fromId: [String], $fromTypes: [String], $toId: [String], $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode) {
-                    stixCoreRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                        edges {
-                            node {
-                                """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                                    query StixCoreRelationships($elementId: [String], $fromId: [String], $fromTypes: [String], $toId: [String], $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode) {
+                                        stixCoreRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                            edges {
+                                                node {
+                                                    """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -378,7 +402,7 @@ class StixCoreRelationship:
             }
          """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "elementId": element_id,
@@ -400,14 +424,12 @@ class StixCoreRelationship:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(
-                result["data"]["stixCoreRelationships"]
-            )
+            data = self._api.process_multiple(result["data"]["stixCoreRelationships"])
             final_data = final_data + data
             while result["data"]["stixCoreRelationships"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["stixCoreRelationships"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing StixCoreRelationships after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing StixCoreRelationships after " + after)
+                result = self._api.query(
                     query,
                     {
                         "elementId": element_id,
@@ -427,13 +449,13 @@ class StixCoreRelationship:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(
+                data = self._api.process_multiple(
                     result["data"]["stixCoreRelationships"]
                 )
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
+            return self._api.process_multiple(
                 result["data"]["stixCoreRelationships"], with_pagination
             )
 
@@ -464,24 +486,24 @@ class StixCoreRelationship:
         stop_time_stop = kwargs.get("stopTimeStop", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading stix_core_relationship {" + id + "}.")
+            self._api.log("info", "Reading stix_core_relationship {" + id + "}.")
             query = (
                 """
-                    query StixCoreRelationship($id: String!) {
-                        stixCoreRelationship(id: $id) {
-                            """
+                                        query StixCoreRelationship($id: String!) {
+                                            stixCoreRelationship(id: $id) {
+                                                """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(
                 result["data"]["stixCoreRelationship"]
             )
         elif from_id is not None and to_id is not None:
@@ -500,7 +522,7 @@ class StixCoreRelationship:
             else:
                 return None
         else:
-            self.opencti.log("error", "Missing parameters: id or from_id and to_id")
+            self._api.log("error", "Missing parameters: id or from_id and to_id")
             return None
 
     """
@@ -530,7 +552,7 @@ class StixCoreRelationship:
         kill_chain_phases = kwargs.get("killChainPhases", None)
         update = kwargs.get("update", False)
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Creating stix_core_relationship '"
             + relationship_type
@@ -550,7 +572,7 @@ class StixCoreRelationship:
                     }
                 }
             """
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "input": {
@@ -575,7 +597,7 @@ class StixCoreRelationship:
                 }
             },
         )
-        return self.opencti.process_multiple_fields(
+        return self._api.process_multiple_fields(
             result["data"]["stixCoreRelationshipAdd"]
         )
 
@@ -591,7 +613,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Updating stix_core_relationship {" + id + "}",
             )
@@ -606,18 +628,18 @@ class StixCoreRelationship:
                         }
                     }
                 """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
                     "input": input,
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["stixCoreRelationshipEdit"]["fieldPatch"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_stix_core_relationship] Missing parameters: id and key and value",
             )
@@ -633,7 +655,7 @@ class StixCoreRelationship:
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting stix_core_relationship {" + id + "}.")
+            self._api.log("info", "Deleting stix_core_relationship {" + id + "}.")
             query = """
                 mutation StixCoreRelationshipEdit($id: ID!) {
                     stixCoreRelationshipEdit(id: $id) {
@@ -641,9 +663,9 @@ class StixCoreRelationship:
                     }
                 }
             """
-            self.opencti.query(query, {"id": id})
+            self._api.query(query, {"id": id})
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_stix_core_relationship] Missing parameters: id"
             )
             return None
@@ -682,14 +704,14 @@ class StixCoreRelationship:
                 id=id, customAttributes=custom_attributes
             )
             if stix_core_relationship is None:
-                self.opencti.log(
+                self._api.log(
                     "error", "Cannot add Marking-Definition, entity not found"
                 )
                 return False
             if marking_definition_id in stix_core_relationship["objectMarkingIds"]:
                 return True
             else:
-                self.opencti.log(
+                self._api.log(
                     "info",
                     "Adding Marking-Definition {"
                     + marking_definition_id
@@ -706,7 +728,7 @@ class StixCoreRelationship:
                        }
                    }
                 """
-                self.opencti.query(
+                self._api.query(
                     query,
                     {
                         "id": id,
@@ -718,9 +740,7 @@ class StixCoreRelationship:
                 )
                 return True
         else:
-            self.opencti.log(
-                "error", "Missing parameters: id and marking_definition_id"
-            )
+            self._api.log("error", "Missing parameters: id and marking_definition_id")
             return False
 
     """
@@ -735,7 +755,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         marking_definition_id = kwargs.get("marking_definition_id", None)
         if id is not None and marking_definition_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing Marking-Definition {"
                 + marking_definition_id
@@ -752,7 +772,7 @@ class StixCoreRelationship:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -762,7 +782,7 @@ class StixCoreRelationship:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -778,16 +798,16 @@ class StixCoreRelationship:
         label_id = kwargs.get("label_id", None)
         label_name = kwargs.get("label_name", None)
         if label_name is not None:
-            label = self.opencti.label.read(
+            label = self._api.label.read(
                 filters=[{"key": "value", "values": [label_name]}]
             )
             if label:
                 label_id = label["id"]
             else:
-                label = self.opencti.label.create(value=label_name)
+                label = self._api.label.create(value=label_name)
                 label_id = label["id"]
         if id is not None and label_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding label {"
                 + label_id
@@ -804,7 +824,7 @@ class StixCoreRelationship:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -816,7 +836,7 @@ class StixCoreRelationship:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -831,7 +851,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         external_reference_id = kwargs.get("external_reference_id", None)
         if id is not None and external_reference_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding External-Reference {"
                 + external_reference_id
@@ -848,7 +868,7 @@ class StixCoreRelationship:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -860,9 +880,7 @@ class StixCoreRelationship:
             )
             return True
         else:
-            self.opencti.log(
-                "error", "Missing parameters: id and external_reference_id"
-            )
+            self._api.log("error", "Missing parameters: id and external_reference_id")
             return False
 
     """
@@ -877,7 +895,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         external_reference_id = kwargs.get("external_reference_id", None)
         if id is not None and external_reference_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing External-Reference {"
                 + external_reference_id
@@ -894,7 +912,7 @@ class StixCoreRelationship:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -904,7 +922,7 @@ class StixCoreRelationship:
             )
             return True
         else:
-            self.opencti.log("error", "Missing parameters: id and label_id")
+            self._api.log("error", "Missing parameters: id and label_id")
             return False
 
     """
@@ -919,7 +937,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         kill_chain_phase_id = kwargs.get("kill_chain_phase_id", None)
         if id is not None and kill_chain_phase_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding Kill-Chain-Phase {"
                 + kill_chain_phase_id
@@ -936,7 +954,7 @@ class StixCoreRelationship:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -948,7 +966,7 @@ class StixCoreRelationship:
             )
             return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_stix_core_relationship] Missing parameters: id and kill_chain_phase_id",
             )
@@ -966,7 +984,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         kill_chain_phase_id = kwargs.get("kill_chain_phase_id", None)
         if id is not None and kill_chain_phase_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing Kill-Chain-Phase {"
                 + kill_chain_phase_id
@@ -983,7 +1001,7 @@ class StixCoreRelationship:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -993,7 +1011,7 @@ class StixCoreRelationship:
             )
             return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[stix_core_relationship] Missing parameters: id and kill_chain_phase_id",
             )
@@ -1011,7 +1029,7 @@ class StixCoreRelationship:
         id = kwargs.get("id", None)
         identity_id = kwargs.get("identity_id", None)
         if id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Updating author of stix_core_relationship {"
                 + id
@@ -1054,7 +1072,7 @@ class StixCoreRelationship:
                         }
                     }
                 """
-                self.opencti.query(
+                self._api.query(
                     query,
                     {
                         "id": id,
@@ -1080,9 +1098,9 @@ class StixCoreRelationship:
                         "relationship_type": "created-by",
                     },
                 }
-                self.opencti.query(query, variables)
+                self._api.query(query, variables)
         else:
-            self.opencti.log("error", "Missing parameters: id")
+            self._api.log("error", "Missing parameters: id")
             return False
 
     """
@@ -1105,7 +1123,7 @@ class StixCoreRelationship:
                 toId=target_ref,
                 stix_id=stix_relation["id"],
                 relationship_type=stix_relation["relationship_type"],
-                description=self.opencti.stix2.convert_markdown(
+                description=self._api.stix2.convert_markdown(
                     stix_relation["description"]
                 )
                 if "description" in stix_relation
@@ -1147,6 +1165,6 @@ class StixCoreRelationship:
                 update=update,
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )

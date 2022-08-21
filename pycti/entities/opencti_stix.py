@@ -1,9 +1,19 @@
-# coding: utf-8
+"""OpenCTI Stix entity operations"""
+
+from ..api.opencti_api_client import OpenCTIApiClient
 
 
 class Stix:
-    def __init__(self, opencti):
-        self.opencti = opencti
+    """Stix entity objects"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
 
     """
         Delete a Stix element
@@ -15,7 +25,7 @@ class Stix:
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting Stix element {" + id + "}.")
+            self._api.log("info", "Deleting Stix element {" + id + "}.")
             query = """
                  mutation StixEdit($id: ID!) {
                      stixEdit(id: $id) {
@@ -23,7 +33,7 @@ class Stix:
                      }
                  }
              """
-            self.opencti.query(query, {"id": id})
+            self._api.query(query, {"id": id})
         else:
-            self.opencti.log("error", "[opencti_stix] Missing parameters: id")
+            self._api.log("error", "[opencti_stix] Missing parameters: id")
             return None
