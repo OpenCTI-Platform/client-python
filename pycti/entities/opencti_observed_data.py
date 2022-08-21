@@ -1,15 +1,28 @@
-# coding: utf-8
+"""OpenCTI Observed-Data operations"""
 
 import json
-import uuid
+from typing import List
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "ObservedData",
+]
 
 
 class ObservedData:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Observed-Data domain object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -212,11 +225,16 @@ class ObservedData:
         """
 
     @staticmethod
-    def generate_id(object_ids):
+    def generate_id(object_ids: List[str]) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param object_ids: Object IDs
+        :return: A Stix compliant UUID5
+        """
+
         data = {"objects": object_ids}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "observed-data--" + id
+        return _generate_uuid5("observed-data", data)
 
     """
         List ObservedData objects
@@ -241,17 +259,21 @@ class ObservedData:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing ObservedDatas with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query ObservedDatas($filters: [ObservedDatasFiltering], $search: String, $first: Int, $after: ID, $orderBy: ObservedDatasOrdering, $orderMode: OrderingMode) {
-                observedDatas(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                query ObservedDatas($filters: [ObservedDatasFiltering], $search: String, $first: Int, $after: ID, $orderBy: ObservedDatasOrdering, $orderMode: OrderingMode) {
+                    observedDatas(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -266,7 +288,7 @@ class ObservedData:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -277,7 +299,7 @@ class ObservedData:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
+        return self._api.process_multiple(
             result["data"]["observedDatas"], with_pagination
         )
 
@@ -294,24 +316,24 @@ class ObservedData:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading ObservedData {" + id + "}.")
+            self._api.log("info", "Reading ObservedData {" + id + "}.")
             query = (
                 """
-                query ObservedData($id: String!) {
-                    observedData(id: $id) {
-                        """
+                    query ObservedData($id: String!) {
+                        observedData(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["observedData"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["observedData"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -331,7 +353,7 @@ class ObservedData:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Checking StixObjectOrStixRelationship {"
                 + stix_object_or_stix_relationship_id
@@ -344,7 +366,7 @@ class ObservedData:
                     observedDataContainsStixObjectOrStixRelationship(id: $id, stixObjectOrStixRelationshipId: $stixObjectOrStixRelationshipId)
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
@@ -353,7 +375,7 @@ class ObservedData:
             )
             return result["data"]["observedDataContainsStixObjectOrStixRelationship"]
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_observedData] Missing parameters: id or entity_id",
             )
@@ -388,7 +410,7 @@ class ObservedData:
             and last_observed is not None
             and objects is not None
         ):
-            self.opencti.log("info", "Creating ObservedData.")
+            self._api.log("info", "Creating ObservedData.")
             query = """
                 mutation ObservedDataAdd($input: ObservedDataAddInput) {
                     observedDataAdd(input: $input) {
@@ -399,7 +421,7 @@ class ObservedData:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -422,11 +444,9 @@ class ObservedData:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(
-                result["data"]["observedDataAdd"]
-            )
+            return self._api.process_multiple_fields(result["data"]["observedDataAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_observedData] Missing parameters: first_observed, last_observed or objects",
             )
@@ -450,7 +470,7 @@ class ObservedData:
                 stixObjectOrStixRelationshipId=stix_object_or_stix_relationship_id,
             ):
                 return True
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding StixObjectOrStixRelationship {"
                 + stix_object_or_stix_relationship_id
@@ -467,7 +487,7 @@ class ObservedData:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -479,7 +499,7 @@ class ObservedData:
             )
             return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_observedData] Missing parameters: id and stix_object_or_stix_relationship_id",
             )
@@ -499,7 +519,7 @@ class ObservedData:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing StixObjectOrStixRelationship {"
                 + stix_object_or_stix_relationship_id
@@ -516,7 +536,7 @@ class ObservedData:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -526,7 +546,7 @@ class ObservedData:
             )
             return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_observed_data] Missing parameters: id and entity_id"
             )
             return False
@@ -548,7 +568,7 @@ class ObservedData:
             stix_observable_results = []
             for key, observable_item in stix_object["objects"].items():
                 stix_observable_results.append(
-                    self.opencti.stix_cyber_observable.create(
+                    self._api.stix_cyber_observable.create(
                         observableData=observable_item,
                         createdBy=extras["created_by_id"]
                         if "created_by_id" in extras
@@ -570,7 +590,7 @@ class ObservedData:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             observed_data_result = self.create(
                 stix_id=stix_object["id"],
@@ -611,6 +631,6 @@ class ObservedData:
 
             return observed_data_result
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_attack_pattern] Missing parameters: stixObject"
             )

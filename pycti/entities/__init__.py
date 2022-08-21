@@ -7,7 +7,7 @@ from warnings import warn
 from stix2.canonicalization.Canonicalize import canonicalize
 
 
-def _generate_uuid5(prefix: str, data: Dict[str, Any]) -> str:
+def _generate_uuid5(prefix: str, data: Dict[str, Any] = None) -> str:
     """
     Generate an OpenCTI uuid5 identifier.
 
@@ -15,6 +15,11 @@ def _generate_uuid5(prefix: str, data: Dict[str, Any]) -> str:
     :param data: Namespace data
     :return: A uuid5 identifier
     """
+
+    if data is None:
+        id = str(uuid.uuid4())
+        return f"{prefix}--{id}"
+
     stix_cyber_object_namespace = "00abedb4-aa42-466c-9c01-fed23315a9b7"
     data = canonicalize(data, utf8=False)
     id = str(uuid.uuid5(uuid.UUID(stix_cyber_object_namespace), data))
@@ -36,6 +41,7 @@ def _check_for_deprecated_parameter(
     :param kwargs: Keyword arguments from the method
     :return: The value from the old name, or the existing value
     """
+
     if old_name in kwargs:
         warn(
             f"The parameter {old_name} has been superseded by {new_name}",
@@ -56,6 +62,7 @@ def _check_for_excess_parameters(
     :param kwargs: Keyword arguments from the method
     :return: None
     """
+
     if kwargs:
         for key in kwargs:
             warn(f"Excess parameter {key}", SyntaxWarning, stacklevel=2)

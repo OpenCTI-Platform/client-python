@@ -1,17 +1,31 @@
-# coding: utf-8
+"""OpenCTI Report operations"""
 
 import datetime
 import json
-import uuid
+from typing import Union
 
 from dateutil.parser import parse
-from stix2.canonicalization.Canonicalize import canonicalize
+
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "Report",
+]
 
 
 class Report:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Report domain object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -222,14 +236,27 @@ class Report:
         """
 
     @staticmethod
-    def generate_id(name, published):
-        name = name.lower().strip()
+    def generate_id(
+        name: str,
+        published: Union[str, datetime],
+    ) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Report name
+        :param published: Publish datetime
+        :return: A Stix compliant UUID5
+        """
+
         if isinstance(published, datetime.datetime):
             published = published.isoformat()
-        data = {"name": name, "published": published}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "report--" + id
+
+        data = {
+            "name": name.lower().strip(),
+            "published": published,
+        }
+
+        return _generate_uuid5("report", data)
 
     """
         List Report objects
@@ -254,17 +281,21 @@ class Report:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Reports with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Reports($filters: [ReportsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ReportsOrdering, $orderMode: OrderingMode) {
-                reports(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                query Reports($filters: [ReportsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ReportsOrdering, $orderMode: OrderingMode) {
+                    reports(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -279,7 +310,7 @@ class Report:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -292,12 +323,12 @@ class Report:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["reports"])
+            data = self._api.process_multiple(result["data"]["reports"])
             final_data = final_data + data
             while result["data"]["reports"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["reports"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Reports after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing Reports after " + after)
+                result = self._api.query(
                     query,
                     {
                         "filters": filters,
@@ -308,11 +339,11 @@ class Report:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["reports"])
+                data = self._api.process_multiple(result["data"]["reports"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
+            return self._api.process_multiple(
                 result["data"]["reports"], with_pagination
             )
 
@@ -329,24 +360,24 @@ class Report:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Report {" + id + "}.")
+            self._api.log("info", "Reading Report {" + id + "}.")
             query = (
                 """
-                query Report($id: String!) {
-                    report(id: $id) {
-                        """
+                    query Report($id: String!) {
+                        report(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["report"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["report"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -396,7 +427,7 @@ class Report:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Checking StixObjectOrStixRelationship {"
                 + stix_object_or_stix_relationship_id
@@ -409,7 +440,7 @@ class Report:
                     reportContainsStixObjectOrStixRelationship(id: $id, stixObjectOrStixRelationshipId: $stixObjectOrStixRelationshipId)
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
@@ -418,7 +449,7 @@ class Report:
             )
             return result["data"]["reportContainsStixObjectOrStixRelationship"]
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_report] Missing parameters: id or stixObjectOrStixRelationshipId",
             )
@@ -450,7 +481,7 @@ class Report:
         update = kwargs.get("update", False)
 
         if name is not None and description is not None and published is not None:
-            self.opencti.log("info", "Creating Report {" + name + "}.")
+            self._api.log("info", "Creating Report {" + name + "}.")
             query = """
                 mutation ReportAdd($input: ReportAddInput) {
                     reportAdd(input: $input) {
@@ -461,7 +492,7 @@ class Report:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -485,9 +516,9 @@ class Report:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["reportAdd"])
+            return self._api.process_multiple_fields(result["data"]["reportAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_report] Missing parameters: name and description and published and report_class",
             )
@@ -506,7 +537,7 @@ class Report:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Adding StixObjectOrStixRelationship {"
                 + stix_object_or_stix_relationship_id
@@ -523,7 +554,7 @@ class Report:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -535,7 +566,7 @@ class Report:
             )
             return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_report] Missing parameters: id and stixObjectOrStixRelationshipId",
             )
@@ -555,7 +586,7 @@ class Report:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
+            self._api.log(
                 "info",
                 "Removing StixObjectOrStixRelationship {"
                 + stix_object_or_stix_relationship_id
@@ -572,7 +603,7 @@ class Report:
                    }
                }
             """
-            self.opencti.query(
+            self._api.query(
                 query,
                 {
                     "id": id,
@@ -582,7 +613,7 @@ class Report:
             )
             return True
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_report] Missing parameters: id and stixObjectOrStixRelationshipId",
             )
@@ -605,7 +636,7 @@ class Report:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -630,9 +661,7 @@ class Report:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
                 report_types=stix_object["report_types"]
@@ -647,4 +676,4 @@ class Report:
                 update=update,
             )
         else:
-            self.opencti.log("error", "[opencti_report] Missing parameters: stixObject")
+            self._api.log("error", "[opencti_report] Missing parameters: stixObject")

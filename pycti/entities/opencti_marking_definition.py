@@ -1,15 +1,27 @@
-# coding: utf-8
+"""OpenCTI Marking-Definition operations"""
 
 import json
-import uuid
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from ..api.opencti_api_client import OpenCTIApiClient
+from . import _generate_uuid5
+
+__all__ = [
+    "MarkingDefinition",
+]
 
 
 class MarkingDefinition:
-    def __init__(self, opencti):
-        self.opencti = opencti
-        self.properties = """
+    """Marking-Definition common object"""
+
+    def __init__(self, api: OpenCTIApiClient):
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -26,10 +38,20 @@ class MarkingDefinition:
 
     @staticmethod
     def generate_id(definition, definition_type):
-        data = {"definition": definition, "definition_type": definition_type}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "marking-definition--" + id
+        """
+        Generate a STIX compliant UUID5.
+
+        :param definition: Marking definition name
+        :param definition_type: Marking-definition type ov
+        :return: A Stix compliant UUID5
+        """
+
+        data = {
+            "definition": definition,
+            "definition_type": definition_type,
+        }
+
+        return _generate_uuid5("marking-definition", data)
 
     """
         List Marking-Definition objects
@@ -52,18 +74,22 @@ class MarkingDefinition:
         if get_all:
             first = 500
 
-        self.opencti.log(
+        self._api.log(
             "info",
             "Listing Marking-Definitions with filters " + json.dumps(filters) + ".",
         )
         query = (
             """
-            query MarkingDefinitions($filters: [MarkingDefinitionsFiltering], $first: Int, $after: ID, $orderBy: MarkingDefinitionsOrdering, $orderMode: OrderingMode) {
-                markingDefinitions(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                        query MarkingDefinitions($filters: [MarkingDefinitionsFiltering], $first: Int, $after: ID, $orderBy: MarkingDefinitionsOrdering, $orderMode: OrderingMode) {
+                            markingDefinitions(filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                                edges {
+                                    node {
+                                        """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -78,7 +104,7 @@ class MarkingDefinition:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -88,7 +114,7 @@ class MarkingDefinition:
                 "orderMode": order_mode,
             },
         )
-        return self.opencti.process_multiple(
+        return self._api.process_multiple(
             result["data"]["markingDefinitions"], with_pagination
         )
 
@@ -104,20 +130,20 @@ class MarkingDefinition:
         id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
         if id is not None:
-            self.opencti.log("info", "Reading Marking-Definition {" + id + "}.")
+            self._api.log("info", "Reading Marking-Definition {" + id + "}.")
             query = (
                 """
-                query MarkingDefinition($id: String!) {
-                    markingDefinition(id: $id) {
-                        """
-                + self.properties
+                            query MarkingDefinition($id: String!) {
+                                markingDefinition(id: $id) {
+                                    """
+                + self._default_attributes
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(
                 result["data"]["markingDefinition"]
             )
         elif filters is not None:
@@ -127,7 +153,7 @@ class MarkingDefinition:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_marking_definition] Missing parameters: id or filters",
             )
@@ -155,16 +181,16 @@ class MarkingDefinition:
         if definition is not None and definition_type is not None:
             query = (
                 """
-                mutation MarkingDefinitionAdd($input: MarkingDefinitionAddInput) {
-                    markingDefinitionAdd(input: $input) {
-                        """
-                + self.properties
+                            mutation MarkingDefinitionAdd($input: MarkingDefinitionAddInput) {
+                                markingDefinitionAdd(input: $input) {
+                                    """
+                + self._default_attributes
                 + """
                     }
                 }
             """
             )
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -180,11 +206,11 @@ class MarkingDefinition:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["markingDefinitionAdd"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_marking_definition] Missing parameters: definition and definition_type",
             )
@@ -201,7 +227,7 @@ class MarkingDefinition:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log("info", "Updating Marking Definition {" + id + "}")
+            self._api.log("info", "Updating Marking Definition {" + id + "}")
             query = """
                     mutation MarkingDefinitionEdit($id: ID!, $input: [EditInput]!) {
                         markingDefinitionEdit(id: $id) {
@@ -213,18 +239,18 @@ class MarkingDefinition:
                         }
                     }
                 """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "id": id,
                     "input": input,
                 },
             )
-            return self.opencti.process_multiple_fields(
+            return self._api.process_multiple_fields(
                 result["data"]["markingDefinitionEdit"]["fieldPatch"]
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error",
                 "[opencti_marking_definition] Missing parameters: id and key and value",
             )
@@ -263,22 +289,22 @@ class MarkingDefinition:
             # Search in extensions
             if (
                 "x_opencti_order" not in stix_object
-                and self.opencti.get_attribute_in_extension("order", stix_object)
+                and self._api.get_attribute_in_extension("order", stix_object)
                 is not None
             ):
-                stix_object[
-                    "x_opencti_order"
-                ] = self.opencti.get_attribute_in_extension("order", stix_object)
+                stix_object["x_opencti_order"] = self._api.get_attribute_in_extension(
+                    "order", stix_object
+                )
             if "x_opencti_color" not in stix_object:
-                stix_object[
-                    "x_opencti_color"
-                ] = self.opencti.get_attribute_in_extension("color", stix_object)
+                stix_object["x_opencti_color"] = self._api.get_attribute_in_extension(
+                    "color", stix_object
+                )
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
-            return self.opencti.marking_definition.create(
+            return self._api.marking_definition.create(
                 stix_id=stix_object["id"],
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
@@ -296,14 +322,14 @@ class MarkingDefinition:
                 update=update,
             )
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_marking_definition] Missing parameters: stixObject"
             )
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            self.opencti.log("info", "Deleting Marking-Definition {" + id + "}.")
+            self._api.log("info", "Deleting Marking-Definition {" + id + "}.")
             query = """
                  mutation MarkingDefinitionEdit($id: ID!) {
                      markingDefinitionEdit(id: $id) {
@@ -311,9 +337,9 @@ class MarkingDefinition:
                      }
                  }
              """
-            self.opencti.query(query, {"id": id})
+            self._api.query(query, {"id": id})
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_marking_definition] Missing parameters: id"
             )
             return None
