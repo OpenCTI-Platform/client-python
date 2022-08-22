@@ -3,7 +3,7 @@
 import json
 import logging
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import stix2
 
@@ -13,8 +13,12 @@ from . import (
     _check_for_excess_parameters,
     _generate_uuid5,
 )
-from .models import CreateEntityExtras, OrderingMode
-from .models.opencti_attack_pattern import AttackPatternFiltering, AttackPatternOrdering
+from .models.opencti_attack_pattern import (
+    AttackPatternFiltering,
+    AttackPatternOrdering,
+    ImportAttackPatternExtras,
+)
+from .models.opencti_common import OrderingMode
 
 __all__ = [
     "AttackPattern",
@@ -199,7 +203,7 @@ class AttackPattern:
         get_all: bool = False,
         with_pagination: bool = False,
         **kwargs: Any,
-    ) -> List[AnyDict]:
+    ) -> Union[AnyDict, List[AnyDict]]:
         """
         List Attack-Pattern objects.
 
@@ -328,10 +332,13 @@ class AttackPattern:
             result = self._api.query(query, variables)
             entity = result["data"]["attackPattern"]
             return self._api.process_multiple_fields(entity)
+
         elif filters is not None:
             result = self.list(filters=filters)
             return next(iter(result), None)
+
         else:
+            # TODO throw?
             log.error("Missing parameter: id or filters")
             return None
 
@@ -385,63 +392,64 @@ class AttackPattern:
             _check_for_excess_parameters(kwargs)
 
         if name is not None:
-            log.info("Creating Attack-Pattern {%s}", name)
-            query = """
-                mutation AttackPatternAdd($input: AttackPatternAddInput) {
-                    attackPatternAdd(input: $input) {
-                        id
-                        standard_id
-                        entity_type
-                        parent_types
-                    }
-                }
-            """
-            variables = {
-                "input": {
-                    "stix_id": stix_id,
-                    "createdBy": created_by,
-                    "objectMarking": object_marking,
-                    "objectLabel": object_label,
-                    "externalReferences": external_references,
-                    "revoked": revoked,
-                    "confidence": confidence,
-                    "lang": lang,
-                    "created": created,
-                    "modified": modified,
-                    "name": name,
-                    "description": description,
-                    "aliases": aliases,
-                    "x_mitre_platforms": x_mitre_platforms,
-                    "x_mitre_permissions_required": x_mitre_permissions_required,
-                    "x_mitre_detection": x_mitre_detection,
-                    "x_mitre_id": x_mitre_id,
-                    "killChainPhases": kill_chain_phases,
-                    "x_opencti_stix_ids": x_opencti_stix_ids,
-                    "update": update,
+            # TODO throw?
+            log.error("Missing parameter: name")
+            return None
+
+        log.info("Creating Attack-Pattern {%s}", name)
+        query = """
+            mutation AttackPatternAdd($input: AttackPatternAddInput) {
+                attackPatternAdd(input: $input) {
+                    id
+                    standard_id
+                    entity_type
+                    parent_types
                 }
             }
-            result = self._api.query(query, variables)
-            entity = result["data"]["attackPatternAdd"]
-            return self._api.process_multiple_fields(entity)
-        else:
-            log.error("Missing parameters: name")
-            return None
+        """
+        variables = {
+            "input": {
+                "stix_id": stix_id,
+                "createdBy": created_by,
+                "objectMarking": object_marking,
+                "objectLabel": object_label,
+                "externalReferences": external_references,
+                "revoked": revoked,
+                "confidence": confidence,
+                "lang": lang,
+                "created": created,
+                "modified": modified,
+                "name": name,
+                "description": description,
+                "aliases": aliases,
+                "x_mitre_platforms": x_mitre_platforms,
+                "x_mitre_permissions_required": x_mitre_permissions_required,
+                "x_mitre_detection": x_mitre_detection,
+                "x_mitre_id": x_mitre_id,
+                "killChainPhases": kill_chain_phases,
+                "x_opencti_stix_ids": x_opencti_stix_ids,
+                "update": update,
+            }
+        }
+        result = self._api.query(query, variables)
+        entity = result["data"]["attackPatternAdd"]
+        return self._api.process_multiple_fields(entity)
 
     def import_from_stix2(
         self,
         *,
         stix_object: stix2.AttackPattern = None,
-        extras: CreateEntityExtras = None,
+        extras: ImportAttackPatternExtras = None,
         update: bool = False,
         **kwargs: Any,
     ) -> Optional[AnyDict]:
         """
-        Import an Attack-Pattern object from a STIX2 object.
+        Import a stix2.AttackPattern object.
 
         :param stix_object: A STIX object
         :param extras: Extra OpenCTI fields
         :param update: Update existing data
-        :return: Attack-Pattern object
+        :return: An Attack-Pattern object
         """
 
         if kwargs:
@@ -453,90 +461,90 @@ class AttackPattern:
         if extras is None:
             extras = {}
 
-        if stix_object is not None:
-            # Extract external ID
-
-            x_mitre_id = stix_object.get("x_mitre_id")
-            if x_mitre_id is None:
-                x_mitre_id = self._api.get_attribute_in_mitre_extension(
-                    "id", stix_object
-                )
-            if x_mitre_id is None:
-                refs = stix_object.get("external_references") or []
-                names = [
-                    "mitre-attack",
-                    "mitre-pre-attack",
-                    "mitre-mobile-attack",
-                    "mitre-ics-attack",
-                    "amitt-attack",
-                ]
-                for external_reference in refs:
-                    if external_reference["source_name"] in names:
-                        x_mitre_id = external_reference.get("external_id")
-
-            # Search in extensions
-            if "x_opencti_order" not in stix_object:
-                value = self._api.get_attribute_in_extension("order", stix_object)
-                stix_object["x_opencti_order"] = value or 0
-
-            if "x_mitre_platforms" not in stix_object:
-                value = self._api.get_attribute_in_mitre_extension(
-                    "platforms", stix_object
-                )
-                stix_object["x_mitre_platforms"] = value
-
-            if "x_mitre_permissions_required" not in stix_object:
-                value = self._api.get_attribute_in_mitre_extension(
-                    "permissions_required", stix_object
-                )
-                stix_object["x_mitre_permissions_required"] = value
-
-            if "x_mitre_detection" not in stix_object:
-                value = self._api.get_attribute_in_mitre_extension(
-                    "detection", stix_object
-                )
-                stix_object["x_mitre_detection"] = value
-
-            if "x_opencti_stix_ids" not in stix_object:
-                value = self._api.get_attribute_in_extension("stix_ids", stix_object)
-                stix_object["x_opencti_stix_ids"] = value
-
-            description = stix_object.get("description", "")
-            if description:
-                description = self._api.stix2.convert_markdown(description)
-
-            x_mitre_platforms = stix_object.get("x_mitre_platforms")
-            if not x_mitre_platforms:
-                x_mitre_platforms = stix_object.get("x_amitt_platforms")
-
-            return self.create(
-                stix_id=stix_object["id"],
-                name=stix_object["name"],
-                created_by=extras.get("created_by_id"),
-                object_marking=extras.get("object_marking_ids"),
-                object_label=extras.get("object_label_ids", []),
-                external_references=extras.get("external_references_ids", []),
-                kill_chain_phases=extras.get("kill_chain_phases_ids"),
-                revoked=stix_object.get("revoked", None),
-                confidence=stix_object.get("confidence"),
-                lang=stix_object.get("lang"),
-                created=stix_object.get("created"),
-                modified=stix_object.get("modified"),
-                description=description,
-                aliases=self._api.stix2.pick_aliases(stix_object),
-                x_mitre_platforms=x_mitre_platforms,
-                x_mitre_permissions_required=stix_object.get(
-                    "x_mitre_permissions_required"
-                ),
-                x_mitre_detection=stix_object.get("x_mitre_detection"),
-                x_mitre_id=x_mitre_id,
-                x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
-                update=update,
-            )
-        else:
+        if stix_object is None:
+            # TODO throw?
             log.error("Missing parameter: stix_object")
+            return None
 
-    def delete(self, *, id: str = None, **kwargs: Any) -> None:
+        # Extract external ID
+        x_mitre_id = stix_object.get("x_mitre_id")
+        if x_mitre_id is None:
+            x_mitre_id = self._api.get_attribute_in_mitre_extension("id", stix_object)
+        if x_mitre_id is None:
+            refs = stix_object.get("external_references") or []
+            names = [
+                "mitre-attack",
+                "mitre-pre-attack",
+                "mitre-mobile-attack",
+                "mitre-ics-attack",
+                "amitt-attack",
+            ]
+            for external_reference in refs:
+                if external_reference["source_name"] in names:
+                    x_mitre_id = external_reference.get("external_id")
+
+        # Search in extensions
+        if "x_opencti_order" not in stix_object:
+            value = self._api.get_attribute_in_extension("order", stix_object)
+            stix_object["x_opencti_order"] = value or 0
+
+        if "x_mitre_platforms" not in stix_object:
+            value = self._api.get_attribute_in_mitre_extension("platforms", stix_object)
+            stix_object["x_mitre_platforms"] = value
+
+        if "x_mitre_permissions_required" not in stix_object:
+            value = self._api.get_attribute_in_mitre_extension(
+                "permissions_required", stix_object
+            )
+            stix_object["x_mitre_permissions_required"] = value
+
+        if "x_mitre_detection" not in stix_object:
+            value = self._api.get_attribute_in_mitre_extension("detection", stix_object)
+            stix_object["x_mitre_detection"] = value
+
+        if "x_opencti_stix_ids" not in stix_object:
+            value = self._api.get_attribute_in_extension("stix_ids", stix_object)
+            stix_object["x_opencti_stix_ids"] = value
+
+        description = stix_object.get("description") or ""
+        if description:
+            description = self._api.stix2.convert_markdown(description)
+
+        x_mitre_platforms = stix_object.get("x_mitre_platforms")
+        if not x_mitre_platforms:
+            x_mitre_platforms = stix_object.get("x_amitt_platforms")
+
+        return self.create(
+            stix_id=stix_object["id"],
+            name=stix_object["name"],
+            created_by=extras.get("created_by_id"),
+            object_marking=extras.get("object_marking_ids"),
+            object_label=extras.get("object_label_ids", []),
+            external_references=extras.get("external_references_ids", []),
+            kill_chain_phases=extras.get("kill_chain_phases_ids"),
+            revoked=stix_object.get("revoked", None),
+            confidence=stix_object.get("confidence"),
+            lang=stix_object.get("lang"),
+            created=stix_object.get("created"),
+            modified=stix_object.get("modified"),
+            description=description,
+            aliases=self._api.stix2.pick_aliases(stix_object),
+            x_mitre_platforms=x_mitre_platforms,
+            x_mitre_permissions_required=stix_object.get(
+                "x_mitre_permissions_required"
+            ),
+            x_mitre_detection=stix_object.get("x_mitre_detection"),
+            x_mitre_id=x_mitre_id,
+            x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
+            update=update,
+        )
+
+    def delete(
+        self,
+        *,
+        id: str = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Delete an Attack-Pattern object.
 
@@ -546,16 +554,18 @@ class AttackPattern:
 
         _check_for_excess_parameters(kwargs)
 
-        if id is not None:
-            log.info("Deleting Attack Pattern {%s}.", id)
-            query = """
-                 mutation AttackPatternEdit($id: ID!) {
-                     attackPatternEdit(id: $id) {
-                         delete
-                     }
+        if id is None:
+            # TODO throw?
+            log.error("Missing parameter: id")
+            return
+
+        log.info("Deleting Attack Pattern {%s}.", id)
+        query = """
+             mutation AttackPatternEdit($id: ID!) {
+                 attackPatternEdit(id: $id) {
+                     delete
                  }
-             """
-            variables = {"id": id}
-            self._api.query(query, variables)
-        else:
-            log.error("error", "Missing parameter: id")
+             }
+         """
+        variables = {"id": id}
+        self._api.query(query, variables)

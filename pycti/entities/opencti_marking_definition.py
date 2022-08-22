@@ -306,19 +306,13 @@ class MarkingDefinition:
 
             return self._api.marking_definition.create(
                 stix_id=stix_object["id"],
-                created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
+                created=stix_object.get("created"),
+                modified=stix_object.get("modified"),
                 definition_type=definition_type,
                 definition=definition,
-                x_opencti_order=stix_object["x_opencti_order"]
-                if "x_opencti_order" in stix_object
-                else 0,
-                x_opencti_color=stix_object["x_opencti_color"]
-                if "x_opencti_color" in stix_object
-                else None,
-                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
-                if "x_opencti_stix_ids" in stix_object
-                else None,
+                x_opencti_order=stix_object.get("x_opencti_order", 0),
+                x_opencti_color=stix_object.get("x_opencti_color"),
+                x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
                 update=update,
             )
         else:

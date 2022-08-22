@@ -1128,40 +1128,18 @@ class StixCoreRelationship:
                 )
                 if "description" in stix_relation
                 else "",
-                start_time=stix_relation["start_time"]
-                if "start_time" in stix_relation
-                else default_date,
-                stop_time=stix_relation["stop_time"]
-                if "stop_time" in stix_relation
-                else default_date,
-                revoked=stix_relation["revoked"]
-                if "revoked" in stix_relation
-                else None,
-                confidence=stix_relation["confidence"]
-                if "confidence" in stix_relation
-                else None,
-                lang=stix_relation["lang"] if "lang" in stix_relation else None,
-                created=stix_relation["created"]
-                if "created" in stix_relation
-                else None,
-                modified=stix_relation["modified"]
-                if "modified" in stix_relation
-                else None,
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                objectMarking=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else None,
-                objectLabel=extras["object_label_ids"]
-                if "object_label_ids" in extras
-                else [],
-                externalReferences=extras["external_references_ids"]
-                if "external_references_ids" in extras
-                else [],
-                killChainPhases=extras["kill_chain_phases_ids"]
-                if "kill_chain_phases_ids" in extras
-                else None,
+                start_time=stix_relation.get("start_time", default_date),
+                stop_time=stix_relation.get("stop_time", default_date),
+                revoked=stix_relation.get("revoked"),
+                confidence=stix_relation.get("confidence"),
+                lang=stix_relation.get("lang"),
+                created=stix_relation.get("created"),
+                modified=stix_relation.get("modified"),
+                createdBy=extras.get("created_by_id"),
+                objectMarking=extras.get("object_marking_ids"),
+                objectLabel=extras.get("object_label_ids", []),
+                externalReferences=extras.get("external_references_ids", []),
+                killChainPhases=extras.get("kill_chain_phases_ids"),
                 update=update,
             )
         else:

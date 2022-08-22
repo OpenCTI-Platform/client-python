@@ -403,39 +403,23 @@ class Location:
             return self.create(
                 type=type,
                 stix_id=stix_object["id"],
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                objectMarking=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else [],
-                objectLabel=extras["object_label_ids"]
-                if "object_label_ids" in extras
-                else [],
-                externalReferences=extras["external_references_ids"]
-                if "external_references_ids" in extras
-                else [],
-                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
-                confidence=stix_object["confidence"]
-                if "confidence" in stix_object
-                else None,
-                lang=stix_object["lang"] if "lang" in stix_object else None,
-                created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
+                createdBy=extras.get("created_by_id"),
+                objectMarking=extras.get("object_marking_ids", []),
+                objectLabel=extras.get("object_label_ids", []),
+                externalReferences=extras.get("external_references_ids", []),
+                revoked=stix_object.get("revoked"),
+                confidence=stix_object.get("confidence"),
+                lang=stix_object.get("lang"),
+                created=stix_object.get("created"),
+                modified=stix_object.get("modified"),
                 name=name,
                 description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
-                latitude=stix_object["latitude"] if "latitude" in stix_object else None,
-                longitude=stix_object["longitude"]
-                if "longitude" in stix_object
-                else None,
-                precision=stix_object["precision"]
-                if "precision" in stix_object
-                else None,
-                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
-                if "x_opencti_stix_ids" in stix_object
-                else None,
+                latitude=stix_object.get("latitude"),
+                longitude=stix_object.get("longitude"),
+                precision=stix_object.get("precision"),
+                x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
                 x_opencti_aliases=self._api.stix2.pick_aliases(stix_object),
                 update=update,
             )

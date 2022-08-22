@@ -65,4 +65,8 @@ def _check_for_excess_parameters(
 
     if kwargs:
         for key in kwargs:
-            warn(f"Excess parameter {key}", SyntaxWarning, stacklevel=2)
+            warn(
+                f"Excess parameter {key}",
+                SyntaxWarning,
+                stacklevel=2,
+            )

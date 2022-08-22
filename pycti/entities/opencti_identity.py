@@ -441,25 +441,15 @@ class Identity:
             return self.create(
                 type=type,
                 stix_id=stix_object["id"],
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                objectMarking=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else [],
-                objectLabel=extras["object_label_ids"]
-                if "object_label_ids" in extras
-                else [],
-                externalReferences=extras["external_references_ids"]
-                if "external_references_ids" in extras
-                else [],
-                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
-                confidence=stix_object["confidence"]
-                if "confidence" in stix_object
-                else None,
-                lang=stix_object["lang"] if "lang" in stix_object else None,
-                created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
+                createdBy=extras.get("created_by_id"),
+                objectMarking=extras.get("object_marking_ids", []),
+                objectLabel=extras.get("object_label_ids", []),
+                externalReferences=extras.get("external_references_ids", []),
+                revoked=stix_object.get("revoked"),
+                confidence=stix_object.get("confidence"),
+                lang=stix_object.get("lang"),
+                created=stix_object.get("created"),
+                modified=stix_object.get("modified"),
                 name=stix_object["name"],
                 description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
@@ -469,23 +459,15 @@ class Identity:
                 )
                 if "contact_information" in stix_object
                 else None,
-                roles=stix_object["roles"] if "roles" in stix_object else None,
+                roles=stix_object.get("roles"),
                 x_opencti_aliases=self._api.stix2.pick_aliases(stix_object),
-                x_opencti_organization_type=stix_object["x_opencti_organization_type"]
-                if "x_opencti_organization_type" in stix_object
-                else None,
-                x_opencti_reliability=stix_object["x_opencti_reliability"]
-                if "x_opencti_reliability" in stix_object
-                else None,
-                x_opencti_firstname=stix_object["x_opencti_firstname"]
-                if "x_opencti_firstname" in stix_object
-                else None,
-                x_opencti_lastname=stix_object["x_opencti_lastname"]
-                if "x_opencti_lastname" in stix_object
-                else None,
-                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
-                if "x_opencti_stix_ids" in stix_object
-                else None,
+                x_opencti_organization_type=stix_object.get(
+                    "x_opencti_organization_type"
+                ),
+                x_opencti_reliability=stix_object.get("x_opencti_reliability"),
+                x_opencti_firstname=stix_object.get("x_opencti_firstname"),
+                x_opencti_lastname=stix_object.get("x_opencti_lastname"),
+                x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
                 update=update,
             )
         else:

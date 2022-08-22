@@ -1,42 +1,37 @@
-"""OpenCTI Attack Pattern models"""
+"""OpenCTI Tool models"""
 
 from typing import List, Literal, TypedDict
 
 from .opencti_common import FilterMode
 
 __all__ = [
-    "AttackPatternOrdering",
-    "AttackPatternFilter",
-    "AttackPatternFiltering",
-    "ImportAttackPatternExtras",
+    "ToolOrdering",
+    "ToolFilter",
+    "ToolFiltering",
+    "ImportToolExtras",
 ]
 
-AttackPatternFilter = Literal[
+ToolFilter = Literal[
     "name",
     "aliases",
     "created",
     "modified",
     "created_at",
-    "updated_at",
-    "x_mitre_id",
     "createdBy",
     "markedBy",
     "labelledBy",
-    "mitigatedBy",
-    "revoked",
     "x_opencti_workflow_id",
 ]
 
 
-class AttackPatternFiltering(TypedDict):
-    key: AttackPatternFilter
+class ToolFiltering(TypedDict):
+    key: ToolFilter
     values: List[str]
     operator: str
     filterMode: FilterMode
 
 
-AttackPatternOrdering = Literal[
-    "x_mitre_id",
+ToolOrdering = Literal[
     "name",
     "created",
     "modified",
@@ -46,11 +41,9 @@ AttackPatternOrdering = Literal[
 ]
 
 
-class ImportAttackPatternExtras(TypedDict, total=False):
+class ImportToolExtras(TypedDict, total=False):
     created_by_id: str
     object_marking_ids: List[str]
     object_label_ids: List[str]
-    kill_chain_phases_ids: List[str]
-    object_ids: List[str]
     external_references_ids: List[str]
-    reports: List[str]
+    kill_chain_phases_ids: List[str]

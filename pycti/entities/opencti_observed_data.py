@@ -570,15 +570,9 @@ class ObservedData:
                 stix_observable_results.append(
                     self._api.stix_cyber_observable.create(
                         observableData=observable_item,
-                        createdBy=extras["created_by_id"]
-                        if "created_by_id" in extras
-                        else None,
-                        objectMarking=extras["object_marking_ids"]
-                        if "object_marking_ids" in extras
-                        else None,
-                        objectLabel=extras["object_label_ids"]
-                        if "object_label_ids" in extras
-                        else [],
+                        createdBy=extras.get("created_by_id"),
+                        objectMarking=extras.get("object_marking_ids"),
+                        objectLabel=extras.get("object_label_ids", []),
                     )
                 )
                 for item in stix_observable_results:
@@ -594,38 +588,20 @@ class ObservedData:
 
             observed_data_result = self.create(
                 stix_id=stix_object["id"],
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                objectMarking=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else None,
-                objectLabel=extras["object_label_ids"]
-                if "object_label_ids" in extras
-                else [],
+                createdBy=extras.get("created_by_id"),
+                objectMarking=extras.get("object_marking_ids"),
+                objectLabel=extras.get("object_label_ids", []),
                 objects=object_refs,
-                externalReferences=extras["external_references_ids"]
-                if "external_references_ids" in extras
-                else [],
-                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
-                confidence=stix_object["confidence"]
-                if "confidence" in stix_object
-                else None,
-                lang=stix_object["lang"] if "lang" in stix_object else None,
-                created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
-                first_observed=stix_object["first_observed"]
-                if "first_observed" in stix_object
-                else None,
-                last_observed=stix_object["last_observed"]
-                if "last_observed" in stix_object
-                else None,
-                number_observed=stix_object["number_observed"]
-                if "number_observed" in stix_object
-                else None,
-                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
-                if "x_opencti_stix_ids" in stix_object
-                else None,
+                externalReferences=extras.get("external_references_ids", []),
+                revoked=stix_object.get("revoked"),
+                confidence=stix_object.get("confidence"),
+                lang=stix_object.get("lang"),
+                created=stix_object.get("created"),
+                modified=stix_object.get("modified"),
+                first_observed=stix_object.get("first_observed"),
+                last_observed=stix_object.get("last_observed"),
+                number_observed=stix_object.get("number_observed"),
+                x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
                 update=update,
             )
 
