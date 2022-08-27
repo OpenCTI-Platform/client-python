@@ -1,32 +1,40 @@
 import json
+import socket
 import threading
 from typing import Dict, Callable
 import pika
-from pika.exceptions import StreamLostError
+from pika.exceptions import StreamLostError, NackError, UnroutableError
+from stix2 import Bundle
 
+from pycti.connector.new.libs.connector_utils import get_logger
 from pycti.connector.new.libs.orchestrator_schemas import RunContainer
 
 
 class PikaBroker(threading.Thread):
-    def __init__(self, broker_settings: Dict, callback_function: Callable) -> None:
+    def __init__(self, broker_settings: Dict) -> None:
         threading.Thread.__init__(self)
-        self.callback_function = callback_function
+        self.callback_function = None
+        self.logger = get_logger("PikaBroker", "INFO")
         self.broker_settings = broker_settings
         pika_credentials = pika.PlainCredentials(
-            broker_settings["user"], broker_settings["password"]
+            broker_settings["connection"]["user"], broker_settings["connection"]["pass"]
         )
 
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
-                host=broker_settings["host"],
-                port=broker_settings["port"],
+                host=broker_settings["connection"]["host"],
+                port=broker_settings["connection"]["port"],
                 virtual_host="/",
                 credentials=pika_credentials,
             )
         )
 
-    def listen(self, queue):
+    def listen_stream(self, queue: str, callback_function: Callable):
+        pass
+
+    def listen(self, queue: str, callback_function: Callable):
         self.channel = self.connection.channel()
+        self.callback_function = callback_function
 
         self.channel.queue_declare(queue=queue, durable=True)
         self.channel.basic_qos(prefetch_count=1)
@@ -41,49 +49,70 @@ class PikaBroker(threading.Thread):
             pass
 
     def callback(self, ch, method, properties, body):
-        print(" [x] %r" % body.decode())
+        self.logger.info(f"Received {body}")
+
+        try:
+            msg = json.loads(body)
+        except Exception as e:
+            self.logger.error(f"Received non-json packet ({body}) -> {e} ")
+            return
+        # Execute the callback
+        try:
+            self.callback_function(msg)
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"Error!!! {str(e)}")
         # TODO get task
         # for connector:
         #   get task message
         # for stix worker:
         #   get stix bundle and ingest
-        try:
-            run_container = RunContainer(**json.loads(body.decode()))
-        except Exception as e:
-            print(f"Received unknown container format {e}")
-            return
-            # Print log
-            # accept delivery?
-            # send message to orchestrator that it failed? (but for which config?)
-
-        try:
-            return_container: RunContainer = self.callback_function(run_container)
-        except Exception as e:
-            # TODO handle exceptions (in case something went wrong)
-            # then no container is passed and the job as well as the run
-            # are set to failed result
-            # do something??...
-            print(f"errorr: {str(e)}")
-            return
-        # manual ack is necessary, when rerunning connector
+        # try:
+        #     run_container = RunContainer(**json.loads(body.decode()))
+        # except Exception as e:
+        #     print(f"Received unknown container format {e}")
+        #     return
+        #     # Print log
+        #     # accept delivery?
+        #     # send message to orchestrator that it failed? (but for which config?)
+        #
+        # try:
+        #     self.callback_function(run_container)
+        # except Exception as e:
+        #     # TODO handle exceptions (in case something went wrong)
+        #     # then no container is passed and the job as well as the run
+        #     # are set to failed result
+        #     # do something??...
+        #     print(f"errorr: {str(e)}")
+        #     return
+        # # manual ack is necessary, when rerunning connector
         # or should we only rerun entire workflow runs?
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        self.send(return_container)
-
-    def send(self, run_container: RunContainer):
-        job = run_container.jobs[0]
-
+    def send(self, bundle: Bundle):
         channel = self.connection.channel()
-        channel.queue_declare(queue=job.queue, durable=True)
-        channel.basic_publish(
-            exchange="",
-            routing_key=job.queue,
-            body=run_container.json(),
-            properties=pika.BasicProperties(
-                delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
-            ),
-        )
+        try:
+            routing_key = "push_routing_" + self.base_config.id
+            channel.basic_publish(
+                exchange=self.broker_settings["push_exchange"],
+                routing_key=routing_key,
+                body=json.dumps(message),
+                properties=pika.BasicProperties(
+                    delivery_mode=2,  # make message persistent
+                ),
+            )
+        except (UnroutableError, NackError) as e:
+            self.logger.error("Unable to send bundle, retry...%s", e)
+            self.send(bundle)
+        #
+        # channel.queue_declare(queue="worker", durable=True)
+        # channel.basic_publish(
+        #     exchange="",
+        #     routing_key=job.queue,
+        #     body=run_container.json(),
+        #     properties=pika.BasicProperties(
+        #         delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
+        #     ),
+        # )
 
     def stop(self):
         if self.channel:
