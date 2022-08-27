@@ -2,12 +2,14 @@
 
 import json
 import os
-from typing import Optional, Type
+from typing import TYPE_CHECKING, Optional, Type
 
 import magic
 
-from ..api.opencti_api_client import OpenCTIApiClient
 from . import _generate_uuid5
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
 
 __all__ = [
     "ExternalReference",
@@ -17,7 +19,7 @@ __all__ = [
 class ExternalReference:
     """External-Reference common object"""
 
-    def __init__(self, api: OpenCTIApiClient, file_type: Type):
+    def __init__(self, api: "OpenCTIApiClient", file_type: Type):
         """
         Constructor.
 

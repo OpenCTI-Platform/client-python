@@ -2,12 +2,14 @@
 
 import datetime
 import json
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from dateutil.parser import parse
 
-from ..api.opencti_api_client import OpenCTIApiClient
 from . import _generate_uuid5
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
 
 __all__ = [
     "Report",
@@ -17,7 +19,7 @@ __all__ = [
 class Report:
     """Report domain object"""
 
-    def __init__(self, api: OpenCTIApiClient):
+    def __init__(self, api: "OpenCTIApiClient"):
         """
         Constructor.
 

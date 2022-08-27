@@ -1,15 +1,18 @@
 """OpenCTI Opinion operations"""
 
 import json
+from typing import TYPE_CHECKING
 
-from ..api.opencti_api_client import OpenCTIApiClient
 from . import _generate_uuid5
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
 
 
 class Opinion:
     """Opinion domain object"""
 
-    def __init__(self, api: OpenCTIApiClient):
+    def __init__(self, api: "OpenCTIApiClient"):
         """
         Constructor.
 

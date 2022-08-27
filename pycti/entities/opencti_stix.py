@@ -1,12 +1,19 @@
 """OpenCTI Stix entity operations"""
 
-from ..api.opencti_api_client import OpenCTIApiClient
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
+
+__all__ = [
+    "Stix",
+]
 
 
 class Stix:
     """Stix entity objects"""
 
-    def __init__(self, api: OpenCTIApiClient):
+    def __init__(self, api: "OpenCTIApiClient"):
         """
         Constructor.
 

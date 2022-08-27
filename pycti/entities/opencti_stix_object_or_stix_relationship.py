@@ -1,12 +1,19 @@
 """OpenCTI Stix-Object and Stix-Relationship operations"""
 
-from ..api.opencti_api_client import OpenCTIApiClient
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
+
+__all__ = [
+    "StixObjectOrStixRelationship",
+]
 
 
 class StixObjectOrStixRelationship:
     """Stix-Object or Stix-Relationship objects"""
 
-    def __init__(self, api: OpenCTIApiClient):
+    def __init__(self, api: "OpenCTIApiClient"):
         """
         Constructor.
 

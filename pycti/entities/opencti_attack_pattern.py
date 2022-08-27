@@ -9,9 +9,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import stix2
 
-if TYPE_CHECKING:
-    from ..api.opencti_api_client import OpenCTIApiClient
-
 from . import (
     _check_for_deprecated_parameter,
     _check_for_excess_parameters,
@@ -23,6 +20,10 @@ from .models.opencti_attack_pattern import (
     ImportAttackPatternExtras,
 )
 from .models.opencti_common import OrderingMode
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
+
 
 __all__ = [
     "AttackPattern",

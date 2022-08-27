@@ -2,11 +2,13 @@
 
 import json
 import os
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
 import magic
 
-from ..api.opencti_api_client import OpenCTIApiClient
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
+
 
 __all__ = [
     "StixCyberObservable",
@@ -16,7 +18,7 @@ __all__ = [
 class StixCyberObservable:
     """SCO objects"""
 
-    def __init__(self, api: OpenCTIApiClient, file_type: Type):
+    def __init__(self, api: "OpenCTIApiClient", file_type: Type):
         """
         Constructor.
 

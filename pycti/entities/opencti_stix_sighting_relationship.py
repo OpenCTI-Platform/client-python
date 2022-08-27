@@ -1,16 +1,22 @@
 """OpenCTI Sighting operations"""
 
 from datetime import datetime
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
-from ..api.opencti_api_client import OpenCTIApiClient
 from . import _generate_uuid5
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
+
+__all__ = [
+    "StixSightingRelationship",
+]
 
 
 class StixSightingRelationship:
     """Sighting relationship object"""
 
-    def __init__(self, api: OpenCTIApiClient):
+    def __init__(self, api: "OpenCTIApiClient"):
         """
         Constructor.
 

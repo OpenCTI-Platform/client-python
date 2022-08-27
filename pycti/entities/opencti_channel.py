@@ -2,13 +2,21 @@
 
 import json
 import uuid
+from typing import TYPE_CHECKING
 
 from stix2.canonicalization.Canonicalize import canonicalize
 
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
+
+__all__ = [
+    "Channel",
+]
+
 
 class Channel:
-    def __init__(self, opencti):
-        self.opencti = opencti
+    def __init__(self, api: "OpenCTIApiClient"):
+        self.opencti = api
         self.properties = """
             id
             standard_id

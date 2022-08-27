@@ -1,6 +1,9 @@
 """OpenCTI SCO relationship operations"""
 
-from ..api.opencti_api_client import OpenCTIApiClient
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
 
 __all__ = [
     "StixCyberObservableRelationship",
@@ -10,7 +13,7 @@ __all__ = [
 class StixCyberObservableRelationship:
     """SCO relationship objects"""
 
-    def __init__(self, api: OpenCTIApiClient):
+    def __init__(self, api: "OpenCTIApiClient"):
         """
         Constructor.
 

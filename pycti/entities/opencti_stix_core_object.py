@@ -1,14 +1,19 @@
 """OpenCTI Stix core entity operations"""
 
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
-from ..api.opencti_api_client import OpenCTIApiClient
+if TYPE_CHECKING:
+    from ..api.opencti_api_client import OpenCTIApiClient
+
+__all__ = [
+    "StixCoreObject",
+]
 
 
 class StixCoreObject:
     """Stix core objects"""
 
-    def __init__(self, api: OpenCTIApiClient, file_type: Type):
+    def __init__(self, api: "OpenCTIApiClient", file_type: Type):
         """
         Constructor.
 
