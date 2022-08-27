@@ -1,6 +1,8 @@
 """OpenCTI Tool models"""
 
-from typing import List, Literal, TypedDict
+from typing import List
+
+from typing_extensions import Literal, TypedDict
 
 from .opencti_common import FilterMode
 

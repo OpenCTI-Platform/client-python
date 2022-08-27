@@ -1,6 +1,6 @@
 """OpenCTI common models"""
 
-from typing import Literal
+from typing_extensions import Literal
 
 __all__ = [
     "FilterMode",
