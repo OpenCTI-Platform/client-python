@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import queue
 import signal
 import ssl
 import sys
@@ -10,6 +11,7 @@ import threading
 import time
 import traceback
 import uuid
+from queue import Queue
 from typing import Callable, Dict, List, Optional, Union
 
 import pika
@@ -66,6 +68,9 @@ def get_config_variable(
     if isNumber:
         return int(result)
 
+    if isinstance(result, str) and len(result) == 0:
+        return default
+
     return result
 
 
@@ -113,6 +118,7 @@ class ListenQueue(threading.Thread):
         self.helper = helper
         self.callback = callback
         self.host = config["connection"]["host"]
+        self.vhost = config["connection"]["vhost"]
         self.use_ssl = config["connection"]["use_ssl"]
         self.port = config["connection"]["port"]
         self.user = config["connection"]["user"]
@@ -189,7 +195,7 @@ class ListenQueue(threading.Thread):
                 self.pika_parameters = pika.ConnectionParameters(
                     host=self.host,
                     port=self.port,
-                    virtual_host="/",
+                    virtual_host=self.vhost,
                     credentials=self.pika_credentials,
                     ssl_options=pika.SSLOptions(create_ssl_context(), self.host)
                     if self.use_ssl
@@ -262,6 +268,37 @@ class PingAlive(threading.Thread):
         self.exit_event.set()
 
 
+class StreamAlive(threading.Thread):
+    def __init__(self, q) -> None:
+        threading.Thread.__init__(self)
+        self.q = q
+        self.exit_event = threading.Event()
+
+    def run(self) -> None:
+        try:
+            logging.info("Starting stream alive thread")
+            time_since_last_heartbeat = 0
+            while not self.exit_event.is_set():
+                time.sleep(5)
+                try:
+                    self.q.get(block=False)
+                    time_since_last_heartbeat = 0
+                except queue.Empty:
+                    time_since_last_heartbeat = time_since_last_heartbeat + 5
+                    if time_since_last_heartbeat > 45:
+                        logging.error(
+                            "Time since last heartbeat exceeded 45s, stopping the connector"
+                        )
+                        break
+            sys.excepthook(*sys.exc_info())
+        except:
+            sys.excepthook(*sys.exc_info())
+
+    def stop(self) -> None:
+        logging.info("Preparing for clean shutdown")
+        self.exit_event.set()
+
+
 class ListenStream(threading.Thread):
     def __init__(
         self,
@@ -297,13 +334,20 @@ class ListenStream(threading.Thread):
             current_state = self.helper.get_state()
             if current_state is None:
                 current_state = {
-                    "connectorStartTime": self.helper.date_now_z(),
+                    "connectorStartTime": self.helper.connect_live_stream_recover_iso_date
+                    if self.helper.connect_live_stream_recover_iso_date is not None
+                    else self.helper.date_now_z(),
                     "connectorLastEventId": f"{self.start_timestamp}-0"
                     if self.start_timestamp is not None
                     and len(self.start_timestamp) > 0
                     else "-",
                 }
                 self.helper.set_state(current_state)
+
+            # Start the stream alive watchdog
+            q = Queue(maxsize=1)
+            stream_alive = StreamAlive(q)
+            stream_alive.start()
 
             # If URL and token are provided, likely consuming a remote stream
             if self.url is not None and self.token is not None:
@@ -402,6 +446,7 @@ class ListenStream(threading.Thread):
                         f", SSL verify: {self.helper.opencti_ssl_verify}, Listen Delete: {self.helper.connect_live_stream_listen_delete}, No Dependencies: {self.helper.connect_live_stream_no_dependencies})"
                     ),
                 )
+                # Start SSE Client
                 messages = SSEClient(
                     live_stream_url,
                     headers={
@@ -420,11 +465,15 @@ class ListenStream(threading.Thread):
                 )
             # Iter on stream messages
             for msg in messages:
+                if msg.id is not None:
+                    try:
+                        q.put(msg.event, block=False)
+                    except queue.Full:
+                        pass
                 if self.exit:
+                    stream_alive.stop()
                     break
                 if msg.event == "heartbeat" or msg.event == "connected":
-                    continue
-                if msg.event == "sync":
                     if msg.id is not None:
                         state = self.helper.get_state()
                         state["connectorLastEventId"] = str(msg.id)
@@ -498,6 +547,11 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             config,
             False,
             False,
+        )
+        self.connect_live_stream_recover_iso_date = get_config_variable(
+            "CONNECTOR_LIVE_STREAM_RECOVER_ISO_DATE",
+            ["connector", "live_stream_recover_iso_date"],
+            config,
         )
         self.connect_name = get_config_variable(
             "CONNECTOR_NAME", ["connector", "name"], config
@@ -786,7 +840,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         pika_parameters = pika.ConnectionParameters(
             host=self.config["connection"]["host"],
             port=self.config["connection"]["port"],
-            virtual_host="/",
+            virtual_host=self.config["connection"]["vhost"],
             credentials=pika_credentials,
             ssl_options=pika.SSLOptions(
                 create_ssl_context(), self.config["connection"]["host"]
@@ -1005,10 +1059,22 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         """
 
         allowed_tlps: Dict[str, List[str]] = {
-            "TLP:RED": ["TLP:WHITE", "TLP:GREEN", "TLP:AMBER", "TLP:RED"],
-            "TLP:AMBER": ["TLP:WHITE", "TLP:GREEN", "TLP:AMBER"],
-            "TLP:GREEN": ["TLP:WHITE", "TLP:GREEN"],
-            "TLP:WHITE": ["TLP:WHITE"],
+            "TLP:RED": [
+                "TLP:CLEAR",
+                "TLP:GREEN",
+                "TLP:AMBER",
+                "TLP:AMBER+STRICT",
+                "TLP:RED",
+            ],
+            "TLP:AMBER+STRICT": [
+                "TLP:CLEAR",
+                "TLP:GREEN",
+                "TLP:AMBER",
+                "TLP:AMBER+STRICT",
+            ],
+            "TLP:AMBER": ["TLP:CLEAR", "TLP:GREEN", "TLP:AMBER"],
+            "TLP:GREEN": ["TLP:CLEAR", "TLP:GREEN"],
+            "TLP:CLEAR": ["TLP:CLEAR"],
         }
 
         return tlp in allowed_tlps[max_tlp]

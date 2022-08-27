@@ -748,7 +748,7 @@ class StixCyberObservable:
                     "is_multipart": observable_data["is_multipart"]
                     if "is_multipart" in observable_data
                     else None,
-                    "attribute_date": observable_data["attribute_date"]
+                    "attribute_date": observable_data["date"]
                     if "date" in observable_data
                     else None,
                     "message_id": observable_data["message_id"]
@@ -794,6 +794,18 @@ class StixCyberObservable:
                     else None,
                 }
             elif type == "StixFile":
+                if (
+                    "x_opencti_additional_names" not in observable_data
+                    and self.opencti.get_attribute_in_extension(
+                        "x_opencti_additional_names", observable_data
+                    )
+                    is not None
+                ):
+                    observable_data[
+                        "x_opencti_additional_names"
+                    ] = self.opencti.get_attribute_in_extension(
+                        "x_opencti_additional_names", observable_data
+                    )
                 input_variables["StixFile"] = {
                     "hashes": hashes if len(hashes) > 0 else None,
                     "size": observable_data["size"]

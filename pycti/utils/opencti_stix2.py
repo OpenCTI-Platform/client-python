@@ -295,8 +295,16 @@ class OpenCTIStix2:
             if "object_marking_refs" in stix_object
             else []
         )
-        # Object Tags
+        # Object Labels
         object_label_ids = []
+        if (
+            "labels" not in stix_object
+            and self.opencti.get_attribute_in_extension("labels", stix_object)
+            is not None
+        ):
+            stix_object["labels"] = self.opencti.get_attribute_in_extension(
+                "labels", stix_object
+            )
         if "labels" in stix_object:
             for label in stix_object["labels"]:
                 if "label_" + label in self.mapping_cache:
@@ -308,15 +316,6 @@ class OpenCTIStix2:
                     object_label_ids.append(label_data["id"])
         elif "x_opencti_labels" in stix_object:
             for label in stix_object["x_opencti_labels"]:
-                if "label_" + label in self.mapping_cache:
-                    label_data = self.mapping_cache["label_" + label]
-                else:
-                    label_data = self.opencti.label.create(value=label)
-                if label_data is not None and "id" in label_data:
-                    self.mapping_cache["label_" + label] = label_data
-                    object_label_ids.append(label_data["id"])
-        elif self.opencti.get_attribute_in_extension("labels", stix_object) is not None:
-            for label in self.opencti.get_attribute_in_extension("labels", stix_object):
                 if "label_" + label in self.mapping_cache:
                     label_data = self.mapping_cache["label_" + label]
                 else:
@@ -337,54 +336,18 @@ class OpenCTIStix2:
                     object_label_ids.append(label_data["id"])
         # Kill Chain Phases
         kill_chain_phases_ids = []
-        if "kill_chain_phases" in stix_object:
-            for kill_chain_phase in stix_object["kill_chain_phases"]:
-                if (
-                    kill_chain_phase["kill_chain_name"] + kill_chain_phase["phase_name"]
-                    in self.mapping_cache
-                ):
-                    kill_chain_phase = self.mapping_cache[
-                        kill_chain_phase["kill_chain_name"]
-                        + kill_chain_phase["phase_name"]
-                    ]
-                else:
-                    if (
-                        "x_opencti_order" not in kill_chain_phase
-                        and self.opencti.get_attribute_in_extension(
-                            "order", kill_chain_phase
-                        )
-                        is not None
-                    ):
-                        kill_chain_phase[
-                            "x_opencti_order"
-                        ] = self.opencti.get_attribute_in_extension(
-                            "order", kill_chain_phase
-                        )
-                    kill_chain_phase = self.opencti.kill_chain_phase.create(
-                        kill_chain_name=kill_chain_phase["kill_chain_name"],
-                        phase_name=kill_chain_phase["phase_name"],
-                        x_opencti_order=kill_chain_phase["x_opencti_order"]
-                        if "x_opencti_order" in kill_chain_phase
-                        else 0,
-                        stix_id=kill_chain_phase["id"]
-                        if "id" in kill_chain_phase
-                        else None,
-                    )
-                    self.mapping_cache[
-                        kill_chain_phase["kill_chain_name"]
-                        + kill_chain_phase["phase_name"]
-                    ] = {
-                        "id": kill_chain_phase["id"],
-                        "type": kill_chain_phase["entity_type"],
-                    }
-                kill_chain_phases_ids.append(kill_chain_phase["id"])
-        elif (
-            self.opencti.get_attribute_in_extension("kill_chain_phases", stix_object)
+        if (
+            "kill_chain_phases" not in stix_object
+            and self.opencti.get_attribute_in_extension(
+                "kill_chain_phases", stix_object
+            )
             is not None
         ):
-            for kill_chain_phase in self.opencti.get_attribute_in_extension(
+            stix_object["kill_chain_phases"] = self.opencti.get_attribute_in_extension(
                 "kill_chain_phases", stix_object
-            ):
+            )
+        if "kill_chain_phases" in stix_object:
+            for kill_chain_phase in stix_object["kill_chain_phases"]:
                 if (
                     kill_chain_phase["kill_chain_name"] + kill_chain_phase["phase_name"]
                     in self.mapping_cache
@@ -431,6 +394,18 @@ class OpenCTIStix2:
         # External References
         reports = {}
         external_references_ids = []
+        if (
+            "external_references" not in stix_object
+            and self.opencti.get_attribute_in_extension(
+                "external_references", stix_object
+            )
+            is not None
+        ):
+            stix_object[
+                "external_references"
+            ] = self.opencti.get_attribute_in_extension(
+                "external_references", stix_object
+            )
         if "external_references" in stix_object:
             for external_reference in stix_object["external_references"]:
                 url = external_reference["url"] if "url" in external_reference else None
@@ -543,20 +518,20 @@ class OpenCTIStix2:
                             title + " (" + str(external_reference["external_id"]) + ")"
                         )
 
-                    if "marking_tlpwhite" in self.mapping_cache:
+                    if "marking_tlpclear" in self.mapping_cache:
                         object_marking_ref_result = self.mapping_cache[
-                            "marking_tlpwhite"
+                            "marking_tlpclear"
                         ]
                     else:
                         object_marking_ref_result = (
                             self.opencti.marking_definition.read(
                                 filters=[
                                     {"key": "definition_type", "values": ["TLP"]},
-                                    {"key": "definition", "values": ["TLP:WHITE"]},
+                                    {"key": "definition", "values": ["TLP:CLEAR"]},
                                 ]
                             )
                         )
-                        self.mapping_cache["marking_tlpwhite"] = {
+                        self.mapping_cache["marking_tlpclear"] = {
                             "id": object_marking_ref_result["id"]
                         }
 
@@ -634,6 +609,7 @@ class OpenCTIStix2:
             "marking-definition": self.opencti.marking_definition.import_from_stix2,
             "attack-pattern": self.opencti.attack_pattern.import_from_stix2,
             "campaign": self.opencti.campaign.import_from_stix2,
+            "event": self.opencti.event.import_from_stix2,
             "note": self.opencti.note.import_from_stix2,
             "observed-data": self.opencti.observed_data.import_from_stix2,
             "opinion": self.opencti.opinion.import_from_stix2,
@@ -647,6 +623,8 @@ class OpenCTIStix2:
             "malware": self.opencti.malware.import_from_stix2,
             "threat-actor": self.opencti.threat_actor.import_from_stix2,
             "tool": self.opencti.tool.import_from_stix2,
+            "channel": self.opencti.channel.import_from_stix2,
+            "narrative": self.opencti.narrative.import_from_stix2,
             "vulnerability": self.opencti.vulnerability.import_from_stix2,
             "incident": self.opencti.incident.import_from_stix2,
         }
@@ -1482,6 +1460,7 @@ class OpenCTIStix2:
                 "Infrastructure": self.opencti.infrastructure.read,
                 "Intrusion-Set": self.opencti.intrusion_set.read,
                 "Location": self.opencti.location.read,
+                "Language": self.opencti.language.read,
                 "Malware": self.opencti.malware.read,
                 "Threat-Actor": self.opencti.threat_actor.read,
                 "Tool": self.opencti.tool.read,
@@ -1616,6 +1595,7 @@ class OpenCTIStix2:
         reader = {
             "Attack-Pattern": self.opencti.attack_pattern.read,
             "Campaign": self.opencti.campaign.read,
+            "Event": self.opencti.campaign.read,
             "Note": self.opencti.note.read,
             "Observed-Data": self.opencti.observed_data.read,
             "Opinion": self.opencti.opinion.read,
@@ -1626,9 +1606,12 @@ class OpenCTIStix2:
             "Infrastructure": self.opencti.infrastructure.read,
             "Intrusion-Set": self.opencti.intrusion_set.read,
             "Location": self.opencti.location.read,
+            "Language": self.opencti.language.read,
             "Malware": self.opencti.malware.read,
             "Threat-Actor": self.opencti.threat_actor.read,
             "Tool": self.opencti.tool.read,
+            "Channel": self.opencti.channel.read,
+            "Narrative": self.opencti.narrative.read,
             "Vulnerability": self.opencti.vulnerability.read,
             "Incident": self.opencti.incident.read,
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
@@ -1706,6 +1689,7 @@ class OpenCTIStix2:
             "Stix-Domain-Object": self.opencti.stix_domain_object.list,
             "Attack-Pattern": self.opencti.attack_pattern.list,
             "Campaign": self.opencti.campaign.list,
+            "Event": self.opencti.event.list,
             "Note": self.opencti.note.list,
             "Observed-Data": self.opencti.observed_data.list,
             "Opinion": self.opencti.opinion.list,
@@ -1716,9 +1700,12 @@ class OpenCTIStix2:
             "Infrastructure": self.opencti.infrastructure.list,
             "Intrusion-Set": self.opencti.intrusion_set.list,
             "Location": self.opencti.location.list,
+            "Language": self.opencti.language.list,
             "Malware": self.opencti.malware.list,
             "Threat-Actor": self.opencti.threat_actor.list,
             "Tool": self.opencti.tool.list,
+            "Channel": self.opencti.channel.list,
+            "Narrative": self.opencti.narrative.list,
             "Vulnerability": self.opencti.vulnerability.list,
             "Incident": self.opencti.incident.list,
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
