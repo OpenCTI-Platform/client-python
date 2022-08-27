@@ -1,7 +1,7 @@
 """OpenCTI Report operations"""
 
-import datetime
 import json
+from datetime import datetime
 from typing import TYPE_CHECKING, Union
 
 from dateutil.parser import parse
@@ -250,7 +250,7 @@ class Report:
         :return: A Stix compliant UUID5
         """
 
-        if isinstance(published, datetime.datetime):
+        if isinstance(published, datetime):
             published = published.isoformat()
 
         data = {
