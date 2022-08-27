@@ -3,11 +3,11 @@
 import json
 import logging
 from datetime import datetime
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import stix2
 
-from ..api.opencti_api_client import AnyDict, OpenCTIApiClient
+from ..api.opencti_api_client import OpenCTIApiClient
 from . import (
     _check_for_deprecated_parameter,
     _check_for_excess_parameters,
@@ -25,6 +25,7 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class AttackPattern:
