@@ -489,8 +489,14 @@ class OpenCTIApiClient:
 
         if isinstance(data, list):
             for node in data:
-                if isinstance(node, dict) and (id := node.get("id")):
-                    result.append(id)
+                if not isinstance(node, dict):
+                    continue
+
+                id = node.get("id")
+                if not id:
+                    continue
+
+                result.append(id)
 
         return result
 
@@ -506,7 +512,8 @@ class OpenCTIApiClient:
         if data is None:
             return data
 
-        if (created_by := data.get("createdBy")) is None:
+        created_by = data.get("createdBy")
+        if created_by is not None:
             data["createdById"] = created_by["id"]
 
             keys = [
@@ -648,13 +655,19 @@ class OpenCTIApiClient:
         stix_ext_octi = "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
         stix_ext_octi_sco = "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
 
-        if extensions := obj.get("extensions"):
-            if ext := extensions.get(stix_ext_octi):
-                if key in ext:
-                    return ext[key]
-            if ext := extensions.get(stix_ext_octi_sco):
-                if key in ext:
-                    return ext[key]
+        extensions = obj.get("extensions")
+        if extensions is None:
+            return None
+
+        ext = extensions.get(stix_ext_octi)
+        if ext:
+            if key in ext:
+                return ext[key]
+
+        ext = extensions.get(stix_ext_octi_sco)
+        if ext:
+            if key in ext:
+                return ext[key]
 
         return None
 
@@ -670,9 +683,13 @@ class OpenCTIApiClient:
 
         stix_ext_mitre = "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
 
-        if extensions := obj.get("extensions"):
-            if ext := extensions.get(stix_ext_mitre):
-                if key in ext:
-                    return ext[key]
+        extensions = obj.get("extensions")
+        if extensions is None:
+            return None
+
+        ext = extensions.get(stix_ext_mitre)
+        if ext:
+            if key in ext:
+                return ext[key]
 
         return None

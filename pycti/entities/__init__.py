@@ -31,6 +31,7 @@ def _check_for_deprecated_parameter(
     new_name: str,
     existing_value: Any,
     kwargs: Dict[str, Any],
+    stack_level: int = 2,
 ) -> Any:
     """
     Check if a deprecated function parameter is in use and warn if so.
@@ -39,6 +40,7 @@ def _check_for_deprecated_parameter(
     :param new_name: The new name of the parameter
     :param existing_value: The current parameter value
     :param kwargs: Keyword arguments from the method
+    :param stack_level: Stack level to show the warning properly
     :return: The value from the old name, or the existing value
     """
 
@@ -46,7 +48,7 @@ def _check_for_deprecated_parameter(
         warn(
             f"The parameter {old_name} has been superseded by {new_name}",
             DeprecationWarning,
-            stacklevel=2,
+            stacklevel=stack_level,
         )
         return kwargs.pop(old_name)
 
