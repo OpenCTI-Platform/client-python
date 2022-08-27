@@ -17,8 +17,8 @@ def api_client():
 
 
 @fixture(scope="session")
-def schedule_server():
-    return "http://localhost:5000"
+def opencti_server():
+    return "https://demo.opencti.io"
 
 
 @fixture(scope="session")
