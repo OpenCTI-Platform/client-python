@@ -448,11 +448,11 @@ class StixDomainObject:
         )
         query = (
             """
-                query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
-                    stixDomainObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                        edges {
-                            node {
-                                """
+                    query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
+                        stixDomainObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                            edges {
+                                node {
+                                    """
             + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
@@ -528,9 +528,9 @@ class StixDomainObject:
             self.opencti.log("info", "Reading Stix-Domain-Object {" + id + "}.")
             query = (
                 """
-                    query StixDomainObject($id: String!) {
-                        stixDomainObject(id: $id) {
-                            """
+                        query StixDomainObject($id: String!) {
+                            stixDomainObject(id: $id) {
+                                """
                 + (
                     custom_attributes
                     if custom_attributes is not None
@@ -716,6 +716,24 @@ class StixDomainObject:
                 "[opencti_stix_domain_object] Missing parameters: id or file_name",
             )
             return None
+
+    def file_ask_for_enrichment(self, file_id: str, connector_id: str) -> str:
+        query = """
+            mutation StixCoreObjectEnrichmentLinesAskJobMutation($fileName: ID!, $connectorId: String) {
+                askJobImport(fileName: $fileName, connectorId: $connectorId) {
+                    id
+                }
+            }
+        """
+
+        result = self.opencti.query(
+            query,
+            {
+                "fileName": file_id,
+                "connectorId": connector_id,
+            },
+        )
+        return result["data"]["askJobImport"]["id"]
 
     def push_list_export(self, entity_type, file_name, data, list_filters=""):
         query = """
