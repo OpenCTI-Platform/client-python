@@ -14,7 +14,9 @@ from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_work import OpenCTIApiWork
 from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_campaign import Campaign
+from pycti.entities.opencti_channel import Channel
 from pycti.entities.opencti_course_of_action import CourseOfAction
+from pycti.entities.opencti_event import Event
 from pycti.entities.opencti_external_reference import ExternalReference
 from pycti.entities.opencti_identity import Identity
 from pycti.entities.opencti_incident import Incident
@@ -23,9 +25,11 @@ from pycti.entities.opencti_infrastructure import Infrastructure
 from pycti.entities.opencti_intrusion_set import IntrusionSet
 from pycti.entities.opencti_kill_chain_phase import KillChainPhase
 from pycti.entities.opencti_label import Label
+from pycti.entities.opencti_language import Language
 from pycti.entities.opencti_location import Location
 from pycti.entities.opencti_malware import Malware
 from pycti.entities.opencti_marking_definition import MarkingDefinition
+from pycti.entities.opencti_narrative import Narrative
 from pycti.entities.opencti_note import Note
 from pycti.entities.opencti_observed_data import ObservedData
 from pycti.entities.opencti_opinion import Opinion
@@ -158,6 +162,7 @@ class OpenCTIApiClient:
         self.stix_sighting_relationship = StixSightingRelationship(self)
         self.stix_cyber_observable_relationship = StixCyberObservableRelationship(self)
         self.identity = Identity(self)
+        self.event = Event(self)
         self.location = Location(self)
         self.threat_actor = ThreatActor(self)
         self.intrusion_set = IntrusionSet(self)
@@ -166,6 +171,9 @@ class OpenCTIApiClient:
         self.incident = Incident(self)
         self.malware = Malware(self)
         self.tool = Tool(self)
+        self.channel = Channel(self)
+        self.narrative = Narrative(self)
+        self.language = Language(self)
         self.vulnerability = Vulnerability(self)
         self.attack_pattern = AttackPattern(self)
         self.course_of_action = CourseOfAction(self)

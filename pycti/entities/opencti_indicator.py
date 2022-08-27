@@ -570,6 +570,7 @@ class Indicator:
                 valid_until=stix_object.get("valid_until"),
                 x_opencti_score=stix_object.get("x_opencti_score", 50),
                 x_opencti_detection=stix_object.get("x_opencti_detection", False),
+                x_mitre_platforms=stix_object.get("x_mitre_platforms"),
                 x_opencti_main_observable_type=stix_object[
                     "x_opencti_main_observable_type"
                 ]
