@@ -1,10 +1,10 @@
-# coding: utf-8
+"""OpenCTI Language operations"""
 
 import json
-import uuid
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from . import _generate_uuid5
 
 if TYPE_CHECKING:
     from ..api.opencti_api_client import OpenCTIApiClient
@@ -13,11 +13,22 @@ __all__ = [
     "Language",
 ]
 
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
+
 
 class Language:
+    """Language domain object"""
+
     def __init__(self, api: "OpenCTIApiClient"):
-        self.opencti = api
-        self.properties = """
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -134,12 +145,16 @@ class Language:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "language--" + id
+    def generate_id(name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Language name
+        :return: A Stix compliant UUID5
+        """
+
+        data = {"name": name.lower().strip()}
+        return _generate_uuid5("language", data)
 
     """
         List Language objects
@@ -164,17 +179,21 @@ class Language:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Languages with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Languages($filters: [LanguagesFiltering], $search: String, $first: Int, $after: ID, $orderBy: LanguagesOrdering, $orderMode: OrderingMode) {
-                languages(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                    query Languages($filters: [LanguagesFiltering], $search: String, $first: Int, $after: ID, $orderBy: LanguagesOrdering, $orderMode: OrderingMode) {
+                        languages(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                            edges {
+                                node {
+                                    """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -189,7 +208,7 @@ class Language:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -202,12 +221,12 @@ class Language:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["languages"])
+            data = self._api.process_multiple(result["data"]["languages"])
             final_data = final_data + data
             while result["data"]["languages"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["languages"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Languages after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing Languages after " + after)
+                result = self._api.query(
                     query,
                     {
                         "filters": filters,
@@ -218,11 +237,11 @@ class Language:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["languages"])
+                data = self._api.process_multiple(result["data"]["languages"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
+            return self._api.process_multiple(
                 result["data"]["languages"], with_pagination
             )
 
@@ -239,24 +258,24 @@ class Language:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Language {" + id + "}.")
+            self._api.log("info", "Reading Language {" + id + "}.")
             query = (
                 """
-                query Language($id: String!) {
-                    language(id: $id) {
-                        """
+                        query Language($id: String!) {
+                            language(id: $id) {
+                                """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["language"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["language"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -264,7 +283,7 @@ class Language:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_language] Missing parameters: id or filters"
             )
             return None
@@ -293,7 +312,7 @@ class Language:
         update = kwargs.get("update", False)
 
         if name is not None:
-            self.opencti.log("info", "Creating Language {" + name + "}.")
+            self._api.log("info", "Creating Language {" + name + "}.")
             query = """
                 mutation LanguageAdd($input: LanguageAddInput) {
                     languageAdd(input: $input) {
@@ -304,7 +323,7 @@ class Language:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -325,9 +344,9 @@ class Language:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["languageAdd"])
+            return self._api.process_multiple_fields(result["data"]["languageAdd"])
         else:
-            self.opencti.log("error", "[opencti_language] Missing parameters: name")
+            self._api.log("error", "[opencti_language] Missing parameters: name")
 
     """
         Import an Language object from a STIX2 object
@@ -346,9 +365,9 @@ class Language:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
-            return self.opencti.language.create(
+            return self._api.language.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
@@ -370,13 +389,11 @@ class Language:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self._api.stix2.pick_aliases(stix_object),
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
                 update=update,
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_language] Missing parameters: stixObject"
-            )
+            self._api.log("error", "[opencti_language] Missing parameters: stixObject")

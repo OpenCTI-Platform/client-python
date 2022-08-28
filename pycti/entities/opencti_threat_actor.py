@@ -1,7 +1,8 @@
 """OpenCTI ThreatActor operations"""
 
 import json
-from typing import TYPE_CHECKING, Union
+import logging
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from . import _generate_uuid5
 
@@ -11,6 +12,9 @@ if TYPE_CHECKING:
 __all__ = [
     "ThreatActor",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class ThreatActor:

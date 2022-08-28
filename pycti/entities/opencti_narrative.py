@@ -1,10 +1,10 @@
-# coding: utf-8
+"""OpenCTI Narrative operations"""
 
 import json
-import uuid
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from . import _generate_uuid5
 
 if TYPE_CHECKING:
     from ..api.opencti_api_client import OpenCTIApiClient
@@ -13,11 +13,22 @@ __all__ = [
     "Narrative",
 ]
 
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
+
 
 class Narrative:
+    """Narrative domain object"""
+
     def __init__(self, api: "OpenCTIApiClient"):
-        self.opencti = api
-        self.properties = """
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -136,12 +147,16 @@ class Narrative:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "narrative--" + id
+    def generate_id(name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Narrative name
+        :return: A Stix compliant UUID5
+        """
+
+        data = {"name": name.lower().strip()}
+        return _generate_uuid5("narrative", data)
 
     """
         List Narrative objects
@@ -166,17 +181,21 @@ class Narrative:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Narratives with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Narratives($filters: [NarrativesFiltering], $search: String, $first: Int, $after: ID, $orderBy: NarrativesOrdering, $orderMode: OrderingMode) {
-                narratives(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                query Narratives($filters: [NarrativesFiltering], $search: String, $first: Int, $after: ID, $orderBy: NarrativesOrdering, $orderMode: OrderingMode) {
+                    narratives(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -191,7 +210,7 @@ class Narrative:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -204,12 +223,12 @@ class Narrative:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["narratives"])
+            data = self._api.process_multiple(result["data"]["narratives"])
             final_data = final_data + data
             while result["data"]["narratives"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["narratives"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Narratives after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing Narratives after " + after)
+                result = self._api.query(
                     query,
                     {
                         "filters": filters,
@@ -220,11 +239,11 @@ class Narrative:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["narratives"])
+                data = self._api.process_multiple(result["data"]["narratives"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
+            return self._api.process_multiple(
                 result["data"]["narratives"], with_pagination
             )
 
@@ -241,24 +260,24 @@ class Narrative:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Narrative {" + id + "}.")
+            self._api.log("info", "Reading Narrative {" + id + "}.")
             query = (
                 """
-                query Narrative($id: String!) {
-                    narrative(id: $id) {
-                        """
+                    query Narrative($id: String!) {
+                        narrative(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["narrative"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["narrative"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -266,7 +285,7 @@ class Narrative:
             else:
                 return None
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_narrative] Missing parameters: id or filters"
             )
             return None
@@ -297,7 +316,7 @@ class Narrative:
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Narrative {" + name + "}.")
+            self._api.log("info", "Creating Narrative {" + name + "}.")
             query = """
                 mutation NarrativeAdd($input: NarrativeAddInput) {
                     narrativeAdd(input: $input) {
@@ -308,7 +327,7 @@ class Narrative:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -331,9 +350,9 @@ class Narrative:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["narrativeAdd"])
+            return self._api.process_multiple_fields(result["data"]["narrativeAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_narrative] Missing parameters: name and description"
             )
 
@@ -354,9 +373,9 @@ class Narrative:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
-            return self.opencti.narrative.create(
+            return self._api.narrative.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
@@ -378,12 +397,10 @@ class Narrative:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self._api.stix2.pick_aliases(stix_object),
                 narrative_types=stix_object["narrative_types"]
                 if "narrative_types" in stix_object
                 else None,
@@ -393,6 +410,4 @@ class Narrative:
                 update=update,
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_narrative] Missing parameters: stixObject"
-            )
+            self._api.log("error", "[opencti_narrative] Missing parameters: stixObject")

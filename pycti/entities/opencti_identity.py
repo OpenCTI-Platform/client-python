@@ -1,7 +1,8 @@
 """OpenCTI Identity operations"""
 
 import json
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
 from ..utils.constants import IdentityTypes
 from . import _generate_uuid5
@@ -12,6 +13,9 @@ if TYPE_CHECKING:
 __all__ = [
     "Identity",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class Identity:

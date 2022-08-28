@@ -1,18 +1,21 @@
 """OpenCTI SCO operations"""
 
 import json
+import logging
 import os
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Dict, Type
 
 import magic
 
 if TYPE_CHECKING:
     from ..api.opencti_api_client import OpenCTIApiClient
 
-
 __all__ = [
     "StixCyberObservable",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class StixCyberObservable:

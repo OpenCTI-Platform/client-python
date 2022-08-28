@@ -1,7 +1,8 @@
 """OpenCTI SRO operations"""
 
+import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from . import _generate_uuid5
 
@@ -11,6 +12,9 @@ if TYPE_CHECKING:
 __all__ = [
     "StixCoreRelationship",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class StixCoreRelationship:

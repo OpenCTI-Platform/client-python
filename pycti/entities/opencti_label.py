@@ -1,7 +1,8 @@
 """OpenCTI Label operations"""
 
 import json
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
 from . import _generate_uuid5
 
@@ -11,6 +12,9 @@ if TYPE_CHECKING:
 __all__ = [
     "Label",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class Label:

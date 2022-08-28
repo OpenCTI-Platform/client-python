@@ -1,8 +1,9 @@
 """OpenCTI External-Reference operations"""
 
 import json
+import logging
 import os
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type
 
 import magic
 
@@ -14,6 +15,9 @@ if TYPE_CHECKING:
 __all__ = [
     "ExternalReference",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class ExternalReference:

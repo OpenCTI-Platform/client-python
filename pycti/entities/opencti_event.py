@@ -1,10 +1,10 @@
-# coding: utf-8
+"""OpenCTI Event operations"""
 
 import json
-import uuid
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
-from stix2.canonicalization.Canonicalize import canonicalize
+from . import _generate_uuid5
 
 if TYPE_CHECKING:
     from ..api.opencti_api_client import OpenCTIApiClient
@@ -13,11 +13,22 @@ __all__ = [
     "Event",
 ]
 
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
+
 
 class Event:
+    """Event domain object"""
+
     def __init__(self, api: "OpenCTIApiClient"):
-        self.opencti = api
-        self.properties = """
+        """
+        Constructor.
+
+        :param api: OpenCTI API client
+        """
+
+        self._api = api
+        self._default_attributes = """
             id
             standard_id
             entity_type
@@ -138,12 +149,16 @@ class Event:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
-        data = canonicalize(data, utf8=False)
-        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "event--" + id
+    def generate_id(name: str) -> str:
+        """
+        Generate a STIX compliant UUID5.
+
+        :param name: Attack-Pattern name
+        :return: A Stix compliant UUID5
+        """
+
+        data = {"name": name.lower().strip()}
+        return _generate_uuid5("event", data)
 
     """
         List Event objects
@@ -168,17 +183,21 @@ class Event:
         if get_all:
             first = 100
 
-        self.opencti.log(
+        self._api.log(
             "info", "Listing Events with filters " + json.dumps(filters) + "."
         )
         query = (
             """
-            query Events($filters: [EventsFiltering], $search: String, $first: Int, $after: ID, $orderBy: EventsOrdering, $orderMode: OrderingMode) {
-                events(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                    edges {
-                        node {
-                            """
-            + (custom_attributes if custom_attributes is not None else self.properties)
+                query Events($filters: [EventsFiltering], $search: String, $first: Int, $after: ID, $orderBy: EventsOrdering, $orderMode: OrderingMode) {
+                    events(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
+            + (
+                custom_attributes
+                if custom_attributes is not None
+                else self._default_attributes
+            )
             + """
                         }
                     }
@@ -193,7 +212,7 @@ class Event:
             }
         """
         )
-        result = self.opencti.query(
+        result = self._api.query(
             query,
             {
                 "filters": filters,
@@ -206,12 +225,12 @@ class Event:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["events"])
+            data = self._api.process_multiple(result["data"]["events"])
             final_data = final_data + data
             while result["data"]["events"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["events"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Events after " + after)
-                result = self.opencti.query(
+                self._api.log("info", "Listing Events after " + after)
+                result = self._api.query(
                     query,
                     {
                         "filters": filters,
@@ -222,13 +241,11 @@ class Event:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["events"])
+                data = self._api.process_multiple(result["data"]["events"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(
-                result["data"]["events"], with_pagination
-            )
+            return self._api.process_multiple(result["data"]["events"], with_pagination)
 
     """
         Read a Event object
@@ -243,24 +260,24 @@ class Event:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.log("info", "Reading Event {" + id + "}.")
+            self._api.log("info", "Reading Event {" + id + "}.")
             query = (
                 """
-                query Event($id: String!) {
-                    event(id: $id) {
-                        """
+                    query Event($id: String!) {
+                        event(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else self.properties
+                    else self._default_attributes
                 )
                 + """
                     }
                 }
              """
             )
-            result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(result["data"]["event"])
+            result = self._api.query(query, {"id": id})
+            return self._api.process_multiple_fields(result["data"]["event"])
         elif filters is not None:
             result = self.list(filters=filters)
             if len(result) > 0:
@@ -268,9 +285,7 @@ class Event:
             else:
                 return None
         else:
-            self.opencti.log(
-                "error", "[opencti_event] Missing parameters: id or filters"
-            )
+            self._api.log("error", "[opencti_event] Missing parameters: id or filters")
             return None
 
     """
@@ -301,7 +316,7 @@ class Event:
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
-            self.opencti.log("info", "Creating Event {" + name + "}.")
+            self._api.log("info", "Creating Event {" + name + "}.")
             query = """
                 mutation EventAdd($input: EventAddInput) {
                     eventAdd(input: $input) {
@@ -312,7 +327,7 @@ class Event:
                     }
                 }
             """
-            result = self.opencti.query(
+            result = self._api.query(
                 query,
                 {
                     "input": {
@@ -337,9 +352,9 @@ class Event:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["eventAdd"])
+            return self._api.process_multiple_fields(result["data"]["eventAdd"])
         else:
-            self.opencti.log(
+            self._api.log(
                 "error", "[opencti_event] Missing parameters: name and description"
             )
 
@@ -360,9 +375,9 @@ class Event:
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
-                ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
 
-            return self.opencti.event.create(
+            return self._api.event.create(
                 stix_id=stix_object["id"],
                 createdBy=extras["created_by_id"]
                 if "created_by_id" in extras
@@ -384,12 +399,10 @@ class Event:
                 created=stix_object["created"] if "created" in stix_object else None,
                 modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
-                description=self.opencti.stix2.convert_markdown(
-                    stix_object["description"]
-                )
+                description=self._api.stix2.convert_markdown(stix_object["description"])
                 if "description" in stix_object
                 else "",
-                aliases=self.opencti.stix2.pick_aliases(stix_object),
+                aliases=self._api.stix2.pick_aliases(stix_object),
                 event_types=stix_object["event_types"]
                 if "event_types" in stix_object
                 else None,
@@ -405,4 +418,4 @@ class Event:
                 update=update,
             )
         else:
-            self.opencti.log("error", "[opencti_event] Missing parameters: stixObject")
+            self._api.log("error", "[opencti_event] Missing parameters: stixObject")

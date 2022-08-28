@@ -1,8 +1,9 @@
 """OpenCTI Report operations"""
 
 import json
+import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from dateutil.parser import parse
 
@@ -14,6 +15,9 @@ if TYPE_CHECKING:
 __all__ = [
     "Report",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class Report:

@@ -1,15 +1,20 @@
 """OpenCTI Campaign operations"""
 
 import json
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
     from ..api.opencti_api_client import OpenCTIApiClient
+
 from . import _generate_uuid5
 
 __all__ = [
     "Campaign",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class Campaign:

@@ -1,6 +1,7 @@
 """OpenCTI SCO relationship operations"""
 
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
     from ..api.opencti_api_client import OpenCTIApiClient
@@ -8,6 +9,9 @@ if TYPE_CHECKING:
 __all__ = [
     "StixCyberObservableRelationship",
 ]
+
+log = logging.getLogger(__name__)
+AnyDict = Dict[str, Any]
 
 
 class StixCyberObservableRelationship:
