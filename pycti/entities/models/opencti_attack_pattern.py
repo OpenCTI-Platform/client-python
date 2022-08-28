@@ -1,4 +1,4 @@
-"""OpenCTI Attack Pattern models"""
+"""OpenCTI Attack-Pattern models"""
 
 from typing import List
 
