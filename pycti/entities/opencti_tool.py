@@ -210,7 +210,7 @@ class Tool:
         :param attributes: Customize the GraphQL attributes returned
         :param get_all: Get all existing objects
         :param with_pagination: Get the first page, with the pagination fields
-        :return A list of Attack-Pattern objects
+        :return A list of Tool objects
         """
 
         if kwargs:
