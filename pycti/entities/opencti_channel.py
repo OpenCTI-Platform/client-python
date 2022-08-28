@@ -2,10 +2,7 @@
 
 import json
 import logging
-import uuid
 from typing import TYPE_CHECKING, Any, Dict
-
-from stix2.canonicalization.Canonicalize import canonicalize
 
 from . import _generate_uuid5
 
