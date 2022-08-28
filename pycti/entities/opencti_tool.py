@@ -383,8 +383,13 @@ class Tool:
             _check_for_excess_parameters(kwargs)
 
         if name is None:
-            # TODO throw? also description is not required per stix2?
+            # TODO throw?
             log.error("Missing parameter: name")
+            return None
+
+        if description is None:
+            # TODO throw?
+            log.error("Missing parameter: description")
             return None
 
         log.info("Creating Tool {%s}.", name)

@@ -2,9 +2,22 @@
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Dict, Union
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from . import _generate_uuid5
+import stix2
+
+from . import (
+    _check_for_deprecated_parameter,
+    _check_for_excess_parameters,
+    _generate_uuid5,
+)
+from .models.opencti_common import OrderingMode
+from .models.opencti_threat_actor import (
+    ImportThreatActorExtras,
+    ThreatActorFiltering,
+    ThreatActorOrdering,
+)
 
 if TYPE_CHECKING:
     from ..api.opencti_api_client import OpenCTIApiClient
@@ -167,50 +180,62 @@ class ThreatActor:
         data = {"name": name.lower().strip()}
         return _generate_uuid5("threat-actor", data)
 
-    def list(self, **kwargs) -> dict:
-        """List Threat-Actor objects
+    def list(
+        self,
+        *,
+        filters: List[ThreatActorFiltering] = None,
+        search: str = None,
+        first: int = 500,
+        after: str = None,
+        order_by: ThreatActorOrdering = None,
+        order_mode: OrderingMode = None,
+        attributes: str = None,
+        get_all: bool = False,
+        with_pagination: bool = False,
+        **kwargs: Any,
+    ) -> Union[AnyDict, List[AnyDict]]:
+        """
+        List Threat-Actor objects.
 
-        The list method accepts the following kwargs:
-
-        :param list filters: (optional) the filters to apply
-        :param str search: (optional) a search keyword to apply for the listing
-        :param int first: (optional) return the first n rows from the `after` ID
-                            or the beginning if not set
-        :param str after: (optional) OpenCTI object ID of the first row for pagination
-        :param str orderBy: (optional) the field to order the response on
-        :param bool orderMode: (optional) either "`asc`" or "`desc`"
-        :param bool getAll: (optional) switch to return all entries (be careful to use this without any other filters)
-        :param bool withPagination: (optional) switch to use pagination
+        :param filters: Filters to search by
+        :param search: Search value, an arbitrary string
+        :param first: Fetch the first N rows from the after ID, or the beginning if not set
+        :param after: ID of the first row for pagination
+        :param order_by: The field to order by
+        :param order_mode: The ordering mode
+        :param attributes: Customize the GraphQL attributes returned
+        :param get_all: Get all existing objects
+        :param with_pagination: Get the first page, with the pagination fields
+        :return A list of Threat-Actor objects
         """
 
-        filters = kwargs.get("filters", None)
-        search = kwargs.get("search", None)
-        first = kwargs.get("first", 500)
-        after = kwargs.get("after", None)
-        order_by = kwargs.get("orderBy", None)
-        order_mode = kwargs.get("orderMode", None)
-        custom_attributes = kwargs.get("customAttributes", None)
-        get_all = kwargs.get("getAll", False)
-        with_pagination = kwargs.get("withPagination", False)
+        if kwargs:
+            order_by = _check_for_deprecated_parameter(
+                "orderBy", "order_by", order_by, kwargs
+            )
+            order_mode = _check_for_deprecated_parameter(
+                "orderMode", "order_mode", order_mode, kwargs
+            )
+            attributes = _check_for_deprecated_parameter(
+                "customAttributes", "attributes", attributes, kwargs
+            )
+            with_pagination = _check_for_deprecated_parameter(
+                "withPagination", "with_pagination", with_pagination, kwargs
+            )
+            _check_for_excess_parameters(kwargs)
+
         if get_all:
             first = 500
+        if attributes is None:
+            attributes = self._default_attributes
 
-        self._api.log(
-            "info", "Listing Threat-Actors with filters " + json.dumps(filters) + "."
-        )
-        query = (
-            """
-                    query ThreatActors($filters: [ThreatActorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ThreatActorsOrdering, $orderMode: OrderingMode) {
-                        threatActors(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                            edges {
-                                node {
-                                    """
-            + (
-                custom_attributes
-                if custom_attributes is not None
-                else self._default_attributes
-            )
-            + """
+        log.info("Listing Threat-Actors with filters %s.", json.dumps(filters))
+        query = """
+            query ThreatActors($filters: [ThreatActorsFiltering], $search: String, $first: Int, $after: ID, $orderBy: ThreatActorsOrdering, $orderMode: OrderingMode) {
+                threatActors(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                    edges {
+                        node {
+                            %s
                         }
                     }
                     pageInfo {
@@ -223,230 +248,256 @@ class ThreatActor:
                 }
             }
         """
-        )
-        result = self._api.query(
-            query,
-            {
-                "filters": filters,
-                "search": search,
-                "first": first,
-                "after": after,
-                "orderBy": order_by,
-                "orderMode": order_mode,
-            },
-        )
-        return self._api.process_multiple(
-            result["data"]["threatActors"], with_pagination
-        )
+        query %= attributes
+        variables = {
+            "filters": filters,
+            "search": search,
+            "first": first,
+            "after": after,
+            "orderBy": order_by,
+            "orderMode": order_mode,
+        }
 
-    def read(self, **kwargs) -> Union[dict, None]:
-        """Read a Threat-Actor object
+        if get_all:
+            has_more = True
+            final_data = []
+            while has_more:
+                if after:
+                    log.info("Listing Threat-Actors after %s", after)
 
-        read can be either used with a known OpenCTI entity `id` or by using a
-        valid filter to search and return a single Threat-Actor entity or None.
+                result = self._api.query(query, variables)
 
-        The list method accepts the following kwargs.
+                connection = result["data"]["threatActors"]
+                data = self._api.process_multiple(connection)
+                final_data += data
 
-        Note: either `id` or `filters` is required.
+                pageinfo = connection["pageInfo"]
+                after = variables["after"] = pageinfo["endCursor"]
+                has_more = pageinfo["hasNextPage"]
+            return final_data
 
-        :param str id: the id of the Threat-Actor
-        :param list filters: the filters to apply if no id provided
-        """
-
-        id = kwargs.get("id", None)
-        filters = kwargs.get("filters", None)
-        custom_attributes = kwargs.get("customAttributes", None)
-        if id is not None:
-            self._api.log("info", "Reading Threat-Actor {" + id + "}.")
-            query = (
-                """
-                        query ThreatActor($id: String!) {
-                            threatActor(id: $id) {
-                                """
-                + (
-                    custom_attributes
-                    if custom_attributes is not None
-                    else self._default_attributes
-                )
-                + """
-                    }
-                }
-             """
-            )
-            result = self._api.query(query, {"id": id})
-            return self._api.process_multiple_fields(result["data"]["threatActor"])
-        elif filters is not None:
-            result = self.list(filters=filters)
-            if len(result) > 0:
-                return result[0]
-            else:
-                return None
         else:
-            self._api.log(
-                "error", "[opencti_threat_actor] Missing parameters: id or filters"
-            )
-            return None
+            result = self._api.query(query, variables)
+            connection = result["data"]["threatActors"]
+            return self._api.process_multiple(connection, with_pagination)
 
-    def create(self, **kwargs):
-        """Create a Threat-Actor object
+    def read(
+        self,
+        *,
+        id: str = None,
+        filters: List[ThreatActorFiltering] = None,
+        attributes: str = None,
+        **kwargs: Any,
+    ) -> Optional[AnyDict]:
+        """
+        Read a Threat-Actor object.
 
-        The Threat-Actor entity will only be created if it doesn't exists
-        By setting `update` to `True` it acts like an upsert and updates
-        fields of an existing Threat-Actor entity.
-
-        The create method accepts the following kwargs.
-
-        Note: `name` and `description` or `stix_id` is required.
-
-        :param str stix_id: stix2 id reference for the Threat-Actor entity
-        :param str createdBy: (optional) id of the organization that created the knowledge
-        :param list objectMarking: (optional) list of OpenCTI markin definition ids
-        :param list objectLabel: (optional) list of OpenCTI label ids
-        :param list externalReferences: (optional) list of OpenCTI external references ids
-        :param bool revoked: is this entity revoked
-        :param int confidence: confidence level
-        :param str lang: language
-        :param str created: (optional) date in OpenCTI date format
-        :param str modified: (optional) date in OpenCTI date format
-        :param str name: name of the threat actor
-        :param str description: description of the threat actor
-        :param list aliases: (optional) list of alias names for the Threat-Actor
-        :param list threat_actor_types: (optional) list of threat actor types
-        :param str first_seen: (optional) date in OpenCTI date format
-        :param str last_seen: (optional) date in OpenCTI date format
-        :param list roles: (optional) list of roles
-        :param list goals: (optional) list of goals
-        :param str sophistication: (optional) describe the actors sophistication in text
-        :param str resource_level: (optional) describe the actors resource_level in text
-        :param str primary_motivation: (optional) describe the actors primary_motivation in text
-        :param list secondary_motivations: (optional) describe the actors secondary_motivations in list of string
-        :param list personal_motivations: (optional) describe the actors personal_motivations in list of strings
-        :param bool update: (optional) choose to updated an existing Threat-Actor entity, default `False`
+        :param id: The ID of a Threat-Actor
+        :param filters: Filters to search by if no ID is provided
+        :param attributes: Customize the GraphQL attributes returned
+        :return: A Threat-Actor object or None
         """
 
-        stix_id = kwargs.get("stix_id", None)
-        created_by = kwargs.get("createdBy", None)
-        object_marking = kwargs.get("objectMarking", None)
-        object_label = kwargs.get("objectLabel", None)
-        external_references = kwargs.get("externalReferences", None)
-        revoked = kwargs.get("revoked", None)
-        confidence = kwargs.get("confidence", None)
-        lang = kwargs.get("lang", None)
-        created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
-        name = kwargs.get("name", None)
-        description = kwargs.get("description", "")
-        aliases = kwargs.get("aliases", None)
-        threat_actor_types = kwargs.get("threat_actor_types", None)
-        first_seen = kwargs.get("first_seen", None)
-        last_seen = kwargs.get("last_seen", None)
-        goals = kwargs.get("goals", None)
-        sophistication = kwargs.get("sophistication", None)
-        resource_level = kwargs.get("resource_level", None)
-        primary_motivation = kwargs.get("primary_motivation", None)
-        secondary_motivations = kwargs.get("secondary_motivations", None)
-        personal_motivations = kwargs.get("personal_motivations", None)
-        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
-        update = kwargs.get("update", False)
+        if kwargs:
+            attributes = _check_for_deprecated_parameter(
+                "customAttributes", "attributes", attributes, kwargs
+            )
+            _check_for_excess_parameters(kwargs)
 
-        if name is not None and description is not None:
-            self._api.log("info", "Creating Threat-Actor {" + name + "}.")
+        if attributes is None:
+            attributes = self._default_attributes
+
+        if id is not None:
+            log.info("Reading Threat-Actor {%s}", id)
             query = """
-                mutation ThreatActorAdd($input: ThreatActorAddInput) {
-                    threatActorAdd(input: $input) {
-                        id
-                        standard_id
-                        entity_type
-                        parent_types
+                query ThreatActor($id: String!) {
+                    threatActor(id: $id) {
+                        %s
                     }
                 }
             """
-            result = self._api.query(
-                query,
-                {
-                    "input": {
-                        "stix_id": stix_id,
-                        "createdBy": created_by,
-                        "objectMarking": object_marking,
-                        "objectLabel": object_label,
-                        "externalReferences": external_references,
-                        "revoked": revoked,
-                        "confidence": confidence,
-                        "lang": lang,
-                        "created": created,
-                        "modified": modified,
-                        "name": name,
-                        "description": description,
-                        "aliases": aliases,
-                        "threat_actor_types": threat_actor_types,
-                        "first_seen": first_seen,
-                        "last_seen": last_seen,
-                        "goals": goals,
-                        "sophistication": sophistication,
-                        "resource_level": resource_level,
-                        "primary_motivation": primary_motivation,
-                        "secondary_motivations": secondary_motivations,
-                        "personal_motivations": personal_motivations,
-                        "x_opencti_stix_ids": x_opencti_stix_ids,
-                        "update": update,
-                    }
-                },
-            )
-            return self._api.process_multiple_fields(result["data"]["threatActorAdd"])
+            query %= attributes
+            variables = {"id": id}
+            result = self._api.query(query, variables)
+            entity = result["data"]["threatActor"]
+            return self._api.process_multiple_fields(entity)
+
+        elif filters is not None:
+            result = self.list(filters=filters)
+            return next(iter(result), None)
+
         else:
-            self._api.log(
-                "error",
-                "[opencti_threat_actor] Missing parameters: name and description",
+            # TODO throw?
+            log.error("Missing parameter: id or filters")
+            return None
+
+    def create(
+        self,
+        stix_id: str = None,
+        x_opencti_stix_ids: List[str] = None,
+        name: str = None,
+        description: str = None,
+        aliases: List[str] = None,
+        threat_actor_types: [str] = None,
+        first_seen: datetime = None,
+        last_seen: datetime = None,
+        # roles: List[str] = None, # TODO This was missing before
+        goals: List[str] = None,
+        sophistication: str = None,
+        resource_level: str = None,
+        primary_motivation: str = None,
+        secondary_motivations: List[str] = None,
+        personal_motivations: List[str] = None,
+        confidence: int = None,
+        revoked: bool = None,
+        lang: str = None,
+        created_by: str = None,
+        object_marking: List[str] = None,
+        object_label: List[str] = None,
+        external_references: List[str] = None,
+        created: datetime = None,
+        modified: datetime = None,
+        update: bool = False,
+        **kwargs: Any,
+    ):
+        """
+        Create a Threat-Actor object.
+
+        :return: A Threat-Actor object
+        """
+
+        if kwargs:
+            created_by = _check_for_deprecated_parameter(
+                "createdBy", "created_by", created_by, kwargs
             )
-
-    """
-        Import an Threat-Actor object from a STIX2 object
-
-        :param stixObject: the Stix-Object Intrusion-Set
-        :return Intrusion-Set object
-    """
-
-    def import_from_stix2(self, **kwargs):
-        stix_object = kwargs.get("stixObject", None)
-        extras = kwargs.get("extras", {})
-        update = kwargs.get("update", False)
-        if stix_object is not None:
-
-            # Search in extensions
-            if "x_opencti_stix_ids" not in stix_object:
-                stix_object[
-                    "x_opencti_stix_ids"
-                ] = self._api.get_attribute_in_extension("stix_ids", stix_object)
-
-            return self.create(
-                stix_id=stix_object["id"],
-                createdBy=extras.get("created_by_id"),
-                objectMarking=extras.get("object_marking_ids"),
-                objectLabel=extras.get("object_label_ids", []),
-                externalReferences=extras.get("external_references_ids", []),
-                revoked=stix_object.get("revoked"),
-                confidence=stix_object.get("confidence"),
-                lang=stix_object.get("lang"),
-                created=stix_object.get("created"),
-                modified=stix_object.get("modified"),
-                name=stix_object["name"],
-                description=self._api.stix2.convert_markdown(stix_object["description"])
-                if "description" in stix_object
-                else "",
-                aliases=self._api.stix2.pick_aliases(stix_object),
-                threat_actor_types=stix_object.get("threat_actor_types"),
-                first_seen=stix_object.get("first_seen"),
-                last_seen=stix_object.get("last_seen"),
-                goals=stix_object.get("goals"),
-                sophistication=stix_object.get("sophistication"),
-                resource_level=stix_object.get("resource_level"),
-                primary_motivation=stix_object.get("primary_motivation"),
-                secondary_motivations=stix_object.get("secondary_motivations"),
-                personal_motivations=stix_object.get("personal_motivations"),
-                x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
-                update=update,
+            object_marking = _check_for_deprecated_parameter(
+                "objectMarking", "object_marking", object_marking, kwargs
             )
-        else:
-            self._api.log(
-                "error", "[opencti_attack_pattern] Missing parameters: stixObject"
+            object_label = _check_for_deprecated_parameter(
+                "objectLabel", "object_label", object_label, kwargs
             )
+            external_references = _check_for_deprecated_parameter(
+                "externalReferences", "external_references", external_references, kwargs
+            )
+            _check_for_excess_parameters(kwargs)
+
+        if name is None:
+            # TODO throw?
+            log.error("Missing parameter: name")
+            return None
+
+        if description is None:
+            # TODO throw?
+            log.error("Missing parameter: description")
+            return None
+
+        log.info("Creating Threat-Actor {%s}.", name)
+        query = """
+            mutation ThreatActorAdd($input: ThreatActorAddInput) {
+                threatActorAdd(input: $input) {
+                    id
+                    standard_id
+                    entity_type
+                    parent_types
+                }
+            }
+        """
+        variables = {
+            "input": {
+                "stix_id": stix_id,
+                "createdBy": created_by,
+                "objectMarking": object_marking,
+                "objectLabel": object_label,
+                "externalReferences": external_references,
+                "revoked": revoked,
+                "confidence": confidence,
+                "lang": lang,
+                "created": created,
+                "modified": modified,
+                "name": name,
+                "description": description,
+                "aliases": aliases,
+                "threat_actor_types": threat_actor_types,
+                "first_seen": first_seen,
+                "last_seen": last_seen,
+                # "roles": roles,  # TODO this was missing before
+                "goals": goals,
+                "sophistication": sophistication,
+                "resource_level": resource_level,
+                "primary_motivation": primary_motivation,
+                "secondary_motivations": secondary_motivations,
+                "personal_motivations": personal_motivations,
+                "x_opencti_stix_ids": x_opencti_stix_ids,
+                "update": update,
+            }
+        }
+        result = self._api.query(query, variables)
+        entity = result["data"]["threatActorAdd"]
+        return self._api.process_multiple_fields(entity)
+
+    def import_from_stix2(
+        self,
+        *,
+        stix_object: stix2.ThreatActor = None,
+        extras: ImportThreatActorExtras = None,
+        update: bool = False,
+        **kwargs: Any,
+    ) -> Optional[AnyDict]:
+        """
+        Import a stix2.ThreatActor object.
+
+        :param stix_object: A STIX object
+        :param extras: Extra OpenCTI fields
+        :param update: Update existing data
+        :return: A Threat-Actor object
+        """
+
+        if kwargs:
+            stix_object = _check_for_deprecated_parameter(
+                "stixObject", "stix_object", stix_object, kwargs
+            )
+            _check_for_excess_parameters(kwargs)
+
+        if extras is None:
+            extras = {}
+
+        if stix_object is None:
+            # TODO throw?
+            log.error("Missing parameter: stix_object")
+            return None
+
+        # Search in extensions
+        if "x_opencti_stix_ids" not in stix_object:
+            value = self._api.get_attribute_in_extension("stix_ids", stix_object)
+            stix_object["x_opencti_stix_ids"] = value
+
+        description = stix_object.get("description") or ""
+        if description:
+            description = self._api.stix2.convert_markdown(description)
+
+        return self.create(
+            stix_id=stix_object["id"],
+            createdBy=extras.get("created_by_id"),
+            objectMarking=extras.get("object_marking_ids"),
+            objectLabel=extras.get("object_label_ids", []),
+            externalReferences=extras.get("external_references_ids", []),
+            revoked=stix_object.get("revoked"),
+            confidence=stix_object.get("confidence"),
+            lang=stix_object.get("lang"),
+            created=stix_object.get("created"),
+            modified=stix_object.get("modified"),
+            name=stix_object["name"],
+            description=description,
+            aliases=self._api.stix2.pick_aliases(stix_object),
+            threat_actor_types=stix_object.get("threat_actor_types"),
+            first_seen=stix_object.get("first_seen"),
+            last_seen=stix_object.get("last_seen"),
+            goals=stix_object.get("goals"),
+            sophistication=stix_object.get("sophistication"),
+            resource_level=stix_object.get("resource_level"),
+            primary_motivation=stix_object.get("primary_motivation"),
+            secondary_motivations=stix_object.get("secondary_motivations"),
+            personal_motivations=stix_object.get("personal_motivations"),
+            x_opencti_stix_ids=stix_object.get("x_opencti_stix_ids"),
+            update=update,
+        )
