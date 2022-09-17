@@ -14,10 +14,36 @@ class FileEvent(BaseModel):
     bypass_validation: bool
 
 
+class EnrichmentEvent(BaseModel):
+    entity_id: str
+
+
 class InternalFileInputMessage(BaseModel):
     internal: ConnectorInternal
     event: FileEvent
 
+
+class InternalEnrichmentMessage(BaseModel):
+    internal: ConnectorInternal
+    event: EnrichmentEvent
+
+
+class WorkerMessage(BaseModel):
+    work_id: str
+    applicant_id: str = None
+    action_sequence: int
+    entities_types: list[str]
+    content: str
+    update: bool = False
+
+    #
+    # work_id: str
+    # entity_id: str = None
+    # entities_types: str = None
+    # update: bool = False
+    # event_version: str = None
+    # bypass_split: bool = False
+    # file_name: str
 
 # b'{"internal":
 #       {

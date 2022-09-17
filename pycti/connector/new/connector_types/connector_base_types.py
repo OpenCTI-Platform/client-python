@@ -1,16 +1,22 @@
+import base64
 import os
 import sched
 import threading
+from dataclasses import field
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Union, List, Any
+import schedule
+
 
 import time
 from pydantic import BaseModel
+from stix2 import Bundle
 
 from pycti.connector.new.connector import Connector
 from pycti.connector.new.connector_types.connector_settings import ExternalImportConfig
 from pycti.connector.new.libs.connector_utils import ConnectorType
-from pycti.connector.new.libs.opencti_schema import InternalFileInputMessage, FileEvent
+from pycti.connector.new.libs.opencti_schema import InternalFileInputMessage, FileEvent, WorkerMessage, \
+    InternalEnrichmentMessage
 
 
 class ListenConnector(Connector):
@@ -31,82 +37,79 @@ class ListenConnector(Connector):
         pass
 
 
-class IterativeConnector(Connector):
-    scope = ""
-
-    def __init__(self):
-        super().__init__()
-        self.s = sched.scheduler(time.time, time.sleep)
-        self.interval = self.base_config.interval
-        self.event = self.s.enter(0, 1, self.issue_call)
-
-    def start(self) -> None:
-        self.s.run()
-
-    def issue_call(self):
-        try:
-            # Get the current timestamp and check
-            timestamp = int(time.time())
-            current_state = self.get_state()
-            if current_state is not None and "last_run" in current_state:
-                last_run = current_state["last_run"]
-                self.logger.info(
-                    "Connector last run: "
-                    + datetime.utcfromtimestamp(last_run).strftime("%Y-%m-%d %H:%M:%S")
-                )
-            else:
-                last_run = None
-                self.logger.info("Connector has never run")
-            # If the last_run is more than interval-1 day
-            if last_run is None or (
-                (timestamp - last_run)
-                > ((int(self.base_config.interval) - 1) * 60 * 60 * 24)
-            ):
-                timestamp = int(time.time())
-                now = datetime.utcfromtimestamp(timestamp)
-                friendly_name = "Connector run @ " + now.strftime("%Y-%m-%d %H:%M:%S")
-                work_id = self.api.work.initiate_work(
-                    self.base_config.id, friendly_name
-                )
-
-                run_message = self.run({}, self.connector_config)
-
-                # Store the current timestamp as a last run
-                self.logger.info(
-                    "Connector successfully run, storing last_run as " + str(timestamp)
-                )
-                self.set_state({"last_run": timestamp})
-                message = (
-                    "Last_run stored, next run in: "
-                    + str(round(self.interval / 60 / 60 / 24, 2))
-                    + " days"
-                )
-                self.api.work.to_processed(work_id, message)
-                self.logger.info(message)
-            else:
-                new_interval = self.interval - (timestamp - last_run)
-                self.logger.info(
-                    "Connector will not run, next run in: "
-                    + str(round(new_interval / 60 / 60 / 24, 2))
-                    + " days"
-                )
-        except Exception as e:
-            self.logger.error(str(e))
-
-        self.event = self.s.enter(self.interval, 1, self.issue_call)
-
-    def _stop(self):
-        self.s.cancel(self.event)
-        self.logger.info("Ending")
-
-
-class ExternalInputConnector(IterativeConnector):
+class ExternalInputConnector(Connector):
     connector_type = ConnectorType.EXTERNAL_IMPORT.value
-    scope = "external import"  # scope isn't needed for EIs
+    # scope = "external import"  # scope isn't needed for EIs
     settings = ExternalImportConfig
 
     def __init__(self):
         super().__init__()
+        self.interval = self.base_config.interval
+        self.event = schedule.every(self.interval).seconds.do(self.issue_call)
+        self.stop_event = threading.Event()
+
+        # TODO implement run once
+
+    def start(self) -> None:
+        # Call it for the first time directly
+        self.issue_call()
+
+        # Then start loop which spawns the first process
+        # in self.interval seconds
+        while not self.stop_event.is_set():
+            schedule.run_pending()
+            time.sleep(1)
+
+    def issue_call(self):
+        # Get the current timestamp and check
+        current_state = self.get_state()
+        last_run = None
+        if current_state is not None and "last_run" in current_state:
+            last_run = current_state["last_run"]
+            self.logger.info(
+                "Connector last run: "
+                + datetime.utcfromtimestamp(last_run).strftime("%Y-%m-%d %H:%M:%S")
+            )
+        else:
+            self.logger.info("Connector has never run")
+
+        timestamp = int(time.time())
+        now = datetime.utcfromtimestamp(timestamp)
+        friendly_name = "Connector run @ " + now.strftime("%Y-%m-%d %H:%M:%S")
+        work_id = self.api.work.initiate_work(
+            self.base_config.id, friendly_name
+        )
+
+        try:
+            run_message, bundles = self.run(self.connector_config)
+        except Exception as e:
+            self.logger.error(f"Running Error: {str(e)}")
+            # TODO run again one time
+            return
+
+        # Store the current timestamp as a last run
+        self.logger.info(
+            "Connector successfully run, storing last_run as " + str(timestamp)
+        )
+        self.set_state({"last_run": timestamp})
+        message = (
+                "Last_run stored, next run in: "
+                + str(round(self.interval / 60 / 60 / 24, 2))
+                + " days"
+        )
+        self.api.work.to_processed(work_id, message)
+        self.logger.info(f"Sending message: {message}")
+
+        for bundle in bundles:
+            self._send_bundle(bundle, work_id, None, self.base_config.scope)
+
+    def _stop(self):
+        self.stop_event.set()
+        self.logger.info("Ending")
+
+    def run(self, config: BaseModel) -> (str, List[Bundle]):
+        pass
+
 
 
 # class StreamInputConnector(ListenStreamConnector):
@@ -118,16 +121,162 @@ class ExternalInputConnector(IterativeConnector):
 
 class WorkerConnector(ListenConnector):
     connector_type = ConnectorType.WORKER.value
+    settings = WorkerConfig
+
+    logs_all_queue: str = "logs_all"
+    consumer_threads: Dict[str, Any] = field(default_factory=dict, hash=False)
+    logger_threads: Dict[str, Any] = field(default_factory=dict, hash=False)
+
+    def __init__(self):
+        super().__init__()
+        # Initialize variables
+        self.connectors: List[Any] = []
+        self.queues: List[Any] = []
+        self.interval = self.base_config.interval
+        self.event = schedule.every(self.interval).seconds.do(self.issue_call)
+        self.stop_event = threading.Event()
+
+        # TODO implement run once
+
+    def start(self) -> None:
+        # Call it for the first time directly
+        self.issue_call()
+
+        # Then start loop which spawns the first process
+        # in self.interval seconds
+        while not self.stop_event.is_set():
+            schedule.run_pending()
+            time.sleep(1)
+
+    def process_broker_message(self, message: Dict) -> None:
+        try:
+            msg = WorkerMessage(**message)
+        except Exception as e:
+            self.logger.error(
+                f"Received non-WorkerMessage packet ({message}) -> {e} "
+            )
+            return
+
+        self.api.work.to_received(
+            msg.work_id, "Connector ready to process the operation"
+        )
+        self.logger.info(f"Received work {msg.work_id}")
+        # TODO continue here
+        # launch new thread
+        self.run(
+            msg,
+            self.connector_config,
+        )
+
+    def issue_call(self):
+        # Fetch queue configuration from API
+        self.connectors = self.api.connector.list()
+        self.queues = list(
+            map(lambda x: x["config"]["push"], self.connectors)  # type: ignore
+        )
+
+        # Check if all queues are consumed
+        for connector in self.connectors:
+            queue = connector["config"]["push"]
+            if queue in self.consumer_threads:
+                if not self.consumer_threads[queue].is_alive():
+                    self.logger.info(
+                        "%s",
+                        (
+                            f"Thread for queue {queue} not alive"
+                            ", creating a new one..."
+                        ),
+                    )
+                    self.consumer_threads[queue] = Consumer(
+                        connector,
+                        self.opencti_url,
+                        self.opencti_token,
+                        self.log_level,
+                        self.opencti_ssl_verify,
+                        self.opencti_json_logging,
+                    )
+                    sleep_delay = 0
+                    self.consumer_threads[queue].start()
+            else:
+                self.consumer_threads[queue] = Consumer(
+                    connector,
+                    self.opencti_url,
+                    self.opencti_token,
+                    self.log_level,
+                    self.opencti_ssl_verify,
+                    self.opencti_json_logging,
+                )
+                sleep_delay = 0
+                self.consumer_threads[queue].start()
+
+        # Check if some threads must be stopped
+        for thread in list(self.consumer_threads):
+            if thread not in self.queues:
+                self.logger.info(
+                    "%s",
+                    f"Queue {thread} no longer exists, killing thread...",
+                )
+                try:
+                    self.consumer_threads[thread].terminate()
+                    self.consumer_threads.pop(thread, None)
+                    sleep_delay = 1
+                except:  # TODO: remove bare except
+                    self.logger.info(
+                        "%s",
+                        (
+                            f"Unable to kill the thread for queue {thread}"
+                            ", an operation is running, keep trying..."
+                        ),
+                    )
+
+    def run(
+            self, msg: WorkerMessage, config: BaseModel
+    ) -> None:
+        pass
+
+
+class InternalEnrichmentConnector(ListenConnector):
+    connector_type = ConnectorType.INTERNAL_ENRICHMENT.value
 
     def __init__(self):
         super().__init__()
 
+    def process_broker_message(self, message: Dict) -> None:
+        try:
+            msg = InternalEnrichmentMessage(**message)
+        except Exception as e:
+            self.logger.error(
+                f"Received non-InternalEnrichmentInput packet ({message}) -> {e} "
+            )
+            return
 
-class InternalInputConnector(ListenConnector):
-    connector_type = ConnectorType.INTERNAL_ENRICHMENT
+        self.api.work.to_received(
+            msg.internal.work_id, "Connector ready to process the operation"
+        )
+        self.logger.info(f"Received work {msg.internal.work_id}")
+        try:
+            run_msg, bundles = self.run(
+                msg.event.entity_id,
+                self.connector_config,
+            )
+            self.api.work.to_processed(msg.internal.work_id, run_msg)
 
-    def __init__(self):
-        super().__init__()
+        except ValueError as e:  # pydantic validation error
+            self.logger.exception("Error in message processing, reporting error to API")
+            try:
+                self.api.work.to_processed(msg.internal.work_id, str(e), True)
+            except:  # pylint: disable=bare-except
+                self.logger.error("Failing reporting the processing")
+
+            return
+
+        for bundle in bundles:
+            self._send_bundle(bundle, msg.internal.work_id, msg.internal.applicant_id)
+
+    def run(
+            self, entity_id: str, config: BaseModel
+    ) -> (str, List[Bundle]):
+        pass
 
 
 class InternalFileInputConnector(ListenConnector):
@@ -149,9 +298,9 @@ class InternalFileInputConnector(ListenConnector):
             msg.internal.work_id, "Connector ready to process the operation"
         )
         self.logger.info(f"Received work {msg.internal.work_id}")
+        file_path = self._download_import_file(msg)
         try:
-            file_path = self._download_import_file(msg)
-            run_msg = self.run(
+            run_msg, bundles = self.run(
                 file_path,
                 msg.event.file_mime,
                 msg.event.entity_id,
@@ -168,6 +317,13 @@ class InternalFileInputConnector(ListenConnector):
             except:  # pylint: disable=bare-except
                 self.logger.error("Failing reporting the processing")
 
+            return
+
+        file_name = file_path.split('/')[-1]
+
+        for bundle in bundles:
+            self._send_bundle(bundle, msg.internal.work_id, msg.internal.applicant_id)
+
     def _download_import_file(self, message: InternalFileInputMessage) -> str:
         file_fetch = message.event.file_fetch
         file_uri = f"{self.base_config.url}{message.event.file_fetch}"
@@ -183,8 +339,8 @@ class InternalFileInputConnector(ListenConnector):
         return file_name
 
     def run(
-        self, file_path: str, file_mime: str, entity_id: str, config: BaseModel
-    ) -> str:
+            self, file_path: str, file_mime: str, entity_id: str, config: BaseModel
+    ) -> (str, List[Bundle]):
         pass
 
 
@@ -193,7 +349,6 @@ class InternalExportConnector(ListenConnector):
 
     def __init__(self):
         super().__init__()
-
 
 #
 # class ListenStreamConnector(Connector):

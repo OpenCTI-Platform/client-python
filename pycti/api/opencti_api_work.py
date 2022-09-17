@@ -104,14 +104,14 @@ class OpenCTIApiWork:
         cnt = 0
         while status != "complete":
             state = self.get_work(work_id=work_id)
+            if state is None:
+                raise ValueError(f"Unable to retrieve work '{work_id}'")
+
             if len(state) > 0:
                 if state["errors"]:
-                    self.api.log(
-                        "error", f"Unexpected connector error {state['errors']}"
-                    )
-                    return
+                    raise ValueError(f"Unable to retrieve work '{work_id}' error {state['errors']}")
 
-                status = state["status"]
+                status = state.get("status")
 
             time.sleep(1)
             cnt += 1

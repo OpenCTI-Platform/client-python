@@ -1,116 +1,122 @@
+import base64
 import json
-import threading
 import time
-import uuid
-from dateutil.parser import parse
-from pydantic import BaseModel
-from stix2 import Bundle, IPv4Address
+from stix2 import Bundle
 
-from pycti.connector.new.connector_types.connector_settings import ConnectorConfig
-from pycti.connector.new.libs.mixins.http import HttpMixin
-from pycti.connector.new.connector_types.connector_base_types import ExternalInputConnector as EIC, InternalFileInputConnector as IFIC
-
-
-class EIModel(ConnectorConfig):
-    url: str
-
-
-class ExternalInputConnector(EIC, HttpMixin):
-    config = EIModel
-
-    def run(self, event: dict, config: EIModel) -> str:
-        url = config.url
-        content = self.get(url)
-        bundle = Bundle(**json.loads(content), allow_custom=True)
-        self.send(bundle)
-        return "Finished"
+# from pytest_cases import fixture, parametrize_with_cases
+# import pytest
+from pytest import param, fixture
+from pycti.connector.new.libs.opencti_schema import WorkerMessage
+from tests.cases.external_input_connectors import ExternalInputTest
+from tests.cases.internal_enrichment_connectors import (
+    InternalEnrichmentTest,
+)
+from tests.cases.internal_file_input_connectors import (
+    InternalFileInputTest,
+)
 
 
-def test_external_import_connector(caplog, api_client, opencti_server, monkeypatch):
-    monkeypatch.setenv("opencti_url", opencti_server)
-    monkeypatch.setenv("opencti_token", "18bd74e5-404c-4216-ac74-23de6249d690")
-    monkeypatch.setenv("opencti_broker", "stdout")
-    monkeypatch.setenv("opencti_ssl_verify", "False")
-    monkeypatch.setenv("connector_name", "Get STIX Github Connector")
-    monkeypatch.setenv("connector_run_and_terminate", "true")
-    monkeypatch.setenv("connector_interval", "10")
-    monkeypatch.setenv("connector_id", str(uuid.uuid4()))
-    monkeypatch.setenv("app_url",
-                       "https://github.com/oasis-open/cti-stix-common-objects/raw/main/objects/marking-definition/marking-definition--62fd3f9b-15f3-4ebc-802c-91fce9536bcf.json")
-
-    connector = ExternalInputConnector()
-    t1 = threading.Thread(target=connector.start)
-    t1.start()
-
-    time.sleep(1)
-
-    assert "Sending container" in caplog.text, "No container sent"
-
-    connector.stop()
-    t1.join()
-    api_client.connector.unregister(connector.base_config.id)
+@fixture(params=[InternalFileInputTest, ExternalInputTest, InternalEnrichmentTest])
+def connector_test_instance(request, api_client, monkeypatch):
+    connector = request.param(api_client)
+    connector.setup(monkeypatch)
+    connector.run()
+    yield connector
+    connector.shutdown()
+    connector.teardown()
 
 
-### Internal File Import
+def test_connector_run(connector_test_instance, api_client, caplog):
+    work_id = connector_test_instance.initiate()
 
-class IIModel(ConnectorConfig):
-    pass
+    if not work_id:
+        connector_works = api_client.work.get_connector_works(connector_test_instance.connector_instance.base_config.id)
+        if len(connector_works) > 0:
+            work_id = connector_works[0]['id']  # .split("_", 1)[-1]
 
+    if work_id:
+        api_client.work.wait_for_work_to_finish(work_id)
+    else:
+        time.sleep(3)
 
-class InternalInputConnector(IFIC):
-    config = IIModel
+    container = ""
+    for msg in caplog.records:
+        if "Sending container" in msg.msg:
+            container = msg.msg.split(":", 1)[-1]
 
-    def run(self, file_path: str, file_mime: str, entity_id: str, config: BaseModel) -> str:
-        self.logger.info(f"Processing file: {file_path} ({file_mime})")
-        ip4 = IPv4Address(
-            value="177.60.40.7"
-        )
-        bundle = Bundle(ip4)
-        self.send(bundle)
-        return "Finished"
+    assert container != "", "No container sent"
 
-
-def test_internal_import_connector(caplog, api_client, opencti_server, monkeypatch):
-    monkeypatch.setenv("opencti_url", opencti_server)
-    monkeypatch.setenv("opencti_token", "18bd74e5-404c-4216-ac74-23de6249d690")
-    monkeypatch.setenv("opencti_broker", "pika")
-    monkeypatch.setenv("opencti_ssl_verify", "False")
-    monkeypatch.setenv("connector_name", "Simple Import")
-    monkeypatch.setenv("connector_id", str(uuid.uuid4()))
-    monkeypatch.setenv("connector_scope", "['application/pdf','aaa']")
-
-    date = parse("2019-12-01").strftime("%Y-%m-%dT%H:%M:%SZ")
-    organization = api_client.identity.create(
-        type="Organization",
-        name="My organization",
-        alias=["my-organization"],
-        description="A new organization.",
+    worker_message = WorkerMessage(**json.loads(container))
+    bundle = Bundle(
+        **json.loads(base64.b64decode(worker_message.content)), allow_custom=True
     )
-
-    # Create the report
-    report = api_client.report.create(
-        name="My new report of my organization",
-        description="A report wrote by my organization",
-        published=date,
-        report_types=["internal-report"],
-        createdBy=organization["id"],
-    )
-
-    file = api_client.stix_domain_object.add_file(
-        id=report["id"],
-        file_name="./tests/integration/support_data/test.pdf",
-    )
-
-    connector = InternalInputConnector()
-    work_id = api_client.stix_domain_object.file_ask_for_enrichment(file_id=file['data']['stixDomainObjectEdit']['importPush']['id'], connector_id=connector.base_config.id)
-
-    t1 = threading.Thread(target=connector.start)
-    t1.start()
-
-    # api_client.work.wait_for_work_to_finish(work_id)
-    time.sleep(3)
-
-    assert "Sending container" in caplog.text, "No container sent"
-
-    connector.stop()
-    t1.join()
+    connector_test_instance.verify(bundle)
+#
+#
+#
+# @fixture(params=[ExternalInputTest])
+# def external_input_connector(request, api_client, monkeypatch):
+#     connector = request.param(api_client)
+#     connector.setup(monkeypatch)
+#     connector.run()
+#     yield connector
+#     connector.shutdown()
+#     connector.teardown()
+#
+#
+# def test_external_input_run(external_input_connector, api_client, caplog):
+#     time.sleep(2)
+#
+#     container = ""
+#     for msg in caplog.records:
+#         if "Sending container" in msg.msg:
+#             container = msg.msg.split(":", 1)[-1]
+#
+#     assert container != "", "No container sent"
+#
+#     worker_message = WorkerMessage(**json.loads(container))
+#     bundle = Bundle(
+#         **json.loads(base64.b64decode(worker_message.content)), allow_custom=True
+#     )
+#     external_input_connector.verify(bundle)
+#
+#
+#
+# @fixture(params=[InternalEnrichmentTest])
+# def internal_enrichment_connector(request, api_client, monkeypatch):
+#     connector = request.param(api_client)
+#     connector.setup(monkeypatch)
+#     connector.run()
+#     yield connector
+#     connector.teardown()
+#     connector.shutdown()
+#
+#
+# def test_internal_enrichment_run(internal_enrichment_connector, api_client, caplog):
+#     work_id = api_client.stix_cyber_observable.ask_for_enrichment(
+#         id=internal_enrichment_connector.ipv4["id"],
+#         connector_id=internal_enrichment_connector.connector.base_config.id,
+#     )
+#
+#     # WTF??
+#     # FAILED [ 66%]Connector works {'data': {'works': {'edges': [{'node': {'id': 'work_099ea3e5-01a2-460a-a17d-50ff45cce844_2022-09-07T13:12:18.131Z', 'name': 'Manual enrichment', 'user': {'name': 'admin'}, 'timestamp': '2022-09-07T13:12:18.131Z', 'status': 'wait', 'event_source_id': '8d89bfec-2c23-482e-8334-66c990c92ffc', 'received_time': None, 'processed_time': None, 'completed_time': None, 'tracking': {'import_expected_number': None, 'import_processed_number': None}, 'messages': [], 'errors': []}}]}}}
+#     # 2022-09-07 15:12:18,259 - PikaBroker - INFO - Received b'{"internal":{"work_id":"work_099ea3e5-01a2-460a-a17d-50ff45cce844_2022-09-07T13:12:18.131Z","applicant_id":"88ec0c6a-13ce-5e39-b486-354fe4a7084f"},"event":{"entity_id":"8d89bfec-2c23-482e-8334-66c990c92ffc"}}'
+#
+#     #connector_works = api_client.work.get_connector_works(internal_enrichment_connector.connector.base_config.id)
+#     #assert len(connector_works) > 0, "No works registered"
+#     #work_id = connector_works[0]['id'] #['id'].split("_", 1)[-1]
+#     print(f"Work id {work_id}")
+#     api_client.work.wait_for_work_to_finish(work_id)
+#
+#     container = ""
+#     for msg in caplog.records:
+#         if "Sending container" in msg.msg:
+#             container = msg.msg.split(":", 1)[-1]
+#
+#     assert container != "", "No container sent"
+#
+#     worker_message = WorkerMessage(**json.loads(container))
+#     bundle = Bundle(
+#         **json.loads(base64.b64decode(worker_message.content)), allow_custom=True
+#     )
+#     internal_enrichment_connector.verify(bundle)

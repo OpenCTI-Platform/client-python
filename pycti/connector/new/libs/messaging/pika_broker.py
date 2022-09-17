@@ -7,12 +7,13 @@ from pika.exceptions import StreamLostError, NackError, UnroutableError
 from stix2 import Bundle
 
 from pycti.connector.new.libs.connector_utils import get_logger
+from pycti.connector.new.libs.opencti_schema import WorkerMessage
 from pycti.connector.new.libs.orchestrator_schemas import RunContainer
 
 
-class PikaBroker(threading.Thread):
+class PikaBroker(object):
     def __init__(self, broker_settings: Dict) -> None:
-        threading.Thread.__init__(self)
+        # threading.Thread.__init__(self)
         self.callback_function = None
         self.logger = get_logger("PikaBroker", "INFO")
         self.broker_settings = broker_settings
@@ -28,6 +29,7 @@ class PikaBroker(threading.Thread):
                 credentials=pika_credentials,
             )
         )
+        self.stop_listen_event = threading.Event()
 
     def listen_stream(self, queue: str, callback_function: Callable):
         pass
@@ -43,7 +45,6 @@ class PikaBroker(threading.Thread):
         )
         try:
             self.channel.start_consuming()
-            # self.channel.close()
         except StreamLostError as e:
             # No idea why pika throws this exception when closing
             pass
@@ -59,8 +60,8 @@ class PikaBroker(threading.Thread):
         # Execute the callback
         try:
             self.callback_function(msg)
-        except Exception as e:  # pylint: disable=broad-except
-            print(f"Error!!! {str(e)}")
+        except Exception as e:
+            self.logger.error(f"Error!!! {str(e)}")
         # TODO get task
         # for connector:
         #   get task message
@@ -88,31 +89,20 @@ class PikaBroker(threading.Thread):
         # or should we only rerun entire workflow runs?
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    def send(self, bundle: Bundle):
+    def send(self, worker_message: WorkerMessage, routing_key: str):
         channel = self.connection.channel()
         try:
-            routing_key = "push_routing_" + self.base_config.id
             channel.basic_publish(
                 exchange=self.broker_settings["push_exchange"],
                 routing_key=routing_key,
-                body=json.dumps(message),
+                body=json.dumps(worker_message.json()).encode('utf-8'),
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # make message persistent
                 ),
             )
         except (UnroutableError, NackError) as e:
             self.logger.error("Unable to send bundle, retry...%s", e)
-            self.send(bundle)
-        #
-        # channel.queue_declare(queue="worker", durable=True)
-        # channel.basic_publish(
-        #     exchange="",
-        #     routing_key=job.queue,
-        #     body=run_container.json(),
-        #     properties=pika.BasicProperties(
-        #         delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
-        #     ),
-        # )
+            self.send(worker_message, routing_key)
 
     def stop(self):
         if self.channel:

@@ -1,10 +1,11 @@
+import base64
 import json
-import sched
+import schedule
 import signal
 import socket
 import threading
 import traceback
-from typing import Optional, Dict, Callable
+from typing import Optional, Dict, Callable, Union, List
 
 import requests
 import time
@@ -12,11 +13,12 @@ from pydantic import Json, BaseModel, BaseSettings
 from stix2 import Bundle
 from stix2.workbench import parse
 
-from pycti import OpenCTIApiClient
+from pycti import OpenCTIApiClient, OpenCTIStix2Splitter
 from pycti.connector.new.connector_types.connector_settings import ConnectorBaseConfig
 from pycti.connector.new.libs.messaging.stdout_broker import StdoutBroker
 from pycti.connector.new.libs.connector_utils import get_logger
 from pycti.connector.new.libs.messaging.pika_broker import PikaBroker
+from pycti.connector.new.libs.opencti_schema import WorkerMessage
 
 
 class Connector(object):
@@ -43,6 +45,7 @@ class Connector(object):
             self.base_config.log_level,
             json_logging=self.base_config.json_logging,
         )
+        self.splitter = OpenCTIStix2Splitter()
 
         configuration = self.register_connector(self.base_config.id)
 
@@ -78,6 +81,10 @@ class Connector(object):
             return
 
         self.broker_thread = None
+        self.stdout_broker = None
+
+        if self.base_config.testing:
+            self.stdout_broker = StdoutBroker(self.broker_config)
 
         self.logger.info("Connector set up")
 
@@ -89,25 +96,54 @@ class Connector(object):
         self.logger.info("%s", f"Connector registered with ID: {connector_id}")
         return connector_configuration
 
-    def run(self, event: dict, config: BaseModel) -> str:
-        pass
+    def _send_bundle(self, bundle: Bundle, work_id: str, applicant_id: str = None, entity_types: List = None):
+        sending_bundles = []
+        if not self.base_config.testing:
+            try:
+                sending_bundles = self.splitter.split_bundle(bundle.serialize(), True, None)
+            except Exception as e:
+                self.logger.error(f"Parsing error: {str(e)}")
+        else:
+            sending_bundles = [bundle.serialize()]
 
-    def send(self, bundle: Bundle):
-        stdout = StdoutBroker(self.broker_config)
-        stdout.send(bundle.serialize())
+        if entity_types is None:
+            entity_types = []
+
+        if len(sending_bundles) == 0:
+            self.logger.error("Nothing to import")
+            return
+
+        self.api.work.add_expectations(work_id, len(sending_bundles))
+        routing_key = f"push_routing_{self.base_config.id}"
+
+        for sequence, bundle in enumerate(sending_bundles, start=1):
+            worker_message = WorkerMessage(work_id=work_id,
+                                           applicant_id=applicant_id,
+                                           action_sequence=sequence,
+                                           entities_types=entity_types,
+                                           update=True,
+                                           content=base64.b64encode(bundle.encode("utf-8")).decode("utf-8")
+                                           )
+            self.logger.info(f"Sending off {bundle}")
+
+            if self.base_config.testing:
+                self.logger.info(f"Routing to stdout")
+                self.stdout_broker.send(worker_message, routing_key)
+            else:
+                self.broker.send(worker_message, routing_key)
 
     def _stop(self):
         pass
 
     def stop(self, *args) -> None:
         self.logger.info("Shutting down. Please hold the line...")
-        self._stop()
-        if self.broker_thread:
-            self.broker_thread.join()
-        self.broker.stop()
         if not self.base_config.run_and_terminate:
             self.heartbeat.stop()
             self.heartbeat.join()
+        self._stop()
+        if self.broker_thread:
+            self.broker.stop()
+            self.broker_thread.join()
 
     def set_state(self, state) -> None:
         """sets the connector state
@@ -156,13 +192,13 @@ class Connector(object):
 
 class Heartbeat(threading.Thread):
     def __init__(
-        self,
-        api: OpenCTIApiClient,
-        connector_instance: str,
-        log_level: str,
-        interval: int,
-        set_state: Callable,
-        get_state: Callable,
+            self,
+            api: OpenCTIApiClient,
+            connector_instance: str,
+            log_level: str,
+            interval: int,
+            set_state: Callable,
+            get_state: Callable,
     ):
         threading.Thread.__init__(self)
         self.api = api
@@ -174,19 +210,22 @@ class Heartbeat(threading.Thread):
         self.get_state = get_state
         self.in_error = False
 
-        self.s = sched.scheduler(time.time, time.sleep)
-        self.event = self.s.enter(self.interval, 1, self.run_heartbeat)
+        self.event = schedule.every(self.interval).seconds.do(self.run_heartbeat)
         self.logger.info("Starting ping alive thread")
-        self.stop_event = False
+        self.stop_event = threading.Event()
 
     def run(self):
-        self.s.run()
+        while not self.stop_event.is_set():
+            schedule.run_pending()
+            time.sleep(1)
 
     def stop(self):
         try:
             self.logger.info("Preparing for clean shutdown")
+            self.stop_event.set()
+            # time.sleep(2)
             # self.s.cancel(self.event)
-            self.stop_event = True
+            # schedule.clear()
         except ValueError as e:
             self.logger.error("Killing didn't go as planned")
 
@@ -212,6 +251,3 @@ class Heartbeat(threading.Thread):
         except Exception:  # pylint: disable=broad-except
             self.in_error = True
             self.logger.error("Error pinging the API")
-
-        if not self.stop_event:
-            self.event = self.s.enter(self.interval, 1, self.run_heartbeat)

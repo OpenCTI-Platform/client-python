@@ -7,12 +7,12 @@ from pika.exceptions import StreamLostError
 from pycti.connector.new.libs.connector_utils import get_logger
 
 # from pycti.connector.new.libs.opencti_schema import ConnectorMessage
+from pycti.connector.new.libs.opencti_schema import WorkerMessage
 from pycti.connector.new.libs.orchestrator_schemas import RunContainer
 
 
-class StdoutBroker(threading.Thread):
+class StdoutBroker(object):
     def __init__(self, broker_settings: Dict) -> None:
-        threading.Thread.__init__(self)
         self.logger = get_logger("StdoutBroker", "INFO")
         self.callback_function = None
         self.broker_settings = broker_settings
@@ -62,8 +62,10 @@ class StdoutBroker(threading.Thread):
         # or should we only rerun entire workflow runs?
         # ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    def send(self, data: Any):
-        self.logger.info(f"Sending container {data}")
+    def send(self, worker_message: WorkerMessage, routing_key: str):
+        self.logger.info(f"Sending container: {worker_message.json()}")
+        print(f"Sending container: {worker_message.json()}")
+
 
     def stop(self):
         pass

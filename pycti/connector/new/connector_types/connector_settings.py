@@ -31,6 +31,7 @@ class ConnectorBaseConfig(ConnectorBaseSettings):
 
     id: str = Field(env="connector_id")
     name: str = Field(env="connector_name")
+    testing: bool = Field(env="connector_testing", default=False)
     confidence_level: int = Field(env="connector_confidence_level", default=100)
     # scope: list[str] = Field(env="connector_scope")
     scope: str | None = Field(env="connector_scope")
