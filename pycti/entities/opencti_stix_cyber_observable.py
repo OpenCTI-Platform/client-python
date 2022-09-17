@@ -817,14 +817,14 @@ class StixCyberObservable:
                 if (
                     "x_opencti_additional_names" not in observable_data
                     and self.opencti.get_attribute_in_extension(
-                        "x_opencti_additional_names", observable_data
+                        "additional_names", observable_data
                     )
                     is not None
                 ):
                     observable_data[
                         "x_opencti_additional_names"
                     ] = self.opencti.get_attribute_in_extension(
-                        "x_opencti_additional_names", observable_data
+                        "additional_names", observable_data
                     )
                 input_variables["StixFile"] = {
                     "hashes": hashes if len(hashes) > 0 else None,
@@ -1824,16 +1824,20 @@ class StixCyberObservable:
             self.opencti.log("error", "Missing parameters: id and label_id")
             return False
 
-    def push_list_export(self, file_name, data, list_filters=""):
+    def push_list_export(self, file_name, data, list_filters="", mime_type=None):
         query = """
             mutation StixCyberObservablesExportPush($file: Upload!, $listFilters: String) {
                 stixCyberObservablesExportPush(file: $file, listFilters: $listFilters)
             }
         """
+        if mime_type is None:
+            file = self.file(file_name, data)
+        else:
+            file = self.file(file_name, data, mime_type)
         self.opencti.query(
             query,
             {
-                "file": (self.file(file_name, data)),
+                "file": file,
                 "listFilters": list_filters,
             },
         )
