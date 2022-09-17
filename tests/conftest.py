@@ -11,8 +11,8 @@ from pycti import (
 
 
 @fixture(scope="session")
-def api_client(config):
-    if config.getoption("--drone"):
+def api_client(pytestconfig):
+    if pytestconfig.getoption("--drone"):
         return OpenCTIApiClient(
             "http://opencti:8080",
             "bfa014e0-e02e-4aa6-a42b-603b19dcf159",
