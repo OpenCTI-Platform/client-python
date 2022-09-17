@@ -48,31 +48,6 @@ jobs:
       - ms-teams/report:
           only_on_fail: true
           webhook_url: $MS_TEAMS_WEBHOOK_URL
-  tests:
-    parameters:
-      version:
-        default: "3.9"
-        type: string
-    docker:
-      - image: cimg/python:<< parameters.version >>
-    steps:
-      - checkout
-      - run:
-          name: install dependencies
-          command: pip3 install -r requirements.txt --user
-      - run:
-          name: install test-dependencies
-          command: pip3 install -r test-requirements.txt --user
-      - run:
-          name: run pytest
-          command: python3 -m pytest --cov=pycti
-      - slack/notify:
-          branch_pattern: master
-          event: fail
-          template: basic_fail_1
-      - ms-teams/report:
-          only_on_fail: true
-          webhook_url: $MS_TEAMS_WEBHOOK_URL
   build:
     working_directory: ~/opencti-client
     docker:
@@ -161,44 +136,6 @@ workflows:
   version: 2
   opencti_client_python:
     jobs:
-      - ensure_formatting:
-          filters:
-            tags:
-              only: /.*/
-      - linter:
-          filters:
-            tags:
-              only: /.*/
-      - tests:
-          name: tests_37
-          filters:
-            tags:
-              only: /.*/
-          version: "3.7"
-      - tests:
-          name: tests_38
-          filters:
-            tags:
-              only: /.*/
-          version: "3.8"
-          requires:
-            - tests_37
-      - tests:
-          name: tests_39
-          filters:
-            tags:
-              only: /.*/
-          version: "3.9"
-          requires:
-            - tests_38
-      - tests:
-          name: tests_310
-          filters:
-            tags:
-              only: /.*/
-          version: "3.10"
-          requires:
-            - tests_39
       - build:
           filters:
             tags:
@@ -206,7 +143,6 @@ workflows:
           requires:
             - ensure_formatting
             - linter
-            - tests_310
       - deploy:
           requires:
             - build
