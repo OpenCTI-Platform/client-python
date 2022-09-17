@@ -43,7 +43,6 @@ services:
       EXPIRATION_SCHEDULER__ENABLED: false
       SUBSCRIPTION_SCHEDULER__ENABLED: false
     commands:
-      - sleep 30
       - apk add build-base git libffi-dev
       - git clone https://github.com/OpenCTI-Platform/opencti.git /tmp/opencti
       - cd /tmp/opencti/opencti-graphql
