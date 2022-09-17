@@ -45,9 +45,8 @@ services:
     commands:
       - sleep 30
       - apk add build-base git libffi-dev
-      - cp -a opencti-platform /tmp/raw-start-platform
-      - git clone https://github.com/OpenCTI-Platform/opencti.git opencti
-      - cd opencti/opencti-graphql
+      - git clone https://github.com/OpenCTI-Platform/opencti.git /tmp/opencti
+      - cd /tmp/opencti/opencti-graphql
       - yarn install
       - yarn install:python
       #      - pip3 install --upgrade --force --no-cache-dir git+https://github.com/OpenCTI-Platform/client-python@master
