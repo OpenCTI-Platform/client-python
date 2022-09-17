@@ -96,9 +96,6 @@ workflows:
           filters:
             tags:
               only: /.*/
-          requires:
-            - ensure_formatting
-            - linter
       - deploy:
           requires:
             - build
