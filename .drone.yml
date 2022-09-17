@@ -9,7 +9,7 @@ steps:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
       - sleep 100
-      - python3 -m pytest -vv --connectors --drone
+      - python3 -m pytest -vv --drone
 
 services:
   - name: redis
