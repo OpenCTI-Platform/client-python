@@ -51,7 +51,10 @@ def pytest_addoption(parser):
         "--connectors", action="store_true", default=False, help="run connector tests"
     )
     parser.addoption(
-        "--drone", action="store_true", default=False, help="run connector tests in drone environment"
+        "--drone",
+        action="store_true",
+        default=False,
+        help="run connector tests in drone environment",
     )
 
 
