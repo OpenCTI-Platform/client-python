@@ -14,7 +14,7 @@ from pycti import (
 def api_client(pytestconfig):
     if pytestconfig.getoption("--drone"):
         return OpenCTIApiClient(
-            "http://opencti:8080",
+            "http://opencti:4000",
             "bfa014e0-e02e-4aa6-a42b-603b19dcf159",
             ssl_verify=False,
         )

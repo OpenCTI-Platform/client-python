@@ -8,6 +8,7 @@ steps:
     commands:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
+      - sleep 30
       - python3 -m pytest --no-header -vv --disable-warnings --connectors --drone
 
 services:
