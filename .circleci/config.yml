@@ -4,50 +4,6 @@ orbs:
   slack: circleci/slack@4.8.3
   ms-teams: cloudradar-monitoring/ms-teams@0.0.1
 jobs:
-  ensure_formatting:
-    docker:
-      - image: cimg/python:3.9
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: install dependencies
-          command: pip3 install -r requirements.txt --user
-      - run:
-          name: install test-dependencies
-          command: pip3 install -r test-requirements.txt --user
-      - run:
-          name: confirm black version
-          command: black --version
-      - run:
-          name: run isort check
-          command: isort --check-only .
-      - run:
-          name: run black check
-          command: black --check .
-      - slack/notify:
-          branch_pattern: master
-          event: fail
-          template: basic_fail_1
-      - ms-teams/report:
-          only_on_fail: true
-          webhook_url: $MS_TEAMS_WEBHOOK_URL
-  linter:
-    docker:
-      - image: alpine/flake8
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: flake8
-          command: flake8 --ignore=E,W ~/repo
-      - slack/notify:
-          branch_pattern: master
-          event: fail
-          template: basic_fail_1
-      - ms-teams/report:
-          only_on_fail: true
-          webhook_url: $MS_TEAMS_WEBHOOK_URL
   build:
     working_directory: ~/opencti-client
     docker:
