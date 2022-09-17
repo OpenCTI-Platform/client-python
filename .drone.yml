@@ -8,8 +8,8 @@ steps:
     commands:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
-      - sleep 120
-      - python3 -m pytest --no-header -vv --disable-warnings --connectors --drone
+      - sleep 100
+      - python3 -m pytest -vv --connectors --drone
 
 services:
   - name: redis
