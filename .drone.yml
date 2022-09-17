@@ -4,6 +4,7 @@ name: client-python-tests
 
 steps:
   - name: sleep-for-opencti
+    image: python:3.10
     commands:
       - sleep 100
   - name: client-test-38
