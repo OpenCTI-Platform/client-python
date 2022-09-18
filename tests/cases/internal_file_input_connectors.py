@@ -32,9 +32,7 @@ class InternalInputConnector(IFIC):
 class InternalFileInputTest(ConnectorTest):
     connector = InternalInputConnector
 
-    def setup(self, monkeypatch):
-        monkeypatch.setenv("opencti_url", self.api_client.opencti_url)
-        monkeypatch.setenv("opencti_token", self.api_client.api_token)
+    def _setup(self, monkeypatch):
         monkeypatch.setenv("opencti_broker", "pika")
         monkeypatch.setenv("opencti_ssl_verify", "False")
         monkeypatch.setenv("connector_name", "Simple Import")

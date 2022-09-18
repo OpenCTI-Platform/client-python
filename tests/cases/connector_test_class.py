@@ -12,11 +12,15 @@ class ConnectorTest:
     def __init__(self, api_client: OpenCTIApiClient):
         self.api_client = api_client
 
-    def setup(self, monkeypatch):
+    def _setup(self, monkeypatch):
         pass
 
+    def setup(self, monkeypatch):
+        monkeypatch.setenv("opencti_url", self.api_client.opencti_url)
+        monkeypatch.setenv("opencti_token", self.api_client.api_token)
+        self._setup(monkeypatch)
+
     def run(self):
-        print("Running it")
         self.connector_instance = self.connector()
         self.t1 = threading.Thread(target=self.connector_instance.start)
         self.t1.start()
