@@ -8,17 +8,22 @@ from pycti import (
 
 
 @fixture(scope="session")
-def api_client():
-    return OpenCTIApiClient(
-        "https://demo.opencti.io",
-        "7e663f91-d048-4a8b-bdfa-cdb55597942b",
-        ssl_verify=True,
-    )
-
-
-@fixture(scope="session")
-def opencti_server():
-    return "https://demo.opencti.io"
+def api_client(pytestconfig):
+    if pytestconfig.getoption("--opencti") and pytestconfig.getoption("--token"):
+        url = pytestconfig.getoption("--opencti")
+        token = pytestconfig.getoption("--token")
+        verify_ssl = pytestconfig.getoption("--no_verify_ssl")
+        return OpenCTIApiClient(
+            url,
+            token,
+            ssl_verify=verify_ssl ^ True
+        )
+    else:
+        return OpenCTIApiClient(
+            "https://demo.opencti.io",
+            "7e663f91-d048-4a8b-bdfa-cdb55597942b",
+            ssl_verify=True,
+        )
 
 
 @fixture(scope="session")
@@ -26,15 +31,13 @@ def opencti_splitter():
     return OpenCTIStix2Splitter()
 
 
-@fixture(scope="session")
-def httpserver_listen_address():
-    return "localhost", 8888
-
-
 def pytest_addoption(parser):
     parser.addoption(
         "--connectors", action="store_true", default=False, help="run connector tests"
     )
+    parser.addoption("--opencti", action="store", help="OpenCTI URL")
+    parser.addoption("--token", action="store", help="OpenCTI Token")
+    parser.addoption("--no_verify_ssl", action="store_true", default=False, help="Verify OpenCTI TLS certificate")
 
 
 def pytest_configure(config):
