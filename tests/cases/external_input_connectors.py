@@ -1,5 +1,4 @@
 import json
-import threading
 import uuid
 from typing import List
 from stix2 import Bundle
@@ -9,7 +8,7 @@ from pycti.connector.new.connector_types.connector_base_types import (
     ExternalInputConnector as EIC,
 )
 from pycti.connector.new.libs.mixins.http import HttpMixin
-from tests.cases.connector_test_class import ConnectorTest
+from pycti.connector.new.tests.test_class import ConnectorTest
 
 class EIModel(ConnectorConfig):
     url: str

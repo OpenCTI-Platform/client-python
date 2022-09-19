@@ -10,7 +10,7 @@ from pycti.connector.new.connector_types.connector_settings import ConnectorConf
 from pycti.connector.new.connector_types.connector_base_types import (
     InternalFileInputConnector as IFIC
 )
-from tests.cases.connector_test_class import ConnectorTest
+from pycti.connector.new.tests.test_class import ConnectorTest
 
 
 class IIModel(ConnectorConfig):

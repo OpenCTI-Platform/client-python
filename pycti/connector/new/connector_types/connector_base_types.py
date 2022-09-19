@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from stix2 import Bundle
 
 from pycti.connector.new.connector import Connector
-from pycti.connector.new.connector_types.connector_settings import ExternalImportConfig
+from pycti.connector.new.connector_types.connector_settings import ExternalImportConfig, WorkerConfig
 from pycti.connector.new.libs.connector_utils import ConnectorType
 from pycti.connector.new.libs.opencti_schema import InternalFileInputMessage, FileEvent, WorkerMessage, \
     InternalEnrichmentMessage
@@ -174,60 +174,60 @@ class WorkerConnector(ListenConnector):
         self.queues = list(
             map(lambda x: x["config"]["push"], self.connectors)  # type: ignore
         )
-
-        # Check if all queues are consumed
-        for connector in self.connectors:
-            queue = connector["config"]["push"]
-            if queue in self.consumer_threads:
-                if not self.consumer_threads[queue].is_alive():
-                    self.logger.info(
-                        "%s",
-                        (
-                            f"Thread for queue {queue} not alive"
-                            ", creating a new one..."
-                        ),
-                    )
-                    self.consumer_threads[queue] = Consumer(
-                        connector,
-                        self.opencti_url,
-                        self.opencti_token,
-                        self.log_level,
-                        self.opencti_ssl_verify,
-                        self.opencti_json_logging,
-                    )
-                    sleep_delay = 0
-                    self.consumer_threads[queue].start()
-            else:
-                self.consumer_threads[queue] = Consumer(
-                    connector,
-                    self.opencti_url,
-                    self.opencti_token,
-                    self.log_level,
-                    self.opencti_ssl_verify,
-                    self.opencti_json_logging,
-                )
-                sleep_delay = 0
-                self.consumer_threads[queue].start()
-
-        # Check if some threads must be stopped
-        for thread in list(self.consumer_threads):
-            if thread not in self.queues:
-                self.logger.info(
-                    "%s",
-                    f"Queue {thread} no longer exists, killing thread...",
-                )
-                try:
-                    self.consumer_threads[thread].terminate()
-                    self.consumer_threads.pop(thread, None)
-                    sleep_delay = 1
-                except:  # TODO: remove bare except
-                    self.logger.info(
-                        "%s",
-                        (
-                            f"Unable to kill the thread for queue {thread}"
-                            ", an operation is running, keep trying..."
-                        ),
-                    )
+        #
+        # # Check if all queues are consumed
+        # for connector in self.connectors:
+        #     queue = connector["config"]["push"]
+        #     if queue in self.consumer_threads:
+        #         if not self.consumer_threads[queue].is_alive():
+        #             self.logger.info(
+        #                 "%s",
+        #                 (
+        #                     f"Thread for queue {queue} not alive"
+        #                     ", creating a new one..."
+        #                 ),
+        #             )
+        #             self.consumer_threads[queue] = Consumer(
+        #                 connector,
+        #                 self.opencti_url,
+        #                 self.opencti_token,
+        #                 self.log_level,
+        #                 self.opencti_ssl_verify,
+        #                 self.opencti_json_logging,
+        #             )
+        #             sleep_delay = 0
+        #             self.consumer_threads[queue].start()
+        #     else:
+        #         self.consumer_threads[queue] = Consumer(
+        #             connector,
+        #             self.opencti_url,
+        #             self.opencti_token,
+        #             self.log_level,
+        #             self.opencti_ssl_verify,
+        #             self.opencti_json_logging,
+        #         )
+        #         sleep_delay = 0
+        #         self.consumer_threads[queue].start()
+        #
+        # # Check if some threads must be stopped
+        # for thread in list(self.consumer_threads):
+        #     if thread not in self.queues:
+        #         self.logger.info(
+        #             "%s",
+        #             f"Queue {thread} no longer exists, killing thread...",
+        #         )
+        #         try:
+        #             self.consumer_threads[thread].terminate()
+        #             self.consumer_threads.pop(thread, None)
+        #             sleep_delay = 1
+        #         except:  # TODO: remove bare except
+        #             self.logger.info(
+        #                 "%s",
+        #                 (
+        #                     f"Unable to kill the thread for queue {thread}"
+        #                     ", an operation is running, keep trying..."
+        #                 ),
+        #             )
 
     def run(
             self, msg: WorkerMessage, config: BaseModel

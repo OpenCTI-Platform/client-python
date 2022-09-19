@@ -59,6 +59,9 @@ class StreamInputSetting(ConnectorBaseConfig):
         env="connector_live_stream_with_inferences"
     )
 
+class WorkerConfig(ConnectorBaseSettings):
+    pass
+
 
 class ConnectorConfig(ConnectorBaseSettings):
     class Config:
