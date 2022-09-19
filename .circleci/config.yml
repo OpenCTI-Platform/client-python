@@ -148,11 +148,9 @@ workflows:
           filters:
             tags:
               only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
-            branches:
-              ignore: /.*/
-            requires:
-              - ensure_formatting
-              - linter
+          requires:
+            - ensure_formatting
+            - linter
       - deploy:
           requires:
             - build
