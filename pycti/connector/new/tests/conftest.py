@@ -9,7 +9,7 @@ from pycti import (
 
 @fixture(scope="session")
 def api_client(pytestconfig):
-    if pytestconfig.getoption("--opencti") and pytestconfig.getoption("--token"):
+    if pytestconfig.getoption("--opencti", None) and pytestconfig.getoption("--token", None):
         url = pytestconfig.getoption("--opencti")
         token = pytestconfig.getoption("--token")
         verify_ssl = pytestconfig.getoption("--no_verify_ssl")
