@@ -1,6 +1,5 @@
 import pytest
 from requests import HTTPError
-
 from tests.integration.support_cases.mixins import SuccessMixinTests, FailMixinTests
 from pytest_cases import parametrize_with_cases
 
