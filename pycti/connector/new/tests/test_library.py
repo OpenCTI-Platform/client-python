@@ -2,18 +2,8 @@ import base64
 import json
 import time
 from stix2 import Bundle
-
-# from pytest_cases import fixture, parametrize_with_cases
-# import pytest
-from pytest import param, fixture
 from pycti.connector.new.libs.opencti_schema import WorkerMessage
-from tests.cases.external_input_connectors import ExternalInputTest
-from tests.cases.internal_enrichment_connectors import (
-    InternalEnrichmentTest,
-)
-from tests.cases.internal_file_input_connectors import (
-    InternalFileInputTest,
-)
+
 
 # CONNECTORS = []
 #
