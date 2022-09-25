@@ -1,3 +1,4 @@
+import time
 import base64
 import json
 import time
@@ -5,33 +6,16 @@ from stix2 import Bundle
 from pycti.connector.new.libs.opencti_schema import WorkerMessage
 
 
-# CONNECTORS = []
-#
-#
-# @fixture(params=CONNECTORS)
-# def connector_test_instance(request, api_client, monkeypatch):
-#     connector = request.param(api_client)
-#     connector.setup(monkeypatch)
-#     connector.run()
-#     yield connector
-#     connector.shutdown()
-#     connector.teardown()
-# #
-#
-
-
-def test_connector_run(connector_test_instance, api_client, caplog):
+def wait_for_test_to_finish(connector_test_instance, api_client, caplog, old_state) -> Bundle:
     work_id = connector_test_instance.initiate()
 
-    if not work_id:
-        connector_works = api_client.work.get_connector_works(connector_test_instance.connector_instance.base_config.id)
-        if len(connector_works) > 0:
-            work_id = connector_works[0]['id']
+    finished = False
+    while not finished:
+        new_state = connector_test_instance.connector_instance.get_state()
+        if new_state.get('last_run', None) != old_state.get('last_run', None):
+            finished = True
 
-    if work_id:
-        api_client.work.wait_for_work_to_finish(work_id)
-    else:
-        time.sleep(3)
+        time.sleep(0.5)
 
     container = ""
     for msg in caplog.records:
@@ -44,4 +28,5 @@ def test_connector_run(connector_test_instance, api_client, caplog):
     bundle = Bundle(
         **json.loads(base64.b64decode(worker_message.content)), allow_custom=True
     )
-    connector_test_instance.verify(bundle)
+
+    return bundle
