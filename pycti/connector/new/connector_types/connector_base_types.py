@@ -45,7 +45,9 @@ class ExternalInputConnector(Connector):
         self.event = schedule.every(self.interval).seconds.do(self.issue_call)
         self.stop_event = threading.Event()
 
-        # TODO implement run once
+        if self.base_config.run_and_terminate:
+            self.stop_event.set()
+            # Make start() finish right away
 
     def start(self) -> None:
         # Call it for the first time directly
@@ -59,16 +61,7 @@ class ExternalInputConnector(Connector):
 
     def issue_call(self):
         # Get the current timestamp and check
-        current_state = self.get_state()
-        last_run = None
-        if current_state is not None and "last_run" in current_state:
-            last_run = current_state["last_run"]
-            self.logger.info(
-                "Connector last run: "
-                + datetime.utcfromtimestamp(last_run).strftime("%Y-%m-%d %H:%M:%S")
-            )
-        else:
-            self.logger.info("Connector has never run")
+        self.get_last_run()
 
         timestamp = int(time.time())
         now = datetime.utcfromtimestamp(timestamp)
@@ -88,7 +81,6 @@ class ExternalInputConnector(Connector):
         self.logger.info(
             "Connector successfully run, storing last_run as " + str(timestamp)
         )
-        self.set_state({"last_run": timestamp})
         message = (
                 "Last_run stored, next run in: "
                 + str(round(self.interval / 60 / 60 / 24, 2))
@@ -99,6 +91,8 @@ class ExternalInputConnector(Connector):
 
         for bundle in bundles:
             self._send_bundle(bundle, work_id, None, self.base_config.scope)
+
+        self.set_last_run()
 
     def _stop(self):
         self.stop_event.set()
@@ -131,6 +125,7 @@ class InternalEnrichmentConnector(ListenConnector):
             )
             return
 
+        self.get_last_run()
         self.api.work.to_received(
             msg.internal.work_id, "Connector ready to process the operation"
         )
@@ -154,6 +149,8 @@ class InternalEnrichmentConnector(ListenConnector):
         for bundle in bundles:
             self._send_bundle(bundle, msg.internal.work_id, msg.internal.applicant_id)
 
+        self.set_last_run()
+
     def run(
             self, entity_id: str, config: BaseModel
     ) -> (str, List[Bundle]):
@@ -174,6 +171,8 @@ class InternalFileInputConnector(ListenConnector):
                 f"Received non-InternalFileInput packet ({message}) -> {e} "
             )
             return
+
+        self.get_last_run()
 
         self.api.work.to_received(
             msg.internal.work_id, "Connector ready to process the operation"
@@ -204,6 +203,8 @@ class InternalFileInputConnector(ListenConnector):
 
         for bundle in bundles:
             self._send_bundle(bundle, msg.internal.work_id, msg.internal.applicant_id)
+
+        self.set_last_run()
 
     def _download_import_file(self, message: InternalFileInputMessage) -> str:
         file_fetch = message.event.file_fetch

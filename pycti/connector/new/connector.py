@@ -1,5 +1,7 @@
 import base64
 import json
+from datetime import datetime
+
 import schedule
 import signal
 import socket
@@ -124,10 +126,7 @@ class Connector(object):
                                            update=True,
                                            content=base64.b64encode(bundle.encode("utf-8")).decode("utf-8")
                                            )
-            self.logger.info(f"Sending off {bundle}")
-
             if self.base_config.testing:
-                self.logger.info(f"Routing to stdout")
                 self.stdout_broker.send(worker_message, routing_key)
             else:
                 self.broker.send(worker_message, routing_key)
@@ -145,29 +144,39 @@ class Connector(object):
             self.broker.stop()
             self.broker_thread.join()
 
-    def set_state(self, state) -> None:
+    def set_state(self, state: Dict) -> None:
         """sets the connector state
 
         :param state: state object
         :type state: Dict
         """
-        self.connector_state = json.dumps(state)
+        if state is None:
+            self.connector_state = {}
+        else:
+            self.connector_state = state
 
-    def get_state(self) -> Optional[Dict]:
+    def get_state(self) -> Dict:
         """get the connector state
 
         :return: returns the current state of the connector if there is any
         :rtype:
         """
+        return self.connector_state
 
-        try:
-            if self.connector_state:
-                state = json.loads(self.connector_state)
-                if isinstance(state, Dict) and state:
-                    return state
-        except:  # pylint: disable=bare-except  # noqa: E722
-            pass
-        return None
+    def get_last_run(self) -> None:
+        current_state = self.get_state()
+        last_run = current_state.get("last_run", None)
+        if last_run:
+            self.logger.info(
+                "Connector last run: "
+                + datetime.utcfromtimestamp(last_run).strftime("%Y-%m-%d %H:%M:%S")
+            )
+        else:
+            self.logger.info("Connector has never run")
+
+    def set_last_run(self) -> None:
+        timestamp = int(time.time())
+        self.set_state({"last_run": timestamp})
 
     def to_input(self) -> Dict:
         return self.to_dict()
