@@ -13,7 +13,15 @@ def test_split_bundle():
     assert len(bundles) == 7029
 
 
-def test_crate_bundle():
+def test_split_cyclic_bundle():
+    stix_splitter = OpenCTIStix2Splitter()
+    with open("./tests/data/cyclic-bundle.json") as file:
+        content = file.read()
+    bundles = stix_splitter.split_bundle(content)
+    assert len(bundles) == 3
+
+
+def test_create_bundle():
     stix_splitter = OpenCTIStix2Splitter()
     report = Report(
         report_types=["campaign"],

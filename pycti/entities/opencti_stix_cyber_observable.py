@@ -285,6 +285,20 @@ class StixCyberObservable:
             ... on UserAgent {
                 value
             }
+            ... on BankAccount {
+                iban
+                bic
+                account_number
+            }
+            ... on PhoneNumber {
+                value
+            }
+            ... on PaymentCard {
+                card_number
+                expiration_date
+                cvv
+                holder_name
+            }
             importFiles {
                 edges {
                     node {
@@ -622,7 +636,7 @@ class StixCyberObservable:
             query = """
                 mutation StixCyberObservableAdd(
                     $type: String!,
-                    $stix_id: String,
+                    $stix_id: StixId,
                     $x_opencti_score: Int,
                     $x_opencti_description: String,
                     $createIndicator: Boolean,
@@ -655,6 +669,9 @@ class StixCyberObservable:
                     $Hostname: HostnameAddInput
                     $Text: TextAddInput,
                     $UserAgent: UserAgentAddInput
+                    $BankAccount: BankAccountAddInput
+                    $PhoneNumber: PhoneNumberAddInput
+                    $PaymentCard: PaymentCardAddInput
                 ) {
                     stixCyberObservableAdd(
                         type: $type,
@@ -691,6 +708,9 @@ class StixCyberObservable:
                         Hostname: $Hostname,
                         Text: $Text,
                         UserAgent: $UserAgent
+                        BankAccount: $BankAccount
+                        PhoneNumber: $PhoneNumber
+                        PaymentCard: $PaymentCard
                     ) {
                         id
                         standard_id
@@ -797,14 +817,14 @@ class StixCyberObservable:
                 if (
                     "x_opencti_additional_names" not in observable_data
                     and self.opencti.get_attribute_in_extension(
-                        "x_opencti_additional_names", observable_data
+                        "additional_names", observable_data
                     )
                     is not None
                 ):
                     observable_data[
                         "x_opencti_additional_names"
                     ] = self.opencti.get_attribute_in_extension(
-                        "x_opencti_additional_names", observable_data
+                        "additional_names", observable_data
                     )
                 input_variables["StixFile"] = {
                     "hashes": hashes if len(hashes) > 0 else None,
@@ -1049,6 +1069,12 @@ class StixCyberObservable:
                     if "data_type" in observable_data
                     else None,
                 }
+            elif type == "User-Agent":
+                input_variables["UserAgent"] = {
+                    "value": observable_data["value"]
+                    if "value" in observable_data
+                    else None,
+                }
             elif type == "Cryptographic-Key":
                 input_variables["CryptographicKey"] = {
                     "value": observable_data["value"]
@@ -1076,10 +1102,33 @@ class StixCyberObservable:
                     if "value" in observable_data
                     else None,
                 }
-            elif type == "User-Agent":
-                input_variables["UserAgent"] = {
+            elif type == "Bank-Account":
+                input_variables["BankAccount"] = {
+                    "iban": observable_data["iban"]
+                    if "iban" in observable_data
+                    else None,
+                    "bic": observable_data["bic"] if "bic" in observable_data else None,
+                    "account_number": observable_data["account_number"]
+                    if "account_number" in observable_data
+                    else None,
+                }
+            elif type == "Phone-Number":
+                input_variables["PhoneNumber"] = {
                     "value": observable_data["value"]
                     if "value" in observable_data
+                    else None,
+                }
+            elif type == "Payment-Card":
+                input_variables["PaymentCard"] = {
+                    "card_number": observable_data["card_number"]
+                    if "card_number" in observable_data
+                    else None,
+                    "expiration_date": observable_data["expiration_date"]
+                    if "expiration_date" in observable_data
+                    else None,
+                    "cvv": observable_data["cvv"] if "cvv" in observable_data else None,
+                    "holder_name": observable_data["holder_name"]
+                    if "holder_name" in observable_data
                     else None,
                 }
             result = self.opencti.query(query, input_variables)
@@ -1406,7 +1455,7 @@ class StixCyberObservable:
             stix_domain_object = self.read(id=id, customAttributes=custom_attributes)
             if stix_domain_object["createdBy"] is not None:
                 query = """
-                    mutation StixCyberObservableEdit($id: ID!, $toId: String! $relationship_type: String!) {
+                    mutation StixCyberObservableEdit($id: ID!, $toId: StixRef! $relationship_type: String!) {
                         stixCyberObservableEdit(id: $id) {
                             relationDelete(toId: $toId, relationship_type: $relationship_type) {
                                 id
@@ -1539,7 +1588,7 @@ class StixCyberObservable:
                 + "}",
             )
             query = """
-               mutation StixCyberObservableRemoveRelation($id: ID!, $toId: String!, $relationship_type: String!) {
+               mutation StixCyberObservableRemoveRelation($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    stixCyberObservableEdit(id: $id) {
                         relationDelete(toId: $toId, relationship_type: $relationship_type) {
                             id
@@ -1638,7 +1687,7 @@ class StixCyberObservable:
                 + "}",
             )
             query = """
-               mutation StixCyberObservableRemoveRelation($id: ID!, $toId: String!, $relationship_type: String!) {
+               mutation StixCyberObservableRemoveRelation($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    stixCyberObservableEdit(id: $id) {
                         relationDelete(toId: $toId, relationship_type: $relationship_type) {
                             id
@@ -1754,7 +1803,7 @@ class StixCyberObservable:
                 + "}",
             )
             query = """
-               mutation StixCyberObservableRemoveRelation($id: ID!, $toId: String!, $relationship_type: String!) {
+               mutation StixCyberObservableRemoveRelation($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    stixCyberObservableEdit(id: $id) {
                         relationDelete(toId: $toId, relationship_type: $relationship_type) {
                             id
@@ -1775,16 +1824,20 @@ class StixCyberObservable:
             self.opencti.log("error", "Missing parameters: id and label_id")
             return False
 
-    def push_list_export(self, file_name, data, list_filters=""):
+    def push_list_export(self, file_name, data, list_filters="", mime_type=None):
         query = """
             mutation StixCyberObservablesExportPush($file: Upload!, $listFilters: String) {
                 stixCyberObservablesExportPush(file: $file, listFilters: $listFilters)
             }
         """
+        if mime_type is None:
+            file = self.file(file_name, data)
+        else:
+            file = self.file(file_name, data, mime_type)
         self.opencti.query(
             query,
             {
-                "file": (self.file(file_name, data)),
+                "file": file,
                 "listFilters": list_filters,
             },
         )

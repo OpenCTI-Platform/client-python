@@ -460,11 +460,11 @@ class StixDomainObject:
         )
         query = (
             """
-                    query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
-                        stixDomainObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
-                            edges {
-                                node {
-                                    """
+                query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
+                    stixDomainObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                        edges {
+                            node {
+                                """
             + (custom_attributes if custom_attributes is not None else self.properties)
             + """
                         }
@@ -499,7 +499,7 @@ class StixDomainObject:
             final_data = final_data + data
             while result["data"]["stixDomainObjects"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["stixDomainObjects"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Stix-Domain-Entities after " + after)
+                self.opencti.log("info", "Listing Stix-Domain-Objects after " + after)
                 result = self.opencti.query(
                     query,
                     {
@@ -540,9 +540,9 @@ class StixDomainObject:
             self.opencti.log("info", "Reading Stix-Domain-Object {" + id + "}.")
             query = (
                 """
-                        query StixDomainObject($id: String!) {
-                            stixDomainObject(id: $id) {
-                                """
+                    query StixDomainObject($id: String!) {
+                        stixDomainObject(id: $id) {
+                            """
                 + (
                     custom_attributes
                     if custom_attributes is not None
@@ -729,40 +729,28 @@ class StixDomainObject:
             )
             return None
 
-    def file_ask_for_enrichment(self, file_id: str, connector_id: str) -> str:
-        query = """
-            mutation StixCoreObjectEnrichmentLinesAskJobMutation($fileName: ID!, $connectorId: String) {
-                askJobImport(fileName: $fileName, connectorId: $connectorId) {
-                    id
-                }
-            }
-        """
-
-        result = self.opencti.query(
-            query,
-            {
-                "fileName": file_id,
-                "connectorId": connector_id,
-            },
-        )
-        return result["data"]["askJobImport"]["id"]
-
-    def push_list_export(self, entity_type, file_name, data, list_filters=""):
+    def push_list_export(
+        self, entity_type, file_name, data, list_filters="", mime_type=None
+    ):
         query = """
             mutation StixDomainObjectsExportPush($type: String!, $file: Upload!, $listFilters: String) {
                 stixDomainObjectsExportPush(type: $type, file: $file, listFilters: $listFilters)
             }
         """
+        if mime_type is None:
+            file = self.file(file_name, data)
+        else:
+            file = self.file(file_name, data, mime_type)
         self.opencti.query(
             query,
             {
                 "type": entity_type,
-                "file": (self.file(file_name, data)),
+                "file": file,
                 "listFilters": list_filters,
             },
         )
 
-    def push_entity_export(self, entity_id, file_name, data):
+    def push_entity_export(self, entity_id, file_name, data, mime_type=None):
         query = """
             mutation StixDomainObjectEdit($id: ID!, $file: Upload!) {
                 stixDomainObjectEdit(id: $id) {
@@ -770,9 +758,11 @@ class StixDomainObject:
                 }
             }
         """
-        self.opencti.query(
-            query, {"id": entity_id, "file": (self.file(file_name, data))}
-        )
+        if mime_type is None:
+            file = self.file(file_name, data)
+        else:
+            file = self.file(file_name, data, mime_type)
+        self.opencti.query(query, {"id": entity_id, "file": file})
 
     """
         Update the Identity author of a Stix-Domain-Object object (created_by)
@@ -821,7 +811,7 @@ class StixDomainObject:
             stix_domain_object = self.read(id=id, customAttributes=custom_attributes)
             if stix_domain_object["createdBy"] is not None:
                 query = """
-                    mutation StixDomainObjectEdit($id: ID!, $toId: String! $relationship_type: String!) {
+                    mutation StixDomainObjectEdit($id: ID!, $toId: StixRef! $relationship_type: String!) {
                         stixDomainObjectEdit(id: $id) {
                             relationDelete(toId: $toId, relationship_type: $relationship_type) {
                                 id
@@ -954,7 +944,7 @@ class StixDomainObject:
                 + "}",
             )
             query = """
-               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: String!, $relationship_type: String!) {
+               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    stixDomainObjectEdit(id: $id) {
                         relationDelete(toId: $toId, relationship_type: $relationship_type) {
                             id
@@ -1049,7 +1039,7 @@ class StixDomainObject:
                 "Removing label {" + label_id + "} to Stix-Domain-Object {" + id + "}",
             )
             query = """
-               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: String!, $relationship_type: String!) {
+               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    stixDomainObjectEdit(id: $id) {
                         relationDelete(toId: $toId, relationship_type: $relationship_type) {
                             id
@@ -1137,7 +1127,7 @@ class StixDomainObject:
                 + "}",
             )
             query = """
-               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: String!, $relationship_type: String!) {
+               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    stixDomainObjectEdit(id: $id) {
                         relationDelete(toId: $toId, relationship_type: $relationship_type) {
                             id
@@ -1223,7 +1213,7 @@ class StixDomainObject:
                 + "}",
             )
             query = """
-               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: String!, $relationship_type: String!) {
+               mutation StixDomainObjectRemoveRelation($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    stixDomainObjectEdit(id: $id) {
                         relationDelete(toId: $toId, relationship_type: $relationship_type) {
                             id
