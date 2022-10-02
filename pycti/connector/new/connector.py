@@ -8,13 +8,9 @@ import socket
 import threading
 import traceback
 from typing import Optional, Dict, Callable, Union, List
-
-import requests
 import time
-from pydantic import Json, BaseModel, BaseSettings
+from pydantic import ValidationError
 from stix2 import Bundle
-from stix2.workbench import parse
-
 from pycti import OpenCTIApiClient, OpenCTIStix2Splitter
 from pycti.connector.new.connector_types.connector_settings import ConnectorBaseConfig
 from pycti.connector.new.libs.messaging.stdout_broker import StdoutBroker
@@ -27,13 +23,12 @@ class Connector(object):
     # object for the connector specific config
     connector_type = None
     config: Callable = None
-    scope: str = None
     settings: ConnectorBaseConfig = ConnectorBaseConfig
 
     def __init__(self):
         signal.signal(signal.SIGINT, self.stop)
 
-        self.base_config = self.settings(type=self.connector_type, scope=self.scope)
+        self.base_config = self.settings(type=self.connector_type)
         self.logger = get_logger("Connector", self.base_config.log_level)
         if self.config == "":
             self.logger.error("Please define the connector config!")
@@ -88,47 +83,68 @@ class Connector(object):
         if self.base_config.testing:
             self.stdout_broker = StdoutBroker(self.broker_config)
 
+        self.init()
         self.logger.info("Connector set up")
+
+    def init(self) -> None:
+        pass
 
     def start(self) -> None:
         pass
 
     def register_connector(self, connector_id: str) -> dict:
         connector_configuration = self.api.connector.register(self)
-        self.logger.info("%s", f"Connector registered with ID: {connector_id}")
+        self.logger.info(f"Connector registered with ID: {connector_id}")
         return connector_configuration
 
-    def _send_bundle(self, bundle: Bundle, work_id: str, applicant_id: str = None, entity_types: List = None):
-        sending_bundles = []
+    def _send_bundle(
+        self,
+        bundle: Bundle,
+        work_id: str,
+        applicant_id: str = None,
+        entity_types: List = None,
+    ):
         if not self.base_config.testing:
             try:
-                sending_bundles = self.splitter.split_bundle(bundle.serialize(), True, None)
+                sending_bundles = self.splitter.split_bundle(
+                    bundle.serialize(), True, None
+                )
             except Exception as e:
                 self.logger.error(f"Parsing error: {str(e)}")
+                raise ValueError(e)
         else:
             sending_bundles = [bundle.serialize()]
 
         if entity_types is None:
             entity_types = []
+        elif isinstance(entity_types, str):
+            entity_types = entity_types.split(",")
 
         if len(sending_bundles) == 0:
             self.logger.error("Nothing to import")
             return
 
         self.api.work.add_expectations(work_id, len(sending_bundles))
-        routing_key = f"push_routing_{self.base_config.id}"
 
         for sequence, bundle in enumerate(sending_bundles, start=1):
-            worker_message = WorkerMessage(work_id=work_id,
-                                           applicant_id=applicant_id,
-                                           action_sequence=sequence,
-                                           entities_types=entity_types,
-                                           update=True,
-                                           content=base64.b64encode(bundle.encode("utf-8")).decode("utf-8")
-                                           )
+            try:
+                worker_message = WorkerMessage(
+                    work_id=work_id,
+                    applicant_id=applicant_id,
+                    action_sequence=sequence,
+                    entities_types=entity_types,
+                    update=True,
+                    content=base64.b64encode(bundle.encode("utf-8")).decode("utf-8"),
+                )
+            except ValidationError as e:
+                self.logger.error(f"Worker Message validation error {e}")
+                continue
+
             if self.base_config.testing:
-                self.stdout_broker.send(worker_message, routing_key)
+                queue = f"{self.base_config.name.lower()}-ex"
+                self.broker.send_test(worker_message, queue)
             else:
+                routing_key = f"push_routing_{self.base_config.id}"
                 self.broker.send(worker_message, routing_key)
 
     def _stop(self):
@@ -201,13 +217,13 @@ class Connector(object):
 
 class Heartbeat(threading.Thread):
     def __init__(
-            self,
-            api: OpenCTIApiClient,
-            connector_instance: str,
-            log_level: str,
-            interval: int,
-            set_state: Callable,
-            get_state: Callable,
+        self,
+        api: OpenCTIApiClient,
+        connector_instance: str,
+        log_level: str,
+        interval: int,
+        set_state: Callable,
+        get_state: Callable,
     ):
         threading.Thread.__init__(self)
         self.api = api

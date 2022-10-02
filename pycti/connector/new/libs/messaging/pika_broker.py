@@ -13,7 +13,6 @@ from pycti.connector.new.libs.orchestrator_schemas import RunContainer
 
 class PikaBroker(object):
     def __init__(self, broker_settings: Dict) -> None:
-        # threading.Thread.__init__(self)
         self.callback_function = None
         self.logger = get_logger("PikaBroker", "INFO")
         self.broker_settings = broker_settings
@@ -95,7 +94,7 @@ class PikaBroker(object):
             channel.basic_publish(
                 exchange=self.broker_settings["push_exchange"],
                 routing_key=routing_key,
-                body=json.dumps(worker_message.json()).encode('utf-8'),
+                body=json.dumps(worker_message.json()).encode("utf-8"),
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # make message persistent
                 ),
@@ -103,6 +102,22 @@ class PikaBroker(object):
         except (UnroutableError, NackError) as e:
             self.logger.error("Unable to send bundle, retry...%s", e)
             self.send(worker_message, routing_key)
+
+    def send_test(self, worker_message: WorkerMessage, exchange: str):
+        channel = self.connection.channel()
+        channel.exchange_declare(exchange=exchange, exchange_type="fanout")
+        try:
+            channel.basic_publish(
+                exchange=exchange,
+                routing_key="",
+                body=json.dumps(worker_message.json()).encode("utf-8"),
+                properties=pika.BasicProperties(
+                    delivery_mode=2,  # make message persistent
+                ),
+            )
+        except (UnroutableError, NackError, StreamLostError) as e:
+            self.logger.error("Unable to send bundle, retry...%s", e)
+            self.send_test(worker_message, exchange)
 
     def stop(self):
         if self.channel:
