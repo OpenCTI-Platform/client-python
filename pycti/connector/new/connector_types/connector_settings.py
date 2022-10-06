@@ -34,7 +34,7 @@ class ConnectorBaseConfig(ConnectorBaseSettings):
     testing: bool = Field(env="connector_testing", default=False)
     confidence_level: int = Field(env="connector_confidence_level", default=100)
     # scope: list[str] = Field(env="connector_scope")
-    scope: str | None = Field(env="connector_scope")
+    scope: str = Field(env="connector_scope")
     auto: bool = Field(env="connector_auto", default=False)
     type: str = Field(env="connector_type")
     contextual_only: bool = Field(env="connector_only_contextual", default=False)
@@ -58,6 +58,7 @@ class StreamInputSetting(ConnectorBaseConfig):
     live_stream_with_inferences: str = Field(
         env="connector_live_stream_with_inferences"
     )
+
 
 class WorkerConfig(ConnectorBaseSettings):
     pass
