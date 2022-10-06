@@ -1,7 +1,7 @@
 import base64
 import json
 
-from pytest import fixture
+from pytest import fixture, mark
 from pycti.connector.new.tests.test_library import wait_for_test_to_finish
 from tests.cases.external_input_connectors import ExternalInputTest
 from tests.cases.internal_enrichment_connectors import (
@@ -25,6 +25,7 @@ def connector_test_instance(request, api_client, monkeypatch):
     connector.teardown()
 
 
+@mark.connectors
 def test_connector_run(connector_test_instance, rabbit_server):
     connector_test_instance.run()
     rabbit_server.run(
