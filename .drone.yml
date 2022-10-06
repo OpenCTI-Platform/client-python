@@ -13,19 +13,18 @@ steps:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
-  - name: client-test-38
-    image: python:3.8
-    commands:
-      - pip3 install -r requirements.txt --user
-      - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone
   - name: client-test-39
     image: python:3.9
     commands:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone
-
+      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
+  - name: client-test-38
+    image: python:3.8
+    commands:
+      - pip3 install -r requirements.txt --user
+      - pip3 install -r test-requirements.txt --user
+      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
 
   - name: slack
     image: plugins/slack
@@ -77,6 +76,6 @@ services:
       - git clone https://github.com/OpenCTI-Platform/opencti.git /tmp/opencti
       - cd /tmp/opencti/opencti-platform/opencti-graphql
       - yarn install
-      - yarn install:python
+#      - yarn install:python
       #      - pip3 install --upgrade --force --no-cache-dir git+https://github.com/OpenCTI-Platform/client-python@master
       - NODE_OPTIONS=--max_old_space_size=8192 yarn start
