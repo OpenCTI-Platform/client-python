@@ -112,7 +112,7 @@ class RabbitMQ:
                 # self.channel.queue_delete(queue=self.queue)
                 # self.channel.exchange_delete(exchange=self.exchange)
                 # self.channel.close()
-            except StreamLostError as e:
+            except (StreamLostError, AttributeError) as e:
                 # No idea why pika throws this exception when closing
                 pass
         else:
