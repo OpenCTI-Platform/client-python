@@ -66,7 +66,7 @@ class DummyConnector(object):
 
 
 class RabbitMQ:
-    def __init__(self, host, port, username, password):
+    def __init__(self, host: str, port: str, username: str, password: str):
         self.messages = []
         self.host = host
         self.port = port

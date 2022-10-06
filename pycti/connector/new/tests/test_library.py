@@ -1,7 +1,9 @@
+from typing import Dict
+
 import time
 
 
-def wait_for_test_to_finish(connector_test_instance, old_state) -> str:
+def wait_for_test_to_finish(connector_test_instance, old_state: Dict) -> str:
     work_id = connector_test_instance.initiate()
 
     finished = False
