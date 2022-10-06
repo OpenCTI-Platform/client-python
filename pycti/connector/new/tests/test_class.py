@@ -109,9 +109,8 @@ class RabbitMQ:
             try:
                 self.channel.stop_consuming()
                 # self.channel = self.connection.channel()
-                self.channel.queue_delete(queue=self.queue)
-                self.channel.exchange_delete(exchange=self.exchange)
-                self.broker_thread.join()
+                # self.channel.queue_delete(queue=self.queue)
+                # self.channel.exchange_delete(exchange=self.exchange)
                 # self.channel.close()
             except StreamLostError as e:
                 # No idea why pika throws this exception when closing
@@ -122,6 +121,8 @@ class RabbitMQ:
             except StreamLostError as e:
                 # No idea why pika throws this exception when closing
                 pass
+
+        self.broker_thread.join()
 
     def get_messages(self) -> List[str]:
         cnt = 3
