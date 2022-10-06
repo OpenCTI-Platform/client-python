@@ -26,19 +26,19 @@ steps:
 #      - pip3 install -r test-requirements.txt --user
 #      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
 
-  - name: slack
-    image: plugins/slack
-    settings:
-      webhook:
-        from_secret: slack_webhook
-      username: drone
-      icon_url: https://avatars.githubusercontent.com/oa/1284929
-      channel: notifications
-    when:
-      status: [ success, failure ]
-      event:
-        exclude:
-          - pull_request
+#  - name: slack
+#    image: plugins/slack
+#    settings:
+#      webhook:
+#        from_secret: slack_webhook
+#      username: drone
+#      icon_url: https://avatars.githubusercontent.com/oa/1284929
+#      channel: notifications
+#    when:
+#      status: [ success, failure ]
+#      event:
+#        exclude:
+#          - pull_request
 
 services:
   - name: redis
