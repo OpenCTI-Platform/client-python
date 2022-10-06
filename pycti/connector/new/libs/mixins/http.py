@@ -23,7 +23,7 @@ class HttpMixin(object):
 
         try:
             response = self._session.get(
-                url, timeout=2, params=params, headers=headers, auth=auth
+                url, timeout=10, params=params, headers=headers, auth=auth
             )
 
             response.raise_for_status()
