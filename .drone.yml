@@ -26,6 +26,7 @@ steps:
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
 
+
   - name: slack
     image: plugins/slack
     settings:
