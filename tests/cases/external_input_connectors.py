@@ -10,6 +10,7 @@ from pycti.connector.new.connector_types.connector_base_types import (
 from pycti.connector.new.libs.mixins.http import HttpMixin
 from pycti.connector.new.tests.test_class import ConnectorTest
 
+
 class EIModel(ConnectorConfig):
     url: str
 
@@ -31,24 +32,23 @@ class ExternalInputTest(ConnectorTest):
         monkeypatch.setenv("opencti_broker", "pika")
         monkeypatch.setenv("opencti_ssl_verify", "False")
         monkeypatch.setenv("connector_name", "Simple Import")
+        monkeypatch.setenv("connector_log_level", "DEBUG")
         monkeypatch.setenv("connector_id", str(uuid.uuid4()))
         monkeypatch.setenv("connector_name", "Get STIX Github Connector")
         monkeypatch.setenv("connector_run_and_terminate", "true")
         monkeypatch.setenv("connector_interval", "2")
         monkeypatch.setenv("connector_testing", "True")
+        monkeypatch.setenv("connector_scope", '["IPv4Addr"]')
         monkeypatch.setenv(
             "app_url",
             "https://github.com/oasis-open/cti-stix-common-objects/raw/main/objects/marking-definition/marking-definition--62fd3f9b-15f3-4ebc-802c-91fce9536bcf.json",
         )
 
-    def teardown(self):
-        pass
-        # TODO remove marking definition
-
     def verify(self, bundle: Bundle):
         bundle_objects = bundle["objects"]
         assert len(bundle_objects) == 1, "Bundle size is not equal to 1"
         for _object in bundle_objects:
+            print(f"ob {_object}")
             assert (
                 _object["type"]
                 == StixMetaTypes.MARKING_DEFINITION.value.__str__().lower()

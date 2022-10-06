@@ -8,7 +8,7 @@ from dateutil.parser import parse
 from pycti import StixCyberObservableTypes
 from pycti.connector.new.connector_types.connector_settings import ConnectorConfig
 from pycti.connector.new.connector_types.connector_base_types import (
-    InternalFileInputConnector as IFIC
+    InternalFileInputConnector,
 )
 from pycti.connector.new.tests.test_class import ConnectorTest
 
@@ -17,14 +17,14 @@ class IIModel(ConnectorConfig):
     pass
 
 
-class InternalInputConnector(IFIC):
+class InternalInputConnector(InternalFileInputConnector):
     config = IIModel
 
-    def run(self, file_path: str, file_mime: str, entity_id: str, config: BaseModel) -> (str, List[Bundle]):
+    def run(
+        self, file_path: str, file_mime: str, entity_id: str, config: IIModel
+    ) -> (str, List[Bundle]):
         self.logger.info(f"Processing file: {file_path} ({file_mime})")
-        ip4 = IPv4Address(
-            value="177.60.40.7"
-        )
+        ip4 = IPv4Address(value="177.60.40.7")
         bundle = Bundle(ip4)
         return "Finished", [bundle]
 
@@ -37,7 +37,7 @@ class InternalFileInputTest(ConnectorTest):
         monkeypatch.setenv("opencti_ssl_verify", "False")
         monkeypatch.setenv("connector_name", "Simple Import")
         monkeypatch.setenv("connector_id", str(uuid.uuid4()))
-        monkeypatch.setenv("connector_scope", "['application/pdf']")
+        monkeypatch.setenv("connector_scope", "application/pdf")
         monkeypatch.setenv("connector_testing", "True")
 
         date = parse("2019-12-01").strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -68,9 +68,7 @@ class InternalFileInputTest(ConnectorTest):
 
     def initiate(self) -> Optional[str]:
         file_url = self.api_client.stix_domain_object.file_ask_for_enrichment(
-            file_id=self.file["data"]["stixDomainObjectEdit"][
-                "importPush"
-            ]["id"],
+            file_id=self.file["data"]["stixDomainObjectEdit"]["importPush"]["id"],
             connector_id=self.connector_instance.base_config.id,
         )
         return None

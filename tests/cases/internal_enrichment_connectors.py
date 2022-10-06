@@ -31,7 +31,7 @@ class InternalEnrichmentTest(ConnectorTest):
         monkeypatch.setenv("opencti_ssl_verify", "False")
         monkeypatch.setenv("connector_name", "Simple Import")
         monkeypatch.setenv("connector_id", str(uuid.uuid4()))
-        monkeypatch.setenv("connector_scope", "['application/pdf']")
+        monkeypatch.setenv("connector_scope", '["application/pdf"]')
         monkeypatch.setenv("connector_testing", "True")
 
         self.ipv4 = self.api_client.stix_cyber_observable.create(
