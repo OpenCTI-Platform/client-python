@@ -15,7 +15,7 @@ def test_split_bundle():
 
 def test_split_cyclic_bundle():
     stix_splitter = OpenCTIStix2Splitter()
-    with open("./tests/data/cyclic-bundle.json") as file:
+    with open("./tests/unit/support_data/cyclic-bundle.json") as file:
         content = file.read()
     bundles = stix_splitter.split_bundle(content)
     assert len(bundles) == 3
