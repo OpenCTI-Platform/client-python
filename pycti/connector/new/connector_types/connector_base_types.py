@@ -10,10 +10,14 @@ from pydantic import BaseModel
 from stix2 import Bundle
 
 from pycti.connector.new.connector import Connector
-from pycti.connector.new.connector_types.connector_settings import ExternalImportConfig, WorkerConfig
+from pycti.connector.new.connector_types.connector_settings import (
+    ExternalImportConfig,
+)
 from pycti.connector.new.libs.connector_utils import ConnectorType
-from pycti.connector.new.libs.opencti_schema import InternalFileInputMessage, FileEvent, WorkerMessage, \
-    InternalEnrichmentMessage
+from pycti.connector.new.libs.opencti_schema import (
+    InternalFileInputMessage,
+    InternalEnrichmentMessage,
+)
 
 
 class ListenConnector(Connector):
@@ -36,7 +40,6 @@ class ListenConnector(Connector):
 
 class ExternalInputConnector(Connector):
     connector_type = ConnectorType.EXTERNAL_IMPORT.value
-    # scope = "external import"  # scope isn't needed for EIs
     settings = ExternalImportConfig
 
     def __init__(self):
@@ -66,15 +69,20 @@ class ExternalInputConnector(Connector):
         timestamp = int(time.time())
         now = datetime.utcfromtimestamp(timestamp)
         friendly_name = "Connector run @ " + now.strftime("%Y-%m-%d %H:%M:%S")
-        work_id = self.api.work.initiate_work(
-            self.base_config.id, friendly_name
-        )
+        work_id = self.api.work.initiate_work(self.base_config.id, friendly_name)
 
         try:
             run_message, bundles = self.run(self.connector_config)
         except Exception as e:
             self.logger.error(f"Running Error: {str(e)}")
+            self.logger.error(f"error: {str(e)}")
+            self.set_state({"error": str(e)})
             # TODO run again one time
+            try:
+                self.api.work.to_processed(work_id, str(e), True)
+            except:  # pylint: disable=bare-except
+                self.logger.error("Failing reporting the processing")
+
             return
 
         # Store the current timestamp as a last run
@@ -82,15 +90,26 @@ class ExternalInputConnector(Connector):
             "Connector successfully run, storing last_run as " + str(timestamp)
         )
         message = (
-                "Last_run stored, next run in: "
-                + str(round(self.interval / 60 / 60 / 24, 2))
-                + " days"
+            "Last_run stored, next run in: "
+            + str(round(self.interval / 60 / 60 / 24, 2))
+            + " days"
         )
         self.api.work.to_processed(work_id, message)
         self.logger.info(f"Sending message: {message}")
 
         for bundle in bundles:
-            self._send_bundle(bundle, work_id, None, self.base_config.scope)
+            try:
+                self._send_bundle(bundle, work_id, None, self.base_config.scope)
+            except Exception as e:
+                self.logger.error(f"Running Error: {str(e)}")
+                self.logger.error(f"error: {str(e)}")
+                self.set_state({"error": str(e)})
+                try:
+                    self.api.work.to_processed(work_id, str(e), True)
+                except:  # pylint: disable=bare-except
+                    self.logger.error("Failing reporting the processing")
+
+                return
 
         self.set_last_run()
 
@@ -100,7 +119,6 @@ class ExternalInputConnector(Connector):
 
     def run(self, config: BaseModel) -> (str, List[Bundle]):
         pass
-
 
 
 # class StreamInputConnector(ListenStreamConnector):
@@ -137,8 +155,10 @@ class InternalEnrichmentConnector(ListenConnector):
             )
             self.api.work.to_processed(msg.internal.work_id, run_msg)
 
-        except ValueError as e:  # pydantic validation error
+        except Exception as e:  # pydantic validation error
             self.logger.exception("Error in message processing, reporting error to API")
+            self.logger.error(f"error: {str(e)}")
+            self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
             except:  # pylint: disable=bare-except
@@ -151,9 +171,7 @@ class InternalEnrichmentConnector(ListenConnector):
 
         self.set_last_run()
 
-    def run(
-            self, entity_id: str, config: BaseModel
-    ) -> (str, List[Bundle]):
+    def run(self, entity_id: str, config: BaseModel) -> (str, List[Bundle]):
         pass
 
 
@@ -186,12 +204,17 @@ class InternalFileInputConnector(ListenConnector):
                 msg.event.entity_id,
                 self.connector_config,
             )
+
+            # TODO implement here validate_before_import
+
             self.api.work.to_processed(msg.internal.work_id, run_msg)
 
             os.remove(file_path)
 
-        except ValueError as e:  # pydantic validation error
+        except Exception as e:  # pydantic validation error
             self.logger.exception("Error in message processing, reporting error to API")
+            self.logger.error(f"error: {str(e)}")
+            self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
             except:  # pylint: disable=bare-except
@@ -199,7 +222,7 @@ class InternalFileInputConnector(ListenConnector):
 
             return
 
-        file_name = file_path.split('/')[-1]
+        file_name = file_path.split("/")[-1]
 
         for bundle in bundles:
             self._send_bundle(bundle, msg.internal.work_id, msg.internal.applicant_id)
@@ -221,7 +244,7 @@ class InternalFileInputConnector(ListenConnector):
         return file_name
 
     def run(
-            self, file_path: str, file_mime: str, entity_id: str, config: BaseModel
+        self, file_path: str, file_mime: str, entity_id: str, config: BaseModel
     ) -> (str, List[Bundle]):
         pass
 
@@ -231,6 +254,7 @@ class InternalExportConnector(ListenConnector):
 
     def __init__(self):
         super().__init__()
+
 
 #
 # class ListenStreamConnector(Connector):
