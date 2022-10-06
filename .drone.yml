@@ -19,12 +19,12 @@ steps:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
-  - name: client-test-38
-    image: python:3.8
-    commands:
-      - pip3 install -r requirements.txt --user
-      - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
+#  - name: client-test-38
+#    image: python:3.8
+#    commands:
+#      - pip3 install -r requirements.txt --user
+#      - pip3 install -r test-requirements.txt --user
+#      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
 
   - name: slack
     image: plugins/slack
