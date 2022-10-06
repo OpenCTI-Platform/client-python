@@ -729,6 +729,24 @@ class StixDomainObject:
             )
             return None
 
+    def file_ask_for_enrichment(self, file_id: str, connector_id: str) -> str:
+        query = """
+            mutation StixCoreObjectEnrichmentLinesAskJobMutation($fileName: ID!, $connectorId: String) {
+                askJobImport(fileName: $fileName, connectorId: $connectorId) {
+                    id
+                }
+            }
+        """
+
+        result = self.opencti.query(
+            query,
+            {
+                "fileName": file_id,
+                "connectorId": connector_id,
+            },
+        )
+        return result["data"]["askJobImport"]["id"]
+
     def push_list_export(
         self, entity_type, file_name, data, list_filters="", mime_type=None
     ):
