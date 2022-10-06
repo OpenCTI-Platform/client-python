@@ -45,6 +45,7 @@ class WorkerMessage(BaseModel):
     # bypass_split: bool = False
     # file_name: str
 
+
 # b'{"internal":
 #       {
 #      "work_id":"opencti-work--dd201432-6c84-4c90-9d0b-91a926f9189c","applicant_id":"88ec0c6a-13ce-5e39-b486-354fe4a7084f"},

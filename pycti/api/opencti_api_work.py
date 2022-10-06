@@ -109,7 +109,9 @@ class OpenCTIApiWork:
 
             if len(state) > 0:
                 if state["errors"]:
-                    raise ValueError(f"Unable to retrieve work '{work_id}' error {state['errors']}")
+                    raise ValueError(
+                        f"Unable to retrieve work '{work_id}' error {state['errors']}"
+                    )
 
                 status = state.get("status")
 
