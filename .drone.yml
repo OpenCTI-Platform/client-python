@@ -24,7 +24,7 @@ steps:
     commands:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
+      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone --connectors
 
 
   - name: slack
