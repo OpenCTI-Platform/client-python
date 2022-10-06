@@ -9,3 +9,4 @@ setuptools~=65.3.0
 sseclient~=0.0.27
 stix2~=3.0.1
 schedule~=1.1.0
+pydantic~=1.8.2
