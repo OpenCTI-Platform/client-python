@@ -12,7 +12,7 @@ steps:
     commands:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest -p pycti.connector.new.tests.pytest_pycti --drone -vv --cov=pycti
+      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
   - name: client-test-39
     image: python:3.9
     commands:
