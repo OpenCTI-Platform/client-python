@@ -47,7 +47,7 @@ class Connector(object):
         configuration = self.register_connector(self.base_config.id)
 
         self.work_id = None
-        self.applicant_id = configuration["connector_user"]["id"]
+        self.applicant_id = configuration["connector_user_id"]
         connector_state = configuration["connector_state"]
         self.set_state(connector_state)
         self.broker_config = configuration["config"]
