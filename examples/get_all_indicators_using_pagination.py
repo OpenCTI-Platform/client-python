@@ -17,7 +17,7 @@ custom_attributes = """
 """
 
 final_indicators = []
-data = {"pagination": {"hasNextPage": True, "endCursor": 0}}
+data = {"pagination": {"hasNextPage": True, "endCursor": None}}
 while data["pagination"]["hasNextPage"]:
     after = data["pagination"]["endCursor"]
     if after:
