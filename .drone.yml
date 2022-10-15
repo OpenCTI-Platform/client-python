@@ -31,6 +31,7 @@ steps:
     image: python:3.10
     commands:
       - pip3 install -r requirements.txt --user
+      - pip3 install .
       - find examples/ -type f -execdir python {} \;
 
   - name: slack
