@@ -7,33 +7,33 @@ steps:
     image: python:3.10
     commands:
       - sleep 100
-  - name: client-test-38
-    image: python:3.8
-    commands:
-      - pip3 install -r requirements.txt --user
-      - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
-  - name: client-test-39
-    image: python:3.9
-    commands:
-      - pip3 install -r requirements.txt --user
-      - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
-  - name: client-test-310
-    image: python:3.10
-    commands:
-      - pip3 install -r requirements.txt --user
-      - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
+#  - name: client-test-38
+#    image: python:3.8
+#    commands:
+#      - pip3 install -r requirements.txt --user
+#      - pip3 install -r test-requirements.txt --user
+#      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
+#  - name: client-test-39
+#    image: python:3.9
+#    commands:
+#      - pip3 install -r requirements.txt --user
+#      - pip3 install -r test-requirements.txt --user
+#      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
+#  - name: client-test-310
+#    image: python:3.10
+#    commands:
+#      - pip3 install -r requirements.txt --user
+#      - pip3 install -r test-requirements.txt --user
+#      - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
 
   # always run the examples last since they don't clean up
-  - name: example-tests-310
+  - name: example-tests
     image: python:3.10
     commands:
       - pip3 install -r requirements.txt --user
       - pip3 install .
       - cd examples/
-      - for script in ./*.py; do [["$script" == *"cmd_line_tag_latest_indicators_of_threat.py"*]] && continue; python3 $script; done
+      - for script in ./*.py; do [[ "$script" == *"cmd_line_tag_latest_indicators_of_threat.py"* ]] && continue; python3 $script; done
 
   - name: slack
     image: plugins/slack
