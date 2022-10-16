@@ -5,8 +5,8 @@ from dateutil.parser import parse
 from pycti import OpenCTIApiClient
 
 # Variables
-api_url = "https://opencti.ssh.local"
-api_token = "18bd74e5-404c-4216-ac74-23de6249d690"
+api_url = "http://opencti:4000"
+api_token = "bfa014e0-e02e-4aa6-a42b-603b19dcf159"
 
 # OpenCTI initialization
 opencti_api_client = OpenCTIApiClient(api_url, api_token)
