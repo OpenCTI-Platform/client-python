@@ -33,7 +33,8 @@ steps:
       - pip3 install -r requirements.txt --user
       - pip3 install .
       - cd examples/
-      - /bin/bash run_all.sh
+#      - /bin/bash run_all.sh
+      - for script in ./*.py; do python3 $script; done
 
   - name: slack
     image: plugins/slack
