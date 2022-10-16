@@ -52,7 +52,7 @@ ttp1_relation = opencti_api_client.stix_core_relationship.create(
     stop_time=date,
 )
 # Add kill chain phases to the relation
-for kill_chain_phase_id in ttp1.get("killChainPhasesIds", []):
+for kill_chain_phase_id in ttp1["kill_chain_phases_ids"]:
     opencti_api_client.stix_core_relationship.add_kill_chain_phase(
         id=ttp1_relation["id"], kill_chain_phase_id=kill_chain_phase_id
     )
@@ -107,7 +107,7 @@ ttp2_relation = opencti_api_client.stix_core_relationship.create(
     stop_time=date,
 )
 # Add kill chain phases to the relation
-for kill_chain_phase_id in ttp2["killChainPhasesIds"]:
+for kill_chain_phase_id in ttp2["kill_chain_phases_ids"]:
     opencti_api_client.stix_core_relationship.add_kill_chain_phase(
         id=ttp2_relation["id"], kill_chain_phase_id=kill_chain_phase_id
     )
@@ -157,7 +157,7 @@ ttp3_relation = opencti_api_client.stix_core_relationship.create(
     stop_time=date,
 )
 # Add kill chain phases to the relation
-for kill_chain_phase_id in ttp3["killChainPhasesIds"]:
+for kill_chain_phase_id in ttp3["kill_chain_phases_ids"]:
     opencti_api_client.stix_core_relationship.add_kill_chain_phase(
         id=ttp3_relation["id"], kill_chain_phase_id=kill_chain_phase_id
     )
