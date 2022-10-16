@@ -35,9 +35,13 @@ report = opencti_api_client.report.create(
 
 # Associate the TTPs to the incident
 
-# Spearphishing Attachment
-ttp1 = opencti_api_client.attack_pattern.read(
-    filters=[{"key": "x_mitre_id", "values": ["T1193"]}]
+ttp1 = opencti_api_client.attack_pattern.create(
+    name="Phishing: Spearphishing Attachment",
+    description="Adversaries may send spearphishing emails with a malicious attachment in an attempt to gain access to victim systems. Spearphishing attachment is a specific variant of spearphishing. Spearphishing attachment is different from other forms of spearphishing in that it employs the use of malware attached to an email. All forms of spearphishing are electronically delivered social engineering targeted at a specific individual, company, or industry. In this scenario, adversaries attach a file to the spearphishing email and usually rely upon User Execution to gain execution. Spearphishing may also involve social engineering techniques, such as posing as a trusted source.",
+    x_mitre_id="T1566.001",
+    kill_chain_phases=[
+        {"kill_chain_name": "mitre-attack", "phase_name": "initial-access"}
+    ],
 )
 ttp1_relation = opencti_api_client.stix_core_relationship.create(
     fromId=incident["id"],
@@ -48,11 +52,10 @@ ttp1_relation = opencti_api_client.stix_core_relationship.create(
     stop_time=date,
 )
 # Add kill chain phases to the relation
-for kill_chain_phase_id in ttp1["killChainPhasesIds"]:
+for kill_chain_phase_id in ttp1.get("killChainPhasesIds", []):
     opencti_api_client.stix_core_relationship.add_kill_chain_phase(
         id=ttp1_relation["id"], kill_chain_phase_id=kill_chain_phase_id
     )
-
 
 # Create the observable and indicator and indicates to the relation
 # Create the observable
@@ -85,8 +88,14 @@ object_refs.extend(
 observable_refs.append(observable_ttp1["id"])
 
 # Registry Run Keys / Startup Folder
-ttp2 = opencti_api_client.attack_pattern.read(
-    filters=[{"key": "x_mitre_id", "values": ["T1060"]}]
+ttp2 = opencti_api_client.attack_pattern.create(
+    name="Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder ",
+    description="Adversaries may achieve persistence by adding a program to a startup folder or referencing it with a Registry run key. Adding an entry to the 'run keys' in the Registry or startup folder will cause the program referenced to be executed when a user logs in. These programs will be executed under the context of the user and will have the account's associated permissions level.",
+    x_mitre_id="T1547.001",
+    kill_chain_phases=[
+        {"kill_chain_name": "mitre-attack", "phase_name": "persistence"},
+        {"kill_chain_name": "mitre-attack", "phase_name": "privilege-escalation"},
+    ],
 )
 # Create the relation
 ttp2_relation = opencti_api_client.stix_core_relationship.create(
@@ -133,8 +142,11 @@ object_refs.extend(
 observable_refs.append(observable_ttp2["id"])
 
 # Data Encrypted
-ttp3 = opencti_api_client.attack_pattern.read(
-    filters=[{"key": "x_mitre_id", "values": ["T1022"]}]
+ttp3 = opencti_api_client.attack_pattern.create(
+    name=" Archive Collected Data",
+    description="An adversary may compress and/or encrypt data that is collected prior to exfiltration. Compressing the data can help to obfuscate the collected data and minimize the amount of data sent over the network. Encryption can be used to hide information that is being exfiltrated from detection or make exfiltration less conspicuous upon inspection by a defender.",
+    x_mitre_id="T1560",
+    kill_chain_phases=[{"kill_chain_name": "mitre-attack", "phase_name": "collection"}],
 )
 ttp3_relation = opencti_api_client.stix_core_relationship.create(
     fromId=incident["id"],
