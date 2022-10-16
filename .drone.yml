@@ -33,7 +33,7 @@ steps:
       - pip3 install -r requirements.txt --user
       - pip3 install .
       - cd examples/
-      - for script in ./*.py; do ["$script" -eq "cmd_line_tag_latest_indicators_of_threat.py"] && continue; python3 $script; done
+      - for script in ./*.py; do [["$script" == *"cmd_line_tag_latest_indicators_of_threat.py"*]] && continue; python3 $script; done
 
   - name: slack
     image: plugins/slack
