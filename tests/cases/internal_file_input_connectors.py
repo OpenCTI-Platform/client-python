@@ -64,7 +64,6 @@ class InternalFileInputTest(ConnectorTest):
         self.api_client.stix_domain_object.delete(id=self.report["id"])
         self.api_client.stix_domain_object.delete(id=self.organization["id"])
 
-
     def initiate(self) -> Optional[str]:
         self.api_client.stix_domain_object.file_ask_for_enrichment(
             file_id=self.file["data"]["stixDomainObjectEdit"]["importPush"]["id"],
