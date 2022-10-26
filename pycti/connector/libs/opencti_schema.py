@@ -1,4 +1,4 @@
-from pydantic import BaseModel, UUID4, Json
+from pydantic import BaseModel
 
 
 class ConnectorInternal(BaseModel):

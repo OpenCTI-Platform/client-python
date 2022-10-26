@@ -39,7 +39,7 @@ class PikaBroker(object):
         )
         try:
             self.channel.start_consuming()
-        except StreamLostError as e:
+        except StreamLostError:
             # No idea why pika throws this exception when closing
             pass
 
@@ -96,12 +96,12 @@ class PikaBroker(object):
             try:
                 self.channel.stop_consuming()
                 # self.channel.close()
-            except (StreamLostError, AttributeError) as e:
+            except (StreamLostError, AttributeError):
                 # No idea why pika throws this exception when closing
                 pass
         else:
             try:
                 self.pika_connection.close()
-            except StreamLostError as e:
+            except StreamLostError:
                 # No idea why pika throws this exception when closing
                 pass

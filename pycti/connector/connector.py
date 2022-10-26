@@ -256,7 +256,7 @@ class Heartbeat(threading.Thread):
             # self.s.cancel(self.event)
             # schedule.clear()
         except ValueError as e:
-            self.logger.error("Killing didn't go as planned")
+            self.logger.error(f"Killing didn't go as planned ({e})")
 
     def run_heartbeat(self):
         try:

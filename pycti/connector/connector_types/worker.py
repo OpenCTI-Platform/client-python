@@ -181,7 +181,7 @@ class WorkerConsumer(Thread):
             )
             try:
                 self.channel.start_consuming()
-            except StreamLostError as e:
+            except StreamLostError:
                 # No idea why pika throws this exception when closing
                 pass
         except Exception as e:
@@ -215,13 +215,13 @@ class WorkerConsumer(Thread):
             try:
                 self.channel.stop_consuming()
                 # self.channel.close()
-            except (StreamLostError, AttributeError) as e:
+            except (StreamLostError, AttributeError):
                 # No idea why pika throws this exception when closing
                 pass
         else:
             try:
                 self.pika_connection.close()
-            except StreamLostError as e:
+            except StreamLostError:
                 # No idea why pika throws this exception when closing
                 pass
 
@@ -331,7 +331,6 @@ class Worker(object):
                         self.base_config.ssl_verify,
                         self.base_config.json_logging,
                     )
-                    sleep_delay = 0
                     self.consumer_threads[queue].start()
             else:
                 self.consumer_threads[queue] = WorkerConsumer(
@@ -342,7 +341,6 @@ class Worker(object):
                     self.base_config.ssl_verify,
                     self.base_config.json_logging,
                 )
-                sleep_delay = 0
                 self.consumer_threads[queue].start()
 
     def clean_queues(self, sleep_delay: int):
