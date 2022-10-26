@@ -2,12 +2,11 @@ import uuid
 from typing import List, Optional
 from pydantic import BaseModel
 from stix2 import Bundle, IPv4Address
-from pycti import StixCyberObservableTypes
-from pycti.connector.new.connector_types.connector_settings import ConnectorConfig
-from pycti.connector.new.connector_types.connector_base_types import (
+from pycti.connector.connector_types.connector_settings import ConnectorConfig
+from pycti.connector.connector_types.connector_base_types import (
     InternalEnrichmentConnector as IEC,
 )
-from pycti.connector.new.tests.test_class import ConnectorTest
+from pycti.connector.tests.test_class import ConnectorTest
 
 
 class IEModel(ConnectorConfig):
@@ -18,27 +17,38 @@ class InternalEnrichmentConnector(IEC):
     config = IEModel
 
     def run(self, entity_id: str, config: BaseModel) -> (str, List[Bundle]):
-        ip4 = IPv4Address(value="177.60.40.7")
-        bundle = Bundle(ip4, allow_custom=True)
+        bundle = Bundle(IPv4Address(value="177.60.40.7"), allow_custom=True)
         return "Finished", [bundle]
 
 
 class InternalEnrichmentTest(ConnectorTest):
     connector = InternalEnrichmentConnector
+    bundle = Bundle(IPv4Address(value="177.60.40.7"), allow_custom=True)
 
     def _setup(self, monkeypatch):
-        monkeypatch.setenv("opencti_broker", "pika")
-        monkeypatch.setenv("opencti_ssl_verify", "False")
         monkeypatch.setenv("connector_name", "Simple Import")
         monkeypatch.setenv("connector_id", str(uuid.uuid4()))
-        monkeypatch.setenv("connector_scope", '["application/pdf"]')
+        monkeypatch.setenv("connector_scope", "IPv4-addr,Domain")
         monkeypatch.setenv("connector_testing", "True")
+        monkeypatch.setenv("connector_max_tlp", "TLP:AMBER")
+
+        # Create the marking definition
+        marking_definition = self.api_client.marking_definition.create(
+            definition_type="TLP",
+            definition="TLP:CLEAR",
+            x_opencti_order=10,
+            x_opencti_color="#000000",
+        )
 
         self.ipv4 = self.api_client.stix_cyber_observable.create(
             observableData={
                 "type": "ipv4-addr",
                 "value": "8.8.8.8",
             }
+        )
+
+        self.api_client.stix_cyber_observable.add_marking_definition(
+            id=self.ipv4["id"], marking_definition_id=marking_definition["id"]
         )
 
     def teardown(self):
@@ -51,12 +61,36 @@ class InternalEnrichmentTest(ConnectorTest):
         )
         return work_id
 
-    def verify(self, bundle: Bundle):
-        bundle_objects = bundle["objects"]
-        assert len(bundle_objects) == 1, "Bundle size is not equal to 1"
-        for _object in bundle_objects:
-            assert (
-                _object["type"]
-                == StixCyberObservableTypes.IPV4_ADDR.value.__str__().lower()
-            ), "Object not an IPv4Addr"
-            assert _object["value"] == "177.60.40.7", "IPv4 has wrong IP"
+
+class InternalEnrichmentTest_TLP_Invalid(InternalEnrichmentTest):
+    connector = InternalEnrichmentConnector
+
+    def _setup(self, monkeypatch):
+        monkeypatch.setenv("connector_name", "Simple Import")
+        monkeypatch.setenv("connector_id", str(uuid.uuid4()))
+        monkeypatch.setenv("connector_scope", "IPv4-addr,Domain")
+        monkeypatch.setenv("connector_testing", "True")
+        monkeypatch.setenv("connector_max_tlp", "TLP:AMBER")
+
+        # Create the marking definition
+        marking_definition = self.api_client.marking_definition.create(
+            definition_type="TLP",
+            definition="TLP:RED",
+            x_opencti_order=10,
+            x_opencti_color="#000000",
+        )
+
+        self.ipv4 = self.api_client.stix_cyber_observable.create(
+            observableData={
+                "type": "ipv4-addr",
+                "value": "8.8.8.8",
+            }
+        )
+
+        self.api_client.stix_cyber_observable.add_marking_definition(
+            id=self.ipv4["id"], marking_definition_id=marking_definition["id"]
+        )
+
+    @staticmethod
+    def get_expected_exception() -> str:
+        return "TLP of the observable is greater than MAX TLP"

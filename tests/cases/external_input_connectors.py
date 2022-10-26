@@ -3,12 +3,12 @@ import uuid
 from typing import List
 from stix2 import Bundle
 from pycti import StixMetaTypes
-from pycti.connector.new.connector_types.connector_settings import ConnectorConfig
-from pycti.connector.new.connector_types.connector_base_types import (
+from pycti.connector.connector_types.connector_settings import ConnectorConfig
+from pycti.connector.connector_types.connector_base_types import (
     ExternalInputConnector as EIC,
 )
-from pycti.connector.new.libs.mixins.http import HttpMixin
-from pycti.connector.new.tests.test_class import ConnectorTest
+from pycti.connector.libs.mixins.http import HttpMixin
+from pycti.connector.tests.test_class import ConnectorTest
 
 
 class EIModel(ConnectorConfig):
@@ -38,7 +38,7 @@ class ExternalInputTest(ConnectorTest):
         monkeypatch.setenv("connector_run_and_terminate", "true")
         monkeypatch.setenv("connector_interval", "2")
         monkeypatch.setenv("connector_testing", "True")
-        monkeypatch.setenv("connector_scope", '["IPv4Addr"]')
+        monkeypatch.setenv("connector_scope", "IPv4Addr")
         monkeypatch.setenv(
             "app_url",
             "https://github.com/oasis-open/cti-stix-common-objects/raw/main/objects/marking-definition/marking-definition--62fd3f9b-15f3-4ebc-802c-91fce9536bcf.json",
