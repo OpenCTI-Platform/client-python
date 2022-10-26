@@ -1,5 +1,5 @@
 import threading
-from typing import List, Callable
+from typing import Callable, List
 
 
 class MessagingQueue(threading.Thread):

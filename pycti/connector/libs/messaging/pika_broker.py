@@ -1,7 +1,8 @@
 import json
-from typing import Dict, Callable
+from typing import Callable, Dict
+
 import pika
-from pika.exceptions import StreamLostError, NackError, UnroutableError
+from pika.exceptions import NackError, StreamLostError, UnroutableError
 
 from pycti.connector.libs.connector_utils import get_logger
 from pycti.connector.libs.opencti_schema import WorkerMessage

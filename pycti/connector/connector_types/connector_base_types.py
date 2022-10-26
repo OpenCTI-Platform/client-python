@@ -1,11 +1,10 @@
 import os
 import threading
+import time
 from datetime import datetime
 from typing import Dict, List
+
 import schedule
-
-
-import time
 from pydantic import BaseModel
 from stix2 import Bundle
 
@@ -16,8 +15,8 @@ from pycti.connector.connector_types.connector_settings import (
 )
 from pycti.connector.libs.connector_utils import ConnectorType, check_max_tlp
 from pycti.connector.libs.opencti_schema import (
-    InternalFileInputMessage,
     InternalEnrichmentMessage,
+    InternalFileInputMessage,
 )
 
 

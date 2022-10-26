@@ -1,12 +1,14 @@
 import json
 import uuid
 from typing import List
+
 from stix2 import Bundle
+
 from pycti import StixMetaTypes
-from pycti.connector.connector_types.connector_settings import ConnectorConfig
 from pycti.connector.connector_types.connector_base_types import (
     ExternalInputConnector as EIC,
 )
+from pycti.connector.connector_types.connector_settings import ConnectorConfig
 from pycti.connector.libs.mixins.http import HttpMixin
 from pycti.connector.tests.test_class import ConnectorTest
 

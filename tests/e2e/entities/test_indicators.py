@@ -2,7 +2,6 @@
 
 import json
 
-
 # Commented out since OpenCTI requires at least 100 indicators
 # for this test to work
 #

@@ -1,15 +1,14 @@
 import json
 import threading
 from time import sleep
-from typing import Type, Optional, List
+from typing import List, Optional, Type
 
+from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import StreamLostError
 from stix2 import Bundle
 
-from pycti import OpenCTIApiClient, ConnectorType
+from pycti import ConnectorType, OpenCTIApiClient
 from pycti.connector.connector import Connector
-
-from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 
 
 class ConnectorTest:

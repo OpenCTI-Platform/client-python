@@ -1,6 +1,5 @@
-from typing import Dict
-
 import time
+from typing import Dict
 
 
 def wait_for_test_to_finish(connector_test_instance, old_state: Dict) -> str:

@@ -1,13 +1,13 @@
 import uuid
 from typing import List, Optional
 
-from stix2 import Bundle, IPv4Address
 from dateutil.parser import parse
+from stix2 import Bundle, IPv4Address
 
-from pycti.connector.connector_types.connector_settings import ConnectorConfig
 from pycti.connector.connector_types.connector_base_types import (
     InternalFileInputConnector,
 )
+from pycti.connector.connector_types.connector_settings import ConnectorConfig
 from pycti.connector.tests.test_class import ConnectorTest
 
 

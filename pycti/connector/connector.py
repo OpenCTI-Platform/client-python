@@ -1,20 +1,21 @@
 import base64
 import json
-from datetime import datetime
-
-import schedule
 import signal
 import socket
 import threading
-from typing import Dict, Callable, List
 import time
+from datetime import datetime
+from typing import Callable, Dict, List
+
+import schedule
 from pydantic import ValidationError
 from stix2 import Bundle
+
 from pycti import OpenCTIApiClient, OpenCTIStix2Splitter
 from pycti.connector.connector_types.connector_settings import ConnectorBaseConfig
-from pycti.connector.libs.messaging.stdout_broker import StdoutBroker
 from pycti.connector.libs.connector_utils import get_logger
 from pycti.connector.libs.messaging.pika_broker import PikaBroker
+from pycti.connector.libs.messaging.stdout_broker import StdoutBroker
 from pycti.connector.libs.opencti_schema import WorkerMessage
 
 

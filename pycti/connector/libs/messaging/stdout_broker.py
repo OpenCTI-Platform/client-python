@@ -1,8 +1,7 @@
 import json
-from typing import Dict, Callable
+from typing import Callable, Dict
 
 from pycti.connector.libs.connector_utils import get_logger
-
 from pycti.connector.libs.opencti_schema import WorkerMessage
 
 

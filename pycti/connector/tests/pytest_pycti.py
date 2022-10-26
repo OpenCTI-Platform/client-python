@@ -1,14 +1,13 @@
 from typing import List
+
 import pytest
-from _pytest.config.argparsing import Parser
 from _pytest.config import Config
+from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 from pytest import fixture, hookimpl
-from pycti import (
-    OpenCTIApiClient,
-    OpenCTIStix2Splitter,
-)
-from pycti.connector.tests.test_class import RabbitMQ, DummyConnector
+
+from pycti import OpenCTIApiClient, OpenCTIStix2Splitter
+from pycti.connector.tests.test_class import DummyConnector, RabbitMQ
 
 
 def pytest_addoption(parser: Parser) -> None:

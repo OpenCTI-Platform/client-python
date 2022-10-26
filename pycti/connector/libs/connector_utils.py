@@ -2,7 +2,7 @@ import datetime
 import logging
 import ssl
 from enum import Enum
-from typing import List, Any, Dict
+from typing import Any, Dict, List
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 # TODO implement JSON logging format

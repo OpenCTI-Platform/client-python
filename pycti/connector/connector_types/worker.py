@@ -4,16 +4,14 @@ import json
 import random
 import signal
 import threading
-
 import time
-
 from threading import Thread
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import StreamLostError
-from requests import Timeout, RequestException
+from requests import RequestException, Timeout
 
 from pycti import ConnectorType, OpenCTIApiClient
 from pycti.connector.connector_types.connector_settings import WorkerConfig

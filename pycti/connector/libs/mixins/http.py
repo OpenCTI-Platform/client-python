@@ -1,4 +1,5 @@
-from typing import Tuple, Dict
+from typing import Dict, Tuple
+
 import requests
 
 # example: https://github.com/certtools/intelmq/blob/d4adbd57ed8bb7e7fa14e7d2132db2ac1fd97658/intelmq/bots/collectors/http/collector_http_stream.py

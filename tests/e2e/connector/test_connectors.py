@@ -2,6 +2,9 @@ import base64
 import json
 
 from pytest import fixture, mark
+from stix2 import Bundle
+
+from pycti.connector.libs.opencti_schema import WorkerMessage
 from pycti.connector.tests.test_library import wait_for_test_to_finish
 from tests.cases.external_input_connectors import ExternalInputTest
 from tests.cases.internal_enrichment_connectors import (
@@ -12,8 +15,6 @@ from tests.cases.internal_file_input_connectors import (
     InternalFileInputTest,
     InternalFileInputWorkflowTest,
 )
-from stix2 import Bundle
-from pycti.connector.libs.opencti_schema import WorkerMessage
 from tests.cases.worker_connector import WorkerTest
 
 CONNECTORS = [
