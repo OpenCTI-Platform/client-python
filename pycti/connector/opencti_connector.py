@@ -17,6 +17,7 @@ class ConnectorType(Enum):
         "INTERNAL_EXPORT_FILE"  # From OpenCTI stix2 to OpenCTI file system
     )
     STREAM = "STREAM"  # Read the stream and do something
+    WORKER = "WORKER"
 
 
 class OpenCTIConnector:
