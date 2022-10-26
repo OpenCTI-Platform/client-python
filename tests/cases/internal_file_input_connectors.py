@@ -63,12 +63,10 @@ class InternalFileInputTest(ConnectorTest):
     def teardown(self):
         self.api_client.stix_domain_object.delete(id=self.report["id"])
         self.api_client.stix_domain_object.delete(id=self.organization["id"])
-        observable = self.api_client.stix_cyber_observable.read(
-            filters=[{"key": "value", "values": ["177.60.40.9"]}]
-        )
+
 
     def initiate(self) -> Optional[str]:
-        file_url = self.api_client.stix_domain_object.file_ask_for_enrichment(
+        self.api_client.stix_domain_object.file_ask_for_enrichment(
             file_id=self.file["data"]["stixDomainObjectEdit"]["importPush"]["id"],
             connector_id=self.connector_instance.base_config.id,
         )
@@ -119,7 +117,7 @@ class InternalFileInputWorkflowTest(ConnectorTest):
             self.api_client.stix_cyber_observable.delete(id=observable["id"])
 
     def initiate(self) -> Optional[str]:
-        file_url = self.api_client.stix_domain_object.file_ask_for_enrichment(
+        self.api_client.stix_domain_object.file_ask_for_enrichment(
             file_id=self.file["data"]["stixDomainObjectEdit"]["importPush"]["id"],
             connector_id=self.connector_instance.base_config.id,
         )
@@ -129,4 +127,4 @@ class InternalFileInputWorkflowTest(ConnectorTest):
         observable = self.api_client.stix_cyber_observable.read(
             filters=[{"key": "value", "values": ["177.60.40.9"]}]
         )
-        assert observable is not None, f"No IP '177.60.40.9' was imported"
+        assert observable is not None, "No IP '177.60.40.9' was imported"

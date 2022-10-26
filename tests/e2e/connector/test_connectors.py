@@ -90,7 +90,7 @@ def test_connector_workflow_run(connector_test_workflow, api_client):
     work_ids = api_client.work.get_connector_works(
         connector.connector_instance.base_config.id
     )
-    assert len(work_ids) > 0, f"Didn't get works for connector"
+    assert len(work_ids) > 0, "Didn't get works for connector"
 
     work_id = work_ids[0]["id"]
     finished = False
