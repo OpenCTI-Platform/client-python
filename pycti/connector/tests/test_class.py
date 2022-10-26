@@ -7,13 +7,14 @@ from pika.exceptions import StreamLostError
 from stix2 import Bundle
 
 from pycti import OpenCTIApiClient, ConnectorType
-from pycti.connector.new.connector import Connector
+from pycti.connector.connector import Connector
 
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 
 
 class ConnectorTest:
     connector = None
+    bundle = None
 
     def __init__(self, api_client: OpenCTIApiClient):
         self.api_client = api_client
@@ -47,8 +48,25 @@ class ConnectorTest:
     def get_connector(self) -> Type[Connector]:
         pass
 
-    def verify(self, bundle: Bundle):
-        pass
+    def verify(self, bundle_received: Bundle):
+        assert self.bundle is not None, "Bundle undefined!"
+
+        bundle_received_objects = bundle_received["objects"]
+        assert len(bundle_received_objects) == len(
+            self.bundle["objects"]
+        ), f"Bundle sizes are not equal (received {len(bundle_received_objects)} vs expected {self.bundle['objets']})"
+
+        for _object in self.bundle["objects"]:
+            found = False
+            for _received_object in bundle_received_objects:
+                if _received_object == _object:
+                    found = True
+
+            assert found, f"Object {_object} not found in received bundle"
+
+    @staticmethod
+    def get_expected_exception() -> str:
+        return ""
 
 
 class DummyConnector(object):
@@ -98,20 +116,23 @@ class RabbitMQ:
         )
 
         self.broker_thread = threading.Thread(
-            target=self.channel.start_consuming, name="Broker Listen"
+            target=self._start_consuming, name="Broker Listen"
         )
 
         self.broker_thread.daemon = True
         self.broker_thread.start()
 
+    def _start_consuming(self):
+        try:
+            self.channel.start_consuming()
+        except StreamLostError as e:
+            # No idea why pika throws this exception when closing
+            pass
+
     def shutdown(self):
         if self.channel:
             try:
                 self.channel.stop_consuming()
-                # self.channel = self.connection.channel()
-                # self.channel.queue_delete(queue=self.queue)
-                # self.channel.exchange_delete(exchange=self.exchange)
-                # self.channel.close()
             except (StreamLostError, AttributeError) as e:
                 # No idea why pika throws this exception when closing
                 pass
