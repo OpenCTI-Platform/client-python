@@ -6,17 +6,16 @@ import schedule
 import signal
 import socket
 import threading
-import traceback
-from typing import Optional, Dict, Callable, Union, List
+from typing import Dict, Callable, List
 import time
 from pydantic import ValidationError
 from stix2 import Bundle
 from pycti import OpenCTIApiClient, OpenCTIStix2Splitter
-from pycti.connector.new.connector_types.connector_settings import ConnectorBaseConfig
-from pycti.connector.new.libs.messaging.stdout_broker import StdoutBroker
-from pycti.connector.new.libs.connector_utils import get_logger
-from pycti.connector.new.libs.messaging.pika_broker import PikaBroker
-from pycti.connector.new.libs.opencti_schema import WorkerMessage
+from pycti.connector.connector_types.connector_settings import ConnectorBaseConfig
+from pycti.connector.libs.messaging.stdout_broker import StdoutBroker
+from pycti.connector.libs.connector_utils import get_logger
+from pycti.connector.libs.messaging.pika_broker import PikaBroker
+from pycti.connector.libs.opencti_schema import WorkerMessage
 
 
 class Connector(object):
@@ -46,6 +45,7 @@ class Connector(object):
 
         configuration = self.register_connector(self.base_config.id)
 
+        self.connector_state = {}
         self.work_id = None
         self.applicant_id = configuration["connector_user_id"]
         connector_state = configuration["connector_state"]
@@ -79,9 +79,6 @@ class Connector(object):
 
         self.broker_thread = None
         self.stdout_broker = None
-
-        if self.base_config.testing:
-            self.stdout_broker = StdoutBroker(self.broker_config)
 
         self.init()
         self.logger.info("Connector set up")
@@ -159,6 +156,7 @@ class Connector(object):
         if self.broker_thread:
             self.broker.stop()
             self.broker_thread.join()
+        self.logger.info("Good bye")
 
     def set_state(self, state: Dict) -> None:
         """sets the connector state
@@ -169,7 +167,7 @@ class Connector(object):
         if state is None:
             self.connector_state = {}
         else:
-            self.connector_state = state
+            self.connector_state |= state
 
     def get_state(self) -> Dict:
         """get the connector state
@@ -180,6 +178,12 @@ class Connector(object):
         return self.connector_state
 
     def get_last_run(self) -> None:
+        keys = self.connector_state.keys()
+        for key in keys:
+            if key == "last_run":
+                continue
+            del self.connector_state[key]
+
         current_state = self.get_state()
         last_run = current_state.get("last_run", None)
         if last_run:

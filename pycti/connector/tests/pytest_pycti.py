@@ -8,7 +8,7 @@ from pycti import (
     OpenCTIApiClient,
     OpenCTIStix2Splitter,
 )
-from pycti.connector.new.tests.test_class import RabbitMQ, DummyConnector
+from pycti.connector.tests.test_class import RabbitMQ, DummyConnector
 
 
 def pytest_addoption(parser: Parser) -> None:

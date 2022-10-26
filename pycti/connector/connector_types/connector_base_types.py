@@ -1,7 +1,7 @@
 import os
 import threading
 from datetime import datetime
-from typing import Dict, Union, List, Any
+from typing import Dict, List
 import schedule
 
 
@@ -9,12 +9,13 @@ import time
 from pydantic import BaseModel
 from stix2 import Bundle
 
-from pycti.connector.new.connector import Connector
-from pycti.connector.new.connector_types.connector_settings import (
+from pycti.connector.connector import Connector
+from pycti.connector.connector_types.connector_settings import (
     ExternalImportConfig,
+    InternalEnrichmentConfig,
 )
-from pycti.connector.new.libs.connector_utils import ConnectorType
-from pycti.connector.new.libs.opencti_schema import (
+from pycti.connector.libs.connector_utils import ConnectorType, check_max_tlp
+from pycti.connector.libs.opencti_schema import (
     InternalFileInputMessage,
     InternalEnrichmentMessage,
 )
@@ -75,13 +76,11 @@ class ExternalInputConnector(Connector):
             run_message, bundles = self.run(self.connector_config)
         except Exception as e:
             self.logger.error(f"Running Error: {str(e)}")
-            self.logger.error(f"error: {str(e)}")
             self.set_state({"error": str(e)})
-            # TODO run again one time
             try:
                 self.api.work.to_processed(work_id, str(e), True)
-            except:  # pylint: disable=bare-except
-                self.logger.error("Failing reporting the processing")
+            except Exception as e:
+                self.logger.error(f"Failing reporting the processing: {str(e)}")
 
             return
 
@@ -98,18 +97,8 @@ class ExternalInputConnector(Connector):
         self.logger.info(f"Sending message: {message}")
 
         for bundle in bundles:
-            try:
-                self._send_bundle(bundle, work_id, None, self.base_config.scope)
-            except Exception as e:
-                self.logger.error(f"Running Error: {str(e)}")
-                self.logger.error(f"error: {str(e)}")
-                self.set_state({"error": str(e)})
-                try:
-                    self.api.work.to_processed(work_id, str(e), True)
-                except:  # pylint: disable=bare-except
-                    self.logger.error("Failing reporting the processing")
-
-                return
+            # TODO exception processing here
+            self._send_bundle(bundle, work_id, None, self.base_config.scope)
 
         self.set_last_run()
 
@@ -130,6 +119,7 @@ class ExternalInputConnector(Connector):
 
 class InternalEnrichmentConnector(ListenConnector):
     connector_type = ConnectorType.INTERNAL_ENRICHMENT.value
+    settings = InternalEnrichmentConfig
 
     def __init__(self):
         super().__init__()
@@ -148,22 +138,37 @@ class InternalEnrichmentConnector(ListenConnector):
             msg.internal.work_id, "Connector ready to process the operation"
         )
         self.logger.info(f"Received work {msg.internal.work_id}")
+        observable = self.api.stix_cyber_observable.read(id=msg.event.entity_id)
+
+        # Check TLP markings, do not submit higher than the max allowed
+        tlps = ["TLP:CLEAR"]
+        for marking_definition in observable.get("objectMarking", []):
+            if marking_definition["definition_type"] == "TLP":
+                tlps.append(marking_definition["definition"])
+
+        for tlp in tlps:
+            if not check_max_tlp(tlp, self.base_config.max_tlp):
+                error_msg = f"Do not send any data, TLP of the observable is greater than MAX TLP ({observable} -> {tlp})"
+                self.logger.exception(error_msg)
+                self.set_state({"error": error_msg})
+                self.api.work.to_processed(msg.internal.work_id, error_msg, True)
+                self.set_last_run()
+                return
+
         try:
+            # TODO change entity_id against observable variable
             run_msg, bundles = self.run(
                 msg.event.entity_id,
                 self.connector_config,
             )
             self.api.work.to_processed(msg.internal.work_id, run_msg)
-
-        except Exception as e:  # pydantic validation error
+        except Exception as e:
             self.logger.exception("Error in message processing, reporting error to API")
-            self.logger.error(f"error: {str(e)}")
             self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
-            except:  # pylint: disable=bare-except
-                self.logger.error("Failing reporting the processing")
-
+            except Exception as e:
+                self.logger.error(f"Failing reporting the processing: {str(e)}")
             return
 
         for bundle in bundles:
@@ -204,28 +209,34 @@ class InternalFileInputConnector(ListenConnector):
                 msg.event.entity_id,
                 self.connector_config,
             )
-
-            # TODO implement here validate_before_import
-
             self.api.work.to_processed(msg.internal.work_id, run_msg)
 
             os.remove(file_path)
 
-        except Exception as e:  # pydantic validation error
+        except Exception as e:
             self.logger.exception("Error in message processing, reporting error to API")
-            self.logger.error(f"error: {str(e)}")
             self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
-            except:  # pylint: disable=bare-except
-                self.logger.error("Failing reporting the processing")
+            except Exception as e:  # pylint: disable=bare-except
+                self.logger.error(f"Failing reporting the processing: {str(e)}")
 
             return
 
         file_name = file_path.split("/")[-1]
 
         for bundle in bundles:
-            self._send_bundle(bundle, msg.internal.work_id, msg.internal.applicant_id)
+            if self.base_config.validate_before_import:
+                self.api.upload_pending_file(
+                    file_name=file_name,
+                    data=bundle,
+                    mime_type="application/json",
+                    entity_id=msg.event.entity_id,
+                )
+            else:
+                self._send_bundle(
+                    bundle, msg.internal.work_id, msg.internal.applicant_id
+                )
 
         self.set_last_run()
 

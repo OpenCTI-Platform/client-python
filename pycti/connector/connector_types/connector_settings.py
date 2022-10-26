@@ -4,7 +4,7 @@ import yaml
 from pydantic import BaseSettings, Field
 
 
-class ConnectorBaseSettings(BaseSettings):
+class ConnectorBaseSettingConfig(BaseSettings):
     class Config:
         @classmethod
         def customise_sources(
@@ -22,13 +22,16 @@ class ConnectorBaseSettings(BaseSettings):
             )
 
 
-class ConnectorBaseConfig(ConnectorBaseSettings):
+class ConnectorBaseSettings(ConnectorBaseSettingConfig):
     url: str = Field(env="opencti_url")
     token: str = Field(env="opencti_token")
     ssl_verify: bool = Field(env="opencti_ssl_verify", default=True)
     json_logging: bool = Field(env="opencti_json_logging", default=False)
     broker: str = Field(env="opencti_broker", default="pika")
+    log_level: str = Field(env="connector_log_level", default="INFO")
 
+
+class ConnectorBaseConfig(ConnectorBaseSettings):
     id: str = Field(env="connector_id")
     name: str = Field(env="connector_name")
     testing: bool = Field(env="connector_testing", default=False)
@@ -38,11 +41,14 @@ class ConnectorBaseConfig(ConnectorBaseSettings):
     auto: bool = Field(env="connector_auto", default=False)
     type: str = Field(env="connector_type")
     contextual_only: bool = Field(env="connector_only_contextual", default=False)
-    log_level: str = Field(env="connector_log_level", default="INFO")
     run_and_terminate: bool = Field(env="connector_run_and_terminate", default=False)
     validate_before_import: bool = Field(
         env="connector_validate_before_import", default=False
     )
+
+
+class InternalEnrichmentConfig(ConnectorBaseConfig):
+    max_tlp: str = Field(env="connector_max_tlp", default="TLP:CLEAR")
 
 
 class ExternalImportConfig(ConnectorBaseConfig):
@@ -64,7 +70,7 @@ class WorkerConfig(ConnectorBaseSettings):
     pass
 
 
-class ConnectorConfig(ConnectorBaseSettings):
+class ConnectorConfig(ConnectorBaseSettingConfig):
     class Config:
         env_prefix = "app_"
 
