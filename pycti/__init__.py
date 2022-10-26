@@ -52,7 +52,6 @@ from .utils.opencti_stix2_utils import OpenCTIStix2Utils
 
 __all__ = [
     "AttackPattern",
-    "Connector",
     "Campaign",
     "ConnectorType",
     "CourseOfAction",
