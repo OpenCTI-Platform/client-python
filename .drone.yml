@@ -19,6 +19,7 @@ steps:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest -p pycti.connector.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
+# skipped 3.8 tests, as the pytest plugin crashes 
 #  - name: client-test-38
 #    image: python:3.8
 #    commands:
@@ -26,19 +27,28 @@ steps:
 #      - pip3 install -r test-requirements.txt --user
 #      - python3 -m pytest -p pycti.connector.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
 
-#  - name: slack
-#    image: plugins/slack
-#    settings:
-#      webhook:
-#        from_secret: slack_webhook
-#      username: drone
-#      icon_url: https://avatars.githubusercontent.com/oa/1284929
-#      channel: notifications
-#    when:
-#      status: [ success, failure ]
-#      event:
-#        exclude:
-#          - pull_request
+  # always run the examples last since they don't clean up
+  - name: example-tests
+    image: python:3.10
+    commands:
+      - pip3 install -r requirements.txt --user
+      - pip3 install .
+      - cd examples/
+      - /bin/bash run_all.sh
+
+  - name: slack
+    image: plugins/slack
+    settings:
+      webhook:
+        from_secret: slack_webhook
+      username: drone
+      icon_url: https://avatars.githubusercontent.com/oa/1284929
+      channel: notifications
+    when:
+      status: [ success, failure ]
+      event:
+        exclude:
+          - pull_request
 
 services:
   - name: redis
