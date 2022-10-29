@@ -1,7 +1,6 @@
 import base64
 import json
 import signal
-import socket
 import threading
 import time
 from datetime import datetime
@@ -18,22 +17,27 @@ from pycti.connector.libs.messaging.pika_broker import PikaBroker
 from pycti.connector.libs.messaging.stdout_broker import StdoutBroker
 from pycti.connector.libs.opencti_schema import WorkerMessage
 
+BROKERS = {"pika": PikaBroker, "stdout": StdoutBroker}
+HEARTBEAT_INTERVAL = 40
+
 
 class Connector(object):
-    # object for the connector specific config
     connector_type = None
-    config: Callable = None
+    # Settings = configuration for the connector execution
     settings: ConnectorBaseConfig = ConnectorBaseConfig
+    # Config = configuration for the opencti connector job
+    config: Callable = None
 
     def __init__(self):
         signal.signal(signal.SIGINT, self.stop)
 
         self.base_config = self.settings(type=self.connector_type)
         self.logger = get_logger("Connector", self.base_config.log_level)
+
         if self.config == "":
             self.logger.error("Please define the connector config!")
             return
-        if self.config is not None:
+        elif self.config is not None:
             self.connector_config = self.config()
 
         self.api = OpenCTIApiClient(
@@ -47,7 +51,6 @@ class Connector(object):
         configuration = self.register_connector(self.base_config.id)
 
         self.connector_state = {}
-        self.work_id = None
         self.applicant_id = configuration["connector_user_id"]
         connector_state = configuration["connector_state"]
         self.set_state(connector_state)
@@ -58,28 +61,23 @@ class Connector(object):
                 self.api,
                 self.base_config.id,
                 self.base_config.log_level,
-                40,
+                HEARTBEAT_INTERVAL,
                 self.set_state,
                 self.get_state,
             )
             self.heartbeat.start()
 
-        if self.base_config.broker == "pika":
-            try:
-                self.broker = PikaBroker(self.broker_config)
-            except socket.gaierror as e:
-                self.logger.error(
-                    f"Unable to contact broker: {self.broker_config['connection']['host']}:{self.broker_config['connection']['port']} -> {str(e)}"
-                )
-                return
-        elif self.base_config.broker == "stdout":
-            self.broker = StdoutBroker(self.broker_config)
-        else:
-            self.logger.error(f"Invalid broker {self.base_config.broker}!")
+        try:
+            self.broker = self.initiate_broker(
+                self.base_config.broker, self.broker_config
+            )
+        except Exception as e:
+            self.logger.error(f"{e}")
             return
 
         self.broker_thread = None
         self.stdout_broker = None
+        self.work_id = None
 
         self.init()
         self.logger.info("Connector set up")
@@ -102,6 +100,7 @@ class Connector(object):
         applicant_id: str = None,
         entity_types: List = None,
     ):
+        # Bundle splitting isn't helping during test runs
         if not self.base_config.testing:
             try:
                 sending_bundles = self.splitter.split_bundle(
@@ -119,7 +118,7 @@ class Connector(object):
             entity_types = entity_types.split(",")
 
         if len(sending_bundles) == 0:
-            self.logger.error("Nothing to import")
+            self.logger.info("Nothing to import")
             return
 
         self.api.work.add_expectations(work_id, len(sending_bundles))
@@ -219,6 +218,19 @@ class Connector(object):
             }
         }
 
+    @staticmethod
+    def initiate_broker(broker: str, broker_config: Dict):
+        broker_class = BROKERS.get(broker, None)
+        if broker_class is None:
+            raise NotImplementedError(f"Invalid broker '{broker}'")
+
+        try:
+            broker_object = broker_class(broker_config)
+        except Exception as e:
+            raise AssertionError(f"Broker could not be launched: {e}")
+
+        return broker_object
+
 
 class Heartbeat(threading.Thread):
     def __init__(
@@ -233,7 +245,6 @@ class Heartbeat(threading.Thread):
         threading.Thread.__init__(self)
         self.api = api
         self.connector_instance = connector_instance
-        # self.connector_id = connector_id
         self.interval = interval
         self.logger = get_logger("ConnectorHeartbeat", log_level)
         self.set_state = set_state
@@ -253,9 +264,6 @@ class Heartbeat(threading.Thread):
         try:
             self.logger.info("Preparing for clean shutdown")
             self.stop_event.set()
-            # time.sleep(2)
-            # self.s.cancel(self.event)
-            # schedule.clear()
         except ValueError as e:
             self.logger.error(f"Killing didn't go as planned ({e})")
 
@@ -278,6 +286,6 @@ class Heartbeat(threading.Thread):
                 self.in_error = False
 
             self.logger.error("API Ping back to normal")
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:
             self.in_error = True
-            self.logger.error("Error pinging the API")
+            self.logger.error(f"Error pinging the API '{e}'")

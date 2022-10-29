@@ -102,7 +102,7 @@ class PikaBroker(object):
                 pass
         else:
             try:
-                self.pika_connection.close()
+                self.connection.close()
             except StreamLostError:
                 # No idea why pika throws this exception when closing
                 pass

@@ -96,7 +96,6 @@ class ExternalInputConnector(Connector):
         self.logger.info(f"Sending message: {message}")
 
         for bundle in bundles:
-            # TODO exception processing here
             self._send_bundle(bundle, work_id, None, self.base_config.scope)
 
         self.set_last_run()
@@ -107,13 +106,6 @@ class ExternalInputConnector(Connector):
 
     def run(self, config: BaseModel) -> (str, List[Bundle]):
         pass
-
-
-# class StreamInputConnector(ListenStreamConnector):
-#     settings = StreamInputSetting
-#
-#     def __init__(self):
-#         super().__init__()
 
 
 class InternalEnrichmentConnector(ListenConnector):
@@ -138,6 +130,13 @@ class InternalEnrichmentConnector(ListenConnector):
         )
         self.logger.info(f"Received work {msg.internal.work_id}")
         observable = self.api.stix_cyber_observable.read(id=msg.event.entity_id)
+        if observable is None:
+            error_msg = f"No object found with id '{msg.event.entity_id}'"
+            self.logger.exception(error_msg)
+            self.set_state({"error": error_msg})
+            self.api.work.to_processed(msg.internal.work_id, error_msg, True)
+            self.set_last_run()
+            return
 
         # Check TLP markings, do not submit higher than the max allowed
         tlps = ["TLP:CLEAR"]
@@ -155,14 +154,13 @@ class InternalEnrichmentConnector(ListenConnector):
                 return
 
         try:
-            # TODO change entity_id against observable variable
             run_msg, bundles = self.run(
                 msg.event.entity_id,
                 self.connector_config,
             )
             self.api.work.to_processed(msg.internal.work_id, run_msg)
         except Exception as e:
-            self.logger.exception("Error in message processing, reporting error to API")
+            self.logger.exception(f"Error in message processing, reporting error to API: '{e}'")
             self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
@@ -213,12 +211,12 @@ class InternalFileInputConnector(ListenConnector):
             os.remove(file_path)
 
         except Exception as e:
-            self.logger.exception("Error in message processing, reporting error to API")
+            self.logger.exception(f"Error in message processing, reporting error to API: '{e}'")
             self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
-            except Exception as e:  # pylint: disable=bare-except
-                self.logger.error(f"Failing reporting the processing: {str(e)}")
+            except Exception as e:
+                self.logger.error(f"Failing reporting the processing: {e}")
 
             return
 
