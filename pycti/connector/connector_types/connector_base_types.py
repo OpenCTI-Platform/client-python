@@ -160,7 +160,9 @@ class InternalEnrichmentConnector(ListenConnector):
             )
             self.api.work.to_processed(msg.internal.work_id, run_msg)
         except Exception as e:
-            self.logger.exception(f"Error in message processing, reporting error to API: '{e}'")
+            self.logger.exception(
+                f"Error in message processing, reporting error to API: '{e}'"
+            )
             self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
@@ -211,7 +213,9 @@ class InternalFileInputConnector(ListenConnector):
             os.remove(file_path)
 
         except Exception as e:
-            self.logger.exception(f"Error in message processing, reporting error to API: '{e}'")
+            self.logger.exception(
+                f"Error in message processing, reporting error to API: '{e}'"
+            )
             self.set_state({"error": str(e)})
             try:
                 self.api.work.to_processed(msg.internal.work_id, str(e), True)
