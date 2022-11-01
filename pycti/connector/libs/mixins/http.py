@@ -1,36 +1,48 @@
-from typing import Dict, Tuple
+from typing import Dict
 
 import requests
-
-# example: https://github.com/certtools/intelmq/blob/d4adbd57ed8bb7e7fa14e7d2132db2ac1fd97658/intelmq/bots/collectors/http/collector_http_stream.py
 from requests import HTTPError
 
 
 class HttpMixin(object):
     _session: requests.Session = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._session = requests.Session()
         super().__init__()
 
-    def _setup(self):
+    def _setup(self) -> None:
         self._session = requests.Session()
 
-    def get(
-        self, url: str, params: Dict = None, headers: Dict = None, auth: Tuple = None
-    ):
+    def _retrieve(self, url: str, cmd: str, args: Dict = None, retry_cnt: int = 3):
         if self._session is None:
             self._setup()
 
+        if args is None:
+            args = {}
+
         try:
-            response = self._session.get(
-                url, timeout=10, params=params, headers=headers, auth=auth
-            )
+            request_function = getattr(self._session, cmd)
+            response = request_function(url, **args)
 
             response.raise_for_status()
         except HTTPError as http_err:
+            if retry_cnt > 0:
+                if http_err.response.status_code == 408:  # request timeout
+                    return self.http_get(url, args, retry_cnt - 1)
+
             raise HTTPError(f"HTTP error occurred: {http_err}")
+        except AttributeError as e:
+            raise NotImplementedError(
+                f"Error requests function '{cmd}' is not supported: {e}"
+            )
         except Exception as err:
             raise HTTPError(f"Another HTTP error occurred: {err}")
 
         return response.content
+
+    def http_get(self, url: str, args: Dict = None, retry_cnt: int = 3):
+        return self._retrieve(url, "get", args, retry_cnt)
+
+    def http_post(self, url: str, args: Dict = None, retry_cnt: int = 3):
+        return self._retrieve(url, "post", args, retry_cnt)

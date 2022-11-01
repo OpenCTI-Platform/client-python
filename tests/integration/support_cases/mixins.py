@@ -30,7 +30,7 @@ class HttpMixinTest:
         endpoint = "/en"
         httpserver.expect_request(endpoint).respond_with_data(body)
 
-        return http_mixin.get(httpserver.url_for(endpoint))
+        return http_mixin.http_get(httpserver.url_for(endpoint))
 
 
 class HttpMixin404Test:
@@ -47,4 +47,4 @@ class HttpMixin404Test:
             "Not found", status=404, content_type="text/plain"
         )
 
-        return http_mixin.get(httpserver.url_for(endpoint))
+        return http_mixin.http_get(httpserver.url_for(endpoint))
