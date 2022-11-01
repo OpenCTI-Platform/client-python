@@ -1,3 +1,4 @@
+import time
 from typing import Dict
 
 import requests
@@ -8,7 +9,7 @@ class HttpMixin(object):
     _session: requests.Session = None
 
     def __init__(self) -> None:
-        self._session = requests.Session()
+        self._setup()
         super().__init__()
 
     def _setup(self) -> None:
@@ -29,7 +30,8 @@ class HttpMixin(object):
         except HTTPError as http_err:
             if retry_cnt > 0:
                 if http_err.response.status_code == 408:  # request timeout
-                    return self.http_get(url, args, retry_cnt - 1)
+                    time.sleep(3)
+                    return self._retrieve(url, cmd, args, retry_cnt - 1)
 
             raise HTTPError(f"HTTP error occurred: {http_err}")
         except AttributeError as e:
