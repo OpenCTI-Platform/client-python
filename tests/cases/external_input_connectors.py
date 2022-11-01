@@ -22,7 +22,7 @@ class ExternalInputConnector(EIC, HttpMixin):
 
     def run(self, config: EIModel) -> (str, List[Bundle]):
         url = config.url
-        content = self.get(url)
+        content = self.http_get(url)
         bundle = Bundle(**json.loads(content), allow_custom=True)
         return "Finished", [bundle]
 
