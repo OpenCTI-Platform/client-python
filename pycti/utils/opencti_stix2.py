@@ -632,6 +632,10 @@ class OpenCTIStix2:
             "report": self.opencti.report.import_from_stix2,
             "grouping": self.opencti.grouping.import_from_stix2,
             "course-of-action": self.opencti.course_of_action.import_from_stix2,
+            "data-component": self.opencti.data_component.import_from_stix2,
+            "x-mitre-data-component": self.opencti.data_component.import_from_stix2,
+            "data-source": self.opencti.data_source.import_from_stix2,
+            "x-mitre-data-source": self.opencti.data_source.import_from_stix2,
             "identity": self.opencti.identity.import_from_stix2,
             "indicator": self.opencti.indicator.import_from_stix2,
             "infrastructure": self.opencti.infrastructure.import_from_stix2,
@@ -1207,6 +1211,17 @@ class OpenCTIStix2:
         result = []
         objects_to_get = []
         relations_to_get = []
+
+        # # Handle prepare_export specific case
+        if entity is not None and "type" in entity:
+            attributeName = entity["type"].lower().replace("-", "_")
+            if hasattr(self.opencti, attributeName):
+                attribute = getattr(self.opencti, attributeName)
+                if hasattr(attribute, "prepare_export"):
+                    entity = attribute.prepare_export(
+                        self.generate_export, entity, no_custom_attributes, result
+                    )
+
         # CreatedByRef
         if (
             not no_custom_attributes
@@ -1505,6 +1520,8 @@ class OpenCTIStix2:
                 "Opinion": self.opencti.opinion.read,
                 "Report": self.opencti.report.read,
                 "Course-Of-Action": self.opencti.course_of_action.read,
+                "Data-Component": self.opencti.data_component.read,
+                "Data-Source": self.opencti.data_source.read,
                 "Identity": self.opencti.identity.read,
                 "Indicator": self.opencti.indicator.read,
                 "Infrastructure": self.opencti.infrastructure.read,
@@ -1658,6 +1675,8 @@ class OpenCTIStix2:
             "Report": self.opencti.report.read,
             "Grouping": self.opencti.grouping.read,
             "Course-Of-Action": self.opencti.course_of_action.read,
+            "Data-Component": self.opencti.data_component.read,
+            "Data-Source": self.opencti.data_source.read,
             "Identity": self.opencti.identity.read,
             "Indicator": self.opencti.indicator.read,
             "Infrastructure": self.opencti.infrastructure.read,
@@ -1754,6 +1773,8 @@ class OpenCTIStix2:
             "Report": self.opencti.report.list,
             "Grouping": self.opencti.grouping.list,
             "Course-Of-Action": self.opencti.course_of_action.list,
+            "Data-Component": self.opencti.data_component.list,
+            "Data-Source": self.opencti.data_source.list,
             "Identity": self.opencti.identity.list,
             "Indicator": self.opencti.indicator.list,
             "Infrastructure": self.opencti.infrastructure.list,

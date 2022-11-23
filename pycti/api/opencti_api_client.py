@@ -17,6 +17,8 @@ from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_campaign import Campaign
 from pycti.entities.opencti_channel import Channel
 from pycti.entities.opencti_course_of_action import CourseOfAction
+from pycti.entities.opencti_data_component import DataComponent
+from pycti.entities.opencti_data_source import DataSource
 from pycti.entities.opencti_event import Event
 from pycti.entities.opencti_external_reference import ExternalReference
 from pycti.entities.opencti_grouping import Grouping
@@ -177,6 +179,8 @@ class OpenCTIApiClient:
         self.vulnerability = Vulnerability(self)
         self.attack_pattern = AttackPattern(self)
         self.course_of_action = CourseOfAction(self)
+        self.data_component = DataComponent(self)
+        self.data_source = DataSource(self)
         self.report = Report(self)
         self.note = Note(self)
         self.observed_data = ObservedData(self)
@@ -496,6 +500,14 @@ class OpenCTIApiClient:
         :return: returns the data dict with all fields processed
         :rtype: dict
         """
+
+        # Handle process_multiple_fields specific case
+        if data is not None and "entity_type" in data:
+            attributeName = data["entity_type"].lower().replace("-", "_")
+            if hasattr(self, attributeName):
+                attribute = getattr(self, attributeName)
+                if hasattr(attribute, "process_multiple_fields"):
+                    data = attribute.process_multiple_fields(data)
 
         if data is None:
             return data
