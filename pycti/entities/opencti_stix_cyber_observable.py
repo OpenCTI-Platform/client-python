@@ -532,6 +532,7 @@ class StixCyberObservable:
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
         external_references = kwargs.get("externalReferences", None)
+        granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
         create_indicator = (
@@ -636,6 +637,7 @@ class StixCyberObservable:
                 "createIndicator": create_indicator,
                 "createdBy": created_by,
                 "objectMarking": object_marking,
+                "objectOrganization": granted_refs,
                 "objectLabel": object_label,
                 "externalReferences": external_references,
                 "update": update,
@@ -650,6 +652,7 @@ class StixCyberObservable:
                     $createdBy: String,
                     $objectMarking: [String],
                     $objectLabel: [String],
+                    $objectOrganization: [String],
                     $externalReferences: [String],
                     $AutonomousSystem: AutonomousSystemAddInput,
                     $Directory: DirectoryAddInput,
@@ -691,6 +694,7 @@ class StixCyberObservable:
                         objectMarking: $objectMarking,
                         objectLabel: $objectLabel,
                         externalReferences: $externalReferences,
+                        objectOrganization: $objectOrganization,
                         AutonomousSystem: $AutonomousSystem,
                         Directory: $Directory,
                         DomainName: $DomainName,
@@ -1391,8 +1395,8 @@ class StixCyberObservable:
                     if custom_attributes is not None
                     else self.properties
                 )
-                + """    
-                            }                               
+                + """
+                            }
                         }
                     }
              """
@@ -2016,7 +2020,7 @@ class StixCyberObservable:
                                     name
                                     description
                                     report_types
-                                    published                                    
+                                    published
                                 }
                             }
                         }
@@ -2155,7 +2159,7 @@ class StixCyberObservable:
                                     modified
                                     attribute_abstract
                                     content
-                                    authors                                
+                                    authors
                                 }
                             }
                         }
@@ -2307,7 +2311,7 @@ class StixCyberObservable:
                                                     }
                                                 }
                                             }
-                                        }    
+                                        }
                                     }
                                 }
                             }

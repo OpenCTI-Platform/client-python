@@ -356,6 +356,7 @@ class StixCoreRelationship:
 
     def list(self, **kwargs):
         element_id = kwargs.get("elementId", None)
+        element_with_target_types = kwargs.get("elementWithTargetTypes", None)
         from_id = kwargs.get("fromId", None)
         from_types = kwargs.get("fromTypes", None)
         to_id = kwargs.get("toId", None)
@@ -388,8 +389,8 @@ class StixCoreRelationship:
         )
         query = (
             """
-                query StixCoreRelationships($elementId: [String], $fromId: [String], $fromTypes: [String], $toId: [String], $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode) {
-                    stixCoreRelationships(elementId: $elementId, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                query StixCoreRelationships($elementId: [String], $elementWithTargetTypes: [String], $fromId: [String], $fromTypes: [String], $toId: [String], $toTypes: [String], $relationship_type: [String], $startTimeStart: DateTime, $startTimeStop: DateTime, $stopTimeStart: DateTime, $stopTimeStop: DateTime, $filters: [StixCoreRelationshipsFiltering], $first: Int, $after: ID, $orderBy: StixCoreRelationshipsOrdering, $orderMode: OrderingMode) {
+                    stixCoreRelationships(elementId: $elementId, elementWithTargetTypes: $elementWithTargetTypes, fromId: $fromId, fromTypes: $fromTypes, toId: $toId, toTypes: $toTypes, relationship_type: $relationship_type, startTimeStart: $startTimeStart, startTimeStop: $startTimeStop, stopTimeStart: $stopTimeStart, stopTimeStop: $stopTimeStop, filters: $filters, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {
                                 """
@@ -412,6 +413,7 @@ class StixCoreRelationship:
             query,
             {
                 "elementId": element_id,
+                "elementWithTargetTypes": element_with_target_types,
                 "fromId": from_id,
                 "fromTypes": from_types,
                 "toId": to_id,
@@ -441,6 +443,7 @@ class StixCoreRelationship:
                     query,
                     {
                         "elementId": element_id,
+                        "elementWithTargetTypes": element_with_target_types,
                         "fromId": from_id,
                         "fromTypes": from_types,
                         "toId": to_id,
@@ -558,6 +561,7 @@ class StixCoreRelationship:
         object_label = kwargs.get("objectLabel", None)
         external_references = kwargs.get("externalReferences", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
+        granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
         self.opencti.log(
@@ -599,6 +603,7 @@ class StixCoreRelationship:
                     "createdBy": created_by,
                     "objectMarking": object_marking,
                     "objectLabel": object_label,
+                    "objectOrganization": granted_refs,
                     "externalReferences": external_references,
                     "killChainPhases": kill_chain_phases,
                     "update": update,
@@ -1128,6 +1133,13 @@ class StixCoreRelationship:
         update = kwargs.get("update", False)
         default_date = kwargs.get("defaultDate", False)
         if stix_relation is not None:
+
+            # Search in extensions
+            if "granted_refs" not in stix_relation:
+                stix_relation["granted_refs"] = self.opencti.get_attribute_in_extension(
+                    "granted_refs", stix_relation
+                )
+
             source_ref = stix_relation["source_ref"]
             target_ref = stix_relation["target_ref"]
             return self.create(
@@ -1173,6 +1185,9 @@ class StixCoreRelationship:
                 else [],
                 killChainPhases=extras["kill_chain_phases_ids"]
                 if "kill_chain_phases_ids" in extras
+                else None,
+                objectOrganization=stix_relation["granted_refs"]
+                if "granted_refs" in stix_relation
                 else None,
                 update=update,
             )

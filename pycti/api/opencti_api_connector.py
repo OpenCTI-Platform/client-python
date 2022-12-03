@@ -92,8 +92,10 @@ class OpenCTIApiConnector:
                             pass
                         }
                         listen
+                        listen_routing
                         listen_exchange
                         push
+                        push_routing
                         push_exchange
                     }
                     connector_user_id

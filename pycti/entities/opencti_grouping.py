@@ -111,6 +111,7 @@ class Grouping:
             name
             description
             context
+            x_opencti_aliases
             objects {
                 edges {
                     node {
@@ -255,7 +256,7 @@ class Grouping:
         )
         query = (
             """
-            query Groupings($filters: [GroupingsFiltering], $search: String, $first: Int, $after: ID, $orderBy: GroupingsOrdering, $orderMode: OrderingMode) {
+            query Groupings($filters: [GroupingsFiltering!], $search: String, $first: Int, $after: ID, $orderBy: GroupingsOrdering, $orderMode: OrderingMode) {
                 groupings(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
@@ -440,13 +441,15 @@ class Grouping:
         name = kwargs.get("name", None)
         context = kwargs.get("context", None)
         description = kwargs.get("description", "")
+        x_opencti_aliases = kwargs.get("x_opencti_aliases", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
+        granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
         if name is not None and description is not None and context is not None:
             self.opencti.log("info", "Creating Grouping {" + name + "}.")
             query = """
-                mutation GroupingAdd($input: GroupingAddInput) {
+                mutation GroupingAdd($input: GroupingAddInput!) {
                     groupingAdd(input: $input) {
                         id
                         standard_id
@@ -463,6 +466,7 @@ class Grouping:
                         "createdBy": created_by,
                         "objectMarking": object_marking,
                         "objectLabel": object_label,
+                        "objectOrganization": granted_refs,
                         "objects": objects,
                         "externalReferences": external_references,
                         "revoked": revoked,
@@ -473,6 +477,7 @@ class Grouping:
                         "name": name,
                         "context": context,
                         "description": description,
+                        "x_opencti_aliases": x_opencti_aliases,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
@@ -509,10 +514,8 @@ class Grouping:
             )
             query = """
                mutation GroupingEditRelationAdd($id: ID!, $input: StixMetaRelationshipAddInput) {
-                   groupingEdit(id: $id) {
-                        relationAdd(input: $input) {
-                            id
-                        }
+                   groupingRelationAdd(id: $id, input: $input) {
+                        id
                    }
                }
             """
@@ -558,10 +561,8 @@ class Grouping:
             )
             query = """
                mutation GroupingEditRelationDelete($id: ID!, $toId: StixRef!, $relationship_type: String!) {
-                   groupingEdit(id: $id) {
-                        relationDelete(toId: $toId, relationship_type: $relationship_type) {
-                            id
-                        }
+                   groupingRelationDelete(id: $id, toId: $toId, relationship_type: $relationship_type) {
+                        id
                    }
                }
             """
@@ -595,10 +596,18 @@ class Grouping:
         if stix_object is not None:
 
             # Search in extensions
+            if "x_opencti_aliases" not in stix_object:
+                stix_object[
+                    "x_opencti_aliases"
+                ] = self.opencti.get_attribute_in_extension("aliases", stix_object)
             if "x_opencti_stix_ids" not in stix_object:
                 stix_object[
                     "x_opencti_stix_ids"
                 ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+            if "granted_refs" not in stix_object:
+                stix_object["granted_refs"] = self.opencti.get_attribute_in_extension(
+                    "granted_refs", stix_object
+                )
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -632,6 +641,10 @@ class Grouping:
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
+                objectOrganization=stix_object["granted_refs"]
+                if "granted_refs" in stix_object
+                else None,
+                x_opencti_aliases=self.opencti.stix2.pick_aliases(stix_object),
                 update=update,
             )
         else:

@@ -114,6 +114,9 @@ class Incident:
             first_seen
             last_seen
             objective
+            incident_type
+            severity
+            source
             importFiles {
                 edges {
                     node {
@@ -267,7 +270,11 @@ class Incident:
         first_seen = kwargs.get("first_seen", None)
         last_seen = kwargs.get("last_seen", None)
         objective = kwargs.get("objective", None)
+        incident_type = kwargs.get("incident_type", None)
+        severity = kwargs.get("severity", None)
+        source = kwargs.get("source", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
+        granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
         if name is not None and description is not None:
@@ -290,6 +297,7 @@ class Incident:
                         "createdBy": created_by,
                         "objectMarking": object_marking,
                         "objectLabel": object_label,
+                        "objectOrganization": granted_refs,
                         "externalReferences": external_references,
                         "revoked": revoked,
                         "confidence": confidence,
@@ -301,7 +309,10 @@ class Incident:
                         "aliases": aliases,
                         "first_seen": first_seen,
                         "last_seen": last_seen,
+                        "incident_type": incident_type,
                         "objective": objective,
+                        "severity": severity,
+                        "source": source,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
@@ -329,6 +340,10 @@ class Incident:
                 stix_object[
                     "x_opencti_stix_ids"
                 ] = self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+            if "granted_refs" not in stix_object:
+                stix_object["granted_refs"] = self.opencti.get_attribute_in_extension(
+                    "granted_refs", stix_object
+                )
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -367,8 +382,16 @@ class Incident:
                 last_seen=stix_object["last_seen"]
                 if "last_seen" in stix_object
                 else None,
+                incident_type=stix_object["incident_type"]
+                if "incident_type" in stix_object
+                else None,
+                severity=stix_object["severity"] if "severity" in stix_object else None,
+                source=stix_object["source"] if "source" in stix_object else None,
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
+                else None,
+                objectOrganization=stix_object["granted_refs"]
+                if "granted_refs" in stix_object
                 else None,
                 update=update,
             )
