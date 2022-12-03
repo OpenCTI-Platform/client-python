@@ -23,6 +23,7 @@ HEARTBEAT_INTERVAL = 40
 
 class Connector(object):
     connector_type = None
+    scope = None
     # Settings = configuration for the connector execution
     settings: ConnectorBaseConfig = ConnectorBaseConfig
     # Config = configuration for the opencti connector job
@@ -31,9 +32,15 @@ class Connector(object):
     def __init__(self):
         signal.signal(signal.SIGINT, self.stop)
 
-        self.base_config = self.settings(type=self.connector_type)
+        if self.scope:
+            self.base_config = self.settings(type=self.connector_type, scope=self.scope)
+        else:
+            self.base_config = self.settings(type=self.connector_type)
+
         self.logger = get_logger("Connector", self.base_config.log_level)
 
+        # This will be removed once the job configs are being retrieved during
+        # job execution
         if self.config == "":
             self.logger.error("Please define the connector config!")
             return
@@ -56,6 +63,7 @@ class Connector(object):
         self.set_state(connector_state)
         self.broker_config = configuration["config"]
 
+        self.heartbeat = None
         if not self.base_config.run_and_terminate:
             self.heartbeat = Heartbeat(
                 self.api,
@@ -72,11 +80,11 @@ class Connector(object):
                 self.base_config.broker, self.broker_config
             )
         except Exception as e:
-            self.logger.error(f"{e}")
+            self.logger.error(f"Broker initiation error: {e}")
+            self.stop()
             return
 
         self.broker_thread = None
-        self.stdout_broker = None
         self.work_id = None
 
         self.init()
@@ -149,12 +157,16 @@ class Connector(object):
 
     def stop(self, *args) -> None:
         self.logger.info("Shutting down. Please hold the line...")
-        if not self.base_config.run_and_terminate:
+
+        if self.heartbeat:
             self.heartbeat.stop()
             self.heartbeat.join()
+
         self._stop()
-        if self.broker_thread:
+
+        if self.broker:
             self.broker.stop()
+        if self.broker_thread:
             self.broker_thread.join()
         self.logger.info("Good bye")
 
