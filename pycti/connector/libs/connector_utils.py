@@ -1,10 +1,16 @@
 import datetime
 import logging
+import queue
 import ssl
+import threading
+import time
 from enum import Enum
+from queue import Queue
 from typing import Any, Dict, List
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+
 # TODO implement JSON logging format
 
 
@@ -106,3 +112,35 @@ def check_max_tlp(tlp: str, max_tlp: str) -> bool:
     }
 
     return tlp in allowed_tlps[max_tlp]
+
+
+class StreamAlive(threading.Thread):
+    def __init__(
+        self, q: Queue, log_level: str, connector_stop_event: threading.Event
+    ) -> None:
+        threading.Thread.__init__(self)
+        self.logger = get_logger("StreamAlive", log_level)
+        self.q = q
+        self.connector_stop_event = connector_stop_event
+        self.exit_event = threading.Event()
+
+    def run(self) -> None:
+        self.logger.info("Starting stream alive thread")
+        time_since_last_heartbeat = 0
+        while not self.exit_event.is_set():
+            time.sleep(5)
+            try:
+                self.q.get(block=False)
+                time_since_last_heartbeat = 0
+            except queue.Empty:
+                time_since_last_heartbeat = time_since_last_heartbeat + 5
+                if time_since_last_heartbeat > 45:
+                    self.logger.error(
+                        "Time since last heartbeat exceeded 45s, stopping the connector"
+                    )
+                    self.stop()
+                    self.connector_stop_event.set()
+
+    def stop(self) -> None:
+        logging.info("Preparing for clean shutdown")
+        self.exit_event.set()

@@ -5,6 +5,9 @@ import requests
 from requests import HTTPError
 
 
+RETRY_ERROR_CODES = [408, 500, 501, 502, 503, 504]
+
+
 class HttpMixin(object):
     _session: requests.Session = None
 
@@ -29,7 +32,7 @@ class HttpMixin(object):
             response.raise_for_status()
         except HTTPError as http_err:
             if retry_cnt > 0:
-                if http_err.response.status_code == 408:  # request timeout
+                if http_err.response.status_code in RETRY_ERROR_CODES:  # request timeout
                     time.sleep(3)
                     return self._retrieve(url, cmd, args, retry_cnt - 1)
 

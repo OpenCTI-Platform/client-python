@@ -56,7 +56,7 @@ class ExternalImportConfig(ConnectorBaseConfig):
     interval: int = Field(env="connector_interval", default=60)
 
 
-class StreamInputSetting(ConnectorBaseConfig):
+class StreamInputConfig(ConnectorBaseConfig):
     live_stream_id: str = Field(env="connector_live_stream_id")
     live_stream_listen_delete: str = Field(env="connector_live_stream_listen_delete")
     live_stream_no_dependencies: str = Field(
@@ -64,6 +64,12 @@ class StreamInputSetting(ConnectorBaseConfig):
     )
     live_stream_with_inferences: str = Field(
         env="connector_live_stream_with_inferences"
+    )
+    live_stream_recover_iso_date: str = Field(
+        env="connector_live_stream_recover_iso_date"
+    )
+    live_stream_start_timestamp: str = Field(
+        env="connector_live_stream_start_timestamp"
     )
 
 

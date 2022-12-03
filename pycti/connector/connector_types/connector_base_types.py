@@ -1,19 +1,27 @@
 import os
+import queue
 import threading
 import time
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import schedule
 from pydantic import BaseModel
+from sseclient import SSEClient, Event
 from stix2 import Bundle
 
 from pycti.connector.connector import Connector
 from pycti.connector.connector_types.connector_settings import (
     ExternalImportConfig,
     InternalEnrichmentConfig,
+    StreamInputConfig,
 )
-from pycti.connector.libs.connector_utils import ConnectorType, check_max_tlp
+from pycti.connector.libs.connector_utils import (
+    ConnectorType,
+    StreamAlive,
+    check_max_tlp,
+    date_now,
+)
 from pycti.connector.libs.opencti_schema import (
     InternalEnrichmentMessage,
     InternalFileInputMessage,
@@ -266,6 +274,127 @@ class InternalExportConnector(ListenConnector):
 
     def __init__(self):
         super().__init__()
+
+
+class StreamInputConnector(Connector):
+    connector_type = ConnectorType.STREAM.value
+    settings = StreamInputConfig
+
+    def __init__(self):
+        super().__init__()
+        self.stop_event = threading.Event()
+
+        self.stream_alive = None
+
+    def start(self) -> None:
+        # Call it for the first time directly
+        self.issue_call()
+
+        # Then start loop which spawns the first process
+        # in self.interval seconds
+        while not self.stop_event.is_set():
+            schedule.run_pending()
+            time.sleep(1)
+
+    def issue_call(self):
+        # Get the current timestamp and check
+        self.get_last_run()
+
+        state = self.get_state()
+
+        start_from = state.get("start_from", state.get("connectorLastEventId", "0-0"))
+        recover_until = state.get(
+            "recover_until",
+            state.get("connectorStartTime", date_now().replace("+00:00", "Z")),
+        )
+
+        self.set_state({"start_from": start_from})
+        self.set_state({"recover_until": recover_until})
+
+        work_queue = queue.Queue(maxsize=1)
+        self.stream_alive = StreamAlive(
+            work_queue, self.base_config.log_level, self.stop_event
+        )
+        self.stream_alive.start()
+
+        url = f"{self.base_config.url}/stream"
+        if self.base_config.live_stream_id:
+            url = f"{url}/{self.base_config.live_stream_id}"
+
+        # Computing args, from is always set
+        live_stream_args = f"?from={start_from}"
+        # In case no recover is explicitly set
+        if recover_until is not False:
+            live_stream_args = f"{live_stream_args}&recover={recover_until}"
+
+        live_stream_url = f"{url}{live_stream_args}"
+        listen_delete = str(self.base_config.live_stream_listen_delete).lower()
+        no_dependencies = str(self.base_config.live_stream_no_dependencies).lower()
+        with_inferences = str(self.base_config.live_stream_with_inferences).lower()
+
+        self.logger.info(
+            'Starting to listen stream events on "'
+            + live_stream_url
+            + '" (listen-delete: '
+            + listen_delete
+            + ", no-dependencies: "
+            + no_dependencies
+            + ", with-inferences: "
+            + with_inferences
+            + ")"
+        )
+
+        messages = SSEClient(
+            live_stream_url,
+            headers={
+                "authorization": "Bearer " + self.base_config.token,
+                "listen-delete": listen_delete,
+                "no-dependencies": no_dependencies,
+                "with-inferences": with_inferences,
+            },
+            verify=self.base_config.ssl_verify,
+        )
+
+        # Iter on stream messages
+        for msg in messages:
+            if self.stop_event.is_set():
+                break
+
+            if msg.id is not None:
+                try:
+                    work_queue.put(msg.event, block=False)
+                except queue.Full:
+                    pass
+
+                if msg.event != "heartbeat" and msg.event != "connected":
+                    try:
+                        run_message, bundles = self.run(self.connector_config, msg)
+                    except Exception as e:
+                        self.logger.error(f"Running Error: {str(e)}")
+                        self.set_state({"error": str(e)})
+                        try:
+                            self.api.work.to_processed(work_id, str(e), True)
+                        except Exception as e:
+                            self.logger.error(
+                                f"Failing reporting the processing: {str(e)}"
+                            )
+
+                        return
+
+                    for bundle in bundles:
+                        self._send_bundle(bundle, work_id, None, self.base_config.scope)
+
+                self.set_state({"start_from": str(msg.id)})
+                self.set_last_run()
+
+    def _stop(self):
+        self.stop_event.set()
+        if self.stream_alive:
+            self.stream_alive.stop()
+        self.logger.info("Ending")
+
+    def run(self, config: BaseModel, msg: Event) -> Optional[(str, List[Bundle])]:
+        pass
 
 
 #
