@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 import schedule
 from pydantic import BaseModel
-from sseclient import SSEClient, Event
+from sseclient import Event, SSEClient
 from stix2 import Bundle
 
 from pycti.connector.connector import Connector
@@ -354,6 +354,9 @@ class StreamInputConnector(Connector):
             },
             verify=self.base_config.ssl_verify,
         )
+
+        # Dummy values
+        work_id = "12312"
 
         # Iter on stream messages
         for msg in messages:
