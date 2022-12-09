@@ -2,7 +2,6 @@
 
 import json
 import uuid
-from typing import Dict
 
 from stix2.canonicalization.Canonicalize import canonicalize
 
