@@ -266,7 +266,7 @@ class DataSource:
         name = kwargs.get("name", None)
         description = kwargs.get("description", "")
         aliases = kwargs.get("aliases", None)
-        x_mitre_platforms = kwargs.get("x_mitre_platforms", None)
+        platforms = kwargs.get("platforms", None)
         collection_layers = kwargs.get("collection_layers", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         granted_refs = kwargs.get("objectOrganization", None)
@@ -303,7 +303,7 @@ class DataSource:
                         "name": name,
                         "description": description,
                         "aliases": aliases,
-                        "x_mitre_platforms": x_mitre_platforms,
+                        "x_mitre_platforms": platforms,
                         "collection_layers": collection_layers,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
@@ -332,10 +332,18 @@ class DataSource:
         if stix_object is not None:
 
             # Handle x-mitre-
-            if stix_object["type"] == "x-mitre-data-source":
+            if (
+                stix_object["type"] == "x-mitre-data-source"
+                and "x_mitre_collection_layers" in stix_object
+            ):
                 stix_object["collection_layers"] = stix_object[
                     "x_mitre_collection_layers"
                 ]
+            if (
+                stix_object["type"] == "x-mitre-data-source"
+                and "x_mitre_platforms" in stix_object
+            ):
+                stix_object["platforms"] = stix_object["x_mitre_platforms"]
 
             # Search in extensions
             if "x_opencti_stix_ids" not in stix_object:
@@ -375,8 +383,8 @@ class DataSource:
                 if "description" in stix_object
                 else "",
                 aliases=self.opencti.stix2.pick_aliases(stix_object),
-                x_mitre_platforms=stix_object["x_mitre_platforms"]
-                if "x_mitre_platforms" in stix_object
+                platforms=stix_object["platforms"]
+                if "platforms" in stix_object
                 else None,
                 collection_layers=stix_object["collection_layers"]
                 if "collection_layers" in stix_object

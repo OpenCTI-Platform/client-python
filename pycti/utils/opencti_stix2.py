@@ -1095,7 +1095,10 @@ class OpenCTIStix2:
             if "platforms" in entity and entity["platforms"] is not None:
                 entity["x_mitre_platforms"] = entity["platforms"]
                 del entity["platforms"]
-            if "collection_layers" in entity and entity["collection_layers"] is not None:
+            if (
+                "collection_layers" in entity
+                and entity["collection_layers"] is not None
+            ):
                 entity["x_mitre_collection_layers"] = entity["collection_layers"]
                 del entity["collection_layers"]
 

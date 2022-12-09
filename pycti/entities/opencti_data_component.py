@@ -348,9 +348,15 @@ class DataComponent:
         if stix_object is not None:
 
             # Handle ref
-            if stix_object["type"] == "x-mitre-data-component":
+            if (
+                stix_object["type"] == "x-mitre-data-component"
+                and "x_mitre_data_source_ref" in stix_object
+            ):
                 stix_object["dataSource"] = stix_object["x_mitre_data_source_ref"]
-            if stix_object["type"] == "data-component":
+            if (
+                stix_object["type"] == "data-component"
+                and "data_source_ref" in stix_object
+            ):
                 stix_object["dataSource"] = stix_object["data_source_ref"]
 
             # Search in extensions
