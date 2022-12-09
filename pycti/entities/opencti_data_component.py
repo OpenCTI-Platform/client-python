@@ -164,7 +164,7 @@ class DataComponent:
         )
         query = (
             """
-            query DataComponents($filters: [DataComponentsFiltering], $search: String, $first: Int, $after: ID, $orderBy: DataComponentsOrdering, $orderMode: OrderingMode) {
+            query DataComponents($filters: [DataComponentsFiltering!], $search: String, $first: Int, $after: ID, $orderBy: DataComponentsOrdering, $orderMode: OrderingMode) {
                 dataComponents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {
