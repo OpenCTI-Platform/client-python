@@ -393,16 +393,3 @@ class DataSource:
             self.opencti.log(
                 "error", "[opencti_data_source] Missing parameters: stixObject"
             )
-
-    def prepare_export(
-        self, generate_export, entity: Dict, no_custom_attributes: bool, result
-    ):
-        # Handle mitre spec
-        if "id" in entity and entity["id"] is not None:
-            entity["id"] = "x-mitre-" + entity["id"]
-        if "type" in entity and entity["type"] is not None:
-            entity["type"] = "x-mitre-" + entity["type"]
-        if "collection_layers" in entity and entity["collection_layers"] is not None:
-            entity["collection_layers"] = "x-mitre-" + entity["collection_layers"]
-
-        return entity

@@ -1083,6 +1083,22 @@ class OpenCTIStix2:
         if entity["entity_type"] == "StixFile":
             entity["entity_type"] = "File"
 
+        # Data component
+        if entity["entity_type"] == "Data-Component":
+            entity["standard_id"] = "x-mitre-" + entity["standard_id"]
+            entity["entity_type"] = "x-mitre-" + entity["entity_type"]
+
+        # Data source
+        if entity["entity_type"] == "Data-Source":
+            entity["standard_id"] = "x-mitre-" + entity["standard_id"]
+            entity["entity_type"] = "x-mitre-" + entity["entity_type"]
+            if "platforms" in entity and entity["platforms"] is not None:
+                entity["x_mitre_platforms"] = entity["platforms"]
+                del entity["platforms"]
+            if "collection_layers" in entity and entity["collection_layers"] is not None:
+                entity["x_mitre_collection_layers"] = entity["collection_layers"]
+                del entity["collection_layers"]
+
         # Dates
         if (
             "valid_from" in entity
@@ -1212,16 +1228,6 @@ class OpenCTIStix2:
         result = []
         objects_to_get = []
         relations_to_get = []
-
-        # # Handle prepare_export specific case
-        attribute = OpenCTIStix2Utils.retrieveClassForMethod(
-            self.opencti, entity, "type", "prepare_export"
-        )
-        if attribute is not None:
-            entity = attribute.prepare_export(
-                self.generate_export, entity, no_custom_attributes, result
-            )
-
         # CreatedByRef
         if (
             not no_custom_attributes
@@ -1237,6 +1243,19 @@ class OpenCTIStix2:
         if "observables" in entity:
             del entity["observables"]
             del entity["observablesIds"]
+
+        # DataSource
+        if (
+            not no_custom_attributes
+            and "dataSource" in entity
+            and entity["dataSource"] is not None
+        ):
+            data_source = self.generate_export(entity["dataSource"])
+            entity["x_mitre_data_source_ref"] = data_source["id"]
+            result.append(data_source)
+        if "dataSource" in entity:
+            del entity["dataSource"]
+            del entity["dataSourceId"]
 
         entity_copy = entity.copy()
         if no_custom_attributes:
