@@ -54,6 +54,7 @@ from pycti.entities.opencti_threat_actor import ThreatActor
 from pycti.entities.opencti_tool import Tool
 from pycti.entities.opencti_vulnerability import Vulnerability
 from pycti.utils.opencti_stix2 import OpenCTIStix2
+from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -502,12 +503,11 @@ class OpenCTIApiClient:
         """
 
         # Handle process_multiple_fields specific case
-        if data is not None and "entity_type" in data:
-            attributeName = data["entity_type"].lower().replace("-", "_")
-            if hasattr(self, attributeName):
-                attribute = getattr(self, attributeName)
-                if hasattr(attribute, "process_multiple_fields"):
-                    data = attribute.process_multiple_fields(data)
+        attribute = OpenCTIStix2Utils.retrieveClassForMethod(
+            self, data, "entity_type", "process_multiple_fields"
+        )
+        if attribute is not None:
+            data = attribute.process_multiple_fields(data)
 
         if data is None:
             return data

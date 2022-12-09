@@ -125,6 +125,24 @@ class DataComponent:
                     }
                 }
             }
+            dataSource {
+                id
+                standard_id
+                entity_type
+                parent_types
+                spec_version
+                created_at
+                updated_at
+                revoked
+                confidence
+                created
+                modified
+                name
+                description
+                aliases
+                x_mitre_platforms
+                collection_layers
+            }
         """
 
     @staticmethod
@@ -399,15 +417,32 @@ class DataComponent:
     def prepare_export(
         self, generate_export, entity: Dict, no_custom_attributes: bool, result
     ):
+        # Handle data source
         if (
             not no_custom_attributes
             and "dataSource" in entity
             and entity["dataSource"] is not None
         ):
             data_source = generate_export(entity["dataSource"])
+
+            # Handle mitre spec
+            if "id" in data_source and data_source["id"] is not None:
+                data_source["id"] = "x-mitre-" + data_source["id"]
+            if "type" in data_source and data_source["type"] is not None:
+                data_source["type"] = "x-mitre-" + data_source["type"]
+            if "collection_layers" in data_source and data_source["collection_layers"] is not None:
+                data_source["collection_layers"] = "x-mitre-" + data_source["collection_layers"]
+
             entity["data_source_ref"] = data_source["id"]
             result.append(data_source)
         if "dataSource" in entity:
             del entity["dataSource"]
             del entity["dataSourceId"]
+
+        # Handle mitre spec
+        if "id" in entity and entity["id"] is not None:
+            entity["id"] = "x-mitre-" + entity["id"]
+        if "type" in entity and entity["type"] is not None:
+            entity["type"] = "x-mitre-" + entity["type"]
+
         return entity

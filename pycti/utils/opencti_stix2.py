@@ -23,6 +23,7 @@ from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
 from pycti.utils.opencti_stix2_utils import (
     OBSERVABLES_VALUE_INT,
     STIX_CYBER_OBSERVABLE_MAPPING,
+    OpenCTIStix2Utils,
 )
 
 datefinder.ValueError = ValueError, OverflowError
@@ -1213,14 +1214,13 @@ class OpenCTIStix2:
         relations_to_get = []
 
         # # Handle prepare_export specific case
-        if entity is not None and "type" in entity:
-            attributeName = entity["type"].lower().replace("-", "_")
-            if hasattr(self.opencti, attributeName):
-                attribute = getattr(self.opencti, attributeName)
-                if hasattr(attribute, "prepare_export"):
-                    entity = attribute.prepare_export(
-                        self.generate_export, entity, no_custom_attributes, result
-                    )
+        attribute = OpenCTIStix2Utils.retrieveClassForMethod(
+            self.opencti, entity, "type", "prepare_export"
+        )
+        if attribute is not None:
+            entity = attribute.prepare_export(
+                self.generate_export, entity, no_custom_attributes, result
+            )
 
         # CreatedByRef
         if (
