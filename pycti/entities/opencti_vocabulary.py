@@ -123,14 +123,10 @@ class Vocabulary:
 
     def read_or_create_unchecked(self, **kwargs):
         value = kwargs.get("name", None)
-        required = kwargs.get("required", None)
         vocab = self.read(filters=[{"key": "name", "values": [value]}])
         if vocab is None:
             try:
                 return self.create(**kwargs)
             except ValueError:
-                if required:
-                    raise ValueError("Enable to create Vocabulary for mandatory field")
-                else:
-                    return None
+                return None
         return vocab
