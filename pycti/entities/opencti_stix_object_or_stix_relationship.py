@@ -531,3 +531,70 @@ class StixObjectOrStixRelationship:
         else:
             self.opencti.log("error", "Missing parameters: id")
             return None
+
+    def last_reports_query(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.log(
+                "info", "Reading StixObjectOrStixRelationshipLastReportsQuery {" + id + "}."
+            )
+            query = ( 
+                      """
+                query StixCoreObjectOrStixCoreRelationshipLastReportsQuery(
+                                $first: Int
+                                $orderBy: ReportsOrdering
+                                $orderMode: OrderingMode
+                                $filters: [ReportsFiltering]
+                            ) {
+                                reports(
+                                first: $first
+                                orderBy: $orderBy
+                                orderMode: $orderMode
+                                filters: $filters
+                                ) {
+                                edges {
+                                    node {
+                                    id
+                                    name
+                                    description
+                                    published
+                                    createdBy {
+                                        ... on Identity {
+                                        id
+                                        name
+                                        entity_type
+                                        }
+                                    }
+                                    objectMarking {
+                                        edges {
+                                        node {
+                                            definition
+                                        }
+                                        }
+                                    }
+                                    }
+                                }
+                                }
+                            }
+             """
+            )
+            variables = {
+                "first": 8,
+                "orderBy": "published",
+                "orderMode": "desc",
+                "filters": [
+                    {
+                        "key": "objectContains",
+                        "values": [
+                            id
+                        ]
+                    }
+                ]
+            }
+            result = self.opencti.query(query, variables)
+            return self.opencti.process_multiple_fields(
+                result["data"]["reports"]["edges"]
+            )
+        else:
+            self.opencti.log("error", "Missing parameters: id")
+            return None
