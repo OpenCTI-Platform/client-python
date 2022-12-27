@@ -15,6 +15,7 @@ from tests.cases.internal_file_input_connectors import (
     InternalFileInputTest,
     InternalFileInputWorkflowTest,
 )
+from tests.cases.stream_connector import StreamConnectorTest
 from tests.cases.worker_connector import WorkerTest
 
 CONNECTORS = [
@@ -22,6 +23,7 @@ CONNECTORS = [
     ExternalInputTest,
     InternalEnrichmentTest,
     InternalEnrichmentTest_TLP_Invalid,
+    StreamConnectorTest
 ]
 WORKFLOW_CONNECTORS = [InternalFileInputWorkflowTest]
 

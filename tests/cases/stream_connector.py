@@ -19,9 +19,10 @@ class StreamConnector(StreamInputConnector):
     config = StreamModel
     bundle = Bundle(IPv4Address(value="177.60.40.1"), allow_custom=True)
 
-    def run(self, config: StreamModel, msg: Event) -> Optional[(str, List[Bundle])]:
+    def run(self, config: StreamModel, msg: Event) -> (Optional[str], Optional[List[Bundle]]):
         self.logger.info(f"Received message: {msg}")
-        return "Finished", [self.bundle]
+        #return "Finished", [self.bundle]
+        return
 
 
 class StreamConnectorTest(ConnectorTest):

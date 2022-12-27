@@ -347,16 +347,13 @@ class StreamInputConnector(Connector):
         messages = SSEClient(
             live_stream_url,
             headers={
-                "authorization": "Bearer " + self.base_config.token,
+                "authorization": f"Bearer ${self.base_config.token}",
                 "listen-delete": listen_delete,
                 "no-dependencies": no_dependencies,
                 "with-inferences": with_inferences,
             },
             verify=self.base_config.ssl_verify,
         )
-
-        # Dummy values
-        work_id = "12312"
 
         # Iter on stream messages
         for msg in messages:
@@ -371,21 +368,17 @@ class StreamInputConnector(Connector):
 
                 if msg.event != "heartbeat" and msg.event != "connected":
                     try:
-                        run_message, bundles = self.run(self.connector_config, msg)
+                        work_id, bundles = self.run(self.connector_config, msg)
                     except Exception as e:
                         self.logger.error(f"Running Error: {str(e)}")
                         self.set_state({"error": str(e)})
-                        try:
-                            self.api.work.to_processed(work_id, str(e), True)
-                        except Exception as e:
-                            self.logger.error(
-                                f"Failing reporting the processing: {str(e)}"
-                            )
 
                         return
 
-                    for bundle in bundles:
-                        self._send_bundle(bundle, work_id, None, self.base_config.scope)
+                    # Not all stream connectors are returning stix bundles for import
+                    if work_id is not None and len(bundles) > 0:
+                        for bundle in bundles:
+                            self._send_bundle(bundle, work_id, None, self.base_config.scope)
 
                 self.set_state({"start_from": str(msg.id)})
                 self.set_last_run()
@@ -396,7 +389,7 @@ class StreamInputConnector(Connector):
             self.stream_alive.stop()
         self.logger.info("Ending")
 
-    def run(self, config: BaseModel, msg: Event) -> Optional[(str, List[Bundle])]:
+    def run(self, config: BaseModel, msg: Event) -> (Optional[str], Optional[List[Bundle]]):
         pass
 
 
