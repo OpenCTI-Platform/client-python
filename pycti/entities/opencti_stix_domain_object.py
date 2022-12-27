@@ -144,6 +144,8 @@ class StixDomainObject:
                 attribute_abstract
                 content
                 authors
+                note_types
+                likelihood
                 objects {
                     edges {
                         node {
@@ -250,6 +252,33 @@ class StixDomainObject:
                 name
                 description
                 x_opencti_aliases
+            }
+            ... on DataComponent {
+                name
+                description
+                dataSource {
+                    id
+                    standard_id
+                    entity_type
+                    parent_types
+                    spec_version
+                    created_at
+                    updated_at
+                    revoked
+                    confidence
+                    created
+                    modified
+                    name
+                    description
+                    x_mitre_platforms
+                    collection_layers
+                }
+            }
+            ... on DataSource {
+                name
+                description
+                x_mitre_platforms
+                collection_layers
             }
             ... on Individual {
                 name
@@ -424,6 +453,14 @@ class StixDomainObject:
                 aliases
                 narrative_types
             }
+            ... on DataComponent {
+                name
+                description
+            }
+            ... on DataSource {
+                name
+                description
+            }
             ... on Vulnerability {
                 name
                 description
@@ -472,6 +509,8 @@ class StixDomainObject:
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         first = kwargs.get("first", 100)
+        relationship_type = kwargs.get("relationship_type", None)
+        element_id = kwargs.get("elementId", None)
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
         order_mode = kwargs.get("orderMode", None)
@@ -487,8 +526,8 @@ class StixDomainObject:
         )
         query = (
             """
-                query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
-                    stixDomainObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $relationship_type: [String], $elementId: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
+                    stixDomainObjects(types: $types, filters: $filters, search: $search, relationship_type: $relationship_type, elementId: $elementId, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {
                                 """
@@ -513,6 +552,8 @@ class StixDomainObject:
                 "types": types,
                 "filters": filters,
                 "search": search,
+                "relationship_type": relationship_type,
+                "elementId": element_id,
                 "first": first,
                 "after": after,
                 "orderBy": order_by,
@@ -533,6 +574,8 @@ class StixDomainObject:
                         "types": types,
                         "filters": filters,
                         "search": search,
+                        "relationship_type": relationship_type,
+                        "elementId": element_id,
                         "first": first,
                         "after": after,
                         "orderBy": order_by,
@@ -1543,6 +1586,8 @@ class StixDomainObject:
                                     attribute_abstract
                                     content
                                     authors
+                                    note_types
+                                    likelihood
                                 }
                             }
                         }

@@ -129,6 +129,8 @@ class StixObjectOrStixRelationship:
                 attribute_abstract
                 content
                 authors
+                note_types
+                likelihood
             }
             ... on ObservedData {
                 first_observed
@@ -338,6 +340,14 @@ class StixObjectOrStixRelationship:
               }
              ... on Language {
                 name
+            }
+            ... on DataComponent {
+                name
+                description
+            }
+            ... on DataSource {
+                name
+                description
             }
             ... on StixCyberObservable {
                 observable_value

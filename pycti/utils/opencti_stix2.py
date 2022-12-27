@@ -83,7 +83,7 @@ class OpenCTIStix2:
             date_value = datetime.datetime.utcnow()
 
         if not date_value.tzinfo:
-            self.opencti.log("No timezone found. Setting to UTC", "info")
+            self.opencti.log("info", "No timezone found. Setting to UTC")
             date_value = date_value.replace(tzinfo=datetime.timezone.utc)
 
         return date_value.isoformat(timespec="milliseconds").replace("+00:00", "Z")
@@ -295,6 +295,51 @@ class OpenCTIStix2:
             if "object_marking_refs" in stix_object
             else []
         )
+
+        # Open vocabularies
+        object_open_vocabularies = {}
+        if self.mapping_cache.get("vocabularies_definition_fields") is None:
+            self.mapping_cache["vocabularies_definition_fields"] = []
+            query = """
+                    query getVocabCategories {
+                      vocabularyCategories {
+                        key
+                        fields{
+                          key
+                          required
+                        }
+                      }
+                    }
+                """
+            result = self.opencti.query(query)
+            for category in result["data"]["vocabularyCategories"]:
+                for field in category["fields"]:
+                    self.mapping_cache["vocabularies_definition_fields"].append(field)
+                    self.mapping_cache["category_" + field["key"]] = category["key"]
+        if any(
+            field["key"] in stix_object
+            for field in self.mapping_cache["vocabularies_definition_fields"]
+        ):
+            for f in self.mapping_cache["vocabularies_definition_fields"]:
+                if stix_object.get(f["key"]) is None:
+                    continue
+                if isinstance(stix_object.get(f["key"]), list):
+                    object_open_vocabularies[f["key"]] = []
+                    for vocab in stix_object[f["key"]]:
+                        object_open_vocabularies[f["key"]].append(
+                            self.opencti.vocabulary.handle_vocab(
+                                vocab, self.mapping_cache, field=f
+                            )["name"]
+                        )
+                else:
+                    object_open_vocabularies[
+                        f["key"]
+                    ] = self.opencti.vocabulary.handle_vocab(
+                        stix_object[f["key"]], self.mapping_cache, field=f
+                    )[
+                        "name"
+                    ]
+
         # Object Labels
         object_label_ids = []
         if (
@@ -569,6 +614,7 @@ class OpenCTIStix2:
             "created_by": created_by_id,
             "object_marking": object_marking_ids,
             "object_label": object_label_ids,
+            "open_vocabs": object_open_vocabularies,
             "kill_chain_phases": kill_chain_phases_ids,
             "object_refs": object_refs_ids,
             "granted_refs": granted_refs_ids,
@@ -604,6 +650,7 @@ class OpenCTIStix2:
         created_by_id = embedded_relationships["created_by"]
         object_marking_ids = embedded_relationships["object_marking"]
         object_label_ids = embedded_relationships["object_label"]
+        open_vocabs = embedded_relationships["open_vocabs"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
         object_refs_ids = embedded_relationships["object_refs"]
         external_references_ids = embedded_relationships["external_references"]
@@ -614,6 +661,7 @@ class OpenCTIStix2:
             "created_by_id": created_by_id,
             "object_marking_ids": object_marking_ids,
             "object_label_ids": object_label_ids,
+            "open_vocabs": open_vocabs,
             "kill_chain_phases_ids": kill_chain_phases_ids,
             "object_ids": object_refs_ids,
             "external_references_ids": external_references_ids,
@@ -632,6 +680,10 @@ class OpenCTIStix2:
             "report": self.opencti.report.import_from_stix2,
             "grouping": self.opencti.grouping.import_from_stix2,
             "course-of-action": self.opencti.course_of_action.import_from_stix2,
+            "data-component": self.opencti.data_component.import_from_stix2,
+            "x-mitre-data-component": self.opencti.data_component.import_from_stix2,
+            "data-source": self.opencti.data_source.import_from_stix2,
+            "x-mitre-data-source": self.opencti.data_source.import_from_stix2,
             "identity": self.opencti.identity.import_from_stix2,
             "indicator": self.opencti.indicator.import_from_stix2,
             "infrastructure": self.opencti.infrastructure.import_from_stix2,
@@ -713,6 +765,7 @@ class OpenCTIStix2:
         created_by_id = embedded_relationships["created_by"]
         object_marking_ids = embedded_relationships["object_marking"]
         object_label_ids = embedded_relationships["object_label"]
+        open_vocabs = embedded_relationships["open_vocabs"]
         granted_refs_ids = embedded_relationships["granted_refs"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
         object_refs_ids = embedded_relationships["object_refs"]
@@ -724,6 +777,7 @@ class OpenCTIStix2:
             "created_by_id": created_by_id,
             "object_marking_ids": object_marking_ids,
             "object_label_ids": object_label_ids,
+            "open_vocabs": open_vocabs,
             "granted_refs_ids": granted_refs_ids,
             "kill_chain_phases_ids": kill_chain_phases_ids,
             "object_ids": object_refs_ids,
@@ -850,6 +904,7 @@ class OpenCTIStix2:
         created_by_id = embedded_relationships["created_by"]
         object_marking_ids = embedded_relationships["object_marking"]
         object_label_ids = embedded_relationships["object_label"]
+        open_vocabs = embedded_relationships["open_vocabs"]
         granted_refs_ids = embedded_relationships["granted_refs"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
         object_refs_ids = embedded_relationships["object_refs"]
@@ -861,6 +916,7 @@ class OpenCTIStix2:
             "created_by_id": created_by_id,
             "object_marking_ids": object_marking_ids,
             "object_label_ids": object_label_ids,
+            "open_vocabs": open_vocabs,
             "granted_refs_ids": granted_refs_ids,
             "kill_chain_phases_ids": kill_chain_phases_ids,
             "object_ids": object_refs_ids,
@@ -943,6 +999,7 @@ class OpenCTIStix2:
         created_by_id = embedded_relationships["created_by"]
         object_marking_ids = embedded_relationships["object_marking"]
         object_label_ids = embedded_relationships["object_label"]
+        open_vocabs = embedded_relationships["open_vocabs"]
         granted_refs_ids = embedded_relationships["granted_refs"]
         kill_chain_phases_ids = embedded_relationships["kill_chain_phases"]
         object_refs_ids = embedded_relationships["object_refs"]
@@ -954,6 +1011,7 @@ class OpenCTIStix2:
             "created_by_id": created_by_id,
             "object_marking_ids": object_marking_ids,
             "object_label_ids": object_label_ids,
+            "open_vocabs": open_vocabs,
             "granted_refs_ids": granted_refs_ids,
             "kill_chain_phases_ids": kill_chain_phases_ids,
             "object_ids": object_refs_ids,
@@ -1074,9 +1132,33 @@ class OpenCTIStix2:
                 entity["region"] = entity["name"]
             entity["entity_type"] = "Location"
 
+        # Malware
+        if entity["entity_type"] == "Malware":
+            if "is_family" not in entity or not isinstance(entity["is_family"], bool):
+                entity["is_family"] = True
+
         # Files
         if entity["entity_type"] == "StixFile":
             entity["entity_type"] = "File"
+
+        # Data component
+        if entity["entity_type"] == "Data-Component":
+            entity["standard_id"] = "x-mitre-" + entity["standard_id"]
+            entity["entity_type"] = "x-mitre-" + entity["entity_type"]
+
+        # Data source
+        if entity["entity_type"] == "Data-Source":
+            entity["standard_id"] = "x-mitre-" + entity["standard_id"]
+            entity["entity_type"] = "x-mitre-" + entity["entity_type"]
+            if "platforms" in entity and entity["platforms"] is not None:
+                entity["x_mitre_platforms"] = entity["platforms"]
+                del entity["platforms"]
+            if (
+                "collection_layers" in entity
+                and entity["collection_layers"] is not None
+            ):
+                entity["x_mitre_collection_layers"] = entity["collection_layers"]
+                del entity["collection_layers"]
 
         # Dates
         if (
@@ -1222,6 +1304,19 @@ class OpenCTIStix2:
         if "observables" in entity:
             del entity["observables"]
             del entity["observablesIds"]
+
+        # DataSource
+        if (
+            not no_custom_attributes
+            and "dataSource" in entity
+            and entity["dataSource"] is not None
+        ):
+            data_source = self.generate_export(entity["dataSource"])
+            entity["x_mitre_data_source_ref"] = data_source["id"]
+            result.append(data_source)
+        if "dataSource" in entity:
+            del entity["dataSource"]
+            del entity["dataSourceId"]
 
         entity_copy = entity.copy()
         if no_custom_attributes:
@@ -1505,6 +1600,8 @@ class OpenCTIStix2:
                 "Opinion": self.opencti.opinion.read,
                 "Report": self.opencti.report.read,
                 "Course-Of-Action": self.opencti.course_of_action.read,
+                "Data-Component": self.opencti.data_component.read,
+                "Data-Source": self.opencti.data_source.read,
                 "Identity": self.opencti.identity.read,
                 "Indicator": self.opencti.indicator.read,
                 "Infrastructure": self.opencti.infrastructure.read,
@@ -1658,6 +1755,8 @@ class OpenCTIStix2:
             "Report": self.opencti.report.read,
             "Grouping": self.opencti.grouping.read,
             "Course-Of-Action": self.opencti.course_of_action.read,
+            "Data-Component": self.opencti.data_component.read,
+            "Data-Source": self.opencti.data_source.read,
             "Identity": self.opencti.identity.read,
             "Indicator": self.opencti.indicator.read,
             "Infrastructure": self.opencti.infrastructure.read,
@@ -1702,10 +1801,13 @@ class OpenCTIStix2:
         order_mode: str = None,
         max_marking_definition: Dict = None,
         types: List = None,
+        elementId: str = None,
         fromId: str = None,
         toId: str = None,
+        elementWithTargetTypes: [str] = None,
         fromTypes: [str] = None,
         toTypes: [str] = None,
+        relationship_type: [str] = None,
     ) -> Dict:
         max_marking_definition_entity = (
             self.opencti.marking_definition.read(id=max_marking_definition)
@@ -1754,6 +1856,8 @@ class OpenCTIStix2:
             "Report": self.opencti.report.list,
             "Grouping": self.opencti.grouping.list,
             "Course-Of-Action": self.opencti.course_of_action.list,
+            "Data-Component": self.opencti.data_component.list,
+            "Data-Source": self.opencti.data_source.list,
             "Identity": self.opencti.identity.list,
             "Indicator": self.opencti.indicator.list,
             "Infrastructure": self.opencti.infrastructure.list,
@@ -1781,10 +1885,13 @@ class OpenCTIStix2:
             orderMode=order_mode,
             types=types,
             getAll=True,
+            elementId=elementId,
             fromId=fromId,
             toId=toId,
+            elementWithTargetTypes=elementWithTargetTypes,
             fromTypes=fromTypes,
             toTypes=toTypes,
+            relationship_type=relationship_type,
         )
         if entities_list is not None:
             uuids = []
@@ -1863,6 +1970,19 @@ class OpenCTIStix2:
                         stix_id=item["id"],
                         value=item["value"],
                         color=item["color"],
+                        x_opencti_stix_ids=stix_ids,
+                        update=update,
+                    )
+                elif item["type"] == "vocabulary":
+                    stix_ids = self.opencti.get_attribute_in_extension("stix_ids", item)
+                    self.opencti.vocabulary.create(
+                        stix_id=item["id"],
+                        name=item["name"],
+                        category=item["category"],
+                        description=item["description"]
+                        if "description" in item
+                        else None,
+                        aliases=item["aliases"] if "aliases" in item else None,
                         x_opencti_stix_ids=stix_ids,
                         update=update,
                     )

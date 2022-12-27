@@ -131,6 +131,14 @@ class EntityTestCases:
     def case_vulnerability(api_client):
         return VulnerabilityTest(api_client)
 
+    @staticmethod
+    def data_component(api_client):
+        return DataComponentTest(api_client)
+
+    @staticmethod
+    def data_source(api_client):
+        return DataSourceTest(api_client)
+
 
 class EntityTest:
     def __init__(self, api_client):
@@ -504,6 +512,8 @@ class NoteTest(EntityTest):
             "content": "You would like to know that",
             "confidence": 50,
             "authors": ["you"],
+            "note_types": ["internal"],
+            "likelihood": 75,
             #    "lang": "en",
         }
 
@@ -591,7 +601,7 @@ class ReportTest(EntityTest):
             "name": "The Black Vine Cyberespionage Group",
             "description": "A simple report with an indicator and campaign",
             "published": "2016-01-20T17:00:00.000Z",
-            "report_types": ["campaign"],
+            "report_types": ["threat-report"],
             # "lang": "en",
             # "object_refs": [self.ipv4["id"], self.domain["id"]],
         }
@@ -875,7 +885,6 @@ class ToolTest(EntityTest):
         return {
             "type": "Tool",
             "description": "The Evil Org threat actor group",
-            "tool_types": ["remote-access"],
             "name": "VNC",
         }
 
@@ -911,3 +920,23 @@ class VulnerabilityTest(EntityTest):
             "key": "name",
             "values": ["CVE-2016-1234"],
         }
+
+
+class DataComponentTest(EntityTest):
+    def data(self) -> Dict:
+        return {
+            "type": "DataComponent",
+            "name": "Command Execution",
+            "description": "A command Execution",
+        }
+
+    def own_class(self):
+        return self.api_client.data_component
+
+
+class DataSourceTest(EntityTest):
+    def data(self) -> Dict:
+        return {"type": "DataSource", "name": "Command", "description": "A command"}
+
+    def own_class(self):
+        return self.api_client.data_source

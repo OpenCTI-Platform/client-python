@@ -1,7 +1,10 @@
 # coding: utf-8
 
+import datetime
 import json
 import uuid
+
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Note:
@@ -109,6 +112,8 @@ class Note:
             attribute_abstract
             content
             authors
+            note_types
+            likelihood
             objects {
                 edges {
                     node {
@@ -185,6 +190,24 @@ class Note:
                         ... on Incident {
                             name
                         }
+                        ... on Event {
+                            name
+                        }
+                        ... on Channel {
+                            name
+                        }
+                        ... on Narrative {
+                            name
+                        }
+                        ... on Language {
+                            name
+                        }
+                        ... on DataComponent {
+                            name
+                        }
+                        ... on DataSource {
+                            name
+                        }
                         ... on StixCoreRelationship {
                             standard_id
                             spec_version
@@ -211,8 +234,14 @@ class Note:
         """
 
     @staticmethod
-    def generate_id():
-        return "note--" + str(uuid.uuid4())
+    def generate_id(created, content):
+        content = content.lower().strip()
+        if isinstance(created, datetime.datetime):
+            created = created.isoformat()
+        data = {"content": content, "created": created}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "note--" + id
 
     """
         List Note objects
@@ -398,6 +427,8 @@ class Note:
         abstract = kwargs.get("abstract", None)
         content = kwargs.get("content", None)
         authors = kwargs.get("authors", None)
+        note_types = kwargs.get("note_types", None)
+        likelihood = kwargs.get("likelihood", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
@@ -433,6 +464,8 @@ class Note:
                         "attribute_abstract": abstract,
                         "content": content,
                         "authors": authors,
+                        "note_types": note_types,
+                        "likelihood": likelihood,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
@@ -600,6 +633,12 @@ class Note:
                 if "x_opencti_stix_ids" in stix_object
                 else None,
                 authors=stix_object["authors"] if "authors" in stix_object else None,
+                note_types=stix_object["note_types"]
+                if "note_types" in stix_object
+                else None,
+                likelihood=stix_object["likelihood"]
+                if "likelihood" in stix_object
+                else None,
                 objectOrganization=stix_object["granted_refs"]
                 if "granted_refs" in stix_object
                 else None,

@@ -133,6 +133,8 @@ class StixCoreObject:
                 attribute_abstract
                 content
                 authors
+                note_types
+                likelihood
             }
             ... on ObservedData {
                 first_observed
@@ -159,6 +161,33 @@ class StixCoreObject:
                 name
                 description
                 x_opencti_aliases
+            }
+            ... on DataComponent {
+                name
+                description
+                dataSource {
+                    id
+                    standard_id
+                    entity_type
+                    parent_types
+                    spec_version
+                    created_at
+                    updated_at
+                    revoked
+                    confidence
+                    created
+                    modified
+                    name
+                    description
+                    x_mitre_platforms
+                    collection_layers
+                }
+            }
+            ... on DataSource {
+                name
+                description
+                x_mitre_platforms
+                collection_layers
             }
             ... on Individual {
                 name
@@ -347,6 +376,14 @@ class StixCoreObject:
             }
             ... on Language {
                 name
+            }
+            ... on DataComponent {
+                name
+                description
+            }
+            ... on DataSource {
+                name
+                description
             }
             ... on StixCyberObservable {
                 observable_value
@@ -557,6 +594,8 @@ class StixCoreObject:
         types = kwargs.get("types", None)
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
+        relationship_type = kwargs.get("relationship_type", None)
+        element_id = kwargs.get("elementId", None)
         first = kwargs.get("first", 100)
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
@@ -573,8 +612,8 @@ class StixCoreObject:
         )
         query = (
             """
-                    query StixCoreObjects($types: [String], $filters: [StixCoreObjectsFiltering], $search: String, $first: Int, $after: ID, $orderBy: StixCoreObjectsOrdering, $orderMode: OrderingMode) {
-                        stixCoreObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                    query StixCoreObjects($types: [String], $filters: [StixCoreObjectsFiltering], $search: String, $relationship_type: [String], $elementId: String, $first: Int, $after: ID, $orderBy: StixCoreObjectsOrdering, $orderMode: OrderingMode) {
+                        stixCoreObjects(types: $types, filters: $filters, search: $search, relationship_type: $relationship_type, elementId: $elementId, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                             edges {
                                 node {
                                     """
@@ -599,6 +638,8 @@ class StixCoreObject:
                 "types": types,
                 "filters": filters,
                 "search": search,
+                "relationship_type": relationship_type,
+                "elementId": element_id,
                 "first": first,
                 "after": after,
                 "orderBy": order_by,
@@ -619,6 +660,8 @@ class StixCoreObject:
                         "types": types,
                         "filters": filters,
                         "search": search,
+                        "relationship_type": relationship_type,
+                        "elementId": element_id,
                         "first": first,
                         "after": after,
                         "orderBy": order_by,
@@ -632,55 +675,6 @@ class StixCoreObject:
             return self.opencti.process_multiple(
                 result["data"]["stixCoreObjects"], with_pagination
             )
-
-    """
-        Update a Stix-Domain-Object object field
-
-        :param id: the Stix-Domain-Object id
-        :param key: the key of the field
-        :param value: the value of the field
-        :return The updated Stix-Domain-Object object
-    """
-
-    def merge(self, **kwargs):
-        _id = kwargs.get("id", None)
-        stix_core_objects_ids = kwargs.get("object_ids", None)
-        if _id is not None and stix_core_objects_ids is not None:
-            self.opencti.log(
-                "info",
-                "Merging Core object {"
-                + _id
-                + "} with {"
-                + ",".join(stix_core_objects_ids)
-                + "}.",
-            )
-            query = """
-                    mutation StixCoreObjectEdit($id: ID!, $stixCoreObjectsIds: [String]!) {
-                        stixCoreObjectEdit(id: $id) {
-                            merge(stixCoreObjectsIds: $stixCoreObjectsIds) {
-                                id
-                                standard_id
-                                entity_type
-                            }
-                        }
-                    }
-                """
-            result = self.opencti.query(
-                query,
-                {
-                    "id": _id,
-                    "stixCoreObjectsIds": stix_core_objects_ids,
-                },
-            )
-            return self.opencti.process_multiple_fields(
-                result["data"]["stixCoreObjectEdit"]["merge"]
-            )
-        else:
-            self.opencti.log(
-                "error",
-                "[opencti_stix_core_object] Missing parameters: id and object_ids",
-            )
-            return None
 
     def list_files(self, **kwargs):
         id = kwargs.get("id", None)
@@ -871,30 +865,3 @@ class StixCoreObject:
         else:
             self.opencti.log("error", "Missing parameters: id")
             return None
-
-    def ask_for_enrichment(self, **kwargs) -> str:
-        id = kwargs.get("id", None)
-        connector_id = kwargs.get("connector_id", None)
-
-        if id is None or connector_id is None:
-            self.opencti.log("error", "Missing parameters: id and connector_id")
-            return ""
-
-        query = """
-            mutation StixCoreObjectEnrichmentLinesMutation($id: ID!, $connectorId: ID!) {
-                stixCoreObjectEdit(id: $id) {
-                    askEnrichment(connectorId: $connectorId) {
-                        id
-                    }
-                }
-            }
-            """
-
-        result = self.opencti.query(
-            query,
-            {
-                "id": id,
-                "connectorId": connector_id,
-            },
-        )
-        return result["data"]["stixCoreObjectEdit"]["askEnrichment"]["id"]
