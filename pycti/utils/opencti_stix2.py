@@ -1801,12 +1801,13 @@ class OpenCTIStix2:
         order_mode: str = None,
         max_marking_definition: Dict = None,
         types: List = None,
+        elementId: str = None,
         fromId: str = None,
         toId: str = None,
+        elementWithTargetTypes: [str] = None,
         fromTypes: [str] = None,
         toTypes: [str] = None,
         relationship_type: [str] = None,
-        elementId: str = None,
     ) -> Dict:
         max_marking_definition_entity = (
             self.opencti.marking_definition.read(id=max_marking_definition)
@@ -1884,12 +1885,13 @@ class OpenCTIStix2:
             orderMode=order_mode,
             types=types,
             getAll=True,
+            elementId=elementId,
             fromId=fromId,
             toId=toId,
+            elementWithTargetTypes=elementWithTargetTypes,
             fromTypes=fromTypes,
             toTypes=toTypes,
             relationship_type=relationship_type,
-            elementId=elementId,
         )
         if entities_list is not None:
             uuids = []

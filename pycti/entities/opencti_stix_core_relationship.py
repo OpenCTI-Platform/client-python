@@ -397,10 +397,18 @@ class StixCoreRelationship:
             "info",
             "Listing stix_core_relationships with {type: "
             + str(relationship_type)
+            + ", element_id: "
+            + str(element_id)
             + ", from_id: "
             + str(from_id)
             + ", to_id: "
             + str(to_id)
+            + ", element_with_target_types: "
+            + str(element_with_target_types)
+            + ", from_types: "
+            + str(from_types)
+            + ", to_types: "
+            + str(to_types)
             + "}",
         )
         query = (
