@@ -302,11 +302,27 @@ class StreamInputConnector(Connector):
 
         state = self.get_state()
 
-        start_from = state.get("start_from", state.get("connectorLastEventId", "0-0"))
+        start_from = state.get(
+            "start_from",
+            # for backward compatibility
+            state.get("connectorLastEventId", ""),
+        )
+        if start_from == "":
+            if self.base_config.live_stream_start_timestamp:
+                start_from = f"{self.base_config.live_stream_start_timestamp}-0"
+            else:
+                start_from = "0-0"
+
         recover_until = state.get(
             "recover_until",
-            state.get("connectorStartTime", date_now().replace("+00:00", "Z")),
+            # for backward compatibility
+            state.get("connectorStartTime", ""),
         )
+        if recover_until == "":
+            if self.base_config.live_stream_recover_iso_date:
+                recover_until = self.base_config.live_stream_recover_iso_date
+            else:
+                recover_until = date_now().replace("+00:00", "Z")
 
         self.set_state({"start_from": start_from})
         self.set_state({"recover_until": recover_until})
@@ -378,7 +394,9 @@ class StreamInputConnector(Connector):
                     # Not all stream connectors are returning stix bundles for import
                     if work_id is not None and len(bundles) > 0:
                         for bundle in bundles:
-                            self._send_bundle(bundle, work_id, None, self.base_config.scope)
+                            self._send_bundle(
+                                bundle, work_id, None, self.base_config.scope
+                            )
 
                 self.set_state({"start_from": str(msg.id)})
                 self.set_last_run()
@@ -389,7 +407,9 @@ class StreamInputConnector(Connector):
             self.stream_alive.stop()
         self.logger.info("Ending")
 
-    def run(self, config: BaseModel, msg: Event) -> (Optional[str], Optional[List[Bundle]]):
+    def run(
+        self, config: BaseModel, msg: Event
+    ) -> (Optional[str], Optional[List[Bundle]]):
         pass
 
 

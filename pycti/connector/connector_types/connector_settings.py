@@ -57,19 +57,21 @@ class ExternalImportConfig(ConnectorBaseConfig):
 
 
 class StreamInputConfig(ConnectorBaseConfig):
-    live_stream_id: str = Field(env="connector_live_stream_id")
-    live_stream_listen_delete: str = Field(env="connector_live_stream_listen_delete")
-    live_stream_no_dependencies: str = Field(
-        env="connector_live_stream_no_dependencies"
+    live_stream_id: str = Field(env="connector_live_stream_id", default=None)
+    live_stream_listen_delete: bool = Field(
+        env="connector_live_stream_listen_delete", default=True
     )
-    live_stream_with_inferences: str = Field(
-        env="connector_live_stream_with_inferences"
+    live_stream_no_dependencies: bool = Field(
+        env="connector_live_stream_no_dependencies", default=False
+    )
+    live_stream_with_inferences: bool = Field(
+        env="connector_live_stream_with_inferences", default=False
     )
     live_stream_recover_iso_date: str = Field(
-        env="connector_live_stream_recover_iso_date"
+        env="connector_live_stream_recover_iso_date", default=None
     )
     live_stream_start_timestamp: str = Field(
-        env="connector_live_stream_start_timestamp"
+        env="connector_live_stream_start_timestamp", default=None
     )
 
 
