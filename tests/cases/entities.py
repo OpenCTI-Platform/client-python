@@ -2,7 +2,10 @@ from typing import Dict, List, Union
 
 from stix2 import TLP_GREEN, TLP_WHITE, AttackPattern
 
-from pycti.connector.tests.utils import get_incident_end_date, get_incident_start_date
+from pycti.test_plugin.utils import (
+    get_incident_end_date,
+    get_incident_start_date,
+)
 from pycti.utils.constants import ContainerTypes, IdentityTypes, LocationTypes
 
 

@@ -8,7 +8,7 @@ from pycti.connector.connector_types.connector_base_types import (
     InternalFileInputConnector,
 )
 from pycti.connector.connector_types.connector_settings import ConnectorConfig
-from pycti.connector.tests.test_class import ConnectorTest
+from pycti.test_plugin.test_class import ConnectorTest
 
 
 class IIModel(ConnectorConfig):

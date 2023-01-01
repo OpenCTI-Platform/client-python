@@ -1,5 +1,5 @@
 from pycti.connector.connector_types.worker import Worker
-from pycti.connector.tests.test_class import ConnectorTest
+from pycti.test_plugin.test_class import ConnectorTest
 
 
 class WorkerTest(ConnectorTest):
