@@ -1,6 +1,6 @@
 from pytest_cases import fixture, parametrize_with_cases
 
-from pycti.connector.tests.utils import compare_values
+from pycti.test_plugin.utils import compare_values
 from tests.cases.entities import EntityTestCases
 
 

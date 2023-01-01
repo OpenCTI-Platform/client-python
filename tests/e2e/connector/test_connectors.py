@@ -1,11 +1,13 @@
 import base64
 import json
+import time
 
 from pytest import fixture, mark
 from stix2 import Bundle
 
+from pycti import OpenCTIApiClient
 from pycti.connector.libs.opencti_schema import WorkerMessage
-from pycti.connector.tests.test_library import wait_for_test_to_finish
+from pycti.test_plugin.test_library import wait_for_test_to_finish
 from tests.cases.external_input_connectors import ExternalInputTest
 from tests.cases.internal_enrichment_connectors import (
     InternalEnrichmentTest,
@@ -23,7 +25,7 @@ CONNECTORS = [
     ExternalInputTest,
     InternalEnrichmentTest,
     InternalEnrichmentTest_TLP_Invalid,
-    StreamConnectorTest
+    StreamConnectorTest,
 ]
 WORKFLOW_CONNECTORS = [InternalFileInputWorkflowTest]
 
@@ -82,7 +84,9 @@ def connector_test_workflow(request, api_client, monkeypatch):
 
 
 @mark.connectors
-def test_connector_workflow_run(connector_test_workflow, api_client):
+def test_connector_workflow_run(
+    connector_test_workflow, api_client: OpenCTIApiClient, timeout: int = 60
+):
     connector, worker = connector_test_workflow
 
     connector.run()
@@ -96,13 +100,22 @@ def test_connector_workflow_run(connector_test_workflow, api_client):
 
     work_id = work_ids[0]["id"]
     finished = False
-    while not finished:
+    sleep_delay = 0.1
+    time_spent = 0
+    while not finished and time_spent < timeout:
         work_info = api_client.work.get_work(work_id)
         if (
             work_info["tracking"]["import_expected_number"]
             == work_info["tracking"]["import_processed_number"]
         ):
             finished = True
+        else:
+            time.sleep(sleep_delay)
+            time_spent += sleep_delay
+
+    assert (
+        time_spent < timeout
+    ), f"Timeout after {time_spent} seconds. Please step through your code to find the issue if no error is visible."
 
     expected_error = connector.get_expected_exception()
     if expected_error == "":
