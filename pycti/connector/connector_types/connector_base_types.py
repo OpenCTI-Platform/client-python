@@ -288,13 +288,8 @@ class StreamInputConnector(Connector):
 
     def start(self) -> None:
         # Call it for the first time directly
+        # TODO run again if first run exits (no new messages from server?)
         self.issue_call()
-
-        # Then start loop which spawns the first process
-        # in self.interval seconds
-        while not self.stop_event.is_set():
-            schedule.run_pending()
-            time.sleep(1)
 
     def issue_call(self):
         # Get the current timestamp and check
@@ -344,32 +339,29 @@ class StreamInputConnector(Connector):
             live_stream_args = f"{live_stream_args}&recover={recover_until}"
 
         live_stream_url = f"{url}{live_stream_args}"
-        listen_delete = str(self.base_config.live_stream_listen_delete).lower()
-        no_dependencies = str(self.base_config.live_stream_no_dependencies).lower()
-        with_inferences = str(self.base_config.live_stream_with_inferences).lower()
+        listen_delete = self.base_config.live_stream_listen_delete
+        no_dependencies = self.base_config.live_stream_no_dependencies
+        with_inferences = self.base_config.live_stream_with_inferences
 
         self.logger.info(
-            'Starting to listen stream events on "'
-            + live_stream_url
-            + '" (listen-delete: '
-            + listen_delete
-            + ", no-dependencies: "
-            + no_dependencies
-            + ", with-inferences: "
-            + with_inferences
-            + ")"
+            f'Starting to listen stream events on "{live_stream_url}" (listen-delete: {listen_delete}, no-dependencies: {no_dependencies}, with-inferences: {with_inferences})'
         )
 
-        messages = SSEClient(
-            live_stream_url,
-            headers={
-                "authorization": f"Bearer ${self.base_config.token}",
-                "listen-delete": listen_delete,
-                "no-dependencies": no_dependencies,
-                "with-inferences": with_inferences,
-            },
-            verify=self.base_config.ssl_verify,
-        )
+        try:
+            messages = SSEClient(
+                live_stream_url,
+                headers={
+                    "authorization": f"Bearer {self.base_config.token}",
+                    "listen-delete": str(listen_delete).lower(),
+                    "no-dependencies": str(no_dependencies).lower(),
+                    "with-inferences": str(with_inferences).lower(),
+                },
+                verify=self.base_config.ssl_verify,
+            )
+        except Exception as e:
+            self.logger.exception(f"Unable to set up SSEClient: '{e}'")
+            self.set_state({"error": str(e)})
+            return
 
         # Iter on stream messages
         for msg in messages:
@@ -411,186 +403,3 @@ class StreamInputConnector(Connector):
         self, config: BaseModel, msg: Event
     ) -> (Optional[str], Optional[List[Bundle]]):
         pass
-
-
-#
-# class ListenStreamConnector(Connector):
-#     def __init__(self):
-#         super().__init__()
-#
-#         self.broker_thread = threading.Thread(
-#             target=self.broker.listen_stream,
-#             name="Pika Broker Listen",
-#             args=[self.config["queue"], self.process_broker_message],
-#         )
-#
-#         self.broker_thread.daemon = True
-#         self.broker_thread.start()
-#
-#     def process_broker_message(self, message: ConnectorMessage) -> None:
-#         try:
-#             current_state = self.get_state()
-#             if current_state is None:
-#                 current_state = {
-#                     "connectorStartTime": date_now(),
-#                     "connectorLastEventId": f"{self.start_timestamp}-0"
-#                     if self.start_timestamp is not None
-#                     and len(self.start_timestamp) > 0
-#                     else "-",
-#                 }
-#                 self.set_state(current_state)
-#
-#             # If URL and token are provided, likely consuming a remote stream
-#             if self.url is not None and self.token is not None:
-#                 # If a live stream ID, appending the URL
-#                 if self.base_config.live_stream_id is not None:
-#                     live_stream_uri = f"/{self.base_config.live_stream_id}"
-#                 elif self.base_config.connect_live_stream_id is not None:
-#                     live_stream_uri = f"/{self.base_config.connect_live_stream_id}"
-#                 else:
-#                     live_stream_uri = ""
-#                 # Live stream "from" should be empty if start from the beginning
-#                 if (
-#                     self.base_config.live_stream_id is not None
-#                 ):
-#
-#                     live_stream_from = (
-#                         f"?from={current_state['connectorLastEventId']}"
-#                         if "connectorLastEventId" in current_state
-#                         and current_state["connectorLastEventId"] != "-"
-#                         else "?from=0-0&recover="
-#                         + (
-#                             current_state["connectorStartTime"]
-#                             if self.recover_iso_date is None
-#                             else self.recover_iso_date
-#                         )
-#                     )
-#                 # Global stream "from" should be 0 if starting from the beginning
-#                 else:
-#                     live_stream_from = "?from=" + (
-#                         current_state["connectorLastEventId"]
-#                         if "connectorLastEventId" in current_state
-#                         and current_state["connectorLastEventId"] != "-"
-#                         else "0-0"
-#                     )
-#                 live_stream_url = (
-#                     f"{self.url}/stream{live_stream_uri}{live_stream_from}"
-#                 )
-#                 opencti_ssl_verify = (
-#                     self.verify_ssl if self.verify_ssl is not None else True
-#                 )
-#                 logging.info(
-#                     "%s",
-#                     (
-#                         "Starting listening stream events (URL: "
-#                         f"{live_stream_url}, SSL verify: {opencti_ssl_verify}, Listen Delete: {self.listen_delete})"
-#                     ),
-#                 )
-#                 messages = SSEClient(
-#                     live_stream_url,
-#                     headers={
-#                         "authorization": "Bearer " + self.token,
-#                         "listen-delete": "false"
-#                         if self.listen_delete is False
-#                         else "true",
-#                         "no-dependencies": "true"
-#                         if self.no_dependencies is True
-#                         else "false",
-#                         "with-inferences": "true"
-#                         if self.helper.connect_live_stream_with_inferences is True
-#                         else "false",
-#                     },
-#                     verify=opencti_ssl_verify,
-#                 )
-#             else:
-#                 live_stream_uri = (
-#                     f"/{self.helper.connect_live_stream_id}"
-#                     if self.helper.connect_live_stream_id is not None
-#                     else ""
-#                 )
-#                 if self.helper.connect_live_stream_id is not None:
-#                     live_stream_from = (
-#                         f"?from={current_state['connectorLastEventId']}"
-#                         if "connectorLastEventId" in current_state
-#                         and current_state["connectorLastEventId"] != "-"
-#                         else "?from=0-0&recover="
-#                         + (
-#                             self.helper.date_now_z()
-#                             if self.recover_iso_date is None
-#                             else self.recover_iso_date
-#                         )
-#                     )
-#                 # Global stream "from" should be 0 if starting from the beginning
-#                 else:
-#                     live_stream_from = "?from=" + (
-#                         current_state["connectorLastEventId"]
-#                         if "connectorLastEventId" in current_state
-#                         and current_state["connectorLastEventId"] != "-"
-#                         else "0-0"
-#                     )
-#                 live_stream_url = f"{self.helper.opencti_url}/stream{live_stream_uri}{live_stream_from}"
-#                 logging.info(
-#                     "%s",
-#                     (
-#                         f"Starting listening stream events (URL: {live_stream_url}"
-#                         f", SSL verify: {self.helper.opencti_ssl_verify}, Listen Delete: {self.helper.connect_live_stream_listen_delete}, No Dependencies: {self.helper.connect_live_stream_no_dependencies})"
-#                     ),
-#                 )
-#                 messages = SSEClient(
-#                     live_stream_url,
-#                     headers={
-#                         "authorization": "Bearer " + self.helper.opencti_token,
-#                         "listen-delete": "false"
-#                         if self.helper.connect_live_stream_listen_delete is False
-#                         else "true",
-#                         "no-dependencies": "true"
-#                         if self.helper.connect_live_stream_no_dependencies is True
-#                         else "false",
-#                         "with-inferences": "true"
-#                         if self.helper.connect_live_stream_with_inferences is True
-#                         else "false",
-#                     },
-#                     verify=self.helper.opencti_ssl_verify,
-#                 )
-#             # Iter on stream messages
-#             for msg in messages:
-#                 if self.exit:
-#                     break
-#                 if msg.event == "heartbeat" or msg.event == "connected":
-#                     continue
-#                 if msg.event == "sync":
-#                     if msg.id is not None:
-#                         state = self.helper.get_state()
-#                         state["connectorLastEventId"] = str(msg.id)
-#                         self.helper.set_state(state)
-#                 else:
-#                     self.callback(msg)
-#                     if msg.id is not None:
-#                         state = self.helper.get_state()
-#                         state["connectorLastEventId"] = str(msg.id)
-#                         self.helper.set_state(state)
-#         except:
-#             sys.excepthook(*sys.exc_info())
-#
-#         if message.internal.applicant_id is not None:
-#             self.applicant_id = message.internal.applicant_id
-#             self.api.set_applicant_id_header(message.internal.applicant_id)
-#
-#         self.api.work.to_received(
-#                 message.internal.work_id, "Connector ready to process the operation"
-#         )
-#         try:
-#
-#             run_message, bundle = self.run(message.event, self.connector_config)
-#             self.broker.send(bundle)
-#             self.api.work.to_processed(message.internal.work_id, run_message)
-#
-#             # if isinstance(bundle, Bundle):
-#             #     bundle = bundle.serialize()
-#             # run.bundle = bundle
-#         except ValueError as e:  # pydantic validation error
-#             self.logger.exception("Error in message processing, reporting error to API")
-#             try:
-#                 self.api.work.to_processed(message.internal.work_id, str(e), True)
-#             except:  # pylint: disable=bare-except
-#                 self.logger.error("Failing reporting the processing")
