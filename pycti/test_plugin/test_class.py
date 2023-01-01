@@ -53,7 +53,7 @@ class ConnectorTest:
         bundle_received_objects = bundle_received["objects"]
         assert len(bundle_received_objects) == len(
             self.bundle["objects"]
-        ), f"Bundle sizes are not equal (received {len(bundle_received_objects)} vs expected {self.bundle['objets']})"
+        ), f"Bundle sizes are not equal (received {len(bundle_received_objects)} vs expected {self.bundle['objects']})"
 
         for _object in self.bundle["objects"]:
             found = False

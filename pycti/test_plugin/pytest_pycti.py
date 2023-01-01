@@ -7,7 +7,7 @@ from _pytest.nodes import Item
 from pytest import fixture, hookimpl
 
 from pycti import OpenCTIApiClient, OpenCTIStix2Splitter
-from pycti.connector.tests.test_class import DummyConnector, RabbitMQ
+from pycti.test_plugin.test_class import DummyConnector, RabbitMQ
 
 
 def pytest_addoption(parser: Parser) -> None:
