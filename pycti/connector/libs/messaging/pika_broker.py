@@ -17,6 +17,8 @@ class PikaBroker(object):
             broker_settings["connection"]["user"], broker_settings["connection"]["pass"]
         )
 
+        self.channel = None
+
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=broker_settings["connection"]["host"],
@@ -100,9 +102,9 @@ class PikaBroker(object):
             except (StreamLostError, AttributeError):
                 # No idea why pika throws this exception when closing
                 pass
-        else:
+        elif self.connection:
             try:
                 self.connection.close()
-            except StreamLostError:
+            except (StreamLostError, AttributeError):
                 # No idea why pika throws this exception when closing
                 pass
