@@ -1,7 +1,7 @@
 from pytest_cases import fixture, parametrize_with_cases
 
 from pycti.test_plugin.utils import compare_values
-from tests.e2e.support_cases import EntityTestCases
+from tests.e2e.support_cases.entities import EntityTestCases
 
 
 @fixture
