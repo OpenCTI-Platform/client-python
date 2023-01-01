@@ -18,14 +18,14 @@ steps:
     commands:
       - pip3 install -r requirements.txt --user
       - pip3 install -r test-requirements.txt --user
-      - python3 -m pytest -p pycti.connector.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
+      - python3 -m pytest -p pycti.test_plugin.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
 # skipped 3.8 tests, as the pytest plugin crashes 
 #  - name: client-test-38
 #    image: python:3.8
 #    commands:
 #      - pip3 install -r requirements.txt --user
 #      - pip3 install -r test-requirements.txt --user
-#      - python3 -m pytest -p pycti.connector.tests.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
+#      - python3 -m pytest -p pycti.test_plugin.pytest_pycti --no-header -vv --disable-warnings --cov=pycti --drone --connectors
 
   # always run the examples last since they don't clean up
   - name: example-tests
