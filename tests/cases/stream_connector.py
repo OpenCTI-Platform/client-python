@@ -1,13 +1,12 @@
 import uuid
 from typing import List, Optional
 
+from sseclient import Event
 from stix2 import Bundle, IPv4Address
 
 from pycti.connector.connector_types.connector_base_types import StreamInputConnector
 from pycti.connector.connector_types.connector_settings import ConnectorConfig
-from sseclient import Event
-
-from pycti.connector.tests.test_class import ConnectorTest
+from pycti.test_plugin.test_class import ConnectorTest
 
 
 class StreamModel(ConnectorConfig):
@@ -19,10 +18,12 @@ class StreamConnector(StreamInputConnector):
     config = StreamModel
     bundle = Bundle(IPv4Address(value="177.60.40.1"), allow_custom=True)
 
-    def run(self, config: StreamModel, msg: Event) -> (Optional[str], Optional[List[Bundle]]):
+    def run(
+        self, config: StreamModel, msg: Event
+    ) -> (Optional[str], Optional[List[Bundle]]):
         self.logger.info(f"Received message: {msg}")
-        #return "Finished", [self.bundle]
-        return
+        return "Finished", [self.bundle]
+        # return "1234", []
 
 
 class StreamConnectorTest(ConnectorTest):
