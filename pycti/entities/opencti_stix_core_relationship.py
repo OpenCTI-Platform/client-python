@@ -210,6 +210,9 @@ class StixCoreRelationship:
                     name
                     description
                 }
+                ... on Case {
+                    name
+                }                         
                 ... on StixCyberObservable {
                     observable_value
                 }
@@ -317,6 +320,9 @@ class StixCoreRelationship:
                     name
                     description
                 }
+                ... on Case {
+                    name
+                }                
                 ... on StixCyberObservable {
                     observable_value
                 }
