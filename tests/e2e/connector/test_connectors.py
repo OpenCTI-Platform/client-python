@@ -8,17 +8,17 @@ from stix2 import Bundle
 from pycti import OpenCTIApiClient
 from pycti.connector.libs.opencti_schema import WorkerMessage
 from pycti.test_plugin.test_library import wait_for_test_to_finish
-from tests.cases.external_input_connectors import ExternalInputTest
-from tests.cases.internal_enrichment_connectors import (
+from tests.e2e.support_cases import (
+    ExternalInputTest,
+    InternalFileInputTest,
+    InternalFileInputWorkflowTest,
+    StreamConnectorTest,
+    WorkerTest,
+)
+from tests.e2e.support_cases.internal_enrichment_connectors import (
     InternalEnrichmentTest,
     InternalEnrichmentTest_TLP_Invalid,
 )
-from tests.cases.internal_file_input_connectors import (
-    InternalFileInputTest,
-    InternalFileInputWorkflowTest,
-)
-from tests.cases.stream_connector import StreamConnectorTest
-from tests.cases.worker_connector import WorkerTest
 
 CONNECTORS = [
     InternalFileInputTest,
