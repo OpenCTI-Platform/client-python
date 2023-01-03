@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import yaml
-from pydantic import BaseSettings, Field
+from pydantic import BaseSettings, Extra, Field
 
 from pycti.connector.libs.connector_utils import merge_dict
 
@@ -41,8 +41,8 @@ class ConnectorBaseSettings(ConnectorBaseSettingConfig):
 
 
 class ConnectorBaseConfig(ConnectorBaseSettings):
-    id: str = Field(env="connector_id")
-    name: str = Field(env="connector_name")
+    id: str = Field(env="connector_id", alias="connector_id")
+    name: str = Field(env="connector_name", alias="connector_name")
     testing: bool = Field(env="connector_testing", default=False)
     confidence_level: int = Field(env="connector_confidence_level", default=100)
     # scope: list[str] = Field(env="connector_scope")
@@ -90,6 +90,7 @@ class WorkerConfig(ConnectorBaseSettings):
 class ConnectorConfig(ConnectorBaseSettingConfig):
     class Config:
         env_prefix = "app_"
+        extra = Extra.ignore
 
 
 def yml_config_setting(settings: BaseSettings) -> Dict[str, Any]:
