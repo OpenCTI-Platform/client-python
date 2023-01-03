@@ -4,6 +4,8 @@ from typing import Any, Dict
 import yaml
 from pydantic import BaseSettings, Field
 
+from pycti.connector.libs.connector_utils import merge_dict
+
 
 class ConnectorBaseSettingConfig(BaseSettings):
     class Config:
@@ -24,12 +26,18 @@ class ConnectorBaseSettingConfig(BaseSettings):
 
 
 class ConnectorBaseSettings(ConnectorBaseSettingConfig):
-    url: str = Field(env="opencti_url")
-    token: str = Field(env="opencti_token")
-    ssl_verify: bool = Field(env="opencti_ssl_verify", default=True)
-    json_logging: bool = Field(env="opencti_json_logging", default=False)
-    broker: str = Field(env="opencti_broker", default="pika")
-    log_level: str = Field(env="connector_log_level", default="INFO")
+    url: str = Field(env="opencti_url", alias="opencti_url")
+    token: str = Field(env="opencti_token", alias="opencti_token")
+    ssl_verify: bool = Field(
+        env="opencti_ssl_verify", alias="opencti_ssl_verify", default=True
+    )
+    json_logging: bool = Field(
+        env="connector_json_logging", alias="connector_json_logging", default=False
+    )
+    broker: str = Field(env="opencti_broker", alias="opencti_broker", default="pika")
+    log_level: str = Field(
+        env="connector_log_level", alias="connector_log_level", default="INFO"
+    )
 
 
 class ConnectorBaseConfig(ConnectorBaseSettings):
@@ -87,8 +95,18 @@ class ConnectorConfig(ConnectorBaseSettingConfig):
 def yml_config_setting(settings: BaseSettings) -> Dict[str, Any]:
     encoding = settings.__config__.env_file_encoding
     path = Path("config.yml")
+    upper_path = Path("../config.yml")
+    test_path = Path("./tests/integration/connector/settings_yml/config.yml")
     content = {}
     if path.exists():
         with open(path, "r", encoding=encoding) as f:
             content = yaml.safe_load(f)
+    elif upper_path.exists():
+        with open(upper_path, "r", encoding=encoding) as f:
+            content = yaml.safe_load(f)
+    elif test_path.exists():
+        with open(test_path, "r", encoding=encoding) as f:
+            content = yaml.safe_load(f)
+
+    content = merge_dict(content)
     return content

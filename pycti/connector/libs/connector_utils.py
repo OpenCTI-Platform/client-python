@@ -9,6 +9,7 @@ from queue import Queue
 from typing import Any, Dict, List
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+SEPARATOR = "_"
 
 
 # TODO implement JSON logging format
@@ -144,3 +145,16 @@ class StreamAlive(threading.Thread):
     def stop(self) -> None:
         logging.info("Preparing for clean shutdown")
         self.exit_event.set()
+
+
+def merge_dict(dictionary: dict) -> dict:
+    result = {}
+    for key, val in dictionary.items():
+        if isinstance(val, dict):
+            tmp_result = merge_dict(val)
+            for t_key, t_val in tmp_result.items():
+                result[f"{key}{SEPARATOR}{t_key}"] = t_val
+        else:
+            result[f"{key}"] = val
+
+    return result
