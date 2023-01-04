@@ -1,0 +1,9 @@
+connector:
+  log_level: 'DEBUG'
+  json_logging: False
+
+opencti:
+  url: 'https://opencti.io'
+  token: '7f175acc-811b-465d-8a07-47ef11b92392'
+  broker: 'default'
+  ssl_verify: False

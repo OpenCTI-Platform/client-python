@@ -3,12 +3,15 @@ from typing import Any, Dict
 
 import yaml
 from pydantic import BaseSettings, Extra, Field
+from pydantic.env_settings import EnvSettingsSource
 
 from pycti.connector.libs.connector_utils import merge_dict
 
 
 class ConnectorBaseSettingConfig(BaseSettings):
     class Config:
+        env_file_encoding = "utf-8"
+
         @classmethod
         def customise_sources(
             cls,
@@ -18,11 +21,45 @@ class ConnectorBaseSettingConfig(BaseSettings):
         ):
             return (
                 init_settings,
-                yml_config_setting,
-                # json_config_setting,
+                YamlSettingsSource(env_settings).__call__,
                 env_settings,
                 file_secret_settings,
             )
+
+
+class YamlSettingsSource:
+    # A BaseSettings hack to get the path declared in the constructor
+    # for running the test cases
+    __slots__ = ("env_settings",)
+
+    def __init__(self, env_settings: EnvSettingsSource):
+        self.env_settings = env_settings
+
+    def __call__(self, settings: BaseSettings) -> Dict[str, Any]:
+        encoding = settings.__config__.env_file_encoding
+
+        if self.env_settings.env_file:
+            paths = [Path(self.env_settings.env_file)]
+        else:
+            paths = [Path("config.yml"), Path("../config.yml")]
+        content = {}
+        for path in paths:
+            if path.exists():
+                with open(path, "r", encoding=encoding) as f:
+                    content = yaml.safe_load(f)
+                    break
+
+        content = merge_dict(content)
+        return content
+
+    def __repr__(self) -> str:
+        return f"YamlSettingsSource(yaml_file={self.env_settings.env_file!r})"
+
+
+class ConnectorConfig(ConnectorBaseSettingConfig):
+    class Config:
+        env_prefix = "app_"
+        extra = Extra.ignore
 
 
 class ConnectorBaseSettings(ConnectorBaseSettingConfig):
@@ -85,29 +122,3 @@ class StreamInputConfig(ConnectorBaseConfig):
 
 class WorkerConfig(ConnectorBaseSettings):
     pass
-
-
-class ConnectorConfig(ConnectorBaseSettingConfig):
-    class Config:
-        env_prefix = "app_"
-        extra = Extra.ignore
-
-
-def yml_config_setting(settings: BaseSettings) -> Dict[str, Any]:
-    encoding = settings.__config__.env_file_encoding
-    path = Path("config.yml")
-    upper_path = Path("../config.yml")
-    test_path = Path("./tests/integration/connector/settings_yml/config.yml")
-    content = {}
-    if path.exists():
-        with open(path, "r", encoding=encoding) as f:
-            content = yaml.safe_load(f)
-    elif upper_path.exists():
-        with open(upper_path, "r", encoding=encoding) as f:
-            content = yaml.safe_load(f)
-    elif test_path.exists():
-        with open(test_path, "r", encoding=encoding) as f:
-            content = yaml.safe_load(f)
-
-    content = merge_dict(content)
-    return content
