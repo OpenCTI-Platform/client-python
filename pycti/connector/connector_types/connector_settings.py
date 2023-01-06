@@ -53,7 +53,7 @@ class YamlSettingsSource:
         return content
 
     def __repr__(self) -> str:
-        return f"YamlSettingsSource(yaml_file={self.env_settings.env_file!r})"
+        return f"YamlSettingsSource(yaml_path={self.env_settings.env_file!r})"
 
 
 class ConnectorConfig(ConnectorBaseSettingConfig):
@@ -80,43 +80,83 @@ class ConnectorBaseSettings(ConnectorBaseSettingConfig):
 class ConnectorBaseConfig(ConnectorBaseSettings):
     id: str = Field(env="connector_id", alias="connector_id")
     name: str = Field(env="connector_name", alias="connector_name")
-    testing: bool = Field(env="connector_testing", default=False)
-    confidence_level: int = Field(env="connector_confidence_level", default=100)
+    testing: bool = Field(
+        env="connector_testing", alias="connector_testing", default=False
+    )
+    confidence_level: int = Field(
+        env="connector_confidence_level",
+        alias="connector_confidence_level",
+        default=100,
+    )
     # scope: list[str] = Field(env="connector_scope")
-    scope: str = Field(env="connector_scope")
-    auto: bool = Field(env="connector_auto", default=False)
-    type: str = Field(env="connector_type")
-    contextual_only: bool = Field(env="connector_only_contextual", default=False)
-    run_and_terminate: bool = Field(env="connector_run_and_terminate", default=False)
+    scope: str = Field(env="connector_scope", alias="connector_scope")
+    auto: bool = Field(env="connector_auto", alias="connector_auto", default=False)
+    # deprecated field, as there is no use in manually defining the connector type anymore
+    connector_type: str = Field(
+        env="connector_type",
+        deprecated=True,
+        description="No need to define the connector type anymore",
+        default=None,
+    )
+    # Type is hardcoded in the connectors
+    type: str
+    contextual_only: bool = Field(
+        env="connector_only_contextual",
+        alias="connector_only_contextual",
+        default=False,
+    )
+    run_and_terminate: bool = Field(
+        env="connector_run_and_terminate",
+        alias="connector_run_and_terminate",
+        default=False,
+    )
     validate_before_import: bool = Field(
-        env="connector_validate_before_import", default=False
+        env="connector_validate_before_import",
+        alias="connector_validate_before_import",
+        default=False,
     )
 
 
 class InternalEnrichmentConfig(ConnectorBaseConfig):
-    max_tlp: str = Field(env="connector_max_tlp", default="TLP:CLEAR")
+    max_tlp: str = Field(
+        env="connector_max_tlp", alias="connector_max_tlp", default="TLP:CLEAR"
+    )
 
 
 class ExternalImportConfig(ConnectorBaseConfig):
-    interval: int = Field(env="connector_interval", default=60)
+    interval: int = Field(
+        env="connector_interval", alias="connector_interval", default=60
+    )
 
 
 class StreamInputConfig(ConnectorBaseConfig):
-    live_stream_id: str = Field(env="connector_live_stream_id", default=None)
+    live_stream_id: str = Field(
+        env="connector_live_stream_id", alias="connector_live_stream_id", default=None
+    )
     live_stream_listen_delete: bool = Field(
-        env="connector_live_stream_listen_delete", default=True
+        env="connector_live_stream_listen_delete",
+        alias="connector_live_stream_listen_delete",
+        default=True,
     )
     live_stream_no_dependencies: bool = Field(
-        env="connector_live_stream_no_dependencies", default=False
+        env="connector_live_stream_no_dependencies",
+        alias="connector_live_stream_no_dependencies",
+        default=False,
     )
     live_stream_with_inferences: bool = Field(
-        env="connector_live_stream_with_inferences", default=False
+        env="connector_live_stream_with_inferences",
+        alias="connector_live_stream_with_inferences",
+        default=False,
     )
     live_stream_recover_iso_date: str = Field(
-        env="connector_live_stream_recover_iso_date", default=None
+        env="connector_live_stream_recover_iso_date",
+        alias="connector_live_stream_recover_iso_date",
+        default=None,
     )
     live_stream_start_timestamp: str = Field(
-        env="connector_live_stream_start_timestamp", default=None
+        env="connector_live_stream_start_timestamp",
+        alias="connector_live_stream_start_timestamp",
+        default=None,
     )
 
 

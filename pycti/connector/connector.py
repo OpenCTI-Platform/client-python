@@ -33,7 +33,9 @@ class Connector(object):
         signal.signal(signal.SIGINT, self.stop)
 
         if self.scope:
-            self.base_config = self.settings(type=self.connector_type, scope=self.scope)
+            self.base_config = self.settings(
+                type=self.connector_type, connector_scope=self.scope
+            )
         else:
             self.base_config = self.settings(type=self.connector_type)
 
