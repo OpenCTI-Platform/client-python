@@ -4,7 +4,7 @@ import signal
 import threading
 import time
 from datetime import datetime
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 
 import schedule
 from pydantic import ValidationError
@@ -172,7 +172,7 @@ class Connector(object):
             self.broker_thread.join()
         self.logger.info("Good bye")
 
-    def set_state(self, state: Dict) -> None:
+    def set_state(self, state: Union[Dict | str]) -> None:
         """sets the connector state
 
         :param state: state object
@@ -180,8 +180,14 @@ class Connector(object):
         """
         if state is None:
             self.connector_state = {}
-        else:
+        elif isinstance(state, str):
+            self.connector_state = json.loads(state)
+        elif isinstance(state, Dict):
             self.connector_state |= state
+        else:
+            raise ValueError(
+                f"Unable to set state to value '{state}' of type '{type(state)}"
+            )
 
     def get_state(self) -> Dict:
         """get the connector state
