@@ -61,8 +61,7 @@ class Connector(object):
 
         self.connector_state = {}
         self.applicant_id = configuration["connector_user_id"]
-        connector_state = configuration["connector_state"]
-        self.set_state(connector_state)
+        self.set_state(json.loads(configuration["connector_state"]))
         self.broker_config = configuration["config"]
 
         self.heartbeat = None
