@@ -236,12 +236,16 @@ class InternalFileInputConnector(ListenConnector):
 
         for bundle in bundles:
             if self.base_config.validate_before_import:
-                self.api.upload_pending_file(
-                    file_name=file_name,
-                    data=bundle,
-                    mime_type="application/json",
-                    entity_id=msg.event.entity_id,
-                )
+                try:
+                    self.api.upload_pending_file(
+                        file_name=file_name,
+                        data=bundle.serialize(),
+                        mime_type="application/json",
+                        entity_id=msg.event.entity_id,
+                    )
+                except Exception as e:
+                    self.logger.error(f"Error during bundle upload '{e}'")
+                    return
             else:
                 self._send_bundle(
                     bundle, msg.internal.work_id, msg.internal.applicant_id
