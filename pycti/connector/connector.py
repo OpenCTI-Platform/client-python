@@ -4,7 +4,7 @@ import signal
 import threading
 import time
 from datetime import datetime
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List
 
 import schedule
 from pydantic import ValidationError
@@ -172,7 +172,7 @@ class Connector(object):
             self.broker_thread.join()
         self.logger.info("Good bye")
 
-    def set_state(self, state: Union[Dict | str]) -> None:
+    def set_state(self, state: Dict) -> None:
         """sets the connector state
 
         :param state: state object
@@ -180,8 +180,6 @@ class Connector(object):
         """
         if state is None:
             self.connector_state = {}
-        elif isinstance(state, str):
-            self.connector_state = json.loads(state)
         elif isinstance(state, Dict):
             self.connector_state |= state
         else:
@@ -297,15 +295,21 @@ class Heartbeat(threading.Thread):
                 remote_state = json.loads(remote_state)
 
             if initial_state != remote_state:
-                self.set_state(remote_state)
+                try:
+                    self.set_state(remote_state)
+                except Exception as e:
+                    self.in_error = True
+                    self.logger.error(
+                        f"Issue with setting remotely defined status '{e}'"
+                    )
+
                 self.logger.info(
                     f"Connector state has been remotely reset to: '{self.get_state()}'"
                 )
 
             if self.in_error:
                 self.in_error = False
-
-            self.logger.error("API Ping back to normal")
+                self.logger.error("API Ping back to normal")
         except Exception as e:
             self.in_error = True
             self.logger.error(f"Error pinging the API '{e}'")
