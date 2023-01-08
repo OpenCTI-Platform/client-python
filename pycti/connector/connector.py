@@ -4,7 +4,7 @@ import signal
 import threading
 import time
 from datetime import datetime
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 
 import schedule
 from pydantic import ValidationError
@@ -61,7 +61,7 @@ class Connector(object):
 
         self.connector_state = {}
         self.applicant_id = configuration["connector_user_id"]
-        self.set_state(json.loads(configuration["connector_state"]))
+        self.set_state(configuration["connector_state"])
         self.broker_config = configuration["config"]
 
         self.heartbeat = None
@@ -171,7 +171,7 @@ class Connector(object):
             self.broker_thread.join()
         self.logger.info("Good bye")
 
-    def set_state(self, state: Dict) -> None:
+    def set_state(self, state: Union[Dict, None, str]) -> None:
         """sets the connector state
 
         :param state: state object
@@ -180,6 +180,9 @@ class Connector(object):
         if state is None:
             self.connector_state = {}
         elif isinstance(state, Dict):
+            self.connector_state |= state
+        elif isinstance(state, str):
+            state = json.loads(state)
             self.connector_state |= state
         else:
             raise ValueError(
