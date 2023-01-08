@@ -37,9 +37,7 @@ class PikaBroker(object):
 
         self.channel.queue_declare(queue=queue, durable=True)
         self.channel.basic_qos(prefetch_count=qos_limit)
-        self.channel.basic_consume(
-            queue=queue, on_message_callback=self.callback, auto_ack=True
-        )
+        self.channel.basic_consume(queue=queue, on_message_callback=self.callback)
         try:
             self.channel.start_consuming()
         except StreamLostError:
