@@ -1220,6 +1220,8 @@ class OpenCTIStix2:
                 entity["x_opencti_location_type"] = entity["entity_type"]
             if entity["entity_type"] == "City":
                 entity["city"] = entity["name"]
+            elif entity["entity_type"] == "AdministrativArea":
+                entity["administrativeArea"] = entity["name"]
             elif entity["entity_type"] == "Country":
                 entity["country"] = entity["name"]
             elif entity["entity_type"] == "Region":
