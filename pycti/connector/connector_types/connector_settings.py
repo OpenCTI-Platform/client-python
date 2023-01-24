@@ -11,6 +11,7 @@ from pycti.connector.libs.connector_utils import merge_dict
 class ConnectorBaseSettingConfig(BaseSettings):
     class Config:
         env_file_encoding = "utf-8"
+        extra = Extra.ignore
 
         @classmethod
         def customise_sources(
