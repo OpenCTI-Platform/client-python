@@ -4,5 +4,6 @@ for script in ./*.py; do
     # TODO special execution for cmd tools
     continue
   fi
+  echo "$script";
   python3 $script;
 done

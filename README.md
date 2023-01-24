@@ -35,8 +35,10 @@ $ python3 -m pip install -e .[dev,doc]
 # Set up the git hook scripts
 $ pre-commit install
 # Create your feature/fix
-# Create tests for your changes
-$ pytest
+# Create tests for your changes and test them
+$ python3 -m pytest -p pycti.test_plugin.pytest_pycti --opencti <opencti url> --token <token> --no_verify_ssl
+# Fix formatting
+$ black ./pycti /tests; isort ./pycti tests/
 # Push you feature/fix on Github
 $ git add [file(s)]
 $ git commit -m "[descriptive message]"
@@ -66,21 +68,28 @@ $ pip install -r ./test-requirements.txt
 
 ### Launch tests
 
-#### Prerequisite
+#### Testing Environment
 
-Your OpenCTI API should be running.
-Your conftest.py should be configured with your API url and your token.
+The pycti pytest plugin is designed for 3 different testing environments :
+1. Using the https://demo.opencti.io environment (no flag needed, might be a bit slower)
+2. Using your own OpenCTI environment which is needed for connector development (env flag: `--opencti <opencti_url> --token <opencti_token> --no_verify_ssl`)
+3. Using the drone environment for the drone.io CI/CD pipeline (env flag: `--drone`)
 
 #### Launching
 
 Unit tests
 ```bash
-$ pytest ./tests/01-unit/
+$ python3 -m pytest -p pycti.test_plugin.pytest_pycti <env flags> ./tests/unit/
 ```
 
 Integration testing
 ```bash
-$ pytest ./tests/02-integration/
+$ python3 -m pytest -p pycti.test_plugin.pytest_pycti <env flags> ./tests/integration/
+```
+
+End-to-End testing
+```bash
+$ python3 -m pytest -p pycti.test_plugin.pytest_pycti <env flags> ./tests/e2e/
 ```
 
 ## About
