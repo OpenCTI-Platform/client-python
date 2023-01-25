@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import datetime
 import json
@@ -11,18 +12,16 @@ import threading
 import time
 import traceback
 import uuid
-import asyncio
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Union
 
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exceptions import NackError, UnroutableError
-from sseclient import SSEClient
-
 from pycti.api.opencti_api_client import OpenCTIApiClient
 from pycti.connector.opencti_connector import OpenCTIConnector
 from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
+from sseclient import SSEClient
 
 TRUTHY: List[str] = ["yes", "true", "True"]
 FALSY: List[str] = ["no", "false", "False"]
