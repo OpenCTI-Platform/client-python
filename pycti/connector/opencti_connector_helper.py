@@ -11,10 +11,12 @@ import threading
 import time
 import traceback
 import uuid
+import asyncio
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Union
 
 import pika
+from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exceptions import NackError, UnroutableError
 from sseclient import SSEClient
 
@@ -34,6 +36,11 @@ def killProgramHook(etype, value, tb):
 
 
 sys.excepthook = killProgramHook
+
+
+def run_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
 
 
 def get_config_variable(
@@ -98,7 +105,7 @@ def create_ssl_context() -> ssl.SSLContext:
     return ssl_context
 
 
-class ListenQueue(threading.Thread):
+class ListenQueue:
     """Main class for the ListenQueue used in OpenCTIConnectorHelper
 
     :param helper: instance of a `OpenCTIConnectorHelper` class
@@ -110,7 +117,6 @@ class ListenQueue(threading.Thread):
     """
 
     def __init__(self, helper, config: Dict, callback) -> None:
-        threading.Thread.__init__(self)
         self.pika_credentials = None
         self.pika_parameters = None
         self.pika_connection = None
@@ -125,10 +131,14 @@ class ListenQueue(threading.Thread):
         self.password = config["connection"]["pass"]
         self.queue_name = config["listen"]
         self.exit_event = threading.Event()
-        self.thread = None
+        self.connector_thread = None
+        self.connector_event_loop = None
+        self.queue_event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.queue_event_loop)
+        self.run()
 
     # noinspection PyUnusedLocal
-    def _process_message(self, channel, method, properties, body) -> None:
+    async def _process_message(self, channel, method, properties, body) -> None:
         """process a message from the rabbit queue
 
         :param channel: channel instance
@@ -143,11 +153,10 @@ class ListenQueue(threading.Thread):
 
         json_data = json.loads(body)
         channel.basic_ack(delivery_tag=method.delivery_tag)
-        self.thread = threading.Thread(target=self._data_handler, args=[json_data])
-        self.thread.start()
+        message_task = self._data_handler(json_data)
         five_minutes = 60 * 5
         time_wait = 0
-        while self.thread.is_alive():  # Loop while the thread is processing
+        while not message_task.done():  # Loop while the task/thread is processing
             if (
                 self.helper.work_id is not None and time_wait > five_minutes
             ):  # Ping every 5 minutes
@@ -155,13 +164,16 @@ class ListenQueue(threading.Thread):
                 time_wait = 0
             else:
                 time_wait += 1
-            time.sleep(1)
+            await asyncio.sleep(1)
+        self.helper.api.work.to_processed(
+            json_data["internal"]["work_id"], message_task.result()
+        )
 
         logging.info(
             "%s",
             (
                 f"Message (delivery_tag={method.delivery_tag}) processed"
-                ", thread terminated"
+                ", task/thread terminated"
             ),
         )
 
@@ -178,8 +190,15 @@ class ListenQueue(threading.Thread):
             self.helper.api.work.to_received(
                 work_id, "Connector ready to process the operation"
             )
-            message = self.callback(json_data["event"])
-            self.helper.api.work.to_processed(work_id, message)
+            if asyncio.iscoroutinefunction(self.callback):
+                message = asyncio.run_coroutine_threadsafe(
+                    self.callback(json_data["event"]), self.connector_event_loop
+                )
+            else:
+                message = asyncio.get_running_loop().run_in_executor(
+                    None, self.callback, json_data["event"]
+                )
+            return message
         except Exception as e:  # pylint: disable=broad-except
             logging.exception("Error in message processing, reporting error to API")
             try:
@@ -201,13 +220,17 @@ class ListenQueue(threading.Thread):
                     if self.use_ssl
                     else None,
                 )
-                self.pika_connection = pika.BlockingConnection(self.pika_parameters)
-                self.channel = self.pika_connection.channel()
-                assert self.channel is not None
-                self.channel.basic_consume(
-                    queue=self.queue_name, on_message_callback=self._process_message
+                if asyncio.iscoroutinefunction(self.callback):
+                    self.connector_event_loop = asyncio.new_event_loop()
+                    self.connector_thread = threading.Thread(
+                        target=lambda: run_loop(self.connector_event_loop)
+                    ).start()
+                self.pika_connection = AsyncioConnection(
+                    self.pika_parameters,
+                    on_open_callback=self.on_connection_open,
+                    custom_ioloop=self.queue_event_loop,
                 )
-                self.channel.start_consuming()
+                self.pika_connection.ioloop.run_forever()
             except (KeyboardInterrupt, SystemExit):
                 self.helper.log_info("Connector stop")
                 sys.exit(0)
@@ -215,10 +238,26 @@ class ListenQueue(threading.Thread):
                 self.helper.log_error(str(e))
                 time.sleep(10)
 
+    # noinspection PyUnusedLocal
+    def on_connection_open(self, _unused_connection):
+        self.pika_connection.channel(on_open_callback=self.on_channel_open)
+
+    def on_channel_open(self, channel):
+        self.channel = channel
+        assert self.channel is not None
+        self.channel.basic_consume(
+            queue=self.queue_name,
+            on_message_callback=lambda *args: asyncio.create_task(
+                self._process_message(*args)
+            ),
+        )
+
     def stop(self):
+        self.queue_event_loop.stop()
         self.exit_event.set()
-        if self.thread:
-            self.thread.join()
+        if self.connector_thread:
+            self.connector_event_loop.stop()
+            self.connector_thread.join()
 
 
 class PingAlive(threading.Thread):
@@ -666,7 +705,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         """
 
         self.listen_queue = ListenQueue(self, self.config, message_callback)
-        self.listen_queue.start()
 
     def listen_stream(
         self,
