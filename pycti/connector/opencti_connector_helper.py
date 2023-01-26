@@ -155,18 +155,24 @@ class ListenQueue:
         message_task = self._data_handler(json_data)
         five_minutes = 60 * 5
         time_wait = 0
-        while not message_task.done():  # Loop while the task/thread is processing
-            if (
-                self.helper.work_id is not None and time_wait > five_minutes
-            ):  # Ping every 5 minutes
-                self.helper.api.work.ping(self.helper.work_id)
-                time_wait = 0
-            else:
-                time_wait += 1
-            await asyncio.sleep(1)
-        self.helper.api.work.to_processed(
-            json_data["internal"]["work_id"], message_task.result()
-        )
+        try:
+            while not message_task.done():  # Loop while the task/thread is processing
+                if (
+                    self.helper.work_id is not None and time_wait > five_minutes
+                ):  # Ping every 5 minutes
+                    self.helper.api.work.ping(self.helper.work_id)
+                    time_wait = 0
+                else:
+                    time_wait += 1
+                await asyncio.sleep(1)
+            self.helper.api.work.to_processed(
+                json_data["internal"]["work_id"], message_task.result()
+            )
+        except Exception as e: # pylint: disable=broad-except
+            logging.exception("Error in message processing, reporting error to API")
+            self.helper.api.work.to_processed(
+                json_data["internal"]["work_id"], str(e), True
+            )
 
         logging.info(
             "%s",
