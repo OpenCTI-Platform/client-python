@@ -19,6 +19,7 @@ import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exceptions import NackError, UnroutableError
 from pycti.api.opencti_api_client import OpenCTIApiClient
+from pycti.connector import LOGGER
 from pycti.connector.opencti_connector import OpenCTIConnector
 from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 from sseclient import SSEClient
@@ -51,7 +52,7 @@ def get_config_variable(
 ) -> Union[bool, int, None, str]:
     """[summary]
 
-    :param env_var: environnement variable name
+    :param env_var: environment variable name
     :param yaml_path: path to yaml config
     :param config: client config dict, defaults to {}
     :param isNumber: specify if the variable is a number, defaults to False
@@ -173,13 +174,9 @@ class ListenQueue:
             self.helper.api.work.to_processed(
                 json_data["internal"]["work_id"], str(e), True
             )
-
-        logging.info(
-            "%s",
-            (
-                f"Message (delivery_tag={method.delivery_tag}) processed"
-                ", task/thread terminated"
-            ),
+        LOGGER.info(
+            "Message (delivery_tag=%s) processed, thread terminated",
+            method.delivery_tag,
         )
 
     def _data_handler(self, json_data) -> None:
@@ -205,11 +202,11 @@ class ListenQueue:
                 )
             return message
         except Exception as e:  # pylint: disable=broad-except
-            logging.exception("Error in message processing, reporting error to API")
+            LOGGER.exception("Error in message processing, reporting error to API")
             try:
                 self.helper.api.work.to_processed(work_id, str(e), True)
             except:  # pylint: disable=bare-except
-                logging.error("Failing reporting the processing")
+                LOGGER.error("Failing reporting the processing")
 
     def run(self) -> None:
         while not self.exit_event.is_set():
@@ -237,10 +234,10 @@ class ListenQueue:
                 )
                 self.pika_connection.ioloop.run_forever()
             except (KeyboardInterrupt, SystemExit):
-                self.helper.log_info("Connector stop")
+                LOGGER.info("Connector stop")
                 sys.exit(0)
             except Exception as e:  # pylint: disable=broad-except
-                self.helper.log_error(str(e))
+                LOGGER.error("%s", e)
                 time.sleep(10)
 
     # noinspection PyUnusedLocal
@@ -288,27 +285,24 @@ class PingAlive(threading.Thread):
                 )
                 if initial_state != remote_state:
                     self.set_state(result["connector_state"])
-                    logging.info(
-                        "%s",
-                        (
-                            "Connector state has been remotely reset to: "
-                            f'"{self.get_state()}"'
-                        ),
+                    LOGGER.info(
+                        'Connector state has been remotely reset to: "%s"',
+                        self.get_state(),
                     )
                 if self.in_error:
                     self.in_error = False
-                    logging.error("API Ping back to normal")
+                    LOGGER.error("API Ping back to normal")
             except Exception:  # pylint: disable=broad-except
                 self.in_error = True
-                logging.error("Error pinging the API")
+                LOGGER.error("Error pinging the API")
             self.exit_event.wait(40)
 
     def run(self) -> None:
-        logging.info("Starting ping alive thread")
+        LOGGER.info("Starting ping alive thread")
         self.ping()
 
     def stop(self) -> None:
-        logging.info("Preparing for clean shutdown")
+        LOGGER.info("Preparing for clean shutdown")
         self.exit_event.set()
 
 
@@ -320,7 +314,7 @@ class StreamAlive(threading.Thread):
 
     def run(self) -> None:
         try:
-            logging.info("Starting stream alive thread")
+            LOGGER.info("Starting stream alive thread")
             time_since_last_heartbeat = 0
             while not self.exit_event.is_set():
                 time.sleep(5)
@@ -330,7 +324,7 @@ class StreamAlive(threading.Thread):
                 except queue.Empty:
                     time_since_last_heartbeat = time_since_last_heartbeat + 5
                     if time_since_last_heartbeat > 45:
-                        logging.error(
+                        LOGGER.error(
                             "Time since last heartbeat exceeded 45s, stopping the connector"
                         )
                         break
@@ -339,7 +333,7 @@ class StreamAlive(threading.Thread):
             sys.excepthook(*sys.exc_info())
 
     def stop(self) -> None:
-        logging.info("Preparing for clean shutdown")
+        LOGGER.info("Preparing for clean shutdown")
         self.exit_event.set()
 
 
@@ -424,16 +418,10 @@ class ListenStream(threading.Thread):
             listen_delete = str(self.listen_delete).lower()
             no_dependencies = str(self.no_dependencies).lower()
             with_inferences = str(self.with_inferences).lower()
-            logging.info(
-                'Starting to listen stream events on "'
-                + live_stream_url
-                + '" (listen-delete: '
-                + listen_delete
-                + ", no-dependencies: "
-                + no_dependencies
-                + ", with-inferences: "
-                + with_inferences
-                + ")"
+            LOGGER.info(
+                'Starting to listen stream events on "%s" '
+                "(listen-delete: %s, no-dependencies: %s, with-inferences: %s)",
+                *(live_stream_url, listen_delete, no_dependencies, with_inferences),
             )
             messages = SSEClient(
                 live_stream_url,
@@ -571,8 +559,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             False,
         )
         self.log_level = get_config_variable(
-            "CONNECTOR_LOG_LEVEL", ["connector", "log_level"], config
-        )
+            "CONNECTOR_LOG_LEVEL", ["connector", "log_level"], config, default="INFO"
+        ).upper()
         self.connect_run_and_terminate = get_config_variable(
             "CONNECTOR_RUN_AND_TERMINATE",
             ["connector", "run_and_terminate"],
@@ -589,12 +577,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         )
 
         # Configure logger
-        numeric_level = getattr(
-            logging, self.log_level.upper() if self.log_level else "INFO", None
-        )
-        if not isinstance(numeric_level, int):
-            raise ValueError(f"Invalid log level: {self.log_level}")
-        logging.basicConfig(level=numeric_level)
+        logging.basicConfig(level=self.log_level)
 
         # Initialize configuration
         # - Classic API that will be directly attached to the connector rights
@@ -623,7 +606,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.connect_only_contextual,
         )
         connector_configuration = self.api.connector.register(self.connector)
-        logging.info("%s", f"Connector registered with ID: {self.connect_id}")
+        LOGGER.info("Connector registered with ID: %s", self.connect_id)
         self.connector_id = connector_configuration["id"]
         self.work_id = None
         self.applicant_id = connector_configuration["connector_user_id"]
@@ -700,7 +683,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             if initial_state != remote_state:
                 self.api.connector.ping(self.connector_id, initial_state)
         except Exception:  # pylint: disable=broad-except
-            logging.error("Error pinging the API")
+            LOGGER.error("Error pinging the API")
 
     def listen(self, message_callback: Callable[[Dict], str]) -> None:
         """listen for messages and register callback function
@@ -803,18 +786,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_connector(self) -> OpenCTIConnector:
         return self.connector
-
-    def log_error(self, msg: str) -> None:
-        logging.error(msg)
-
-    def log_info(self, msg: str) -> None:
-        logging.info(msg)
-
-    def log_debug(self, msg: str) -> None:
-        logging.debug(msg)
-
-    def log_warning(self, msg: str) -> None:
-        logging.warning(msg)
 
     def date_now(self) -> str:
         """get the current date (UTC)
@@ -970,7 +941,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 ),
             )
         except (UnroutableError, NackError) as e:
-            logging.error("Unable to send bundle, retry...%s", e)
+            LOGGER.error("Unable to send bundle, retry...%s", e)
             self._send_bundle(channel, bundle, **kwargs)
 
     def stix2_get_embedded_objects(self, item) -> Dict:
