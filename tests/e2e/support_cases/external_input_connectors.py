@@ -31,10 +31,7 @@ class ExternalInputTest(ConnectorTest):
     connector = ExternalInputConnector
 
     def _setup(self, monkeypatch):
-        monkeypatch.setenv("opencti_broker", "pika")
         monkeypatch.setenv("opencti_ssl_verify", "False")
-        monkeypatch.setenv("connector_name", "Simple Import")
-        monkeypatch.setenv("connector_log_level", "DEBUG")
         monkeypatch.setenv("connector_id", str(uuid.uuid4()))
         monkeypatch.setenv("connector_name", "Get STIX Github Connector")
         monkeypatch.setenv("connector_run_and_terminate", "true")
