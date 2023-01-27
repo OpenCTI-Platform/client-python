@@ -2000,6 +2000,37 @@ class OpenCTIStix2:
                     bundle["objects"] = bundle["objects"] + entity_bundle_filtered
         return bundle
 
+    def export_selected(
+            self,
+            entities_list: [str],
+            max_marking_definition: Dict = None,
+    ) -> Dict:
+        max_marking_definition_entity = (
+            self.opencti.marking_definition.read(id=max_marking_definition)
+            if max_marking_definition is not None
+            else None
+        )
+        bundle = {
+            "type": "bundle",
+            "id": "bundle--" + str(uuid.uuid4()),
+            "objects": [],
+        }
+
+        if entities_list is not None:
+            uuids = []
+            for entity in entities_list:
+                entity_bundle = self.prepare_export(
+                    self.generate_export(entity),
+                    "simple",
+                    max_marking_definition_entity,
+                )
+                if entity_bundle is not None:
+                    entity_bundle_filtered = self.filter_objects(uuids, entity_bundle)
+                    for x in entity_bundle_filtered:
+                        uuids.append(x["id"])
+                    bundle["objects"] = bundle["objects"] + entity_bundle_filtered
+        return bundle
+
     def import_bundle(
         self,
         stix_bundle: Dict,
