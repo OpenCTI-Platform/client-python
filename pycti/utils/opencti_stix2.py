@@ -1967,6 +1967,7 @@ class OpenCTIStix2:
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
             "stix-sighting-relationship": self.opencti.stix_sighting_relationship.list,
             "stix-core-relationship": self.opencti.stix_core_relationship.list,
+            "stix-sighting-relationship": self.opencti.stix_sighting_relationship.list,
         }
         do_list = lister.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
