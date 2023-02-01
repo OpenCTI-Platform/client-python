@@ -1967,7 +1967,6 @@ class OpenCTIStix2:
             "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
             "stix-sighting-relationship": self.opencti.stix_sighting_relationship.list,
             "stix-core-relationship": self.opencti.stix_core_relationship.list,
-            "stix-sighting-relationship": self.opencti.stix_sighting_relationship.list,
         }
         do_list = lister.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
@@ -1989,8 +1988,13 @@ class OpenCTIStix2:
         )
         if entities_list is not None:
             if element_id:  # filtering of the data to keep those in the container
-                new_entities_list = [entity for entity in entities_list if element_id in entity["objectsIds"]]
+                new_entities_list = [
+                    entity
+                    for entity in entities_list
+                    if ("objectsIds" in entity) and (element_id in entity["objectsIds"])
+                ]
                 entities_list = new_entities_list
+
             uuids = []
             for entity in entities_list:
                 entity_bundle = self.prepare_export(
@@ -2006,10 +2010,10 @@ class OpenCTIStix2:
         return bundle
 
     def export_selected(
-            self,
-            entities_list: [str],
-            element_id: str = None,
-            max_marking_definition: Dict = None,
+        self,
+        entities_list: [str],
+        element_id: str = None,
+        max_marking_definition: Dict = None,
     ) -> Dict:
         max_marking_definition_entity = (
             self.opencti.marking_definition.read(id=max_marking_definition)
@@ -2024,7 +2028,11 @@ class OpenCTIStix2:
 
         if entities_list is not None:
             if element_id:  # filtering of the data to keep those in the container
-                new_entities_list = [entity for entity in entities_list if element_id in entity["objectsIds"]]
+                new_entities_list = [
+                    entity
+                    for entity in entities_list
+                    if element_id in entity["objectsIds"]
+                ]
                 entities_list = new_entities_list
             uuids = []
             for entity in entities_list:
