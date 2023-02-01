@@ -233,12 +233,13 @@ class ListenQueue:
                     custom_ioloop=self.queue_event_loop,
                 )
                 self.pika_connection.ioloop.run_forever()
-                time.sleep(10)  # If the connection fails, sleep between reconnect attempts
+                # If the connection fails, sleep between reconnect attempts
+                time.sleep(10)
             except (KeyboardInterrupt, SystemExit):
                 LOGGER.info("Connector stop")
                 sys.exit(0)
             except Exception as err:  # pylint: disable=broad-except
-                LOGGER.error("%s", e)
+                LOGGER.error("%s", err)
 
     # noinspection PyUnusedLocal
     def on_connection_open(self, _unused_connection):
