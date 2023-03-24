@@ -132,16 +132,20 @@ class EntityTestCases:
         return VulnerabilityTest(api_client)
 
     @staticmethod
-    def data_component(api_client):
+    def case_data_component(api_client):
         return DataComponentTest(api_client)
 
     @staticmethod
-    def data_source(api_client):
+    def case_data_source(api_client):
         return DataSourceTest(api_client)
 
     @staticmethod
-    def case(api_client):
-        return CaseTest(api_client)
+    def case_feedback(api_client):
+        return FeedbackTest(api_client)
+
+    @staticmethod
+    def case_case_incident(api_client):
+        return CaseIncidentTest(api_client)
 
 
 class EntityTest:
@@ -915,15 +919,36 @@ class DataComponentTest(EntityTest):
 
 class DataSourceTest(EntityTest):
     def data(self) -> Dict:
-        return {"type": "DataSource", "name": "Command", "description": "A command"}
+        return {
+            "type": "DataSource",
+            "name": "Command",
+            "description": "A command",
+        }
 
     def own_class(self):
         return self.api_client.data_source
 
 
-class CaseTest(EntityTest):
+class FeedbackTest(EntityTest):
     def data(self) -> Dict:
-        return {"type": "Case", "name": "Case 1", "description": "Case 2"}
+        return {
+            "type": "Feedback",
+            "name": "Feedback 1",
+            "description": "Feedback Test",
+        }
 
     def own_class(self):
-        return self.api_client.case
+        return self.api_client.feedback
+
+
+class CaseIncidentTest(EntityTest):
+    def data(self) -> Dict:
+        return {
+            "type": "Case-Incident",
+            "name": "Case Incident",
+            "description": "Case Incident Desc",
+            "created": "2023-03-29T08:01:50.924Z",
+        }
+
+    def own_class(self):
+        return self.api_client.case_incident
