@@ -16,6 +16,9 @@ from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_work import OpenCTIApiWork
 from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_campaign import Campaign
+from pycti.entities.opencti_case import Case
+from pycti.entities.opencti_case_rfi import CaseRfi
+from pycti.entities.opencti_case_rft import CaseRft
 from pycti.entities.opencti_case_incident import CaseIncident
 from pycti.entities.opencti_channel import Channel
 from pycti.entities.opencti_course_of_action import CourseOfAction
@@ -176,6 +179,8 @@ class OpenCTIApiClient:
         self.campaign = Campaign(self)
         self.case_incident = CaseIncident(self)
         self.feedback = Feedback(self)
+        self.case_rfi = CaseRfi(self)
+        self.case_rft = CaseRft(self)
         self.incident = Incident(self)
         self.malware = Malware(self)
         self.tool = Tool(self)

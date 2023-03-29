@@ -12,6 +12,9 @@ from .connector.opencti_connector_helper import (
 from .entities.opencti_attack_pattern import AttackPattern
 from .entities.opencti_campaign import Campaign
 from .entities.opencti_case_incident import CaseIncident
+from .entities.opencti_case import Case
+from .entities.opencti_case_rfi import CaseRfi
+from .entities.opencti_case_rft import CaseRft
 from .entities.opencti_course_of_action import CourseOfAction
 from .entities.opencti_data_component import DataComponent
 from .entities.opencti_data_source import DataSource
@@ -57,6 +60,8 @@ __all__ = [
     "AttackPattern",
     "Campaign",
     "CaseIncident",
+    "CaseRfi",
+    "CaseRft",
     "ConnectorType",
     "CourseOfAction",
     "DataComponent",
