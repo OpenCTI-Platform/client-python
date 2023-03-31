@@ -109,6 +109,7 @@ class CaseRft:
             modified
             name
             description
+            takedown_types
             objects {
                 edges {
                     node {
@@ -459,6 +460,7 @@ class CaseRft:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
+        takedown_types = kwargs.get("takedown_types", None)
 
         if name is not None:
             self.opencti.log("info", "Creating Case Rft {" + name + "}.")
@@ -492,6 +494,7 @@ class CaseRft:
                         "description": description,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
+                        "takedown_types": takedown_types,
                     }
                 },
             )
@@ -648,6 +651,7 @@ class CaseRft:
                 )
                 if "description" in stix_object
                 else "",
+                takedown_types=stix_object["takedown_types"] if "takedown_types" in stix_object else None,
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
