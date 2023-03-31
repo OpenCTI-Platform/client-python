@@ -109,6 +109,7 @@ class CaseRfi:
             modified
             name
             description
+            information_types
             objects {
                 edges {
                     node {
@@ -459,6 +460,7 @@ class CaseRfi:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
+        information_types = kwargs.get("information_types", None)
 
         if name is not None:
             self.opencti.log("info", "Creating Case Rfi {" + name + "}.")
@@ -492,6 +494,7 @@ class CaseRfi:
                         "description": description,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
+                        "information_types": information_types,
                     }
                 },
             )
@@ -655,6 +658,9 @@ class CaseRfi:
                 if "granted_refs" in stix_object
                 else None,
                 update=update,
+                information_types=stix_object["information_types"]
+                if "information_types" in stix_object
+                else None,
             )
         else:
             self.opencti.log(
