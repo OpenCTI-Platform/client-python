@@ -35,10 +35,10 @@ from .entities.opencti_report import Report
 from .entities.opencti_stix_core_relationship import StixCoreRelationship
 from .entities.opencti_stix_cyber_observable import StixCyberObservable
 from .entities.opencti_stix_domain_object import StixDomainObject
+from .entities.opencti_stix_nested_ref_relationship import StixNestedRefRelationship
 from .entities.opencti_stix_object_or_stix_relationship import (
     StixObjectOrStixRelationship,
 )
-from .entities.opencti_stix_nested_ref_relationship import StixNestedRefRelationship
 from .entities.opencti_stix_sighting_relationship import StixSightingRelationship
 from .entities.opencti_threat_actor import ThreatActor
 from .entities.opencti_tool import Tool

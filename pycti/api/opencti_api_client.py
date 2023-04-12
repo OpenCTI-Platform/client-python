@@ -46,11 +46,11 @@ from pycti.entities.opencti_stix_core_object import StixCoreObject
 from pycti.entities.opencti_stix_core_relationship import StixCoreRelationship
 from pycti.entities.opencti_stix_cyber_observable import StixCyberObservable
 from pycti.entities.opencti_stix_domain_object import StixDomainObject
-from pycti.entities.opencti_stix_object_or_stix_relationship import (
-    StixObjectOrStixRelationship,
-)
 from pycti.entities.opencti_stix_nested_ref_relationship import (
     StixNestedRefRelationship,
+)
+from pycti.entities.opencti_stix_object_or_stix_relationship import (
+    StixObjectOrStixRelationship,
 )
 from pycti.entities.opencti_stix_sighting_relationship import StixSightingRelationship
 from pycti.entities.opencti_threat_actor import ThreatActor
