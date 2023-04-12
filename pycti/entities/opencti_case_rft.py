@@ -651,7 +651,9 @@ class CaseRft:
                 )
                 if "description" in stix_object
                 else "",
-                takedown_types=stix_object["takedown_types"] if "takedown_types" in stix_object else None,
+                takedown_types=stix_object["takedown_types"]
+                if "takedown_types" in stix_object
+                else None,
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
                 else None,
