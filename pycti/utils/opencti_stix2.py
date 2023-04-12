@@ -974,7 +974,9 @@ class OpenCTIStix2:
                     if key.endswith("_ref"):
                         relationship_type = key.replace("_ref", "")
                         if relationship_type.startswith("x_opencti_"):
-                            relationship_type = relationship_type.split("x_opencti_", 1)[1]
+                            relationship_type = relationship_type.split(
+                                "x_opencti_", 1
+                            )[1]
                             relationship_type = relationship_type.replace("_", "-")
                             relationship_type = "x_opencti_" + relationship_type
                         else:
@@ -987,7 +989,9 @@ class OpenCTIStix2:
                     elif key.endswith("_refs"):
                         relationship_type = key.replace("_refs", "")
                         if relationship_type.startswith("x_opencti_"):
-                            relationship_type = relationship_type.split("x_opencti_", 1)[1]
+                            relationship_type = relationship_type.split(
+                                "x_opencti_", 1
+                            )[1]
                             relationship_type = relationship_type.replace("_", "-")
                             relationship_type = "x_opencti_" + relationship_type
                         else:
@@ -1569,8 +1573,10 @@ class OpenCTIStix2:
 
         # StixRefRelationship
         if entity["type"] in STIX_CYBER_OBSERVABLE_MAPPING:
-            stix_nested_ref_relationships = self.opencti.stix_nested_ref_relationship.list(
-                fromId=entity["x_opencti_id"]
+            stix_nested_ref_relationships = (
+                self.opencti.stix_nested_ref_relationship.list(
+                    fromId=entity["x_opencti_id"]
+                )
             )
             for stix_nested_ref_relationship in stix_nested_ref_relationships:
                 if "standard_id" in stix_nested_ref_relationship["to"]:

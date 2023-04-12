@@ -49,7 +49,9 @@ from pycti.entities.opencti_stix_domain_object import StixDomainObject
 from pycti.entities.opencti_stix_object_or_stix_relationship import (
     StixObjectOrStixRelationship,
 )
-from pycti.entities.opencti_stix_nested_ref_relationship import StixNestedRefRelationship
+from pycti.entities.opencti_stix_nested_ref_relationship import (
+    StixNestedRefRelationship,
+)
 from pycti.entities.opencti_stix_sighting_relationship import StixSightingRelationship
 from pycti.entities.opencti_threat_actor import ThreatActor
 from pycti.entities.opencti_tool import Tool
