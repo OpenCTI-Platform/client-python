@@ -444,22 +444,10 @@ class CaseTask:
     """
 
     def create(self, **kwargs):
-        stix_id = kwargs.get("stix_id", None)
-        created_by = kwargs.get("createdBy", None)
         objects = kwargs.get("objects", None)
-        object_marking = kwargs.get("objectMarking", None)
-        object_label = kwargs.get("objectLabel", None)
-        external_references = kwargs.get("externalReferences", None)
-        revoked = kwargs.get("revoked", None)
-        confidence = kwargs.get("confidence", None)
-        lang = kwargs.get("lang", None)
         created = kwargs.get("created", None)
-        modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
         description = kwargs.get("description", "")
-        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
-        granted_refs = kwargs.get("objectOrganization", None)
-        update = kwargs.get("update", False)
         due_date = kwargs.get("dueDate", None)
 
         if name is not None:
@@ -478,23 +466,11 @@ class CaseTask:
                 query,
                 {
                     "input": {
-                        "stix_id": stix_id,
-                        "createdBy": created_by,
-                        "objectMarking": object_marking,
-                        "objectLabel": object_label,
-                        "objectOrganization": granted_refs,
-                        "objects": objects,
-                        "externalReferences": external_references,
-                        "revoked": revoked,
-                        "confidence": confidence,
-                        "lang": lang,
                         "created": created,
-                        "modified": modified,
                         "name": name,
                         "description": description,
-                        "x_opencti_stix_ids": x_opencti_stix_ids,
-                        "update": update,
                         "dueDate": due_date,
+                        "objects": objects,
                     }
                 },
             )
@@ -611,7 +587,6 @@ class CaseTask:
     def import_from_stix2(self, **kwargs):
         stix_object = kwargs.get("stixObject", None)
         extras = kwargs.get("extras", {})
-        update = kwargs.get("update", False)
         if stix_object is not None:
             # Search in extensions
             if "x_opencti_stix_ids" not in stix_object:
@@ -624,27 +599,8 @@ class CaseTask:
                 )
 
             return self.create(
-                stix_id=stix_object["id"],
-                createdBy=extras["created_by_id"]
-                if "created_by_id" in extras
-                else None,
-                objectMarking=extras["object_marking_ids"]
-                if "object_marking_ids" in extras
-                else None,
-                objectLabel=extras["object_label_ids"]
-                if "object_label_ids" in extras
-                else [],
                 objects=extras["object_ids"] if "object_ids" in extras else [],
-                externalReferences=extras["external_references_ids"]
-                if "external_references_ids" in extras
-                else [],
-                revoked=stix_object["revoked"] if "revoked" in stix_object else None,
-                confidence=stix_object["confidence"]
-                if "confidence" in stix_object
-                else None,
-                lang=stix_object["lang"] if "lang" in stix_object else None,
                 created=stix_object["created"] if "created" in stix_object else None,
-                modified=stix_object["modified"] if "modified" in stix_object else None,
                 name=stix_object["name"],
                 description=self.opencti.stix2.convert_markdown(
                     stix_object["description"]
@@ -652,13 +608,6 @@ class CaseTask:
                 if "description" in stix_object
                 else "",
                 dueDate=stix_object["due_date"] if "due_date" in stix_object else None,
-                x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
-                if "x_opencti_stix_ids" in stix_object
-                else None,
-                objectOrganization=stix_object["granted_refs"]
-                if "granted_refs" in stix_object
-                else None,
-                update=update,
             )
         else:
             self.opencti.log(

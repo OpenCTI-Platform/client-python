@@ -1015,7 +1015,7 @@ class CaseTaskTest(EntityTest):
         return {
             "type": "Case-Task",
             "name": "Case Task",
-            "description": "Case Task Desc",
+            "description": "Test",
             "created": "2023-04-19T08:01:50.924Z",
         }
 
