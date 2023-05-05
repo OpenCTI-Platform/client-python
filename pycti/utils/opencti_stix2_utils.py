@@ -24,6 +24,8 @@ STIX_CYBER_OBSERVABLE_MAPPING = {
     "bank-account": "Bank-Account",
     "phone-number": "Phone-Number",
     "payment-card": "Payment-Card",
+    "credential": "Credential",
+    "tracking-number": "Tracking-Number",
     "media-content": "Media-Content",
 }
 
@@ -54,6 +56,8 @@ PATTERN_MAPPING = {
     "Bank-Account": ["iban"],
     "Phone-Number": ["value"],
     "Payment-Card": ["card_number"],
+    "Tracking-Number": ["value"],
+    "Credential": ["value"],
     "Media-Content": ["url"],
 }
 
