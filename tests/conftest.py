@@ -17,12 +17,14 @@ def api_client(pytestconfig):
             "http://opencti:4000",
             "bfa014e0-e02e-4aa6-a42b-603b19dcf159",
             ssl_verify=False,
+            # cert=("/path/to/mtls_cert", "/path/to/mtls_key"),
         )
     else:
         return OpenCTIApiClient(
             "http://localhost:4000",
             "d434ce02-e58e-4cac-8b4c-42bf16748e84",
             ssl_verify=False,
+            # cert=("/path/to/mtls_cert", "/path/to/mtls_key"),
         )
 
 
