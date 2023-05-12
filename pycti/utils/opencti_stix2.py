@@ -2091,7 +2091,7 @@ class OpenCTIStix2:
             "Location": self.opencti.location.list,
             "Language": self.opencti.language.list,
             "Malware": self.opencti.malware.list,
-            "Malware-Analysis": self.opencti.malware_analysis.read,
+            "Malware-Analysis": self.opencti.malware_analysis.list,
             "Threat-Actor": self.opencti.threat_actor.list,
             "Tool": self.opencti.tool.list,
             "Narrative": self.opencti.narrative.list,
