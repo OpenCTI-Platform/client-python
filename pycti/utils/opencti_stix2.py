@@ -1633,7 +1633,7 @@ class OpenCTIStix2:
                         .replace("-", "_")
                         + "_refs"
                     )
-                    if key in entity:
+                    if key in entity and isinstance(entity[key], list):
                         entity[key].append(
                             stix_nested_ref_relationship["to"]["standard_id"]
                         )
