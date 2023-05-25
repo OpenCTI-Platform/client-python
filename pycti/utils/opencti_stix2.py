@@ -1624,14 +1624,23 @@ class OpenCTIStix2:
         )
         for stix_nested_ref_relationship in stix_nested_ref_relationships:
             if "standard_id" in stix_nested_ref_relationship["to"]:
-                if MultipleRefRelationship.has_value(
-                    stix_nested_ref_relationship["relationship_type"]
-                ):
+                # dirty fix because the sample and operating-system ref are not multiple for a Malware Analysis
+                # will be replaced by a proper toStix converter in the back
+                if not MultipleRefRelationship.has_value(stix_nested_ref_relationship["relationship_type"]) or (entity["type"] == "malware-analysis" and stix_nested_ref_relationship["relationship_type"] in ["operating-system", "sample"]):
                     key = (
-                        stix_nested_ref_relationship["relationship_type"]
-                        .replace("obs_", "")
-                        .replace("-", "_")
-                        + "_refs"
+                            stix_nested_ref_relationship["relationship_type"]
+                            .replace("obs_", "")
+                            .replace("-", "_")
+                            + "_ref"
+                    )
+                    entity[key] = stix_nested_ref_relationship["to"]["standard_id"]
+
+                else:
+                    key = (
+                            stix_nested_ref_relationship["relationship_type"]
+                            .replace("obs_", "")
+                            .replace("-", "_")
+                            + "_refs"
                     )
                     if key in entity and isinstance(entity[key], list):
                         entity[key].append(
@@ -1641,14 +1650,6 @@ class OpenCTIStix2:
                         entity[key] = [
                             stix_nested_ref_relationship["to"]["standard_id"]
                         ]
-                else:
-                    key = (
-                        stix_nested_ref_relationship["relationship_type"]
-                        .replace("obs_", "")
-                        .replace("-", "_")
-                        + "_ref"
-                    )
-                    entity[key] = stix_nested_ref_relationship["to"]["standard_id"]
         result.append(entity)
 
         if mode == "simple":
