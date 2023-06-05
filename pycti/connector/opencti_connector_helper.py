@@ -7,8 +7,8 @@ import os
 import queue
 import signal
 import ssl
-import tempfile
 import sys
+import tempfile
 import threading
 import time
 import traceback
@@ -81,7 +81,7 @@ def get_config_variable(
 
 
 def is_memory_certificate(certificate):
-    return certificate.startswith('-----BEGIN')
+    return certificate.startswith("-----BEGIN")
 
 
 def ssl_verify_locations(ssl_context, certdata):
@@ -128,17 +128,17 @@ def ssl_cert_chain(ssl_context, cert_data, key_data, passphrase):
 
 
 def create_mq_ssl_context(config) -> ssl.SSLContext:
-    use_ssl_ca = get_config_variable(
-        "MQ_USE_SSL_CA", ["mq", "use_ssl_ca"], config
-    )
+    use_ssl_ca = get_config_variable("MQ_USE_SSL_CA", ["mq", "use_ssl_ca"], config)
     use_ssl_cert = get_config_variable(
         "MQ_USE_SSL_CERT", ["mq", "use_ssl_cert"], config
     )
-    use_ssl_key = get_config_variable(
-        "MQ_USE_SSL_KEY", ["mq", "use_ssl_key"], config
-    )
+    use_ssl_key = get_config_variable("MQ_USE_SSL_KEY", ["mq", "use_ssl_key"], config)
     use_ssl_reject_unauthorized = get_config_variable(
-        "MQ_USE_SSL_REJECT_UNAUTHORIZED", ["mq", "use_ssl_reject_unauthorized"], config, True, True
+        "MQ_USE_SSL_REJECT_UNAUTHORIZED",
+        ["mq", "use_ssl_reject_unauthorized"],
+        config,
+        True,
+        True,
     )
     use_ssl_passphrase = get_config_variable(
         "MQ_USE_SSL_PASSPHRASE", ["mq", "use_ssl_passphrase"], config
@@ -268,7 +268,9 @@ class ListenQueue:
                     port=self.port,
                     virtual_host=self.vhost,
                     credentials=self.pika_credentials,
-                    ssl_options=pika.SSLOptions(create_mq_ssl_context(self.config), self.host)
+                    ssl_options=pika.SSLOptions(
+                        create_mq_ssl_context(self.config), self.host
+                    )
                     if self.use_ssl
                     else None,
                 )
@@ -779,7 +781,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         :type message_callback: Callable[[Dict], str]
         """
 
-        self.listen_queue = ListenQueue(self, self.config, self.connector_config, message_callback)
+        self.listen_queue = ListenQueue(
+            self, self.config, self.connector_config, message_callback
+        )
 
     def listen_stream(
         self,
@@ -961,7 +965,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.api.work.add_expectations(work_id, len(bundles))
 
         pika_credentials = pika.PlainCredentials(
-            self.connector_config["connection"]["user"], self.connector_config["connection"]["pass"]
+            self.connector_config["connection"]["user"],
+            self.connector_config["connection"]["pass"],
         )
         pika_parameters = pika.ConnectionParameters(
             host=self.connector_config["connection"]["host"],
@@ -969,7 +974,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             virtual_host=self.connector_config["connection"]["vhost"],
             credentials=pika_credentials,
             ssl_options=pika.SSLOptions(
-                create_mq_ssl_context(self.config), self.connector_config["connection"]["host"]
+                create_mq_ssl_context(self.config),
+                self.connector_config["connection"]["host"],
             )
             if self.connector_config["connection"]["use_ssl"]
             else None,
