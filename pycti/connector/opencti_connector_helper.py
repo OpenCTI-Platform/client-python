@@ -95,10 +95,15 @@ def ssl_verify_locations(ssl_context, certdata):
 
 
 def ssl_temp_file(data):
-    file = tempfile.TemporaryFile(mode="w", delete=False)
-    file.write(data)
-    file.close()
-    return file.name
+    # The file is readable and writable only by the creating user ID.
+    # If the operating system uses permission bits to indicate whether a
+    # file is executable, the file is executable by no one. The file
+    # descriptor is not inherited by children of this process.
+    file_descriptor, file_path = tempfile.mkstemp(suffix=".opencti")
+    with os.fdopen(file_descriptor, "w") as open_file:
+        open_file.write(data)
+        open_file.close()
+    return file_path
 
 
 def ssl_cert_chain(ssl_context, cert_data, key_data, passphrase):
