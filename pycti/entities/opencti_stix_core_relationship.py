@@ -1167,4 +1167,4 @@ class StixCoreRelationship:
                 update=update,
             )
         else:
-            LOGGER.error("[opencti_attack_pattern] Missing parameters: stixObject")
+            LOGGER.error("[opencti_stix_core_relationship] Missing parameters: stixObject")
