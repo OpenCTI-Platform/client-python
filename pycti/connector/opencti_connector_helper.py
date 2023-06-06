@@ -94,12 +94,14 @@ def ssl_verify_locations(ssl_context, certdata):
         ssl_context.load_verify_locations(cafile=certdata)
 
 
-def ssl_temp_file(data):
+# As cert must be written in files to be loaded in ssl context
+# Creates a temporary file in the most secure manner possible
+def data_to_temp_file(data):
     # The file is readable and writable only by the creating user ID.
     # If the operating system uses permission bits to indicate whether a
     # file is executable, the file is executable by no one. The file
     # descriptor is not inherited by children of this process.
-    file_descriptor, file_path = tempfile.mkstemp(suffix=".opencti")
+    file_descriptor, file_path = tempfile.mkstemp()
     with os.fdopen(file_descriptor, "w") as open_file:
         open_file.write(data)
         open_file.close()
@@ -115,12 +117,12 @@ def ssl_cert_chain(ssl_context, cert_data, key_data, passphrase):
 
     # Cert loading
     if cert_data is not None and is_memory_certificate(cert_data):
-        cert_file_path = ssl_temp_file(cert_data)
+        cert_file_path = data_to_temp_file(cert_data)
     cert = cert_file_path if cert_file_path is not None else cert_data
 
     # Key loading
     if key_data is not None and is_memory_certificate(key_data):
-        key_file_path = ssl_temp_file(key_data)
+        key_file_path = data_to_temp_file(key_data)
     key = key_file_path if key_file_path is not None else key_data
 
     # Load cert
