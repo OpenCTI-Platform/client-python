@@ -459,7 +459,7 @@ class Report:
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
-        description = kwargs.get("description", "")
+        description = kwargs.get("description", None)
         report_types = kwargs.get("report_types", None)
         published = kwargs.get("published", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
@@ -628,11 +628,11 @@ class Report:
                 else None,
                 objectLabel=extras["object_label_ids"]
                 if "object_label_ids" in extras
-                else [],
+                else None,
                 objects=extras["object_ids"] if "object_ids" in extras else [],
                 externalReferences=extras["external_references_ids"]
                 if "external_references_ids" in extras
-                else [],
+                else None,
                 revoked=stix_object["revoked"] if "revoked" in stix_object else None,
                 confidence=stix_object["confidence"]
                 if "confidence" in stix_object
@@ -645,7 +645,7 @@ class Report:
                     stix_object["description"]
                 )
                 if "description" in stix_object
-                else "",
+                else None,
                 report_types=stix_object["report_types"]
                 if "report_types" in stix_object
                 else None,
