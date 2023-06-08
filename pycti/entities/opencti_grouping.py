@@ -441,7 +441,7 @@ class Grouping:
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None and context is not None:
+        if name is not None and context is not None:
             LOGGER.info("Creating Grouping {%s}.", name)
             query = """
                 mutation GroupingAdd($input: GroupingAddInput!) {

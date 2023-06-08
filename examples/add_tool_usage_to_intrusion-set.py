@@ -15,7 +15,7 @@ tool = opencti_api_client.tool.create(
 
 print(tool)
 
-intrusion_set = opencti_api_client.intrusion_set.create(name="APT_EVIL", description="A new evil intrusion set.")
+intrusion_set = opencti_api_client.intrusion_set.create(name="APT_EVIL")
 
 print(intrusion_set)
 

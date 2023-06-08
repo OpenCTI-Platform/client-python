@@ -303,7 +303,7 @@ class Tool:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None:
+        if name is not None:
             LOGGER.info("Creating Tool {%s}.", name)
             query = """
                 mutation ToolAdd($input: ToolAddInput) {

@@ -275,7 +275,7 @@ class Incident:
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None:
+        if name is not None:
             LOGGER.info("Creating Incident {%s}.", name)
             query = """
                 mutation IncidentAdd($input: IncidentAddInput) {

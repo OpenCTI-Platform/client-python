@@ -329,7 +329,7 @@ class ThreatActor:
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None:
+        if name is not None:
             LOGGER.info("Creating Threat-Actor {%s}.", name)
             query = """
                 mutation ThreatActorAdd($input: ThreatActorAddInput) {

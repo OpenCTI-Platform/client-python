@@ -275,7 +275,7 @@ class IntrusionSet:
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None:
+        if name is not None:
             LOGGER.info("Creating Intrusion-Set {%s}.", name)
             query = """
                 mutation IntrusionSetAdd($input: IntrusionSetAddInput) {

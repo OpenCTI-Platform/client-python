@@ -283,7 +283,7 @@ class Identity:
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
-        if type is not None and name is not None and description is not None:
+        if type is not None and name is not None:
             LOGGER.info("Creating Identity {%s}.", name)
             input_variables = {
                 "stix_id": stix_id,

@@ -466,7 +466,7 @@ class Report:
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
-        if name is not None and description is not None and published is not None:
+        if name is not None and published is not None:
             LOGGER.info("Creating Report {%s}.", name)
             query = """
                 mutation ReportAdd($input: ReportAddInput) {
