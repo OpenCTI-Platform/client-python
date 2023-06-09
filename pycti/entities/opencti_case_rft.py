@@ -467,7 +467,7 @@ class CaseRft:
         if name is not None:
             self.opencti.log("info", "Creating Case Rft {" + name + "}.")
             query = """
-                mutation CaseRftAdd($input: CaseRftAddInput!) {
+                mutation CaseRftAdd($input: CaseRftAddInput!!) {
                     caseRftAdd(input: $input) {
                         id
                         standard_id

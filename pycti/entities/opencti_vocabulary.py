@@ -103,7 +103,7 @@ class Vocabulary:
             )
             query = (
                 """
-                        mutation VocabularyAdd($input: VocabularyAddInput!) {
+                        mutation VocabularyAdd($input: VocabularyAddInput!!) {
                             vocabularyAdd(input: $input) {
                                 """
                 + self.properties

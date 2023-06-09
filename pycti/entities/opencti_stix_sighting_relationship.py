@@ -505,7 +505,7 @@ class StixSightingRelationship:
 
         LOGGER.info("Creating stix_sighting {%s, %s}.", from_id, to_id)
         query = """
-                mutation StixSightingRelationshipAdd($input: StixSightingRelationshipAddInput!) {
+                mutation StixSightingRelationshipAdd($input: StixSightingRelationshipAddInput!!) {
                     stixSightingRelationshipAdd(input: $input) {
                         id
                         standard_id

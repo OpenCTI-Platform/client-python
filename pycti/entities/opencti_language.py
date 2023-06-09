@@ -285,7 +285,7 @@ class Language:
         if name is not None:
             LOGGER.info("Creating Language {%s}.", name)
             query = """
-                mutation LanguageAdd($input: LanguageAddInput!) {
+                mutation LanguageAdd($input: LanguageAddInput!!) {
                     languageAdd(input: $input) {
                         id
                         standard_id

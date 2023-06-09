@@ -249,7 +249,7 @@ class StixNestedRefRelationship:
             *(relationship_type, from_id, to_id),
         )
         query = """
-                mutation StixRefRelationshipAdd($input: StixRefRelationshipAddInput!) {
+                mutation StixRefRelationshipAdd($input: StixRefRelationshipAddInput!!) {
                     stixRefRelationshipAdd(input: $input) {
                         id
                         standard_id

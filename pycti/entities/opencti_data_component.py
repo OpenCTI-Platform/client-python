@@ -290,7 +290,7 @@ class DataComponent:
             self.opencti.log("info", "Creating Data Component {" + name + "}.")
             self.opencti.log("info", "Creating Data Component {" + str(kwargs) + "}.")
             query = """
-                mutation DataComponentAdd($input: DataComponentAddInput!) {
+                mutation DataComponentAdd($input: DataComponentAddInput!!) {
                     dataComponentAdd(input: $input) {
                         id
                         standard_id

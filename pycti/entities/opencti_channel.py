@@ -290,7 +290,7 @@ class Channel:
         if name is not None:
             LOGGER.info("Creating Channel {%s}.", name)
             query = """
-                mutation ChannelAdd($input: ChannelAddInput!) {
+                mutation ChannelAdd($input: ChannelAddInput!!) {
                     channelAdd(input: $input) {
                         id
                         standard_id

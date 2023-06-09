@@ -275,7 +275,7 @@ class DataSource:
             self.opencti.log("info", "Creating Data Source {" + name + "}.")
             self.opencti.log("info", "Creating Data Source {" + str(kwargs) + "}.")
             query = """
-                mutation DataSourceAdd($input: DataSourceAddInput!) {
+                mutation DataSourceAdd($input: DataSourceAddInput!!) {
                     dataSourceAdd(input: $input) {
                         id
                         standard_id
