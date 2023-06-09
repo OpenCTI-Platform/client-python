@@ -831,9 +831,9 @@ class StixCoreRelationship:
                 "Adding label {%s} to stix-core-relationship {%s}", label_id, id
             )
             query = """
-               mutation StixCoreRelationshipAddRelation($id: ID!, $input: StixRefRelationshipAddInput!) {
-                   stixCoreRelationshipEdit(id: $id) {
-                        relationAdd(input: $input) {
+               mutation StixCoreObjectLabelsViewRelationsAddMutation($id: ID!, $input: StixRefRelationshipsAddInput!) {
+                   stixCoreObjectEdit(id: $id) {
+                        relationsAdd(input: $input) {
                             id
                         }
                    }
@@ -844,7 +844,7 @@ class StixCoreRelationship:
                 {
                     "id": id,
                     "input": {
-                        "toId": label_id,
+                        "toIds": label_id,
                         "relationship_type": "object-label",
                     },
                 },
