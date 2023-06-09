@@ -453,7 +453,7 @@ class Indicator:
                     id,
                 )
                 query = """
-                    mutation StixCoreRelationshipAdd($input: StixCoreRelationshipAddInput!!) {
+                    mutation StixCoreRelationshipAdd($input: StixCoreRelationshipAddInput!) {
                         stixCoreRelationshipAdd(input: $input) {
                             id
                         }

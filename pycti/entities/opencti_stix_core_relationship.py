@@ -598,7 +598,7 @@ class StixCoreRelationship:
             to_id,
         )
         query = """
-                mutation StixCoreRelationshipAdd($input: StixCoreRelationshipAddInput!!) {
+                mutation StixCoreRelationshipAdd($input: StixCoreRelationshipAddInput!) {
                     stixCoreRelationshipAdd(input: $input) {
                         id
                         standard_id

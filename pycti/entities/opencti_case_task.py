@@ -455,7 +455,7 @@ class CaseTask:
         if name is not None:
             self.opencti.log("info", "Creating Case Task {" + name + "}.")
             query = """
-                mutation CaseTaskAdd($input: CaseTaskAddInput!!) {
+                mutation CaseTaskAdd($input: CaseTaskAddInput!) {
                     caseTaskAdd(input: $input) {
                         id
                         standard_id

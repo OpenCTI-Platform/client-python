@@ -469,7 +469,7 @@ class Feedback:
         if name is not None:
             self.opencti.log("info", "Creating Feedback {" + name + "}.")
             query = """
-                mutation FeedbackAdd($input: FeedbackAddInput!!) {
+                mutation FeedbackAdd($input: FeedbackAddInput!) {
                     feedbackAdd(input: $input) {
                         id
                         standard_id

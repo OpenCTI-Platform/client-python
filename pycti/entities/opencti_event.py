@@ -293,7 +293,7 @@ class Event:
         if name is not None:
             LOGGER.info("Creating Event {%s}.", name)
             query = """
-                mutation EventAdd($input: EventAddInput!!) {
+                mutation EventAdd($input: EventAddInput!) {
                     eventAdd(input: $input) {
                         id
                         standard_id

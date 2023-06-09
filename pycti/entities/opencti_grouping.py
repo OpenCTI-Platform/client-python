@@ -444,7 +444,7 @@ class Grouping:
         if name is not None and context is not None:
             LOGGER.info("Creating Grouping {%s}.", name)
             query = """
-                mutation GroupingAdd($input: GroupingAddInput!!) {
+                mutation GroupingAdd($input: GroupingAddInput!) {
                     groupingAdd(input: $input) {
                         id
                         standard_id

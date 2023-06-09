@@ -472,7 +472,7 @@ class CaseIncident:
         if name is not None:
             self.opencti.log("info", "Creating Case Incident {" + name + "}.")
             query = """
-                mutation CaseIncidentAdd($input: CaseIncidentAddInput!!) {
+                mutation CaseIncidentAdd($input: CaseIncidentAddInput!) {
                     caseIncidentAdd(input: $input) {
                         id
                         standard_id
