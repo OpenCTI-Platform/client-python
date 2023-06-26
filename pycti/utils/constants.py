@@ -62,7 +62,6 @@ class IdentityTypes(Enum):
         lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
         return value.lower() in lower_attr
 
-
 class LocationTypes(Enum):
     REGION = "Region"
     COUNTRY = "Country"

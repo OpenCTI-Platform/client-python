@@ -800,7 +800,7 @@ class OpenCTIStix2:
             "location": self.opencti.location.import_from_stix2,
             "malware": self.opencti.malware.import_from_stix2,
             "malware-analysis": self.opencti.malware_analysis.import_from_stix2,
-            "threat-actor": self.opencti.threat_actor.import_from_stix2,
+            "threat-actor-group": self.opencti.threat_actor_group.import_from_stix2,
             "tool": self.opencti.tool.import_from_stix2,
             "narrative": self.opencti.narrative.import_from_stix2,
             "vulnerability": self.opencti.vulnerability.import_from_stix2,
@@ -1256,6 +1256,10 @@ class OpenCTIStix2:
         if entity["entity_type"] == "Malware":
             if "is_family" not in entity or not isinstance(entity["is_family"], bool):
                 entity["is_family"] = True
+
+        # Threat Actor
+        if entity["entity_type"] == "Threat-Actor-Group":
+            entity["entity_type"] = "Threat-Actor"
 
         # Files
         if entity["entity_type"] == "StixFile":
@@ -1828,7 +1832,7 @@ class OpenCTIStix2:
                 "Language": self.opencti.language.read,
                 "Malware": self.opencti.malware.read,
                 "Malware-Analysis": self.opencti.malware_analysis.read,
-                "Threat-Actor": self.opencti.threat_actor.read,
+                "Threat-Actor-Group": self.opencti.threat_actor_group.read,
                 "Tool": self.opencti.tool.read,
                 "Vulnerability": self.opencti.vulnerability.read,
                 "Incident": self.opencti.incident.read,
@@ -1996,7 +2000,7 @@ class OpenCTIStix2:
             "Language": self.opencti.language.read,
             "Malware": self.opencti.malware.read,
             "Malware-Analysis": self.opencti.malware_analysis.read,
-            "Threat-Actor": self.opencti.threat_actor.read,
+            "Threat-Actor-Group": self.opencti.threat_actor_group.read,
             "Tool": self.opencti.tool.read,
             "Narrative": self.opencti.narrative.read,
             "Vulnerability": self.opencti.vulnerability.read,
@@ -2139,7 +2143,7 @@ class OpenCTIStix2:
             "Language": self.opencti.language.list,
             "Malware": self.opencti.malware.list,
             "Malware-Analysis": self.opencti.malware_analysis.list,
-            "Threat-Actor": self.opencti.threat_actor.list,
+            "Threat-Actor-Group": self.opencti.threat_actor_group.list,
             "Tool": self.opencti.tool.list,
             "Narrative": self.opencti.narrative.list,
             "Vulnerability": self.opencti.vulnerability.list,

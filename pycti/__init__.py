@@ -44,7 +44,7 @@ from .entities.opencti_stix_object_or_stix_relationship import (
 )
 from .entities.opencti_stix_sighting_relationship import StixSightingRelationship
 from .entities.opencti_task import Task
-from .entities.opencti_threat_actor import ThreatActor
+from .entities.opencti_threat_actor_group import ThreatActorGroup
 from .entities.opencti_tool import Tool
 from .entities.opencti_vulnerability import Vulnerability
 from .utils.constants import (
@@ -110,7 +110,7 @@ __all__ = [
     "MultipleRefRelationship",
     "StixObjectOrStixRelationship",
     "StixSightingRelationship",
-    "ThreatActor",
+    "ThreatActorGroup",
     "Tool",
     "Vulnerability",
     "get_config_variable",

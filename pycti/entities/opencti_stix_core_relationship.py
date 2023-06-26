@@ -177,7 +177,7 @@ class StixCoreRelationship:
                 ... on Malware {
                     name
                 }
-                ... on ThreatActor {
+                ... on ThreatActorGroup {
                     name
                 }
                 ... on Tool {
@@ -287,7 +287,7 @@ class StixCoreRelationship:
                 ... on Malware {
                     name
                 }
-                ... on ThreatActor {
+                ... on ThreatActorGroup {
                     name
                 }
                 ... on Tool {

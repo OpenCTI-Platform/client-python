@@ -424,7 +424,7 @@ class StixDomainObject:
                 result_name
                 result
             }
-            ... on ThreatActor {
+            ... on ThreatActorGroup {
                 name
                 description
                 aliases

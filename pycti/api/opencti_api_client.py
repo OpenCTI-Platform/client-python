@@ -58,7 +58,7 @@ from pycti.entities.opencti_stix_object_or_stix_relationship import (
 )
 from pycti.entities.opencti_stix_sighting_relationship import StixSightingRelationship
 from pycti.entities.opencti_task import Task
-from pycti.entities.opencti_threat_actor import ThreatActor
+from pycti.entities.opencti_threat_actor_group import ThreatActorGroup
 from pycti.entities.opencti_tool import Tool
 from pycti.entities.opencti_vocabulary import Vocabulary
 from pycti.entities.opencti_vulnerability import Vulnerability
@@ -180,7 +180,7 @@ class OpenCTIApiClient:
         self.identity = Identity(self)
         self.event = Event(self)
         self.location = Location(self)
-        self.threat_actor = ThreatActor(self)
+        self.threat_actor_group = ThreatActorGroup(self)
         self.intrusion_set = IntrusionSet(self)
         self.infrastructure = Infrastructure(self)
         self.campaign = Campaign(self)
@@ -404,7 +404,7 @@ class OpenCTIApiClient:
         :rtype: bool
         """
         try:
-            test = self.threat_actor.list(first=1)
+            test = self.threat_actor_group.list(first=1)
             if test is not None:
                 return True
         except:
