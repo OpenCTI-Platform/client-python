@@ -275,7 +275,7 @@ class StixObjectOrStixRelationship:
                     }
                 }
             }
-            ... on ThreatActor {
+            ... on ThreatActorGroup {
                 name
                 description
                 aliases

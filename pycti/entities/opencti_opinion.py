@@ -175,7 +175,7 @@ class Opinion:
                         ... on Malware {
                             name
                         }
-                        ... on ThreatActor {
+                        ... on ThreatActorGroup {
                             name
                         }
                         ... on Tool {

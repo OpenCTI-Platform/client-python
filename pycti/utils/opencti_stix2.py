@@ -19,6 +19,7 @@ from pycti.utils.constants import (
     LocationTypes,
     MultipleRefRelationship,
     StixCyberObservableTypes,
+    ThreatActorTypes,
 )
 from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
@@ -561,6 +562,7 @@ class OpenCTIStix2:
                 external_references_ids.append(external_reference_id)
                 if stix_object["type"] in [
                     "threat-actor",
+                    "threat-actor-group",
                     "intrusion-set",
                     "campaign",
                     "incident",
@@ -801,6 +803,7 @@ class OpenCTIStix2:
             "malware": self.opencti.malware.import_from_stix2,
             "malware-analysis": self.opencti.malware_analysis.import_from_stix2,
             "threat-actor": self.opencti.threat_actor.import_from_stix2,
+            "threat-actor-group": self.opencti.threat_actor_group.import_from_stix2,
             "tool": self.opencti.tool.import_from_stix2,
             "narrative": self.opencti.narrative.import_from_stix2,
             "vulnerability": self.opencti.vulnerability.import_from_stix2,
@@ -1239,6 +1242,14 @@ class OpenCTIStix2:
         # Identities
         if IdentityTypes.has_value(entity["entity_type"]):
             entity["entity_type"] = "Identity"
+
+        # Threat-Actors
+        if ThreatActorTypes.has_value(entity["entity_type"]):
+            if not no_custom_attributes:
+                entity["x_opencti_type"] = entity["entity_type"]
+            if entity["entity_type"] == "Threat-Actor-Group":
+                entity["threat_actor_group"] = entity["name"]
+            entity["entity_type"] = "Threat-Actor"
 
         # Locations
         if LocationTypes.has_value(entity["entity_type"]):
@@ -1829,6 +1840,7 @@ class OpenCTIStix2:
                 "Malware": self.opencti.malware.read,
                 "Malware-Analysis": self.opencti.malware_analysis.read,
                 "Threat-Actor": self.opencti.threat_actor.read,
+                "Threat-Actor-Group": self.opencti.threat_actor_group.read,
                 "Tool": self.opencti.tool.read,
                 "Vulnerability": self.opencti.vulnerability.read,
                 "Incident": self.opencti.incident.read,
@@ -1997,6 +2009,7 @@ class OpenCTIStix2:
             "Malware": self.opencti.malware.read,
             "Malware-Analysis": self.opencti.malware_analysis.read,
             "Threat-Actor": self.opencti.threat_actor.read,
+            "Threat-Actor-Group": self.opencti.threat_actor_group.read,
             "Tool": self.opencti.tool.read,
             "Narrative": self.opencti.narrative.read,
             "Vulnerability": self.opencti.vulnerability.read,
@@ -2140,6 +2153,7 @@ class OpenCTIStix2:
             "Malware": self.opencti.malware.list,
             "Malware-Analysis": self.opencti.malware_analysis.list,
             "Threat-Actor": self.opencti.threat_actor.list,
+            "Threat-Actor-Group": self.opencti.threat_actor_group.list,
             "Tool": self.opencti.tool.list,
             "Narrative": self.opencti.narrative.list,
             "Vulnerability": self.opencti.vulnerability.list,

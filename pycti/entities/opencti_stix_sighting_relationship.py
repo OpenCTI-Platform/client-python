@@ -162,7 +162,7 @@ class StixSightingRelationship:
                 ... on Malware {
                     name
                 }
-                ... on ThreatActor {
+                ... on ThreatActorGroup {
                     name
                 }
                 ... on Tool {
@@ -246,7 +246,7 @@ class StixSightingRelationship:
                 ... on Malware {
                     name
                 }
-                ... on ThreatActor {
+                ... on ThreatActorGroup {
                     name
                 }
                 ... on Tool {
