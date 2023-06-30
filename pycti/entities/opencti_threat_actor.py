@@ -21,6 +21,7 @@ class ThreatActor:
             type = "Threat-Actor-Individual"
         else:
             type = "Threat-Actor-Group"
+
         if "threat-actor-group" in type:
             return ThreatActorGroup.import_from_stix2(self, kwargs)
         if "threat-actor-individual" in type:
