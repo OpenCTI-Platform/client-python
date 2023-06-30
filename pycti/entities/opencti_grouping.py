@@ -181,6 +181,9 @@ class Grouping:
                         ... on ThreatActorGroup {
                             name
                         }
+                        ... on ThreatActorIndividual {
+                            name
+                        }
                         ... on Tool {
                             name
                         }

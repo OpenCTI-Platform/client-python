@@ -178,6 +178,9 @@ class Opinion:
                         ... on ThreatActorGroup {
                             name
                         }
+                        ... on ThreatActorIndividual {
+                            name
+                        }
                         ... on Tool {
                             name
                         }

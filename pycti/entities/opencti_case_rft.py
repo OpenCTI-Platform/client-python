@@ -180,6 +180,9 @@ class CaseRft:
                         ... on ThreatActorGroup {
                             name
                         }
+                        ... on ThreatActorIndividual {
+                            name
+                        }
                         ... on Tool {
                             name
                         }

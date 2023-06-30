@@ -165,6 +165,9 @@ class StixSightingRelationship:
                 ... on ThreatActorGroup {
                     name
                 }
+                ... on ThreatActorIndividual {
+                    name
+                }
                 ... on Tool {
                     name
                 }
@@ -247,6 +250,9 @@ class StixSightingRelationship:
                     name
                 }
                 ... on ThreatActorGroup {
+                    name
+                }
+                ... on ThreatActorIndividual {
                     name
                 }
                 ... on Tool {

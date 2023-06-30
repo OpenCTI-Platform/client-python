@@ -292,6 +292,21 @@ class StixObjectOrStixRelationship:
                     personal_motivations
                 }
             }
+            ... on ThreatActorIndividual {
+                name
+                description
+                aliases
+                threat_actor_types
+                first_seen
+                last_seen
+                roles
+                goals
+                sophistication
+                resource_level
+                primary_motivation
+                secondary_motivations
+                personal_motivations
+            }
             ... on Tool {
                 name
                 description

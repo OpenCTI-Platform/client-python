@@ -180,6 +180,9 @@ class ObservedData:
                         ... on ThreatActorGroup {
                             name
                         }
+                        ... on ThreatActorIndividual {
+                            name
+                        }
                         ... on Tool {
                             name
                         }

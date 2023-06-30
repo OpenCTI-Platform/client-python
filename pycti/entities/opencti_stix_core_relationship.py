@@ -180,6 +180,9 @@ class StixCoreRelationship:
                 ... on ThreatActorGroup {
                     name
                 }
+                ... on ThreatActorIndividual {
+                    name
+                }
                 ... on Tool {
                     name
                 }
@@ -288,6 +291,9 @@ class StixCoreRelationship:
                     name
                 }
                 ... on ThreatActorGroup {
+                    name
+                }
+                ... on ThreatActorIndividual {
                     name
                 }
                 ... on Tool {

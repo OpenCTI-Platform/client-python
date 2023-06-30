@@ -1053,3 +1053,25 @@ class TaskTest(EntityTest):
 
     def own_class(self):
         return self.api_client.task
+
+
+class ThreatActorGroupTest(EntityTest):
+    def data(self) -> Dict:
+        return {
+            "name": "Threat Actor Group",
+            "description": "Test",
+        }
+
+    def own_class(self):
+        return self.api_client.threat_actor_group
+
+
+class ThreatActorIndividualTest(EntityTest):
+    def data(self) -> Dict:
+        return {
+            "name": "Threat Actor Individual",
+            "description": "Test",
+        }
+
+    def own_class(self):
+        return self.api_client.threat_actor_individual

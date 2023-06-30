@@ -179,6 +179,9 @@ class Feedback:
                         ... on ThreatActorGroup {
                             name
                         }
+                        ... on ThreatActorIndividual {
+                            name
+                        }
                         ... on Tool {
                             name
                         }
