@@ -14,13 +14,13 @@ class ThreatActor:
     def import_from_stix2(self, **kwargs):
         stix_object = kwargs.get("stixObject", None)
         if "x_opencti_category" in stix_object:
-            type = stix_object["x_opencti_category"]
+            type = stix_object["x_opencti_category"].lower()
         elif self.opencti.get_attribute_in_extension("type", stix_object) is not None:
-            type = self.opencti.get_attribute_in_extension("type", stix_object)
-        elif "individual" in stix_object["resource_level"]:
-            type = "Threat-Actor-Individual"
+            type = self.opencti.get_attribute_in_extension("type", stix_object).lower()
+        elif "individual" in stix_object["resource_level"].lower():
+            type = "threat-actor-individual"
         else:
-            type = "Threat-Actor-Group"
+            type = "threat-actor-group"
 
         if "threat-actor-group" in type:
             return ThreatActorGroup.import_from_stix2(self, kwargs)
