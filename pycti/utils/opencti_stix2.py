@@ -803,7 +803,6 @@ class OpenCTIStix2:
             "malware": self.opencti.malware.import_from_stix2,
             "malware-analysis": self.opencti.malware_analysis.import_from_stix2,
             "threat-actor": self.opencti.threat_actor.import_from_stix2,
-            "threat-actor-group": self.opencti.threat_actor_group.import_from_stix2,
             "tool": self.opencti.tool.import_from_stix2,
             "narrative": self.opencti.narrative.import_from_stix2,
             "vulnerability": self.opencti.vulnerability.import_from_stix2,

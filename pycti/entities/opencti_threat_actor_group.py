@@ -130,7 +130,6 @@ class ThreatActorGroup:
             resource_level
             primary_motivation
             secondary_motivations
-            personal_motivations
             importFiles {
                 edges {
                     node {
@@ -303,7 +302,6 @@ class ThreatActorGroup:
         :param str resource_level: (optional) describe the actors resource_level in text
         :param str primary_motivation: (optional) describe the actors primary_motivation in text
         :param list secondary_motivations: (optional) describe the actors secondary_motivations in list of string
-        :param list personal_motivations: (optional) describe the actors personal_motivations in list of strings
         :param bool update: (optional) choose to updated an existing Threat-Actor-Group entity, default `False`
         """
 
@@ -328,7 +326,6 @@ class ThreatActorGroup:
         resource_level = kwargs.get("resource_level", None)
         primary_motivation = kwargs.get("primary_motivation", None)
         secondary_motivations = kwargs.get("secondary_motivations", None)
-        personal_motivations = kwargs.get("personal_motivations", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
@@ -371,7 +368,6 @@ class ThreatActorGroup:
                         "resource_level": resource_level,
                         "primary_motivation": primary_motivation,
                         "secondary_motivations": secondary_motivations,
-                        "personal_motivations": personal_motivations,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
@@ -456,9 +452,6 @@ class ThreatActorGroup:
                 else None,
                 secondary_motivations=stix_object["secondary_motivations"]
                 if "secondary_motivations" in stix_object
-                else None,
-                personal_motivations=stix_object["personal_motivations"]
-                if "personal_motivations" in stix_object
                 else None,
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object

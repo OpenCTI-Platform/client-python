@@ -132,7 +132,6 @@ class ThreatActor:
             resource_level
             primary_motivation
             secondary_motivations
-            personal_motivations
             importFiles {
                 edges {
                     node {
@@ -301,7 +300,6 @@ class ThreatActor:
         :param str resource_level: (optional) describe the actors resource_level in text
         :param str primary_motivation: (optional) describe the actors primary_motivation in text
         :param list secondary_motivations: (optional) describe the actors secondary_motivations in list of string
-        :param list personal_motivations: (optional) describe the actors personal_motivations in list of strings
         :param bool update: (optional) choose to updated an existing Threat-Actor entity, default `False`
         """
         return self.threat_actor_group.create(**kwargs)

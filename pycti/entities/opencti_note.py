@@ -180,7 +180,7 @@ class Note:
                         ... on Malware {
                             name
                         }
-                        ... on ThreatActorGroup {
+                        ... on ThreatActor {
                             name
                         }
                         ... on Tool {
