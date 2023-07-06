@@ -22,6 +22,7 @@ class ThreatActor:
 
         self.opencti = opencti
         self.threat_actor_group = ThreatActorGroup(opencti)
+        self.threat_actor_individual = ThreatActorIndividual(opencti)
         self.properties = """
             id
             standard_id
@@ -268,41 +269,9 @@ class ThreatActor:
             LOGGER.error("[opencti_threat_actor] Missing parameters: id or filters")
             return None
 
+    @DeprecationWarning
     def create(self, **kwargs):
-        """Create a Threat-Actor object
-
-        The Threat-Actor entity will only be created if it doesn't exists
-        By setting `update` to `True` it acts like an upsert and updates
-        fields of an existing Threat-Actor entity.
-
-        The create method accepts the following kwargs.
-
-        Note: `name` and `description` or `stix_id` is required.
-
-        :param str stix_id: stix2 id reference for the Threat-Actor entity
-        :param str createdBy: (optional) id of the organization that created the knowledge
-        :param list objectMarking: (optional) list of OpenCTI markin definition ids
-        :param list objectLabel: (optional) list of OpenCTI label ids
-        :param list externalReferences: (optional) list of OpenCTI external references ids
-        :param bool revoked: is this entity revoked
-        :param int confidence: confidence level
-        :param str lang: language
-        :param str created: (optional) date in OpenCTI date format
-        :param str modified: (optional) date in OpenCTI date format
-        :param str name: name of the threat actor
-        :param str description: description of the threat actor
-        :param list aliases: (optional) list of alias names for the Threat-Actor
-        :param list threat_actor_types: (optional) list of threat actor types
-        :param str first_seen: (optional) date in OpenCTI date format
-        :param str last_seen: (optional) date in OpenCTI date format
-        :param list roles: (optional) list of roles
-        :param list goals: (optional) list of goals
-        :param str sophistication: (optional) describe the actors sophistication in text
-        :param str resource_level: (optional) describe the actors resource_level in text
-        :param str primary_motivation: (optional) describe the actors primary_motivation in text
-        :param list secondary_motivations: (optional) describe the actors secondary_motivations in list of string
-        :param bool update: (optional) choose to updated an existing Threat-Actor entity, default `False`
-        """
+        # For backward compatibility, please use threat_actor_group or threat_actor_individual
         return self.threat_actor_group.create(**kwargs)
 
     """
@@ -324,6 +293,6 @@ class ThreatActor:
             type = "threat-actor-group"
 
         if "threat-actor-group" in type:
-            return ThreatActorGroup.import_from_stix2(**kwargs)
+            return self.threat_actor_group.import_from_stix2(**kwargs)
         if "threat-actor-individual" in type:
-            return ThreatActorIndividual.import_from_stix2(**kwargs)
+            return self.threat_actor_individual.import_from_stix2(**kwargs)
