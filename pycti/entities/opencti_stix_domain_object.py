@@ -424,24 +424,7 @@ class StixDomainObject:
                 result_name
                 result
             }
-            ... on ThreatActorGroup {
-                name
-                description
-                aliases
-                threat_actor_types
-                first_seen
-                last_seen
-                roles
-                goals
-                sophistication
-                resource_level
-                primary_motivation
-                secondary_motivations
-                ... on ThreatActorGroup {
-                    personal_motivations
-                }
-            }
-            ... on ThreatActorIndividual {
+            ... on ThreatActor {
                 name
                 description
                 aliases

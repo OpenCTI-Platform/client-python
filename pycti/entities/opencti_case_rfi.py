@@ -177,10 +177,7 @@ class CaseRfi:
                         ... on Malware {
                             name
                         }
-                        ... on ThreatActorGroup {
-                            name
-                        }
-                        ... on ThreatActorIndividual {
+                        ... on ThreatActor {
                             name
                         }
                         ... on Tool {
