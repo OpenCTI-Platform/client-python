@@ -1236,7 +1236,6 @@ class OpenCTIStix2:
 
     # region export
     def generate_export(self, entity: Dict, no_custom_attributes: bool = False) -> Dict:
-        original_entity_type = entity["entity_type"]
         # Handle model deviation
         # Identities
         if IdentityTypes.has_value(entity["entity_type"]):

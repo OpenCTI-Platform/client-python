@@ -128,6 +128,10 @@ class EntityTestCases:
         return ThreatActorGroupTest(api_client)
 
     @staticmethod
+    def case_threat_actor_individual(api_client):
+        return ThreatActorIndividualTest(api_client)
+
+    @staticmethod
     def case_tool(api_client):
         return ToolTest(api_client)
 
@@ -896,25 +900,6 @@ class StixCyberObservableASTest(StixCyberObservableTest):
 
     def get_filter(self) -> Dict[str, str]:
         return {}
-
-
-class ThreatActorGroupTest(EntityTest):
-    def data(self) -> Dict:
-        return {
-            "type": "ThreatActorGroup",
-            "threat_actor_types": ["crime-syndicate"],
-            "name": "Evil Org",
-            "description": "The Evil Org threat actor group",
-            "aliases": ["Syndicate 1", "Evil Syndicate 99"],
-            "roles": ["director"],
-            "goals": ["Steal bank money", "Steal credit cards"],
-            "sophistication": "advanced",
-            "resource_level": "team",
-            "primary_motivation": "organizational-gain",
-        }
-
-    def own_class(self):
-        return self.api_client.threat_actor_group
 
 
 class ToolTest(EntityTest):
