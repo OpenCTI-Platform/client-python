@@ -109,6 +109,7 @@ class Report:
                 }
             }
             revoked
+            x_opencti_reliability
             confidence
             created
             modified
@@ -620,6 +621,10 @@ class Report:
                 stix_object["granted_refs"] = self.opencti.get_attribute_in_extension(
                     "granted_refs", stix_object
                 )
+            if "x_opencti_reliability" not in stix_object:
+                stix_object[
+                    "x_opencti_reliability"
+                ] = self.opencti.get_attribute_in_extension("reliability", stix_object)
 
             return self.create(
                 stix_id=stix_object["id"],
@@ -657,6 +662,9 @@ class Report:
                 else None,
                 x_opencti_stix_ids=stix_object["x_opencti_stix_ids"]
                 if "x_opencti_stix_ids" in stix_object
+                else None,
+                x_opencti_reliability=stix_object["x_opencti_reliability"]
+                if "x_opencti_reliability" in stix_object
                 else None,
                 objectOrganization=stix_object["x_opencti_granted_refs"]
                 if "x_opencti_granted_refs" in stix_object
