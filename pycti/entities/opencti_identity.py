@@ -33,6 +33,7 @@ class Identity:
                     roles
                     contact_information
                     x_opencti_aliases
+                    x_opencti_reliability
                     created
                     modified
                     objectLabel {
@@ -47,7 +48,6 @@ class Identity:
                 }
                 ... on Organization {
                     x_opencti_organization_type
-                    x_opencti_reliability
                 }
                 ... on Individual {
                     x_opencti_firstname
@@ -115,6 +115,7 @@ class Identity:
             name
             description
             x_opencti_aliases
+            x_opencti_reliability
             contact_information
             ... on Individual {
                 x_opencti_firstname
@@ -122,7 +123,6 @@ class Identity:
             }
             ... on Organization {
                 x_opencti_organization_type
-                x_opencti_reliability
             }
             importFiles {
                 edges {

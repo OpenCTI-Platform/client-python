@@ -34,6 +34,7 @@ class Report:
                     roles
                     contact_information
                     x_opencti_aliases
+                    x_opencti_reliability
                     created
                     modified
                     objectLabel {
@@ -48,7 +49,6 @@ class Report:
                 }
                 ... on Organization {
                     x_opencti_organization_type
-                    x_opencti_reliability
                 }
                 ... on Individual {
                     x_opencti_firstname
