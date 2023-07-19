@@ -466,6 +466,7 @@ class Report:
         description = kwargs.get("description", None)
         report_types = kwargs.get("report_types", None)
         published = kwargs.get("published", None)
+        x_opencti_reliability = kwargs.get("x_opencti_reliability", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
@@ -502,6 +503,7 @@ class Report:
                         "description": description,
                         "report_types": report_types,
                         "published": published,
+                        "x_opencti_reliability": x_opencti_reliability,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "update": update,
                     }
