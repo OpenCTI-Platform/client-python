@@ -28,6 +28,8 @@ def test_read(entity_class):
     assert "id" in test_indicator, "No ID on object"
     assert "standard_id" in test_indicator, "No standard_id (STIX ID) on object"
     test_indicator = entity_class.own_class().read(id=test_indicator["id"])
+    if class_data.get("type") == "indicator" or "simple_observable_key" in class_data:
+        assert "creators" in test_indicator, "No creators on object"
     compare_values(
         class_data,
         test_indicator,
