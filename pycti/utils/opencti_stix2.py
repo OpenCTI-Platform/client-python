@@ -2209,9 +2209,7 @@ class OpenCTIStix2:
 
     def export_selected(
         self,
-        entity_type: str,
         entities_list: [str],
-        element_id: str = None,
         mode: str = "simple",
         max_marking_definition: Dict = None,
     ) -> Dict:
@@ -2225,9 +2223,6 @@ class OpenCTIStix2:
             "id": "bundle--" + str(uuid.uuid4()),
             "objects": [],
         }
-        if entity_type == "StixFile":
-            entity_type = "File"
-
         if entities_list is not None:
             uuids = []
             for entity in entities_list:
