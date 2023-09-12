@@ -2072,8 +2072,6 @@ class OpenCTIStix2:
             "id": "bundle--" + str(uuid.uuid4()),
             "objects": [],
         }
-        if entity_type == "StixFile":
-            entity_type = "File"
 
         if IdentityTypes.has_value(entity_type):
             if filters is not None:
