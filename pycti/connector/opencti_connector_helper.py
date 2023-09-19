@@ -287,7 +287,8 @@ class ListenQueue(threading.Thread):
                     self.helper.api.work.to_processed(work_id, str(e), True)
                 except:  # pylint: disable=bare-except
                     self.helper.metric.inc("error_count")
-                    LOGGER.error("Failing reporting the processing")
+                    self.helper.metric.inc("error_count")
+                LOGGER.error("Failing reporting the processing")
 
     def run(self) -> None:
         while not self.exit_event.is_set():
@@ -642,6 +643,11 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         self.connect_validate_before_import = get_config_variable(
             "CONNECTOR_VALIDATE_BEFORE_IMPORT",
             ["connector", "validate_before_import"],
+        )
+        # Start up the server to expose the metrics.
+        expose_metrics = get_config_variable(
+            "CONNECTOR_EXPOSE_METRICS",
+            ["connector", "expose_metrics"],
             config,
         )
         # Start up the server to expose the metrics.
