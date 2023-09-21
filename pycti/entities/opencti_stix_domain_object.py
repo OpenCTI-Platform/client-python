@@ -1606,7 +1606,7 @@ class StixDomainObject:
                     "id": id,
                     "input": {
                         "toId": label_id,
-                        "relationship_type": "object-label",
+                        "relationship_type": "object_label",
                     },
                 },
             )
@@ -1651,7 +1651,7 @@ class StixDomainObject:
                 {
                     "id": id,
                     "toId": label_id,
-                    "relationship_type": "object-label",
+                    "relationship_type": "object_label",
                 },
             )
             return True
