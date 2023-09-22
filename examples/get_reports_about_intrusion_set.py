@@ -27,7 +27,7 @@ intrusion_set = opencti_api_client.intrusion_set.read(
 
 # Get all reports
 reports = opencti_api_client.report.list(
-    filters=[{"key": "objectContains", "values": [intrusion_set["id"]]}],
+    filters=[{"key": "contains", "values": [intrusion_set["id"]]}],
     orderBy="published",
     orderMode="asc",
 )
