@@ -446,7 +446,7 @@ class Grouping:
         LOGGER.info("Listing Groupings with filters %s.", json.dumps(filters))
         query = (
             """
-            query Groupings($filters: [GroupingsFiltering!], $search: String, $first: Int, $after: ID, $orderBy: GroupingsOrdering, $orderMode: OrderingMode) {
+            query Groupings($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: GroupingsOrdering, $orderMode: OrderingMode) {
                 groupings(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                     edges {
                         node {

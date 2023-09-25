@@ -1072,7 +1072,7 @@ class StixDomainObject:
         LOGGER.info("Listing Stix-Domain-Objects with filters %s.", json.dumps(filters))
         query = (
             """
-                query StixDomainObjects($types: [String], $filters: [StixDomainObjectsFiltering], $search: String, $relationship_type: [String], $elementId: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
+                query StixDomainObjects($types: [String], $filters: FilterGroup, $search: String, $relationship_type: [String], $elementId: String, $first: Int, $after: ID, $orderBy: StixDomainObjectsOrdering, $orderMode: OrderingMode) {
                     stixDomainObjects(types: $types, filters: $filters, search: $search, relationship_type: $relationship_type, elementId: $elementId, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {

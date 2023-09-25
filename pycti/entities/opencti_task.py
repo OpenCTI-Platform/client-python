@@ -274,7 +274,7 @@ class Task:
         LOGGER.info("Listing Tasks with filters " + json.dumps(filters) + ".")
         query = (
             """
-        query tasks($filters: [TasksFiltering!], $search: String, $first: Int, $after: ID, $orderBy: TasksOrdering, $orderMode: OrderingMode) {
+        query tasks($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: TasksOrdering, $orderMode: OrderingMode) {
             tasks(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                 edges {
                     node {

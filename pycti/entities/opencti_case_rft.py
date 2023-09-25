@@ -497,7 +497,7 @@ class CaseRft:
         LOGGER.info("Listing Case Rfts with filters " + json.dumps(filters) + ".")
         query = (
             """
-                        query CaseRfts($filters: [CaseRftsFiltering!], $search: String, $first: Int, $after: ID, $orderBy: CaseRftsOrdering, $orderMode: OrderingMode) {
+                        query CaseRfts($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: CaseRftsOrdering, $orderMode: OrderingMode) {
                             caseRfts(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                                 edges {
                                     node {

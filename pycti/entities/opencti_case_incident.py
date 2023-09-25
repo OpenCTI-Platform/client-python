@@ -502,7 +502,7 @@ class CaseIncident:
         LOGGER.info("Listing Case Incidents with filters " + json.dumps(filters) + ".")
         query = (
             """
-                query CaseIncidents($filters: [CaseIncidentsFiltering!], $search: String, $first: Int, $after: ID, $orderBy: CaseIncidentsOrdering, $orderMode: OrderingMode) {
+                query CaseIncidents($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: CaseIncidentsOrdering, $orderMode: OrderingMode) {
                     caseIncidents(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {

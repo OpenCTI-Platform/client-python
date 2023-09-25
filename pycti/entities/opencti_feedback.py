@@ -475,7 +475,7 @@ class Feedback:
         )
         query = (
             """
-                query Feedbacks($filters: [FeedbacksFiltering!], $search: String, $first: Int, $after: ID, $orderBy: FeedbacksOrdering, $orderMode: OrderingMode) {
+                query Feedbacks($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: FeedbacksOrdering, $orderMode: OrderingMode) {
                     feedbacks(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {
