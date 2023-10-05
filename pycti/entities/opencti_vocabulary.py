@@ -22,7 +22,7 @@ class Vocabulary:
         )
         query = (
             """
-                    query Vocabularies($filters: [VocabularyFiltering!]) {
+                    query Vocabularies($filters: FilterGroup) {
                         vocabularies(filters: $filters) {
                             edges {
                                 node {
