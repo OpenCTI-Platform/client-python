@@ -161,7 +161,7 @@ class OpenCTIApiWork:
             $count: Int
             $orderBy: WorksOrdering
             $orderMode: OrderingMode
-            $filters: [WorksFiltering]
+            $filters: FilterGroup
         ) {
             works(
                 first: $count
