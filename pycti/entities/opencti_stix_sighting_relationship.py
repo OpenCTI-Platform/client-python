@@ -317,7 +317,7 @@ class StixSightingRelationship:
         first_seen_stop = kwargs.get("firstSeenStop", None)
         last_seen_start = kwargs.get("lastSeenStart", None)
         last_seen_stop = kwargs.get("lastSeenStop", None)
-        filters = kwargs.get("filters", [])
+        filters = kwargs.get("filters", None)
         first = kwargs.get("first", 100)
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)

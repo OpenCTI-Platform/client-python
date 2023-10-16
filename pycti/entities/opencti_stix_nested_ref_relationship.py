@@ -91,7 +91,7 @@ class StixNestedRefRelationship:
         start_time_stop = kwargs.get("startTimeStop", None)
         stop_time_start = kwargs.get("stopTimeStart", None)
         stop_time_stop = kwargs.get("stopTimeStop", None)
-        filters = kwargs.get("filters", [])
+        filters = kwargs.get("filters", None)
         first = kwargs.get("first", 500)
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
