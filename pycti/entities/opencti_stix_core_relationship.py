@@ -819,7 +819,11 @@ class StixCoreRelationship:
         label_name = kwargs.get("label_name", None)
         if label_name is not None:
             label = self.opencti.label.read(
-                filters=[{"key": "value", "values": [label_name]}]
+                filters={
+                    "mode": "and",
+                    "filters": [{"key": "value", "values": [label_name]}],
+                    "filterGroups": []
+                }
             )
             if label:
                 label_id = label["id"]

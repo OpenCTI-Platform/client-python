@@ -621,10 +621,14 @@ class CaseRfi:
         if object_result is None and name is not None and created is not None:
             created_final = parse(created).strftime("%Y-%m-%d")
             object_result = self.read(
-                filters=[
-                    {"key": "name", "values": [name]},
-                    {"key": "created_day", "values": [created_final]},
-                ],
+                filters={
+                    "mode": "and",
+                    "filters": [
+                        {"key": "name", "values": [name]},
+                        {"key": "created_day", "values": [created_final]},
+                    ],
+                    "filterGroups": []
+                },
                 customAttributes=custom_attributes,
             )
         return object_result

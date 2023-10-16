@@ -207,9 +207,11 @@ class OpenCTIApiWork:
             query,
             {
                 "count": 50,
-                "filters": [
-                    {"key": "connector_id", "values": [connector_id]},
-                ],
+                "filters": {
+                    "mode": "and",
+                    "filters": [{"key": "connector_id", "values": [connector_id]}],
+                    "filterGroups": []
+                },
             },
         )
         result = result["data"]["works"]["edges"]

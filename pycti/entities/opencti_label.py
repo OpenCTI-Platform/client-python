@@ -197,7 +197,11 @@ class Label:
 
     def read_or_create_unchecked(self, **kwargs):
         value = kwargs.get("value", None)
-        label = self.read(filters=[{"key": "value", "values": [value]}])
+        label = self.read(filters={
+            "mode": "and",
+            "filters": [{"key": "value", "values": [value]}],
+            "filterGroups": []
+        })
         if label is None:
             try:
                 return self.create(**kwargs)
