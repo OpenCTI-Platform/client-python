@@ -100,7 +100,7 @@ class OpenCTIApiClient:
     :type token: str
     :param log_level: log level for the client
     :type log_level: str, optional
-    :param ssl_verify:
+    :param ssl_verify: Requiring the requests to verify the TLS certificate at the server.
     :type ssl_verify: bool, optional
     :param proxies:
     :type proxies: dict, optional, The proxy configuration, would have `http` and `https` attributes. Defaults to {}
@@ -112,6 +112,8 @@ class OpenCTIApiClient:
         ```
     :param json_logging: format the logs as json if set to True
     :type json_logging: bool, optional
+    :param cert: If String, file path to pem file. If Tuple, a ('path_to_cert.crt', 'path_to_key.key') pair representing the certificate and the key.
+    :type cert: str, tuple, optional
     """
 
     def __init__(
