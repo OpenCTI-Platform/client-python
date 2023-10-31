@@ -13,6 +13,7 @@ from pythonjsonlogger import jsonlogger
 
 from pycti import __version__
 from pycti.api import LOGGER
+from pycti.api.opencti_api_authentication import OpenCTIApiAuthentication
 from pycti.api.opencti_api_connector import OpenCTIApiConnector
 from pycti.api.opencti_api_playbook import OpenCTIApiPlaybook
 from pycti.api.opencti_api_work import OpenCTIApiWork
@@ -135,10 +136,29 @@ class OpenCTIApiClient:
         self.ssl_verify = ssl_verify
         self.cert = cert
         self.proxies = proxies
+        self.auth = auth
         if url is None or len(url) == 0:
             raise ValueError("An URL must be set")
         if token is None or len(token) == 0 or token == "ChangeMe":
             raise ValueError("A TOKEN must be set")
+
+        self.api_url = url + "/graphql"
+
+        # Instantiate API
+        if self.auth is None:
+            self.auth = OpenCTIApiAuthentication(
+                bearer_token=token,
+                pycti_version=__version__,
+                proxies=self.proxies,
+                verify=self.ssl_verify,
+                cert=self.cert,
+            )
+        elif not issubclass(self.auth, OpenCTIApiAuthentication):
+            raise TypeError(
+                f"The class called '{self.auth}' is not a subclass of OpenCTIApiAuthentication"
+            )
+
+        self.session = requests.session()
 
         # Configure logger
         log_level = log_level.upper()
@@ -154,19 +174,6 @@ class OpenCTIApiClient:
             logging.basicConfig(handlers=[log_handler], level=log_level, force=True)
         else:
             logging.basicConfig(level=log_level)
-
-        # Define API
-        self.api_token = token
-        self.api_url = url + "/graphql"
-        self.request_headers = {
-            "User-Agent": "pycti/" + __version__,
-            "Authorization": "Bearer " + token,
-        }
-
-        if auth is not None:
-            self.session = requests.session(auth=auth)
-        else:
-            self.session = requests.session()
 
         # Define the dependencies
         self.work = OpenCTIApiWork(self)
@@ -230,16 +237,18 @@ class OpenCTIApiClient:
             )
 
     def set_applicant_id_header(self, applicant_id):
-        self.request_headers["opencti-applicant-id"] = applicant_id
+        self.auth.set_custom_header(key="opencti-applicant-id", value=applicant_id)
 
     def set_synchronized_upsert_header(self, synchronized):
-        self.request_headers["synchronized-upsert"] = (
-            "true" if synchronized is True else "false"
+        self.auth.set_custom_header(
+            key="synchronized-upsert",
+            value=("true" if synchronized is True else "false"),
         )
 
     def set_retry_number(self, retry_number):
-        self.request_headers["opencti-retry-number"] = (
-            "" if retry_number is None else str(retry_number)
+        self.auth.set_custom_header(
+            key="opencti-retry-number",
+            value=("" if retry_number is None else str(retry_number)),
         )
 
     def query(self, query, variables={}):
@@ -337,22 +346,16 @@ class OpenCTIApiClient:
             # Send the multipart request
             r = self.session.post(
                 self.api_url,
+                auth=self.auth,
                 data=multipart_data,
                 files=multipart_files,
-                headers=self.request_headers,
-                verify=self.ssl_verify,
-                cert=self.cert,
-                proxies=self.proxies,
             )
         # If no
         else:
             r = self.session.post(
                 self.api_url,
+                auth=self.auth,
                 json={"query": query, "variables": variables},
-                headers=self.request_headers,
-                verify=self.ssl_verify,
-                cert=self.cert,
-                proxies=self.proxies,
             )
         # Build response
         if r.status_code == 200:
@@ -388,7 +391,10 @@ class OpenCTIApiClient:
         :rtype: str or bytes
         """
 
-        r = self.session.get(fetch_uri, headers=self.request_headers)
+        r = self.session.get(
+            fetch_uri,
+            auth=self.auth,
+        )
         if binary:
             if serialize:
                 return base64.b64encode(r.content).decode("utf-8")
