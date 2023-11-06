@@ -46,7 +46,7 @@ print("FILE MD5")
 observable = opencti_api_client.stix_cyber_observable.read(
     filters={
         "mode": "and",
-        "filters": [{"key": "hashes_MD5", "values": ["3aad33e025303dbae12c12b4ec5258c1"]}],
+        "filters": [{"key": "hashes.MD5", "values": ["3aad33e025303dbae12c12b4ec5258c1"]}],
         "filterGroups": []
     }
 )
