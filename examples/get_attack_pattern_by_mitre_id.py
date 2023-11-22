@@ -14,7 +14,7 @@ attack_pattern = opencti_api_client.attack_pattern.read(
     filters={
         "mode": "and",
         "filters": [{"key": "x_mitre_id", "values": ["T1514"]}],
-        "filterGroups": []
+        "filterGroups": [],
     }
 )
 

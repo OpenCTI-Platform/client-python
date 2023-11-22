@@ -137,11 +137,13 @@ class Vocabulary:
 
     def read_or_create_unchecked(self, **kwargs):
         value = kwargs.get("name", None)
-        vocab = self.read(filters={
-            "mode": "and",
-            "filters": [{"key": "name", "values": [value]}],
-            "filterGroups": []
-        })
+        vocab = self.read(
+            filters={
+                "mode": "and",
+                "filters": [{"key": "name", "values": [value]}],
+                "filterGroups": [],
+            }
+        )
         if vocab is None:
             try:
                 return self.create(**kwargs)

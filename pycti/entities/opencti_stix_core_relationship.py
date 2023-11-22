@@ -822,7 +822,7 @@ class StixCoreRelationship:
                 filters={
                     "mode": "and",
                     "filters": [{"key": "value", "values": [label_name]}],
-                    "filterGroups": []
+                    "filterGroups": [],
                 }
             )
             if label:

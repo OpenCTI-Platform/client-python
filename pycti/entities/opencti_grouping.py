@@ -571,7 +571,7 @@ class Grouping:
                         {"key": "name", "values": [name]},
                         {"key": "context", "values": [context]},
                     ],
-                    "filterGroups": []
+                    "filterGroups": [],
                 },
                 customAttributes=custom_attributes,
             )

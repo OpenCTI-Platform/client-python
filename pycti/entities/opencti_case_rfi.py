@@ -627,7 +627,7 @@ class CaseRfi:
                         {"key": "name", "values": [name]},
                         {"key": "created_day", "values": [created_final]},
                     ],
-                    "filterGroups": []
+                    "filterGroups": [],
                 },
                 customAttributes=custom_attributes,
             )

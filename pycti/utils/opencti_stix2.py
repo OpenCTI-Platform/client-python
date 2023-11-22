@@ -646,11 +646,17 @@ class OpenCTIStix2:
                                 self.opencti.marking_definition.read(
                                     filters={
                                         "mode": "and",
-                                    "filters": [
-                                        {"key": "definition_type", "values": ["TLP"]},
-                                        {"key": "definition", "values": ["TLP:CLEAR"]},
-                                    ],
-                                    "filterGroups": [],
+                                        "filters": [
+                                            {
+                                                "key": "definition_type",
+                                                "values": ["TLP"],
+                                            },
+                                            {
+                                                "key": "definition",
+                                                "values": ["TLP:CLEAR"],
+                                            },
+                                        ],
+                                        "filterGroups": [],
                                     }
                                 )
                             )

@@ -619,7 +619,7 @@ class Report:
                         {"key": "name", "values": [name]},
                         {"key": "published_day", "values": [published_final]},
                     ],
-                    "filterGroups": []
+                    "filterGroups": [],
                 },
                 customAttributes=custom_attributes,
             )

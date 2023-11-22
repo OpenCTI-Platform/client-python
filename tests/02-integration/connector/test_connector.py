@@ -96,7 +96,7 @@ def test_external_import_connector(
             filters={
                 "mode": "and",
                 "filters": [{"key": "name", "values": elem["name"]}],
-                "filterGroups": []
+                "filterGroups": [],
             }
         )
         if sdo is None:

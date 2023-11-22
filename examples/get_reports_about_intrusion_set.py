@@ -25,7 +25,7 @@ intrusion_set = opencti_api_client.intrusion_set.read(
     filters={
         "mode": "and",
         "filters": [{"key": "name", "values": ["Sandworm Team"]}],
-        "filterGroups": []
+        "filterGroups": [],
     }
 )
 
@@ -34,7 +34,7 @@ reports = opencti_api_client.report.list(
     filters={
         "mode": "and",
         "filters": [{"key": "contains", "values": [intrusion_set["id"]]}],
-        "filterGroups": []
+        "filterGroups": [],
     },
     orderBy="published",
     orderMode="asc",

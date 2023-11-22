@@ -18,7 +18,7 @@ incident = opencti_api_client.incident.read(
     filters={
         "mode": "and",
         "filters": [{"key": "name", "values": ["My new incident"]}],
-        "filterGroups": []
+        "filterGroups": [],
     }
 )
 

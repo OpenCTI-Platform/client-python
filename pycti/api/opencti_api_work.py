@@ -210,7 +210,7 @@ class OpenCTIApiWork:
                 "filters": {
                     "mode": "and",
                     "filters": [{"key": "connector_id", "values": [connector_id]}],
-                    "filterGroups": []
+                    "filterGroups": [],
                 },
             },
         )
