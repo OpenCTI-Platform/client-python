@@ -849,7 +849,7 @@ class StixCoreRelationship:
                     "id": id,
                     "input": {
                         "toId": label_id,
-                        "relationship_type": "object_label",
+                        "relationship_type": "object-label",
                     },
                 },
             )
