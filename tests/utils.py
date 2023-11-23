@@ -14,6 +14,7 @@ def is_filters_empty(filters):
         return True
     return False
 
+
 def get_incident_start_date():
     return (
         parse("2019-12-01")
