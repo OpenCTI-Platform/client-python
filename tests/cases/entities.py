@@ -639,7 +639,7 @@ class NoteTest(EntityTest):
             "filters": [
                 {
                     "key": "attribute_abstract",
-                    "values": self.data()["attribute_abstract"],
+                    "values": self.data()["abstract"],
                 }
             ],
             "filterGroups": [],
