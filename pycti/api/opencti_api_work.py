@@ -55,7 +55,10 @@ class OpenCTIApiWork:
         try:
             self.api.query(query, {"id": work_id, "error": error})
         except Exception as ex:
-            self.api.log("error", "Cannot report expectation, message:" + str(ex))
+            if hasattr(ex, 'args') and len(ex.args) > 0:
+                self.api.log("error", "Cannot report expectation for work_id:" + work_id + ", message is:" + str(ex.args[0]))
+            else:
+                self.api.log("error", "Cannot report expectation for work_id:" + work_id)
 
     def add_expectations(self, work_id: str, expectations: int):
         LOGGER.info("Update action expectations %s - %s", work_id, expectations)
@@ -69,7 +72,10 @@ class OpenCTIApiWork:
         try:
             self.api.query(query, {"id": work_id, "expectations": expectations})
         except Exception as ex:
-            self.api.log("error", "Cannot add expectation, message:" + str(ex))
+            if hasattr(ex, 'args') and len(ex.args) > 0:
+                self.api.log("error", "Cannot add expectation for work_id:" + work_id + ", message is:" + str(ex.args[0]))
+            else:
+                self.api.log("error", "Cannot add expectation for work_id:" + work_id)
 
     def initiate_work(self, connector_id: str, friendly_name: str) -> str:
         LOGGER.info("Initiate work for %s", connector_id)
