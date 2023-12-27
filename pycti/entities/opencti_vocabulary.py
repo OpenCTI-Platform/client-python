@@ -17,9 +17,7 @@ class Vocabulary:
 
     def list(self, **kwargs):
         filters = kwargs.get("filters", None)
-        self.opencti.log(
-            "info", "Listing Vocabularies with filters " + json.dumps(filters) + "."
-        )
+        self.opencti.app_logger.info("Listing Vocabularies with filters", {"filters": json.dumps(filters)})
         query = (
             """
                     query Vocabularies($filters: FilterGroup) {
@@ -47,7 +45,7 @@ class Vocabulary:
         id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
         if id is not None:
-            self.opencti.log("info", "Reading vocabulary {" + id + "}.")
+            self.opencti.app_logger.info("Reading vocabulary", {"id": id})
             query = (
                 """
                         query Vocabulary($id: String!) {
@@ -68,9 +66,7 @@ class Vocabulary:
             else:
                 return None
         else:
-            self.opencti.log(
-                "error", "[opencti_vocabulary] Missing parameters: id or filters"
-            )
+            self.opencti.app_logger.error("[opencti_vocabulary] Missing parameters: id or filters")
             return None
 
     def handle_vocab(self, vocab, cache, field):
@@ -98,9 +94,7 @@ class Vocabulary:
         update = kwargs.get("update", False)
 
         if name is not None and category is not None:
-            self.opencti.log(
-                "info", "Creating or Getting aliased Vocabulary {" + name + "}."
-            )
+            self.opencti.app_logger.info("Creating or Getting aliased Vocabulary", {"name": name})
             query = (
                 """
                         mutation VocabularyAdd($input: VocabularyAddInput!) {
@@ -130,10 +124,7 @@ class Vocabulary:
             )
             return result["data"]["vocabularyAdd"]
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_vocabulary] Missing parameters: name or category",
-            )
+            self.opencti.app_logger.error("[opencti_vocabulary] Missing parameters: name or category",)
 
     def read_or_create_unchecked(self, **kwargs):
         value = kwargs.get("name", None)
@@ -155,7 +146,7 @@ class Vocabulary:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
-            self.opencti.log("info", "Updating Vocabulary {" + id + "}.")
+            self.opencti.app_logger.info("Updating Vocabulary", {"id": id})
             query = """
                         mutation VocabularyEdit($id: ID!, $input: [EditInput!]!) {
                             vocabularyFieldPatch(id: $id, input: $input) { 
@@ -176,8 +167,5 @@ class Vocabulary:
                 result["data"]["vocabularyFieldPatch"]
             )
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_vocabulary] Missing parameters: id and key and value",
-            )
+            self.opencti.app_logger.error("[opencti_vocabulary] Missing parameters: id and key and value")
             return None

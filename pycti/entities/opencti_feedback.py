@@ -4,8 +4,6 @@ import uuid
 from dateutil.parser import parse
 from stix2.canonicalization.Canonicalize import canonicalize
 
-from pycti.entities import LOGGER
-
 
 class Feedback:
     def __init__(self, opencti):
@@ -469,10 +467,7 @@ class Feedback:
         if get_all:
             first = 500
 
-        self.opencti.log(
-            "info",
-            "Listing Feedbacks with filters " + json.dumps(filters) + ".",
-        )
+        self.opencti.app_logger.info("Listing Feedbacks with filters", {"filters": json.dumps(filters)})
         query = (
             """
                 query Feedbacks($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: FeedbacksOrdering, $orderMode: OrderingMode) {
@@ -516,7 +511,7 @@ class Feedback:
             final_data = final_data + data
             while result["data"]["feedbacks"]["pageInfo"]["hasNextPage"]:
                 after = result["date"]["feedbacks"]["pageInfo"]["endCursor"]
-                self.opencti.log("info", "Listing Feedbacks after " + after)
+                self.opencti.app_logger.info("Listing Feedbacks", {"after": after})
                 result = self.opencti.query(
                     query,
                     {
@@ -550,7 +545,7 @@ class Feedback:
         custom_attributes = kwargs.get("customAttributes", None)
         with_files = kwargs.get("withFiles", False)
         if id is not None:
-            self.opencti.log("info", "Reading Feedback { " + id + "}.")
+            self.opencti.app_logger.info("Reading Feedback", {"id": id})
             query = (
                 """
                     query Feedback($id: String!) {
@@ -623,13 +618,12 @@ class Feedback:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
-                "info",
-                "Checking StixObjectOrStixRelationship {"
-                + stix_object_or_stix_relationship_id
-                + "} in Feedback {"
-                + id
-                + "}",
+            self.opencti.app_logger.info(
+                "Checking StixObjectOrStixRelationship in Feedback",
+                {
+                    "stix_object_or_stix_relationship_id": stix_object_or_stix_relationship_id,
+                    "id": id,
+                },
             )
             query = """
                 query FeedbackContainsStixObjectOrStixRelationship($id: String!, $stixObjectOrStixRelationshipId: String!) {
@@ -645,9 +639,8 @@ class Feedback:
             )
             return result["data"]["feedbackContainsStixObjectOrStixRelationship"]
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_feedback] Missing parameters: id or stixObjectOrStixRelationshipId",
+            self.opencti.app_logger.error(
+                "[opencti_feedback] Missing parameters: id or stixObjectOrStixRelationshipId"
             )
 
     """
@@ -677,7 +670,7 @@ class Feedback:
         update = kwargs.get("update", False)
 
         if name is not None:
-            self.opencti.log("info", "Creating Feedback {" + name + "}.")
+            self.opencti.app_logger.info("Creating Feedback", {"name": name})
             query = """
                 mutation FeedbackAdd($input: FeedbackAddInput!) {
                     feedbackAdd(input: $input) {
@@ -714,13 +707,10 @@ class Feedback:
             )
             return self.opencti.process_multiple_fields(result["data"]["feedbackAdd"])
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_feedback] Missing parameters: name",
-            )
+            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: name")
 
     def update_field(self, **kwargs):
-        LOGGER.info("Updating Feedback {%s}.", json.dumps(kwargs))
+        self.opencti.app_logger.info("Updating Feedback", {"data": json.dumps(kwargs)})
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is not None and input is not None:
@@ -742,7 +732,9 @@ class Feedback:
                 result["data"]["stixDomainObjectEdit"]["fieldPatch"]
             )
         else:
-            LOGGER.error("[opencti_feedback] Missing parameters: id and key and value")
+            self.opencti.app_logger.error(
+                "[opencti_feedback] Missing parameters: id and key and value"
+            )
             return None
 
         """
@@ -759,13 +751,12 @@ class Feedback:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
-                "info",
-                "Adding StixObjectOrStixRelationship {"
-                + stix_object_or_stix_relationship_id
-                + "} to Feedback {"
-                + id
-                + "}",
+            self.opencti.app_logger.info(
+                "Adding StixObjectOrStixRelationship in Feedback",
+                {
+                    "stix_object_or_stix_relationship_id": stix_object_or_stix_relationship_id,
+                    "id": id,
+                },
             )
             query = """
                mutation FeedbackEditRelationAdd($id: ID!, $input: StixRefRelationshipAddInput!) {
@@ -788,10 +779,7 @@ class Feedback:
             )
             return True
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",
-            )
+            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",)
             return False
 
         """
@@ -808,13 +796,12 @@ class Feedback:
             "stixObjectOrStixRelationshipId", None
         )
         if id is not None and stix_object_or_stix_relationship_id is not None:
-            self.opencti.log(
-                "info",
-                "Removing StixObjectOrStixRelationship {"
-                + stix_object_or_stix_relationship_id
-                + "} to Feedback {"
-                + id
-                + "}",
+            self.opencti.app_logger.info(
+                "Removing StixObjectOrStixRelationship in Feedback",
+                {
+                    "stix_object_or_stix_relationship_id": stix_object_or_stix_relationship_id,
+                    "id": id,
+                },
             )
             query = """
                mutation FeedbackEditRelationDelete($id: ID!, $toId: StixRef!, $relationship_type: String!) {
@@ -835,10 +822,7 @@ class Feedback:
             )
             return True
         else:
-            self.opencti.log(
-                "error",
-                "[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",
-            )
+            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",)
             return False
 
         """
@@ -901,14 +885,12 @@ class Feedback:
                 update=update,
             )
         else:
-            self.opencti.log(
-                "error", "[opencti_feedback] Missing parameters: stixObject"
-            )
+            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: stixObject")
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         if id is not None:
-            LOGGER.info("Deleting Feedback {%s}.", id)
+            self.opencti.app_logger.info("Deleting Feedback", {"id": id})
             query = """
                  mutation FeedbackDelete($id: ID!) {
                      stixDomainObjectEdit(id: $id) {
@@ -918,5 +900,5 @@ class Feedback:
              """
             self.opencti.query(query, {"id": id})
         else:
-            LOGGER.error("[opencti_feedback] Missing parameters: id")
+            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: id")
             return None
