@@ -876,9 +876,7 @@ class Report:
                 )
                 if "description" in stix_object
                 else None,
-                content=self.opencti.stix2.convert_markdown(
-                    stix_object["content"]
-                )
+                content=self.opencti.stix2.convert_markdown(stix_object["content"])
                 if "content" in stix_object
                 else None,
                 report_types=stix_object["report_types"]
