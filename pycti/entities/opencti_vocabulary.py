@@ -17,7 +17,9 @@ class Vocabulary:
 
     def list(self, **kwargs):
         filters = kwargs.get("filters", None)
-        self.opencti.app_logger.info("Listing Vocabularies with filters", {"filters": json.dumps(filters)})
+        self.opencti.app_logger.info(
+            "Listing Vocabularies with filters", {"filters": json.dumps(filters)}
+        )
         query = (
             """
                     query Vocabularies($filters: FilterGroup) {
@@ -66,7 +68,9 @@ class Vocabulary:
             else:
                 return None
         else:
-            self.opencti.app_logger.error("[opencti_vocabulary] Missing parameters: id or filters")
+            self.opencti.app_logger.error(
+                "[opencti_vocabulary] Missing parameters: id or filters"
+            )
             return None
 
     def handle_vocab(self, vocab, cache, field):
@@ -94,7 +98,9 @@ class Vocabulary:
         update = kwargs.get("update", False)
 
         if name is not None and category is not None:
-            self.opencti.app_logger.info("Creating or Getting aliased Vocabulary", {"name": name})
+            self.opencti.app_logger.info(
+                "Creating or Getting aliased Vocabulary", {"name": name}
+            )
             query = (
                 """
                         mutation VocabularyAdd($input: VocabularyAddInput!) {
@@ -124,7 +130,9 @@ class Vocabulary:
             )
             return result["data"]["vocabularyAdd"]
         else:
-            self.opencti.app_logger.error("[opencti_vocabulary] Missing parameters: name or category",)
+            self.opencti.app_logger.error(
+                "[opencti_vocabulary] Missing parameters: name or category",
+            )
 
     def read_or_create_unchecked(self, **kwargs):
         value = kwargs.get("name", None)
@@ -167,5 +175,7 @@ class Vocabulary:
                 result["data"]["vocabularyFieldPatch"]
             )
         else:
-            self.opencti.app_logger.error("[opencti_vocabulary] Missing parameters: id and key and value")
+            self.opencti.app_logger.error(
+                "[opencti_vocabulary] Missing parameters: id and key and value"
+            )
             return None

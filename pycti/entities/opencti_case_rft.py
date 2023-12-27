@@ -776,7 +776,9 @@ class CaseRft:
             )
             return True
         else:
-            self.opencti.app_logger.info("[opencti_caseRft] Missing parameters: id and stixObjectOrStixRelationshipId")
+            self.opencti.app_logger.info(
+                "[opencti_caseRft] Missing parameters: id and stixObjectOrStixRelationshipId"
+            )
             return False
 
     """
@@ -819,7 +821,9 @@ class CaseRft:
             )
             return True
         else:
-            self.opencti.app_logger.error("[opencti_caseRft] Missing parameters: id and stixObjectOrStixRelationshipId")
+            self.opencti.app_logger.error(
+                "[opencti_caseRft] Missing parameters: id and stixObjectOrStixRelationshipId"
+            )
             return False
 
         """
@@ -884,7 +888,9 @@ class CaseRft:
                 update=update,
             )
         else:
-            self.opencti.app_logger.error("[opencti_caseRft] Missing parameters: stixObject")
+            self.opencti.app_logger.error(
+                "[opencti_caseRft] Missing parameters: stixObject"
+            )
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)

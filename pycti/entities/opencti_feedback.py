@@ -467,7 +467,9 @@ class Feedback:
         if get_all:
             first = 500
 
-        self.opencti.app_logger.info("Listing Feedbacks with filters", {"filters": json.dumps(filters)})
+        self.opencti.app_logger.info(
+            "Listing Feedbacks with filters", {"filters": json.dumps(filters)}
+        )
         query = (
             """
                 query Feedbacks($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: FeedbacksOrdering, $orderMode: OrderingMode) {
@@ -779,7 +781,9 @@ class Feedback:
             )
             return True
         else:
-            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",)
+            self.opencti.app_logger.error(
+                "[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",
+            )
             return False
 
         """
@@ -822,7 +826,9 @@ class Feedback:
             )
             return True
         else:
-            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",)
+            self.opencti.app_logger.error(
+                "[opencti_feedback] Missing parameters: id and stixObjectOrStixRelationshipId",
+            )
             return False
 
         """
@@ -885,7 +891,9 @@ class Feedback:
                 update=update,
             )
         else:
-            self.opencti.app_logger.error("[opencti_feedback] Missing parameters: stixObject")
+            self.opencti.app_logger.error(
+                "[opencti_feedback] Missing parameters: stixObject"
+            )
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)

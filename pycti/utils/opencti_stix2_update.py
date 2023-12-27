@@ -1,7 +1,5 @@
 # coding: utf-8
 
-import traceback
-
 from pycti.utils.constants import StixCyberObservableTypes
 
 

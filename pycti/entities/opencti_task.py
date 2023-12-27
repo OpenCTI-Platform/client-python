@@ -515,7 +515,9 @@ class Task:
                 result["data"]["taskFieldPatch"]
             )
         else:
-            self.opencti.app_logger.error("[opencti_Task] Missing parameters: id and key and value")
+            self.opencti.app_logger.error(
+                "[opencti_Task] Missing parameters: id and key and value"
+            )
             return None
 
     """
@@ -558,7 +560,9 @@ class Task:
             )
             return True
         else:
-            self.opencti.app_logger.error("[opencti_task] Missing parameters: id and stixObjectOrStixRelationshipId",)
+            self.opencti.app_logger.error(
+                "[opencti_task] Missing parameters: id and stixObjectOrStixRelationshipId",
+            )
             return False
 
     """
@@ -599,7 +603,9 @@ class Task:
             )
             return True
         else:
-            self.opencti.app_logger.error("[opencti_task] Missing parameters: id and stixObjectOrStixRelationshipId",)
+            self.opencti.app_logger.error(
+                "[opencti_task] Missing parameters: id and stixObjectOrStixRelationshipId",
+            )
             return False
 
     """
@@ -666,7 +672,9 @@ class Task:
                 update=update,
             )
         else:
-            self.opencti.app_logger.error("[opencti_task] Missing parameters: stixObject")
+            self.opencti.app_logger.error(
+                "[opencti_task] Missing parameters: stixObject"
+            )
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)

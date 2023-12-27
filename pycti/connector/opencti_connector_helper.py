@@ -362,8 +362,8 @@ class PingAlive(threading.Thread):
                 if initial_state != remote_state:
                     self.set_state(result["connector_state"])
                     self.connector_logger.info(
-                        'Connector state has been remotely reset',
-                        {"state": self.get_state()}
+                        "Connector state has been remotely reset",
+                        {"state": self.get_state()},
                     )
                 if self.in_error:
                     self.in_error = False
@@ -707,7 +707,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             playbook_compatible,
         )
         connector_configuration = self.api.connector.register(self.connector)
-        self.connector_logger.info("Connector registered with ID", {"id": self.connect_id})
+        self.connector_logger.info(
+            "Connector registered with ID", {"id": self.connect_id}
+        )
         self.connector_id = connector_configuration["id"]
         self.work_id = None
         self.playbook = None

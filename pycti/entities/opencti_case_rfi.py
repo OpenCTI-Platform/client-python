@@ -493,7 +493,9 @@ class CaseRfi:
         if get_all:
             first = 500
 
-        self.opencti.app_logger.info("Listing Case Rfis with filters", {"filters": json.dumps(filters)})
+        self.opencti.app_logger.info(
+            "Listing Case Rfis with filters", {"filters": json.dumps(filters)}
+        )
         query = (
             """
                     query CaseRfis($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: CaseRfisOrdering, $orderMode: OrderingMode) {
@@ -775,7 +777,9 @@ class CaseRfi:
             )
             return True
         else:
-            self.opencti.app_logger.info("[opencti_caseRfi] Missing parameters: id and stixObjectOrStixRelationshipId")
+            self.opencti.app_logger.info(
+                "[opencti_caseRfi] Missing parameters: id and stixObjectOrStixRelationshipId"
+            )
             return False
 
         """
@@ -818,7 +822,9 @@ class CaseRfi:
             )
             return True
         else:
-            self.opencti.app_logger.error("[opencti_caseRfi] Missing parameters: id and stixObjectOrStixRelationshipId")
+            self.opencti.app_logger.error(
+                "[opencti_caseRfi] Missing parameters: id and stixObjectOrStixRelationshipId"
+            )
             return False
 
         """
@@ -883,7 +889,9 @@ class CaseRfi:
                 else None,
             )
         else:
-            self.opencti.app_logger.error("[opencti_caseRfi] Missing parameters: stixObject")
+            self.opencti.app_logger.error(
+                "[opencti_caseRfi] Missing parameters: stixObject"
+            )
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)

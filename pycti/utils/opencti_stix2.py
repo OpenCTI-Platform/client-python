@@ -55,7 +55,7 @@ class OpenCTIStix2:
     # region utils
     def unknown_type(self, stix_object: Dict) -> None:
         self.opencti.app_logger.error(
-            'Unknown object type, doing nothing...', {"type": stix_object["type"]}
+            "Unknown object type, doing nothing...", {"type": stix_object["type"]}
         )
 
     def convert_markdown(self, text: str) -> str:

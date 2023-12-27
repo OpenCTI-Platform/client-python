@@ -252,7 +252,9 @@ class DataSource:
         if get_all:
             first = 100
 
-        self.opencti.app_logger.info("Listing Data-Sources with filters", {"filters": json.dumps(filters)})
+        self.opencti.app_logger.info(
+            "Listing Data-Sources with filters", {"filters": json.dumps(filters)}
+        )
         query = (
             """
             query DataSources($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: DataSourcesOrdering, $orderMode: OrderingMode) {
@@ -355,7 +357,9 @@ class DataSource:
             else:
                 return None
         else:
-            self.opencti.app_logger.error("[opencti_data_source] Missing parameters: id or filters")
+            self.opencti.app_logger.error(
+                "[opencti_data_source] Missing parameters: id or filters"
+            )
             return None
 
     """
@@ -425,7 +429,9 @@ class DataSource:
             )
             return self.opencti.process_multiple_fields(result["data"]["dataSourceAdd"])
         else:
-            self.opencti.app_logger.error("[opencti_data_source] Missing parameters: name and description")
+            self.opencti.app_logger.error(
+                "[opencti_data_source] Missing parameters: name and description"
+            )
 
     """
         Import an Data-Source object from a STIX2 object
@@ -507,4 +513,6 @@ class DataSource:
                 update=update,
             )
         else:
-            self.opencti.app_logger.error("[opencti_data_source] Missing parameters: stixObject")
+            self.opencti.app_logger.error(
+                "[opencti_data_source] Missing parameters: stixObject"
+            )

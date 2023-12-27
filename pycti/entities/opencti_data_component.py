@@ -391,7 +391,9 @@ class DataComponent:
             else:
                 return None
         else:
-            self.opencti.app_logger.error("[opencti_data_component] Missing parameters: id or filters")
+            self.opencti.app_logger.error(
+                "[opencti_data_component] Missing parameters: id or filters"
+            )
             return None
 
     """
@@ -422,7 +424,9 @@ class DataComponent:
 
         if name is not None:
             self.opencti.app_logger.info("Creating Data Component", {"name": name})
-            self.opencti.app_logger.info("Creating Data Component", {"data": str(kwargs)})
+            self.opencti.app_logger.info(
+                "Creating Data Component", {"data": str(kwargs)}
+            )
             query = """
                 mutation DataComponentAdd($input: DataComponentAddInput!) {
                     dataComponentAdd(input: $input) {
@@ -461,7 +465,9 @@ class DataComponent:
                 result["data"]["dataComponentAdd"]
             )
         else:
-            self.opencti.app_logger.error("[opencti_data_component] Missing parameters: name and description")
+            self.opencti.app_logger.error(
+                "[opencti_data_component] Missing parameters: name and description"
+            )
 
     """
         Import an Data-Component object from a STIX2 object
@@ -538,7 +544,9 @@ class DataComponent:
                 update=update,
             )
         else:
-            self.opencti.app_logger.error("[opencti_data_source] Missing parameters: stixObject")
+            self.opencti.app_logger.error(
+                "[opencti_data_source] Missing parameters: stixObject"
+            )
 
     def process_multiple_fields(self, data):
         if "dataSource" in data and data["dataSource"] is not None:
