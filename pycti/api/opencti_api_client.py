@@ -3,7 +3,6 @@ import base64
 import datetime
 import io
 import json
-import logging
 from typing import Union
 
 import magic

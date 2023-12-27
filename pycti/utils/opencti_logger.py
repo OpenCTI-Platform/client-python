@@ -1,5 +1,5 @@
-import logging
 import datetime
+import logging
 
 from pythonjsonlogger import jsonlogger
 
