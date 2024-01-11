@@ -1359,11 +1359,11 @@ class StixDomainObject:
             return None
 
     def push_list_export(
-        self, entity_type, file_name, data, list_filters="", mime_type=None
+        self, entity_id, entity_type, file_name, data, list_filters="", mime_type=None
     ):
         query = """
-            mutation StixDomainObjectsExportPush($type: String!, $file: Upload!, $listFilters: String) {
-                stixDomainObjectsExportPush(type: $type, file: $file, listFilters: $listFilters)
+            mutation StixDomainObjectsExportPush($entity_id: String, $entity_type: String!, $file: Upload!, $listFilters: String) {
+                stixDomainObjectsExportPush(entity_id: $entity_id, entity_type: $entity_type, file: $file, listFilters: $listFilters)
             }
         """
         if mime_type is None:
@@ -1373,7 +1373,8 @@ class StixDomainObject:
         self.opencti.query(
             query,
             {
-                "type": entity_type,
+                "entity_id": entity_id,
+                "entity_type": entity_type,
                 "file": file,
                 "listFilters": list_filters,
             },
