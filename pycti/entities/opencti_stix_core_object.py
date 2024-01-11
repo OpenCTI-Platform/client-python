@@ -1332,8 +1332,6 @@ class StixCoreObject:
         types = kwargs.get("types", None)
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
-        relationship_type = kwargs.get("relationship_type", None)
-        element_id = kwargs.get("elementId", None)
         first = kwargs.get("first", 100)
         after = kwargs.get("after", None)
         order_by = kwargs.get("orderBy", None)
@@ -1350,8 +1348,8 @@ class StixCoreObject:
         )
         query = (
             """
-                    query StixCoreObjects($types: [String], $filters: FilterGroup, $search: String, $relationship_type: [String], $elementId: [String], $first: Int, $after: ID, $orderBy: StixCoreObjectsOrdering, $orderMode: OrderingMode) {
-                        stixCoreObjects(types: $types, filters: $filters, search: $search, relationship_type: $relationship_type, elementId: $elementId, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                    query StixCoreObjects($types: [String], $filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: StixCoreObjectsOrdering, $orderMode: OrderingMode) {
+                        stixCoreObjects(types: $types, filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                             edges {
                                 node {
                                     """
@@ -1380,8 +1378,6 @@ class StixCoreObject:
                 "types": types,
                 "filters": filters,
                 "search": search,
-                "relationship_type": relationship_type,
-                "elementId": element_id,
                 "first": first,
                 "after": after,
                 "orderBy": order_by,
@@ -1404,8 +1400,6 @@ class StixCoreObject:
                         "types": types,
                         "filters": filters,
                         "search": search,
-                        "relationship_type": relationship_type,
-                        "elementId": element_id,
                         "first": first,
                         "after": after,
                         "orderBy": order_by,
