@@ -415,10 +415,14 @@ class StreamAlive(threading.Thread):
                             "Time since last heartbeat exceeded 45s, stopping the connector"
                         )
                         break
-            self.helper.connector_logger.info("Exit event in StreamAlive loop, stopping process.")
+            self.helper.connector_logger.info(
+                "Exit event in StreamAlive loop, stopping process."
+            )
             sys.excepthook(*sys.exc_info())
         except Exception as ex:
-            self.helper.connector_logger.error("Error in StreamAlive loop, stopping process.", {"reason": str(ex)})
+            self.helper.connector_logger.error(
+                "Error in StreamAlive loop, stopping process.", {"reason": str(ex)}
+            )
             sys.excepthook(*sys.exc_info())
 
     def stop(self) -> None:
@@ -555,7 +559,9 @@ class ListenStream(threading.Thread):
                         state["start_from"] = str(msg.id)
                         self.helper.set_state(state)
         except Exception as ex:
-            self.helper.connector_logger.error("Error in ListenStream loop, exit.", {"reason": str(ex)})
+            self.helper.connector_logger.error(
+                "Error in ListenStream loop, exit.", {"reason": str(ex)}
+            )
             sys.excepthook(*sys.exc_info())
 
     def stop(self):
