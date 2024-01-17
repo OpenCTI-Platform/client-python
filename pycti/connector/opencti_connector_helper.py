@@ -11,7 +11,6 @@ import sys
 import tempfile
 import threading
 import time
-import traceback
 import uuid
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Union
