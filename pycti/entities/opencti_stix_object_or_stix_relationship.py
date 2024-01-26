@@ -88,18 +88,14 @@ class StixObjectOrStixRelationship:
                 x_mitre_detection
                 x_mitre_id
                 killChainPhases {
-                    edges {
-                        node {
-                            id
-                            standard_id
-                            entity_type
-                            kill_chain_name
-                            phase_name
-                            x_opencti_order
-                            created
-                            modified
-                        }
-                    }
+                  id
+                  standard_id
+                  entity_type
+                  kill_chain_name
+                  phase_name
+                  x_opencti_order
+                  created
+                  modified
                 }
             }
             ... on Campaign {
@@ -244,18 +240,14 @@ class StixObjectOrStixRelationship:
                 implementation_languages
                 capabilities
                 killChainPhases {
-                    edges {
-                        node {
-                            id
-                            standard_id
-                            entity_type
-                            kill_chain_name
-                            phase_name
-                            x_opencti_order
-                            created
-                            modified
-                        }
-                    }
+                  id
+                  standard_id
+                  entity_type
+                  kill_chain_name
+                  phase_name
+                  x_opencti_order
+                  created
+                  modified
                 }
             }
             ... on ThreatActor {
@@ -280,18 +272,14 @@ class StixObjectOrStixRelationship:
                 tool_types
                 tool_version
                 killChainPhases {
-                    edges {
-                        node {
-                            id
-                            standard_id
-                            entity_type
-                            kill_chain_name
-                            phase_name
-                            x_opencti_order
-                            created
-                            modified
-                        }
-                    }
+                  id
+                  standard_id
+                  entity_type
+                  kill_chain_name
+                  phase_name
+                  x_opencti_order
+                  created
+                  modified
                 }
             }
             ... on Vulnerability {

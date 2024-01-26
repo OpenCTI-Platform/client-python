@@ -114,18 +114,14 @@ class Indicator:
                 }
             }
             killChainPhases {
-                edges {
-                    node {
-                        id
-                        standard_id
-                        entity_type
-                        kill_chain_name
-                        phase_name
-                        x_opencti_order
-                        created
-                        modified
-                    }
-                }
+              id
+              standard_id
+              entity_type
+              kill_chain_name
+              phase_name
+              x_opencti_order
+              created
+              modified
             }
         """
         self.properties_with_files = """
@@ -241,18 +237,14 @@ class Indicator:
                 }
             }
             killChainPhases {
-                edges {
-                    node {
-                        id
-                        standard_id
-                        entity_type
-                        kill_chain_name
-                        phase_name
-                        x_opencti_order
-                        created
-                        modified
-                    }
-                }
+              id
+              standard_id
+              entity_type
+              kill_chain_name
+              phase_name
+              x_opencti_order
+              created
+              modified
             }
             importFiles {
                 edges {

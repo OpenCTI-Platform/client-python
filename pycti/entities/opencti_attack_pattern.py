@@ -91,18 +91,14 @@ class AttackPattern:
             x_mitre_detection
             x_mitre_id
             killChainPhases {
-                edges {
-                    node {
-                        id
-                        standard_id
-                        entity_type
-                        kill_chain_name
-                        phase_name
-                        x_opencti_order
-                        created
-                        modified
-                    }
-                }
+              id
+              standard_id
+              entity_type
+              kill_chain_name
+              phase_name
+              x_opencti_order
+              created
+              modified
             }
         """
         self.properties_with_files = """
@@ -200,18 +196,14 @@ class AttackPattern:
             x_mitre_detection
             x_mitre_id
             killChainPhases {
-                edges {
-                    node {
-                        id
-                        standard_id
-                        entity_type
-                        kill_chain_name
-                        phase_name
-                        x_opencti_order
-                        created
-                        modified
-                    }
-                }
+              id
+              standard_id
+              entity_type
+              kill_chain_name
+              phase_name
+              x_opencti_order
+              created
+              modified
             }
             importFiles {
                 edges {
