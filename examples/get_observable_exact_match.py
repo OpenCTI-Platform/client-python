@@ -2,54 +2,47 @@
 
 from pycti import OpenCTIApiClient
 
+from python_scripts.testing.test import CTIclient
+
 # Variables
 api_url = "http://opencti:4000"
 api_token = "bfa014e0-e02e-4aa6-a42b-603b19dcf159"
 
 # OpenCTI initialization
-opencti_api_client = OpenCTIApiClient(api_url, api_token)
+cticlient = OpenCTIApiClient(api_url, api_token)
+
+def search_observable(key, values):
+    """
+    Search for an observable in OpenCTI based on a key-value pair.
+
+    Args:
+        key (str): The key to search for in this case the value.
+        values (list): A list of values to match against(could be Ip address or hash).
+
+    Returns:
+        dict or None: The matching observable if found, None otherwise.
+    """
+    observable = cticlient.stix_cyber_observable.read(
+        filters=[
+            {
+                "key": key,
+                "values": values,
+            }
+        ]
+    )
+    if observable is None:
+        print("Value not found")
+    else:
+        return observable
 
 # Exact IP match
-opencti_api_client.stix_cyber_observable.create(
-    simple_observable_key="IPv4-Addr.value", simple_observable_value="110.172.180.180"
-)
-print("IP ADDRESS")
-observable = opencti_api_client.stix_cyber_observable.read(
-    filters={
-        "mode": "and",
-        "filters": [{"key": "value", "values": ["110.172.180.180"]}],
-        "filterGroups": [],
-    }
-)
-print(observable)
+ip_observable = search_observable("value", ["110.172.180.180"])
+print(ip_observable)
 
 # Exact File name match
-opencti_api_client.stix_cyber_observable.create(
-    simple_observable_key="File.name", simple_observable_value="activeds.dll"
-)
-print("FILE NAME")
-observable = opencti_api_client.stix_cyber_observable.read(
-    filters={
-        "mode": "and",
-        "filters": [{"key": "name", "values": ["activeds.dll"]}],
-        "filterGroups": [],
-    }
-)
-print(observable)
+file_name_observable = search_observable("value", ["activeds.dll"])
+print(file_name_observable)
 
-# Exact File name match
-opencti_api_client.stix_cyber_observable.create(
-    simple_observable_key="File.hashes.MD5",
-    simple_observable_value="3aad33e025303dbae12c12b4ec5258c1",
-)
-print("FILE MD5")
-observable = opencti_api_client.stix_cyber_observable.read(
-    filters={
-        "mode": "and",
-        "filters": [
-            {"key": "hashes.MD5", "values": ["3aad33e025303dbae12c12b4ec5258c1"]}
-        ],
-        "filterGroups": [],
-    }
-)
-print(observable)
+# Exact File hash match
+file_hash_observable = search_observable("value", ["3aad33e025303dbae12c12b4ec5258c1"])
+print(file_hash_observable)
