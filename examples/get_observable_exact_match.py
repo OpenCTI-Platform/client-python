@@ -2,8 +2,6 @@
 
 from pycti import OpenCTIApiClient
 
-from python_scripts.testing.test import CTIclient
-
 # Variables
 api_url = "http://opencti:4000"
 api_token = "bfa014e0-e02e-4aa6-a42b-603b19dcf159"
