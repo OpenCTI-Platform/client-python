@@ -9,7 +9,7 @@ api_url = "http://opencti:4000"
 api_token = "bfa014e0-e02e-4aa6-a42b-603b19dcf159"
 
 # OpenCTI initialization
-cticlient = OpenCTIApiClient(api_url, api_token)
+opencti_api_client = OpenCTIApiClient(api_url, api_token)
 
 def search_observable(key, values):
     """
@@ -22,7 +22,7 @@ def search_observable(key, values):
     Returns:
         dict or None: The matching observable if found, None otherwise.
     """
-    observable = cticlient.stix_cyber_observable.read(
+    observable = opencti_api_client.stix_cyber_observable.read(
         filters=[
             {
                 "key": key,
