@@ -2,12 +2,14 @@
 
 from pycti import OpenCTIApiClient
 
+
 # Variables
 api_url = "http://opencti:4000"
 api_token = "bfa014e0-e02e-4aa6-a42b-603b19dcf159"
 
 # OpenCTI initialization
 opencti_api_client = OpenCTIApiClient(api_url, api_token)
+
 
 def search_observable(key, values):
     """
@@ -22,16 +24,14 @@ def search_observable(key, values):
     """
     observable = opencti_api_client.stix_cyber_observable.read(
         filters=[
-            {
-                "key": key,
-                "values": values,
-            }
+            {"key": key, "values": values}
         ]
     )
     if observable is None:
         print("Value not found")
     else:
         return observable
+
 
 # Exact IP match
 ip_observable = search_observable("value", ["110.172.180.180"])
