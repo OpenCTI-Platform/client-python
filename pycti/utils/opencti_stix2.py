@@ -746,13 +746,15 @@ class OpenCTIStix2:
         # Granted refs
         granted_refs_ids = []
         if (
-            "granted_refs" not in stix_object
+            "x_opencti_granted_refs" not in stix_object
             and self.opencti.get_attribute_in_extension("granted_refs", stix_object)
             is not None
         ):
             granted_refs_ids = self.opencti.get_attribute_in_extension(
                 "granted_refs", stix_object
             )
+        elif "x_opencti_granted_refs" in stix_object:
+            granted_refs_ids = stix_object["x_opencti_granted_refs"]
 
         return {
             "created_by": created_by_id,
@@ -1052,6 +1054,7 @@ class OpenCTIStix2:
                     "created_by_ref",
                     "object_marking_refs",
                     "x_opencti_created_by_ref",
+                    "x_opencti_granted_refs",
                 ]:
                     if key.endswith("_ref"):
                         relationship_type = key.replace("_ref", "")
@@ -1584,6 +1587,20 @@ class OpenCTIStix2:
                 if key.startswith("x_"):
                     del entity[key]
             entity["x_opencti_id"] = entity_copy["x_opencti_id"]
+        # ObjectOrganization
+        if (
+            not no_custom_attributes
+            and "objectOrganization" in entity
+            and len(entity["objectOrganization"]) > 0
+        ):
+            entity["x_opencti_granted_refs"] = []
+            for entity_organization in entity["objectOrganization"]:
+                entity["x_opencti_granted_refs"].append(
+                    entity_organization["standard_id"]
+                )
+        if "objectOrganization" in entity:
+            del entity["objectOrganization"]
+
         # ObjectMarkingRefs
         if (
             not no_custom_attributes
