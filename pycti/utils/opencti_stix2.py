@@ -768,6 +768,53 @@ class OpenCTIStix2:
             "reports": reports,
         }
 
+    def get_readers(self):
+        return {
+            "Attack-Pattern": self.opencti.attack_pattern.read,
+            "Campaign": self.opencti.campaign.read,
+            "Case-Incident": self.opencti.case_incident.read,
+            "Case-Rfi": self.opencti.case_rfi.read,
+            "Case-Rft": self.opencti.case_rft.read,
+            "Channel": self.opencti.channel.read,
+            "Course-Of-Action": self.opencti.course_of_action.read,
+            "Data-Component": self.opencti.data_component.read,
+            "Data-Source": self.opencti.data_source.read,
+            "Event": self.opencti.event.read,
+            "External-Reference": self.opencti.external_reference.read,
+            "Feedback": self.opencti.feedback.read,
+            "Grouping": self.opencti.grouping.read,
+            "Incident": self.opencti.incident.read,
+            "Identity": self.opencti.identity.read,
+            "Indicator": self.opencti.indicator.read,
+            "Infrastructure": self.opencti.infrastructure.read,
+            "Intrusion-Set": self.opencti.intrusion_set.read,
+            "Kill-Chain-Phase": self.opencti.kill_chain_phase.read,
+            "Label": self.opencti.label.read,
+            "Location": self.opencti.location.read,
+            "Language": self.opencti.language.read,
+            "Malware": self.opencti.malware.read,
+            "Malware-Analysis": self.opencti.malware_analysis.read,
+            "Marking-Definition": self.opencti.marking_definition.read,
+            "Narrative": self.opencti.narrative.read,
+            "Note": self.opencti.note.read,
+            "Observed-Data": self.opencti.observed_data.read,
+            "Opinion": self.opencti.opinion.read,
+            "Report": self.opencti.report.read,
+            "Stix-Core-Object": self.opencti.stix_core_object.read,
+            "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
+            "Stix-Domain-Object": self.opencti.stix_domain_object.read,
+            "stix-core-relationship": self.opencti.stix_core_relationship.read,
+            "stix-sighting-relationship": self.opencti.stix_sighting_relationship.read,
+            "stix-nested-relationship": self.opencti.stix_nested_ref_relationship.read,
+            "Task": self.opencti.task.read,
+            "Threat-Actor": self.opencti.threat_actor.read,
+            "Threat-Actor-Group": self.opencti.threat_actor_group.read,
+            "Threat-Actor-Individual": self.opencti.threat_actor_individual.read,
+            "Tool": self.opencti.tool.read,
+            "Vocabulary": self.opencti.vocabulary.read,
+            "Vulnerability": self.opencti.vulnerability.read,
+        }
+
     # endregion
 
     # region import
@@ -1935,42 +1982,7 @@ class OpenCTIStix2:
             if no_custom_attributes:
                 del entity["x_opencti_id"]
             # Export
-            reader = {
-                "Attack-Pattern": self.opencti.attack_pattern.read,
-                "Campaign": self.opencti.campaign.read,
-                "Channel": self.opencti.channel.read,
-                "Note": self.opencti.note.read,
-                "Observed-Data": self.opencti.observed_data.read,
-                "Opinion": self.opencti.opinion.read,
-                "Report": self.opencti.report.read,
-                "Case-Incident": self.opencti.case_incident.read,
-                "Feedback": self.opencti.feedback.read,
-                "Case-Rfi": self.opencti.case_rfi.read,
-                "Case-Rft": self.opencti.case_rft.read,
-                "Task": self.opencti.task.read,
-                "Course-Of-Action": self.opencti.course_of_action.read,
-                "Data-Component": self.opencti.data_component.read,
-                "Data-Source": self.opencti.data_source.read,
-                "Identity": self.opencti.identity.read,
-                "Indicator": self.opencti.indicator.read,
-                "Infrastructure": self.opencti.infrastructure.read,
-                "Intrusion-Set": self.opencti.intrusion_set.read,
-                "Location": self.opencti.location.read,
-                "Language": self.opencti.language.read,
-                "Malware": self.opencti.malware.read,
-                "Malware-Analysis": self.opencti.malware_analysis.read,
-                "Threat-Actor": self.opencti.threat_actor.read,
-                "Threat-Actor-Group": self.opencti.threat_actor_group.read,
-                "Threat-Actor-Individual": self.opencti.threat_actor_individual.read,
-                "Tool": self.opencti.tool.read,
-                "Vulnerability": self.opencti.vulnerability.read,
-                "Incident": self.opencti.incident.read,
-                "Stix-Core-Object": self.opencti.stix_core_object.read,
-                "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
-                "Stix-Domain-Object": self.opencti.stix_domain_object.read,
-                "stix-core-relationship": self.opencti.stix_core_relationship.read,
-                "stix-sighting-relationship": self.opencti.stix_sighting_relationship.read,
-            }
+            reader = self.get_readers()
             # Get extra objects
             for entity_object in objects_to_get:
                 # Map types
@@ -2104,42 +2116,7 @@ class OpenCTIStix2:
             entity_type = "Location"
 
         # Reader
-        reader = {
-            "Attack-Pattern": self.opencti.attack_pattern.read,
-            "Campaign": self.opencti.campaign.read,
-            "Channel": self.opencti.channel.read,
-            "Event": self.opencti.campaign.read,
-            "Note": self.opencti.note.read,
-            "Observed-Data": self.opencti.observed_data.read,
-            "Opinion": self.opencti.opinion.read,
-            "Report": self.opencti.report.read,
-            "Grouping": self.opencti.grouping.read,
-            "Case-Incident": self.opencti.case_incident.read,
-            "Feedback": self.opencti.feedback.read,
-            "Case-Rfi": self.opencti.case_rfi.read,
-            "Case-Rft": self.opencti.case_rft.read,
-            "Task": self.opencti.task.read,
-            "Course-Of-Action": self.opencti.course_of_action.read,
-            "Data-Component": self.opencti.data_component.read,
-            "Data-Source": self.opencti.data_source.read,
-            "Identity": self.opencti.identity.read,
-            "Indicator": self.opencti.indicator.read,
-            "Infrastructure": self.opencti.infrastructure.read,
-            "Intrusion-Set": self.opencti.intrusion_set.read,
-            "Location": self.opencti.location.read,
-            "Language": self.opencti.language.read,
-            "Malware": self.opencti.malware.read,
-            "Malware-Analysis": self.opencti.malware_analysis.read,
-            "Threat-Actor": self.opencti.threat_actor.read,
-            "Threat-Actor-Group": self.opencti.threat_actor_group.read,
-            "Threat-Actor-Individual": self.opencti.threat_actor_individual.read,
-            "Tool": self.opencti.tool.read,
-            "Narrative": self.opencti.narrative.read,
-            "Vulnerability": self.opencti.vulnerability.read,
-            "Incident": self.opencti.incident.read,
-            "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.read,
-            "stix-core-relationship": self.opencti.stix_core_relationship.read,
-        }
+        reader = self.get_readers()
         if StixCyberObservableTypes.has_value(entity_type):
             entity_type = "Stix-Cyber-Observable"
         do_read = reader.get(
