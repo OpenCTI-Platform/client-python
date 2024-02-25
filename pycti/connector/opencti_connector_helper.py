@@ -320,16 +320,15 @@ class ListenQueue(threading.Thread):
                     event_data["stix_objects"] = stix_objects
                     event_data["stix_entity"] = stix_entity
                 # Handle organization propagation
-                stix_entity = event_data["stix_entity"]
                 # Keep the sharing to be re-apply automatically at send_stix_bundle stage
-                if "x_opencti_granted_refs" in stix_entity:
-                    self.helper.enrichment_shared_organizations = stix_entity[
+                if "x_opencti_granted_refs" in event_data["stix_entity"]:
+                    self.helper.enrichment_shared_organizations = event_data["stix_entity"][
                         "x_opencti_granted_refs"
                     ]
                 else:
                     self.helper.enrichment_shared_organizations = (
                         self.helper.get_attribute_in_extension(
-                            "granted_refs", stix_entity
+                            "granted_refs", event_data["stix_entity"]
                         )
                     )
 
