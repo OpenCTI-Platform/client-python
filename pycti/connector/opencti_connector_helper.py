@@ -175,10 +175,6 @@ class ListenQueue(threading.Thread):
     :type config: Dict
     :param callback: callback function to process queue
     :type callback: callable
-    :param custom_attributes_resolution: callback function to process queue
-    :type custom_attributes_resolution: str
-    :param with_files_resolution: if resolution must include files
-    :type with_files_resolution: bool
     """
 
     def __init__(
@@ -187,8 +183,6 @@ class ListenQueue(threading.Thread):
         config: Dict,
         connector_config: Dict,
         callback,
-        custom_attributes_resolution: str,
-        with_files_resolution: bool,
     ) -> None:
         threading.Thread.__init__(self)
         self.pika_credentials = None
@@ -206,8 +200,6 @@ class ListenQueue(threading.Thread):
         self.password = connector_config["connection"]["pass"]
         self.queue_name = connector_config["listen"]
         self.exit_event = threading.Event()
-        self.custom_attributes_resolution = custom_attributes_resolution
-        self.with_files_resolution = with_files_resolution
         self.thread = None
 
     # noinspection PyUnusedLocal
@@ -260,38 +252,10 @@ class ListenQueue(threading.Thread):
             work_id = json_data["internal"]["work_id"]
             self.helper.work_id = work_id
 
-            # Handle action vs playbook behavior
             self.helper.playbook = None
-            if "playbook" in json_data["internal"]:
-                execution_id = json_data["internal"]["playbook"]["execution_id"]
-                execution_start = self.helper.date_now()
-                playbook_id = json_data["internal"]["playbook"]["playbook_id"]
-                data_instance_id = json_data["internal"]["playbook"]["data_instance_id"]
-                previous_bundle = json.dumps((json_data["event"]["bundle"]))
-                step_id = json_data["internal"]["playbook"]["step_id"]
-                previous_step_id = json_data["internal"]["playbook"]["previous_step_id"]
-                playbook_data = {
-                    "execution_id": execution_id,
-                    "execution_start": execution_start,
-                    "playbook_id": playbook_id,
-                    "data_instance_id": data_instance_id,
-                    "previous_step_id": previous_step_id,
-                    "previous_bundle": previous_bundle,
-                    "step_id": step_id,
-                }
-                self.helper.playbook = playbook_data
-                bundle = json_data["bundle"]
-                stix_objects = bundle["objects"]
-                event_data["stix_objects"] = stix_objects
-                event_data["stix_entity"] = [
-                    e for e in stix_objects if e["id"] == entity_id
-                ][0]
-
-            # For enrichment connectors only, pre resolve the information
-            # If not a playbook the event can contain an id for enrich/export connectors
-            # In some cases, id is not here, like query export for list
             self.helper.enrichment_shared_organizations = None
             if self.helper.connect_type == "INTERNAL_ENRICHMENT":
+                # For enrichment connectors only, pre resolve the information
                 if entity_id is None:
                     raise ValueError(
                         "Internal enrichment must be based on a specific id"
@@ -306,28 +270,68 @@ class ListenQueue(threading.Thread):
                     if reader_type in readers
                     else readers[default_reader_type]
                 )
-                opencti_entity = selected_reader(
-                    id=entity_id,
-                    customAttributes=self.custom_attributes_resolution,
-                    withFiles=self.with_files_resolution,
-                )
+                opencti_entity = selected_reader(id=entity_id, withFiles=True)
                 if opencti_entity is None:
                     raise ValueError(
                         "Unable to read/access to the entity, please check that the connector permission"
                     )
                 event_data["enrichment_entity"] = opencti_entity
-                stix_objects = self.helper.api.stix2.prepare_export(
-                    self.helper.api.stix2.generate_export(copy.copy(opencti_entity))
-                )
-                stix_entity = [
-                    e for e in stix_objects if e["id"] == opencti_entity["standard_id"]
-                ][0]
-                event_data["stix_objects"] = stix_objects
-                event_data["stix_entity"] = stix_entity
+                # Handle action vs playbook behavior
+                is_playbook = "playbook" in json_data["internal"]
+                # If playbook, compute object on data bundle
+                if is_playbook:
+                    execution_id = json_data["internal"]["playbook"]["execution_id"]
+                    execution_start = self.helper.date_now()
+                    playbook_id = json_data["internal"]["playbook"]["playbook_id"]
+                    data_instance_id = json_data["internal"]["playbook"][
+                        "data_instance_id"
+                    ]
+                    previous_bundle = json.dumps((json_data["event"]["bundle"]))
+                    step_id = json_data["internal"]["playbook"]["step_id"]
+                    previous_step_id = json_data["internal"]["playbook"][
+                        "previous_step_id"
+                    ]
+                    playbook_data = {
+                        "execution_id": execution_id,
+                        "execution_start": execution_start,
+                        "playbook_id": playbook_id,
+                        "data_instance_id": data_instance_id,
+                        "previous_step_id": previous_step_id,
+                        "previous_bundle": previous_bundle,
+                        "step_id": step_id,
+                    }
+                    self.helper.playbook = playbook_data
+                    bundle = event_data["bundle"]
+                    stix_objects = bundle["objects"]
+                    event_data["stix_objects"] = stix_objects
+                    stix_entity = [e for e in stix_objects if e["id"] == entity_id][0]
+                    event_data["stix_entity"] = stix_entity
+                else:
+                    # If not playbook but enrichment, compute object on enrichment_entity
+                    opencti_entity = event_data["enrichment_entity"]
+                    stix_objects = self.helper.api.stix2.prepare_export(
+                        self.helper.api.stix2.generate_export(copy.copy(opencti_entity))
+                    )
+                    stix_entity = [
+                        e
+                        for e in stix_objects
+                        if e["id"] == opencti_entity["standard_id"]
+                    ][0]
+                    event_data["stix_objects"] = stix_objects
+                    event_data["stix_entity"] = stix_entity
+                # Handle organization propagation
+                stix_entity = event_data["stix_entity"]
                 # Keep the sharing to be re-apply automatically at send_stix_bundle stage
-                self.helper.enrichment_shared_organizations = stix_entity.get(
-                    "x_opencti_granted_refs"
-                )
+                if "x_opencti_granted_refs" in stix_entity:
+                    self.helper.enrichment_shared_organizations = stix_entity[
+                        "x_opencti_granted_refs"
+                    ]
+                else:
+                    self.helper.enrichment_shared_organizations = (
+                        self.helper.get_attribute_in_extension(
+                            "granted_refs", stix_entity
+                        )
+                    )
 
             # Handle applicant_id for in-personalization
             self.helper.applicant_id = None
@@ -341,7 +345,6 @@ class ListenQueue(threading.Thread):
                 self.helper.api.work.to_received(
                     work_id, "Connector ready to process the operation"
                 )
-
             # Send the enriched to the callback
             message = self.callback(event_data)
             if work_id:
@@ -914,15 +917,11 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     def listen(
         self,
         message_callback: Callable[[Dict], str],
-        custom_attributes_resolution=None,
-        with_files_resolution=False,
     ) -> None:
         """listen for messages and register callback function
 
         :param message_callback: callback function to process messages
         :type message_callback: Callable[[Dict], str]
-        :type custom_attributes_resolution: str
-        :type with_files_resolution: bool
         """
 
         self.listen_queue = ListenQueue(
@@ -930,8 +929,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.config,
             self.connector_config,
             message_callback,
-            custom_attributes_resolution,
-            with_files_resolution,
         )
         self.listen_queue.start()
 
@@ -1080,17 +1077,37 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             # Every element of the bundle must be enriched with the same organizations
             bundle_data = json.loads(bundle)
             for item in bundle_data["objects"]:
-                if item.get("x_opencti_granted_refs") is not None:
-                    item["x_opencti_granted_refs"] = list(
-                        set(
-                            item["x_opencti_granted_refs"]
-                            + self.enrichment_shared_organizations
+                if (
+                    "extensions" in item
+                    and "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+                    in item["extensions"]
+                ):
+                    octi_extensions = item["extensions"][
+                        "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
+                    ]
+                    if octi_extensions.get("granted_refs") is not None:
+                        octi_extensions["granted_refs"] = list(
+                            set(
+                                octi_extensions["granted_refs"]
+                                + self.enrichment_shared_organizations
+                            )
                         )
-                    )
+                    else:
+                        octi_extensions["granted_refs"] = (
+                            self.enrichment_shared_organizations
+                        )
                 else:
-                    item["x_opencti_granted_refs"] = (
-                        self.enrichment_shared_organizations
-                    )
+                    if item.get("x_opencti_granted_refs") is not None:
+                        item["x_opencti_granted_refs"] = list(
+                            set(
+                                item["x_opencti_granted_refs"]
+                                + self.enrichment_shared_organizations
+                            )
+                        )
+                    else:
+                        item["x_opencti_granted_refs"] = (
+                            self.enrichment_shared_organizations
+                        )
             bundle = json.dumps(bundle_data)
 
         if self.playbook is not None:
