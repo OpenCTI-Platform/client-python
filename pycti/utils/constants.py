@@ -37,10 +37,8 @@ class StixCyberObservableTypes(Enum):
     WINDOWS_REGISTRY_VALUE_TYPE = "Windows-Registry-Value-Type"
     HOSTNAME = "Hostname"
     CRYPTOGRAPHIC_KEY = "Cryptographic-Key"
-    # CRYPTOCURRENCY_WALLET = "Cryptocurrency-Wallet"
     TEXT = "Text"
     USER_AGENT = "User-Agent"
-    # BANK_ACCOUNT = "Bank-Account"
     PHONE_NUMBER = "Phone-Number"
     PAYMENT_CARD = "Payment-Card"
     MEDIA_CONTENT = "Media-Content"
@@ -264,26 +262,6 @@ class CustomObservableText:
     """Text observable."""
 
     pass
-
-
-# @CustomObservable(
-#     "cryptocurrency-wallet",
-#     [
-#         ("value", StringProperty(required=True)),
-#         ("spec_version", StringProperty(fixed="2.1")),
-#         (
-#             "object_marking_refs",
-#             ListProperty(
-#                 ReferenceProperty(valid_types="marking-definition", spec_version="2.1")
-#             ),
-#         ),
-#     ],
-#     ["value"],
-# )
-# class CustomObservableCryptocurrencyWallet:
-#     """Cryptocurrency wallet observable."""
-
-#     pass
 
 
 @CustomObservable(

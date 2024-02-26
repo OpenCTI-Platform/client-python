@@ -595,9 +595,6 @@ class StixCoreObject:
             ... on CryptographicKey {
                 value
             }
-            # ... on CryptocurrencyWallet {
-            #     value
-            # }
             ... on Hostname {
                 value
             }
@@ -607,11 +604,6 @@ class StixCoreObject:
             ... on UserAgent {
                 value
             }
-            # ... on BankAccount {
-            #     iban
-            #     bic
-            #     account_number
-            # }
             ... on PhoneNumber {
                 value
             }
@@ -1263,9 +1255,6 @@ class StixCoreObject:
             ... on CryptographicKey {
                 value
             }
-            # ... on CryptocurrencyWallet {
-            #     value
-            # }
             ... on Hostname {
                 value
             }
@@ -1275,11 +1264,6 @@ class StixCoreObject:
             ... on UserAgent {
                 value
             }
-            # ... on BankAccount {
-            #     iban
-            #     bic
-            #     account_number
-            # }
             ... on PhoneNumber {
                 value
             }
