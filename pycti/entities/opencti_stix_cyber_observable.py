@@ -1022,7 +1022,10 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                         observable_data["value"] if "value" in observable_data else None
                     ),
                 }
-            elif type == "Financial-Account" or type.lower() == "x-opencti-financial-account":
+            elif (
+                type == "Financial-Account"
+                or type.lower() == "x-opencti-financial-account"
+            ):
                 input_variables["FinancialAccount"] = {
                     "iban_number": observable_data.get("iban_number"),
                     "bic_number": observable_data.get("bic_number"),
@@ -1031,14 +1034,19 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     "account_type": observable_data.get("account_type"),
                     "currency_code": observable_data.get("currency_code"),
                 }
-            elif type == "Financial-Asset" or type.lower() == "x-opencti-financial-asset":
+            elif (
+                type == "Financial-Asset" or type.lower() == "x-opencti-financial-asset"
+            ):
                 input_variables["FinancialAsset"] = {
                     "name": observable_data.get("name"),
                     "asset_type": observable_data.get("asset_type"),
                     "asset_value": observable_data.get("asset_value"),
                     "currency_code": observable_data.get("currency_code"),
                 }
-            elif type == "Financial-Transaction" or type.lower() == "x-opencti-transaction":
+            elif (
+                type == "Financial-Transaction"
+                or type.lower() == "x-opencti-transaction"
+            ):
                 input_variables["FinancialTransaction"] = {
                     "transaction_date": observable_data.get("transaction_date"),
                     "transaction_value": observable_data.get("transaction_value"),
