@@ -182,6 +182,7 @@ class ListenQueue(threading.Thread):
         helper,
         config: Dict,
         connector_config: Dict,
+        applicant_id,
         callback,
     ) -> None:
         threading.Thread.__init__(self)
@@ -192,6 +193,7 @@ class ListenQueue(threading.Thread):
         self.helper = helper
         self.callback = callback
         self.config = config
+        self.connector_applicant_id = applicant_id
         self.host = connector_config["connection"]["host"]
         self.vhost = connector_config["connection"]["vhost"]
         self.use_ssl = connector_config["connection"]["use_ssl"]
@@ -333,8 +335,10 @@ class ListenQueue(threading.Thread):
                     )
 
             # Handle applicant_id for in-personalization
-            self.helper.applicant_id = None
-            self.helper.api_impersonate.set_applicant_id_header(None)
+            self.helper.applicant_id = self.connector_applicant_id
+            self.helper.api_impersonate.set_applicant_id_header(
+                self.connector_applicant_id
+            )
             applicant_id = json_data["internal"]["applicant_id"]
             if applicant_id is not None:
                 self.helper.applicant_id = applicant_id
@@ -927,6 +931,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self,
             self.config,
             self.connector_config,
+            self.applicant_id,
             message_callback,
         )
         self.listen_queue.start()

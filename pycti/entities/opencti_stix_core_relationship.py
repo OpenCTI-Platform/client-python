@@ -67,6 +67,11 @@ class StixCoreRelationship:
                 x_opencti_order
                 x_opencti_color
             }
+            objectOrganization {
+                id
+                standard_id
+                name
+            }
             objectLabel {
                 id
                 value
