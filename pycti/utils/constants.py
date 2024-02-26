@@ -351,6 +351,7 @@ class CustomObservableCredential:
 # class CustomObservableCryptocurrencyWallet:
 #     """Cryptocurrency wallet observable."""
 
+
 @CustomObservable(
     "phone-number",
     [
