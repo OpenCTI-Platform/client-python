@@ -50,10 +50,12 @@ from .entities.opencti_threat_actor_group import ThreatActorGroup
 from .entities.opencti_threat_actor_individual import ThreatActorIndividual
 from .entities.opencti_tool import Tool
 from .entities.opencti_vulnerability import Vulnerability
-from .utils.constants import (
+from .utils.constants import (  # CustomObservableCryptocurrencyWallet,
     CustomObjectCaseIncident,
     CustomObjectTask,
-    CustomObservableCryptocurrencyWallet,
+    CustomObservableFinancialAccount,
+    CustomObservableFinancialAsset,
+    CustomObservableFinancialTransaction,
     CustomObservableHostname,
     CustomObservableText,
     CustomObservableUserAgent,
@@ -130,9 +132,12 @@ __all__ = [
     "StixCyberObservableTypes",
     "CustomObservableHostname",
     "CustomObservableUserAgent",
-    "CustomObservableCryptocurrencyWallet",
+    # "CustomObservableCryptocurrencyWallet",
     "CustomObservableText",
     "STIX_EXT_MITRE",
     "STIX_EXT_OCTI_SCO",
     "STIX_EXT_OCTI",
+    "CustomObservableFinancialAccount",
+    "CustomObservableFinancialAsset",
+    "CustomObservableFinancialTransaction",
 ]
