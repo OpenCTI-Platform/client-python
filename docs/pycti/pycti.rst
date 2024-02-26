@@ -191,8 +191,14 @@ Classes
 - :py:class:`CustomObservableUserAgent`:
   User-Agent observable.
 
-- :py:class:`CustomObservableCryptocurrencyWallet`:
-  Cryptocurrency wallet observable.
+- :py:class:`CustomObservableFinancialAccount`:
+  Financial Account observable.
+
+- :py:class:`CustomObservableFinancialAsset`:
+  Financial Asset observable.
+
+- :py:class:`CustomObservableFinancialTransaction`:
+  Financial Transaction observable.
 
 - :py:class:`CustomObservableText`:
   Text observable.
@@ -590,11 +596,25 @@ Classes
    .. inheritance-diagram:: CustomObservableUserAgent
       :parts: 1
 
-.. autoclass:: CustomObservableCryptocurrencyWallet
+.. autoclass:: CustomObservableFinancialAccount
    :members:
 
    .. rubric:: Inheritance
-   .. inheritance-diagram:: CustomObservableCryptocurrencyWallet
+   .. inheritance-diagram:: CustomObservableFinancialAccount
+      :parts: 1
+
+.. autoclass:: CustomObservableFinancialAsset
+   :members:
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: CustomObservableFinancialAsset
+      :parts: 1
+
+.. autoclass:: CustomObservableFinancialTransaction
+   :members:
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: CustomObservableFinancialTransaction
       :parts: 1
 
 .. autoclass:: CustomObservableText
