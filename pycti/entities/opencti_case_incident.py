@@ -96,7 +96,9 @@ class CaseIncident:
                         description
                         due_date
                         status {
+                          id
                           template {
+                            id
                             name
                             color
                           }

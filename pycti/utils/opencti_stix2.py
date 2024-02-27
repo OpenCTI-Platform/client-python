@@ -1458,6 +1458,14 @@ class OpenCTIStix2:
             del entity["valid_from"]
 
         # Flatten
+        if "tasks" in entity:
+            del entity["tasks"]
+
+        if "status" in entity:
+            entity["x_opencti_workflow_id"] = entity["status"].get("id")
+        if "status" in entity:
+            del entity["status"]
+
         if "objectLabel" in entity and len(entity["objectLabel"]) > 0:
             entity["labels"] = []
             for object_label in entity["objectLabel"]:
