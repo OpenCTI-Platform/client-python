@@ -781,7 +781,7 @@ class Report:
                         "toId": stix_object_or_stix_relationship_id,
                         "relationship_type": "object",
                     },
-                    "commitMessage": '',
+                    "commitMessage": "",
                     "references": [],
                 },
             )
@@ -833,7 +833,7 @@ class Report:
                     "id": id,
                     "toId": stix_object_or_stix_relationship_id,
                     "relationship_type": "object",
-                    "commitMessage": '',
+                    "commitMessage": "",
                     "references": [],
                 },
             )
