@@ -767,7 +767,7 @@ class Report:
             query = """
                mutation ReportEditRelationAdd($id: ID!, $input: StixRefRelationshipAddInput!) {
                    reportEdit(id: $id) {
-                        relationAdd(input: $input) {
+                        relationAdd(input: $input, commitMessage: $commitMessage, references: $references) {
                             id
                         }
                    }
@@ -781,6 +781,8 @@ class Report:
                         "toId": stix_object_or_stix_relationship_id,
                         "relationship_type": "object",
                     },
+                    "commitMessage": '',
+                    "references": [],
                 },
             )
             return True
@@ -814,7 +816,12 @@ class Report:
             query = """
                mutation ReportEditRelationDelete($id: ID!, $toId: StixRef!, $relationship_type: String!) {
                    reportEdit(id: $id) {
-                        relationDelete(toId: $toId, relationship_type: $relationship_type) {
+                        relationDelete(
+                            toId: $toId, 
+                            relationship_type: $relationship_type, 
+                            commitMessage: $commitMessage, 
+                            references: $references
+                        ) {
                             id
                         }
                    }
@@ -826,6 +833,8 @@ class Report:
                     "id": id,
                     "toId": stix_object_or_stix_relationship_id,
                     "relationship_type": "object",
+                    "commitMessage": '',
+                    "references": [],
                 },
             )
             return True
