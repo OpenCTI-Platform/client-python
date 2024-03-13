@@ -45,12 +45,12 @@ def test_format_date_with_tz(opencti_stix2: OpenCTIStix2):
     assert my_date_str == opencti_stix2.format_date(my_date)
     assert my_datetime_str == opencti_stix2.format_date(my_datetime_str)
     assert (
-        str(
-            datetime.datetime.now(tz=datetime.timezone.utc)
-            .isoformat(timespec="seconds")
-            .replace("+00:00", "")
-        )
-        in opencti_stix2.format_date()
+            str(
+                datetime.datetime.now(tz=datetime.timezone.utc)
+                .isoformat(timespec="seconds")
+                .replace("+00:00", "")
+            )
+            in opencti_stix2.format_date()
     )
     with pytest.raises(ValueError):
         opencti_stix2.format_date("No time")
@@ -68,12 +68,12 @@ def test_format_date_with_tz(opencti_stix2: OpenCTIStix2):
     assert my_date_str == opencti_stix2.format_date(my_date)
     assert my_datetime_str == opencti_stix2.format_date(my_datetime_str)
     assert (
-        str(
-            datetime.datetime.now(tz=datetime.timezone.utc)
-            .isoformat(timespec="seconds")
-            .replace("+00:00", "")
-        )
-        in opencti_stix2.format_date()
+            str(
+                datetime.datetime.now(tz=datetime.timezone.utc)
+                .isoformat(timespec="seconds")
+                .replace("+00:00", "")
+            )
+            in opencti_stix2.format_date()
     )
     with pytest.raises(ValueError):
         opencti_stix2.format_date("No time")
@@ -104,3 +104,24 @@ def test_import_bundle_from_file(opencti_stix2: OpenCTIStix2, caplog) -> None:
     for record in caplog.records:
         assert record.levelname == "ERROR"
     assert "The bundle file does not exists" in caplog.text
+
+
+def test_check_max_marking_definition(opencti_stix2: OpenCTIStix2):
+    max_marking_definition_entity = [{'id': 'b71306ab-ee09-45ac-9fb6-93fe5bc552be',
+                                      'standard_id': 'marking-definition--5e57c739-391a-4eb3-b6be-7d15ca92d5ed',
+                                      'entity_type': 'Marking-Definition',
+                                      'parent_types': ['Basic-Object', 'Stix-Object', 'Stix-Meta-Object'],
+                                      'definition_type': 'TLP', 'definition': 'TLP:RED', 'x_opencti_order': 4,
+                                      'x_opencti_color': '#c62828', 'created': '2024-03-05T21:50:19.876Z',
+                                      'modified': '2024-03-05T21:50:19.876Z',
+                                      'created_at': '2024-03-05T21:50:19.876Z',
+                                      'updated_at': '2024-03-05T21:50:19.876Z', 'createdById': None}]
+    entity_marking_definitions = [{'id': 'd04278f2-42ad-46c3-aefe-c33bdaa29044',
+                                   'standard_id': 'marking-definition--4e4e3b84-de45-53df-9d9b-b21207699fd8',
+                                   'entity_type': 'Marking-Definition', 'definition_type': 'PAP',
+                                   'definition': 'PAP:RED', 'created': '2024-03-05T21:50:20.223Z',
+                                   'modified': '2024-03-05T21:50:20.223Z', 'x_opencti_order': 4,
+                                   'x_opencti_color': '#c62828', 'createdById': None}]
+    is_conformed_with_max_markings = opencti_stix2.check_max_marking_definition(max_marking_definition_entity,
+                                                                                entity_marking_definitions)
+    assert is_conformed_with_max_markings == False

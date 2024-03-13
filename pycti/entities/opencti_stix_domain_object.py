@@ -1346,11 +1346,17 @@ class StixDomainObject:
             },
         )
 
-    def push_entity_export(self, entity_id, file_name, data, mime_type=None):
+    def push_entity_export(self, entity_id, file_name, data, file_markings, mime_type=None):
         query = """
-            mutation StixDomainObjectEdit($id: ID!, $file: Upload!) {
+            mutation StixDomainObjectEdit(
+                $id: ID!, $file: Upload!,
+                $file_markings: [String]!
+            ) {
                 stixDomainObjectEdit(id: $id) {
-                    exportPush(file: $file)
+                    exportPush(
+                        file: $file,
+                        file_markings: $file_markings
+                    )
                 }
             }
         """
@@ -1358,7 +1364,13 @@ class StixDomainObject:
             file = self.file(file_name, data)
         else:
             file = self.file(file_name, data, mime_type)
-        self.opencti.query(query, {"id": entity_id, "file": file})
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "file": file,
+                "file_markings": file_markings
+            })
 
     """
         Update the Identity author of a Stix-Domain-Object object (created_by)
