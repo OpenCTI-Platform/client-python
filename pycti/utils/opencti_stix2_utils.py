@@ -104,7 +104,7 @@ class OpenCTIStix2Utils:
 
     @staticmethod
     def retrieveClassForMethod(
-        openCTIApiClient, entity: Dict, type_path: str, method: str
+            openCTIApiClient, entity: Dict, type_path: str, method: str
     ) -> Any:
         if entity is not None and type_path in entity:
             attributeName = entity[type_path].lower().replace("-", "_")
