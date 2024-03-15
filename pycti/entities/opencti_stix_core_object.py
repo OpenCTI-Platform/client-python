@@ -435,7 +435,7 @@ class StixCoreObject:
                         }
                     }
                 }
-            }      
+            }
             ... on StixCyberObservable {
                 observable_value
             }
@@ -595,9 +595,6 @@ class StixCoreObject:
             ... on CryptographicKey {
                 value
             }
-            ... on CryptocurrencyWallet {
-                value
-            }
             ... on Hostname {
                 value
             }
@@ -606,11 +603,6 @@ class StixCoreObject:
             }
             ... on UserAgent {
                 value
-            }
-            ... on BankAccount {
-                iban
-                bic
-                account_number
             }
             ... on PhoneNumber {
                 value
@@ -627,6 +619,25 @@ class StixCoreObject:
                 media_category
                 url
                 publication_date
+            }
+            ... on FinancialAccount {
+                account_number
+                account_status
+                account_type
+                iban_number
+                bic_number
+                currency_code
+            }
+            ... on FinancialAsset {
+                name
+                asset_type
+                asset_value
+                currency_code
+            }
+            ... on FinancialTransaction {
+                transaction_date
+                transaction_value
+                currency_code
             }
         """
         self.properties_with_files = """
@@ -1084,7 +1095,7 @@ class StixCoreObject:
                         }
                     }
                 }
-            }      
+            }
             ... on StixCyberObservable {
                 observable_value
             }
@@ -1244,9 +1255,6 @@ class StixCoreObject:
             ... on CryptographicKey {
                 value
             }
-            ... on CryptocurrencyWallet {
-                value
-            }
             ... on Hostname {
                 value
             }
@@ -1255,11 +1263,6 @@ class StixCoreObject:
             }
             ... on UserAgent {
                 value
-            }
-            ... on BankAccount {
-                iban
-                bic
-                account_number
             }
             ... on PhoneNumber {
                 value
@@ -1276,6 +1279,25 @@ class StixCoreObject:
                 media_category
                 url
                 publication_date
+            }
+            ... on FinancialAccount {
+                account_number
+                account_status
+                account_type
+                iban_number
+                bic_number
+                currency_code
+            }
+            ... on FinancialAsset {
+                name
+                asset_type
+                asset_value
+                currency_code
+            }
+            ... on FinancialTransaction {
+                transaction_date
+                transaction_value
+                currency_code
             }
         """
 

@@ -37,14 +37,15 @@ class StixCyberObservableTypes(Enum):
     WINDOWS_REGISTRY_VALUE_TYPE = "Windows-Registry-Value-Type"
     HOSTNAME = "Hostname"
     CRYPTOGRAPHIC_KEY = "Cryptographic-Key"
-    CRYPTOCURRENCY_WALLET = "Cryptocurrency-Wallet"
     TEXT = "Text"
     USER_AGENT = "User-Agent"
-    BANK_ACCOUNT = "Bank-Account"
     PHONE_NUMBER = "Phone-Number"
     PAYMENT_CARD = "Payment-Card"
     MEDIA_CONTENT = "Media-Content"
     SIMPLE_OBSERVABLE = "Simple-Observable"
+    FINANCIAL_ACCOUNT = "Financial-Account"
+    FINANCIAL_ASSET = "Financial-Asset"
+    FINANCIAL_TRANSACTION = "Financial-Transaction"
 
     @classmethod
     def has_value(cls, value):
@@ -264,26 +265,6 @@ class CustomObservableText:
 
 
 @CustomObservable(
-    "cryptocurrency-wallet",
-    [
-        ("value", StringProperty(required=True)),
-        ("spec_version", StringProperty(fixed="2.1")),
-        (
-            "object_marking_refs",
-            ListProperty(
-                ReferenceProperty(valid_types="marking-definition", spec_version="2.1")
-            ),
-        ),
-    ],
-    ["value"],
-)
-class CustomObservableCryptocurrencyWallet:
-    """Cryptocurrency wallet observable."""
-
-    pass
-
-
-@CustomObservable(
     "user-agent",
     [
         ("value", StringProperty(required=True)),
@@ -299,5 +280,72 @@ class CustomObservableCryptocurrencyWallet:
 )
 class CustomObservableUserAgent:
     """User-Agent observable."""
+
+    pass
+
+
+@CustomObservable(
+    "financial-account",
+    [
+        ("account_number", StringProperty()),
+        ("account_status", StringProperty()),
+        ("account_type", StringProperty()),
+        ("iban_number", StringProperty()),
+        ("bic_number", StringProperty()),
+        ("currency_code", StringProperty()),
+        ("spec_version", StringProperty(fixed="2.1")),
+        (
+            "object_marking_refs",
+            ListProperty(
+                ReferenceProperty(valid_types="marking-definition", spec_version="2.1")
+            ),
+        ),
+    ],
+)
+class CustomObservableFinancialAccount:
+    """Financial account observable."""
+
+    pass
+
+
+@CustomObservable(
+    "financial-asset",
+    [
+        ("name", StringProperty()),
+        ("asset_type", StringProperty()),
+        ("asset_value", StringProperty()),
+        ("currency_code", StringProperty()),
+        ("spec_version", StringProperty(fixed="2.1")),
+        (
+            "object_marking_refs",
+            ListProperty(
+                ReferenceProperty(valid_types="marking-definition", spec_version="2.1")
+            ),
+        ),
+    ],
+)
+class CustomObservableFinancialAsset:
+    """Financial asset observable."""
+
+    pass
+
+
+@CustomObservable(
+    "financial-transaction",
+    [
+        ("transaction_date", StringProperty()),
+        ("transaction_value", StringProperty()),
+        ("currency_code", StringProperty()),
+        ("spec_version", StringProperty(fixed="2.1")),
+        (
+            "object_marking_refs",
+            ListProperty(
+                ReferenceProperty(valid_types="marking-definition", spec_version="2.1")
+            ),
+        ),
+    ],
+)
+class CustomObservableFinancialTransaction:
+    """Financial transaction observable."""
 
     pass

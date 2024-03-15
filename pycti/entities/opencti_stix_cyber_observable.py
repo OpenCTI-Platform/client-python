@@ -262,9 +262,6 @@ class StixCyberObservable:
             ... on CryptographicKey {
                 value
             }
-            ... on CryptocurrencyWallet {
-                value
-            }
             ... on Hostname {
                 value
             }
@@ -273,11 +270,6 @@ class StixCyberObservable:
             }
             ... on UserAgent {
                 value
-            }
-            ... on BankAccount {
-                iban
-                bic
-                account_number
             }
             ... on PhoneNumber {
                 value
@@ -294,6 +286,25 @@ class StixCyberObservable:
                 media_category
                 url
                 publication_date
+            }
+            ... on FinancialAccount {
+                account_number
+                account_status
+                account_type
+                iban_number
+                bic_number
+                currency_code
+            }
+            ... on FinancialAsset {
+                name
+                asset_type
+                asset_value
+                currency_code
+            }
+            ... on FinancialTransaction {
+                transaction_date
+                transaction_value
+                currency_code
             }
         """
         self.properties_with_files = """
@@ -556,9 +567,6 @@ class StixCyberObservable:
             ... on CryptographicKey {
                 value
             }
-            ... on CryptocurrencyWallet {
-                value
-            }
             ... on Hostname {
                 value
             }
@@ -567,11 +575,6 @@ class StixCyberObservable:
             }
             ... on UserAgent {
                 value
-            }
-            ... on BankAccount {
-                iban
-                bic
-                account_number
             }
             ... on PhoneNumber {
                 value
@@ -601,6 +604,25 @@ class StixCyberObservable:
                         }
                     }
                 }
+            }
+            ... on FinancialAccount {
+                account_number
+                account_status
+                account_type
+                iban_number
+                bic_number
+                currency_code
+            }
+            ... on FinancialAsset {
+                name
+                asset_type
+                asset_value
+                currency_code
+            }
+            ... on FinancialTransaction {
+                transaction_date
+                transaction_value
+                currency_code
             }
         """
 
@@ -816,6 +838,7 @@ class StixCyberObservable:
     """
 
     def create(self, **kwargs):
+
         observable_data = kwargs.get("observableData", {})
         simple_observable_id = kwargs.get("simple_observable_id", None)
         simple_observable_key = kwargs.get("simple_observable_key", None)
@@ -849,28 +872,24 @@ class StixCyberObservable:
             )
         if type is None:
             return
-        if type.lower() == "file":
-            type = "StixFile"
-        elif type.lower() == "ipv4-addr":
-            type = "IPv4-Addr"
-        elif type.lower() == "ipv6-addr":
-            type = "IPv6-Addr"
-        elif type.lower() == "hostname" or type.lower() == "x-opencti-hostname":
-            type = "Hostname"
-        elif (
-            type.lower() == "cryptocurrency-wallet"
-            or type.lower() == "x-opencti-cryptocurrency-wallet"
-        ):
-            type = "Cryptocurrency-Wallet"
-        elif type.lower() == "user-agent" or type.lower() == "x-opencti-user-agent":
-            type = "User-Agent"
-        elif (
-            type.lower() == "cryptographic-key"
-            or type.lower() == "x-opencti-cryptographic-key"
-        ):
-            type = "Cryptographic-Key"
-        elif type.lower() == "text" or type.lower() == "x-opencti-text":
-            type = "Text"
+
+        type_mappings = {
+            "cryptographic-key": "Cryptographic-Key",
+            "file": "StixFile",
+            "financial-account": "Financial-Account",
+            "financial-asset": "Financial-Asset",
+            "financial-transaction": "Financial-Transaction",
+            "hostname": "Hostname",
+            "ipv4-addr": "IPv4-Addr",
+            "ipv6-addr": "IPv6-Addr",
+            "text": "Text",
+            "user-agent": "User-Agent",
+            "x-opencti-cryptographic-key": "Cryptographic-Key",
+            "x-opencti-hostname": "Hostname",
+            "x-opencti-text": "Text",
+            "x-opencti-user-agent": "User-Agent",
+        }
+        type = type_mappings.get(type.lower(), type)
 
         if "x_opencti_description" in observable_data:
             x_opencti_description = observable_data["x_opencti_description"]
@@ -968,14 +987,15 @@ class StixCyberObservable:
                     $WindowsRegistryKey: WindowsRegistryKeyAddInput,
                     $WindowsRegistryValueType: WindowsRegistryValueTypeAddInput,
                     $CryptographicKey: CryptographicKeyAddInput,
-                    $CryptocurrencyWallet: CryptocurrencyWalletAddInput,
                     $Hostname: HostnameAddInput
                     $Text: TextAddInput,
                     $UserAgent: UserAgentAddInput
-                    $BankAccount: BankAccountAddInput
                     $PhoneNumber: PhoneNumberAddInput
                     $PaymentCard: PaymentCardAddInput
                     $MediaContent: MediaContentAddInput
+                    $FinancialAccount: FinancialAccountAddInput
+                    $FinancialAsset: FinancialAssetAddInput
+                    $FinancialTransaction: FinancialTransactionAddInput
                 ) {
                     stixCyberObservableAdd(
                         type: $type,
@@ -1010,14 +1030,15 @@ class StixCyberObservable:
                         WindowsRegistryKey: $WindowsRegistryKey,
                         WindowsRegistryValueType: $WindowsRegistryValueType,
                         CryptographicKey: $CryptographicKey,
-                        CryptocurrencyWallet: $CryptocurrencyWallet,
                         Hostname: $Hostname,
                         Text: $Text,
                         UserAgent: $UserAgent
-                        BankAccount: $BankAccount
                         PhoneNumber: $PhoneNumber
                         PaymentCard: $PaymentCard
                         MediaContent: $MediaContent
+                        FinancialAccount: $FinancialAccount
+                        FinancialAsset: $FinancialAsset
+                        FinancialTransaction: $FinancialTransaction
                     ) {
                         id
                         standard_id
@@ -1508,15 +1529,6 @@ class StixCyberObservable:
                         observable_data["value"] if "value" in observable_data else None
                     ),
                 }
-            elif (
-                type == "Cryptocurrency-Wallet"
-                or type == "X-OpenCTI-Cryptocurrency-Wallet"
-            ):
-                input_variables["CryptocurrencyWallet"] = {
-                    "value": (
-                        observable_data["value"] if "value" in observable_data else None
-                    ),
-                }
             elif type == "Hostname":
                 input_variables["Hostname"] = {
                     "value": (
@@ -1527,18 +1539,6 @@ class StixCyberObservable:
                 input_variables["Text"] = {
                     "value": (
                         observable_data["value"] if "value" in observable_data else None
-                    ),
-                }
-            elif type == "Bank-Account":
-                input_variables["BankAccount"] = {
-                    "iban": (
-                        observable_data["iban"] if "iban" in observable_data else None
-                    ),
-                    "bic": observable_data["bic"] if "bic" in observable_data else None,
-                    "account_number": (
-                        observable_data["account_number"]
-                        if "account_number" in observable_data
-                        else None
                     ),
                 }
             elif type == "Phone-Number":
@@ -1588,6 +1588,29 @@ class StixCyberObservable:
                         else None
                     ),
                 }
+            elif type == "Financial-Account":
+                input_variables["FinancialAccount"] = {
+                    "iban_number": observable_data.get("iban_number"),
+                    "bic_number": observable_data.get("bic_number"),
+                    "account_number": observable_data.get("account_number"),
+                    "account_status": observable_data.get("account_status"),
+                    "account_type": observable_data.get("account_type"),
+                    "currency_code": observable_data.get("currency_code"),
+                }
+            elif type == "Financial-Asset":
+                input_variables["FinancialAsset"] = {
+                    "name": observable_data.get("name"),
+                    "asset_type": observable_data.get("asset_type"),
+                    "asset_value": observable_data.get("asset_value"),
+                    "currency_code": observable_data.get("currency_code"),
+                }
+            elif type == "Financial-Transaction":
+                input_variables["FinancialTransaction"] = {
+                    "transaction_date": observable_data.get("transaction_date"),
+                    "transaction_value": observable_data.get("transaction_value"),
+                    "currency_code": observable_data.get("currency_code"),
+                }
+
             result = self.opencti.query(query, input_variables)
             if "payload_bin" in observable_data and "mime/type" in observable_data:
                 self.add_file(

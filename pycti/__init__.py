@@ -53,7 +53,9 @@ from .entities.opencti_vulnerability import Vulnerability
 from .utils.constants import (
     CustomObjectCaseIncident,
     CustomObjectTask,
-    CustomObservableCryptocurrencyWallet,
+    CustomObservableFinancialAccount,
+    CustomObservableFinancialAsset,
+    CustomObservableFinancialTransaction,
     CustomObservableHostname,
     CustomObservableText,
     CustomObservableUserAgent,
@@ -130,9 +132,11 @@ __all__ = [
     "StixCyberObservableTypes",
     "CustomObservableHostname",
     "CustomObservableUserAgent",
-    "CustomObservableCryptocurrencyWallet",
     "CustomObservableText",
     "STIX_EXT_MITRE",
     "STIX_EXT_OCTI_SCO",
     "STIX_EXT_OCTI",
+    "CustomObservableFinancialAccount",
+    "CustomObservableFinancialAsset",
+    "CustomObservableFinancialTransaction",
 ]
