@@ -224,7 +224,9 @@ class ListenQueue(threading.Thread):
         channel.basic_ack(delivery_tag=method.delivery_tag)
         self.helper.connector_logger.info("Message ack", {"tag": method.delivery_tag})
 
-        self.thread = threading.Thread(target=self._data_handler, args=[json_data], daemon=True)
+        self.thread = threading.Thread(
+            target=self._data_handler, args=[json_data], daemon=True
+        )
         self.thread.start()
         five_minutes = 60 * 5
         time_wait = 0
