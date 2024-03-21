@@ -437,7 +437,7 @@ class PingAlive(threading.Thread):
     def ping(self) -> None:
         while not self.exit_event.is_set():
             try:
-                self.connector_logger.info("PingAlive running.")
+                self.connector_logger.debug("PingAlive running.")
                 initial_state = self.get_state()
                 result = self.api.connector.ping(self.connector_id, initial_state)
                 remote_state = (
