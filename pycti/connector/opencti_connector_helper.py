@@ -185,7 +185,7 @@ class ListenQueue(threading.Thread):
         applicant_id,
         callback,
     ) -> None:
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.pika_credentials = None
         self.pika_parameters = None
         self.pika_connection = None
@@ -224,7 +224,7 @@ class ListenQueue(threading.Thread):
         channel.basic_ack(delivery_tag=method.delivery_tag)
         self.helper.connector_logger.info("Message ack", {"tag": method.delivery_tag})
 
-        self.thread = threading.Thread(target=self._data_handler, args=[json_data])
+        self.thread = threading.Thread(target=self._data_handler, args=[json_data], daemon=True)
         self.thread.start()
         five_minutes = 60 * 5
         time_wait = 0
@@ -424,7 +424,7 @@ class PingAlive(threading.Thread):
     def __init__(
         self, connector_logger, connector_id, api, get_state, set_state, metric
     ) -> None:
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.connector_logger = connector_logger
         self.connector_id = connector_id
         self.in_error = False
@@ -473,7 +473,7 @@ class PingAlive(threading.Thread):
 
 class StreamAlive(threading.Thread):
     def __init__(self, helper, q) -> None:
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.helper = helper
         self.q = q
         self.exit_event = threading.Event()
@@ -525,7 +525,7 @@ class ListenStream(threading.Thread):
         recover_iso_date,
         with_inferences,
     ) -> None:
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.helper = helper
         self.callback = callback
         self.url = url
