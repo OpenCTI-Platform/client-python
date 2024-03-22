@@ -25,6 +25,7 @@ from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
 from pycti.utils.opencti_stix2_utils import (
     OBSERVABLES_VALUE_INT,
     STIX_CYBER_OBSERVABLE_MAPPING,
+    OpenCTIStix2Utils,
 )
 
 datefinder.ValueError = ValueError, OverflowError
