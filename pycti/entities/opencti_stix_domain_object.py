@@ -1325,11 +1325,11 @@ class StixDomainObject:
             return None
 
     def push_list_export(
-        self, entity_id, entity_type, file_name, data, list_filters="", mime_type=None
+        self, entity_id, entity_type, file_name, file_markings, data, list_filters="", mime_type=None
     ):
         query = """
-            mutation StixDomainObjectsExportPush($entity_id: String, $entity_type: String!, $file: Upload!, $listFilters: String) {
-                stixDomainObjectsExportPush(entity_id: $entity_id, entity_type: $entity_type, file: $file, listFilters: $listFilters)
+            mutation StixDomainObjectsExportPush($entity_id: String, $entity_type: String!, $file: Upload!, $file_markings: [String]! $listFilters: String) {
+                stixDomainObjectsExportPush(entity_id: $entity_id, entity_type: $entity_type, file: $file,  file_markings: $file_markings, listFilters: $listFilters)
             }
         """
         if mime_type is None:
@@ -1342,6 +1342,7 @@ class StixDomainObject:
                 "entity_id": entity_id,
                 "entity_type": entity_type,
                 "file": file,
+                "file_markings": file_markings,
                 "listFilters": list_filters,
             },
         )
