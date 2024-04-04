@@ -1192,7 +1192,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 bundle_send_to_directory_path, bundle_file + ".tmp"
             )
             message_bundle = {
-                "type": "DIRECTORY_BUNDLE",
+                "bundle_type": "DIRECTORY_BUNDLE",
                 "applicant_id": self.applicant_id,
                 "connector": {
                     "id": self.connect_id,
@@ -1310,7 +1310,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         # if self.current_work_id is None:
         #    raise ValueError('The job id must be specified')
         message = {
-            "type": "QUEUE_BUNDLE",
+            "bundle_type": "QUEUE_BUNDLE",
             "applicant_id": self.applicant_id,
             "action_sequence": sequence,
             "entities_types": entities_types,
