@@ -1164,10 +1164,21 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         # If directory setup, write the bundle to the target directory
         if bundle_send_to_directory:
             self.connector_logger.info(
-                self.connect_name + " sending bundle to directory"
+                "The connector sending bundle to directory",
+                {
+                    "connector": self.connect_name,
+                    "directory": bundle_send_to_directory,
+                    "also_queuing": bundle_send_to_queue,
+                },
             )
-            bundle_file = time.strftime("%Y%m%d-%H%M%S-") + str(time.time()) + ".json"
-            write_file = bundle_send_to_directory + "/" + bundle_file + ".tmp"
+            bundle_file = (
+                self.connect_name.lower().replace(" ", "_")
+                + "-"
+                + time.strftime("%Y%m%d-%H%M%S-")
+                + str(time.time())
+                + ".json"
+            )
+            write_file = os.path.join(bundle_send_to_directory, bundle_file + ".tmp")
             message_bundle = {
                 "type": "DIRECTORY_BUNDLE",
                 "applicant_id": self.applicant_id,
@@ -1191,7 +1202,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 str_bundle = json.dumps(message_bundle)
                 f.write(str_bundle)
             # Rename the file after full write
-            final_write_file = bundle_send_to_directory + "/" + bundle_file
+            final_write_file = os.path.join(bundle_send_to_directory, bundle_file)
             os.rename(write_file, final_write_file)
 
         if bypass_split:
