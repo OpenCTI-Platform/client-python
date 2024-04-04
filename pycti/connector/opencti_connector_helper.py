@@ -1187,16 +1187,18 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 "update": update,
             }
             # Maintains the list of files under control
-            current_time = time.time()
-            for f in os.listdir(bundle_send_to_directory):
-                if f.endswith(".json"):
-                    file_location = os.path.join(bundle_send_to_directory, f)
-                    file_time = os.stat(file_location).st_mtime
-                    is_expired_file = (
-                        file_time < current_time - 86400 * bundle_send_to_directory_days
-                    )  # 86400 = 1 day
-                    if is_expired_file:
-                        os.remove(file_location)
+            if bundle_send_to_directory_days > 0:  # If 0, disable the auto remove
+                current_time = time.time()
+                for f in os.listdir(bundle_send_to_directory):
+                    if f.endswith(".json"):
+                        file_location = os.path.join(bundle_send_to_directory, f)
+                        file_time = os.stat(file_location).st_mtime
+                        is_expired_file = (
+                            file_time
+                            < current_time - 86400 * bundle_send_to_directory_days
+                        )  # 86400 = 1 day
+                        if is_expired_file:
+                            os.remove(file_location)
             # Write the bundle to target directory
             with open(write_file, "w") as f:
                 str_bundle = json.dumps(message_bundle)
