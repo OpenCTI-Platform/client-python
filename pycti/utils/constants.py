@@ -42,7 +42,7 @@ class StixCyberObservableTypes(Enum):
     USER_AGENT = "User-Agent"
     BANK_ACCOUNT = "Bank-Account"
     PHONE_NUMBER = "Phone-Number"
-    CREDENTIAL = "X-OpenCTI-Credential"
+    CREDENTIAL = "Credential"
     TRACKING_NUMBER = "Tracking-Number"
     PAYMENT_CARD = "Payment-Card"
     MEDIA_CONTENT = "Media-Content"
@@ -314,7 +314,7 @@ class CustomObservableBankAccount:
 
 
 @CustomObservable(
-    "x-opencti-credential",
+    "credential",
     [
         ("value", StringProperty(required=True)),
         ("spec_version", StringProperty(fixed="2.1")),
@@ -374,7 +374,7 @@ class CustomObservablePhoneNumber:
 
 
 @CustomObservable(
-    "x-opencti-tracking-number",
+    "tracking-number",
     [
         ("value", StringProperty(required=True)),
         ("spec_version", StringProperty(fixed="2.1")),
