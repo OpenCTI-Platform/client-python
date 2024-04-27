@@ -1,6 +1,6 @@
 class OpenCTIUtils:
     @staticmethod
-    def build_marking_filter(objects_ids: list[str] | None, markings: list[str]):
+    def build_marking_filter(markings: list[str], source_entity_id: str | None, objects_ids: list[str] | None):
         marking_filter = {
             "mode": "and",
             "filters": [],
@@ -25,6 +25,19 @@ class OpenCTIUtils:
                 }
             ],
         }
+        source_entity_filter = {
+            "key": "regardingOf",
+            "mode": "and",
+            "operator": "eq",
+            "values": [
+                {
+                    "key": "id",
+                    "values": [
+                        source_entity_id
+                    ]
+                }
+            ],
+        }
         objects_ids_filter = {
             "key": "id",
             "mode": "or",
@@ -33,7 +46,8 @@ class OpenCTIUtils:
         }
 
         if objects_ids is None or len(objects_ids) == 0:
+            marking_filter["filters"].append(source_entity_filter)
             return marking_filter
 
-        marking_filter["filters"] = objects_ids_filter
+        marking_filter["filters"].append(objects_ids_filter)
         return marking_filter

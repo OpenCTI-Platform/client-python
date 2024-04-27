@@ -25,6 +25,7 @@ from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
 from pycti.utils.opencti_stix2_utils import (
     OBSERVABLES_VALUE_INT,
     STIX_CYBER_OBSERVABLE_MAPPING,
+    OpenCTIStix2Utils
 )
 
 datefinder.ValueError = ValueError, OverflowError
@@ -1621,7 +1622,7 @@ class OpenCTIStix2:
         max_marking_definition_entity: Dict = None,
         no_custom_attributes: bool = False,
     ) -> List:
-        if (
+        if ( # might be removed with filters approach
             self.check_max_marking_definition(
                 max_marking_definition_entity,
                 entity["objectMarking"] if "objectMarking" in entity else [],
@@ -2285,7 +2286,7 @@ class OpenCTIStix2:
         mode: str = "simple",
         max_marking_definition: Dict = None,
     ) -> Dict:
-        max_marking_definition_entity = (
+        max_marking_definition_entity = ( # single marking to update to multiple
             self.opencti.marking_definition.read(id=max_marking_definition)
             if max_marking_definition is not None
             else None
