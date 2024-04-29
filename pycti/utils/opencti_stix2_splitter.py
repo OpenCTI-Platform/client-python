@@ -2,6 +2,9 @@ import json
 import re
 import uuid
 
+from stix2.canonicalization.Canonicalize import canonicalize
+from typing_extensions import deprecated
+
 MITRE_X_CAPEC = (
     "x_capec_*"  # https://github.com/mitre-attack/attack-stix-data/issues/34
 )
@@ -58,16 +61,10 @@ class OpenCTIStix2Splitter:
         self.cache_index[item_id] = item  # Put in cache
         return nb_deps
 
-    def split_bundle(self, bundle, use_json=True, event_version=None) -> list:
-        """splits a valid stix2 bundle into a list of bundles
-        :param bundle: valid stix2 bundle
-        :type bundle:
-        :param use_json: is JSON?
-        :type use_json:
-        :raises Exception: if data is not valid JSON
-        :return: returns a list of bundles
-        :rtype: list
-        """
+    def split_bundle_with_expectations(
+        self, bundle, use_json=True, event_version=None, relations_grouping=True
+    ) -> tuple[int, list]:
+        """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
             try:
                 bundle_data = json.loads(bundle)
@@ -96,16 +93,107 @@ class OpenCTIStix2Splitter:
             return elem["nb_deps"]
 
         self.elements.sort(key=by_dep_size)
-        for entity in self.elements:
+        split_elements = self.elements
+
+        # Algorithm to re-bundle elements
+        # Bundle created group the relationships by dependencies
+        # This grouping will improve relations sharding
+        if relations_grouping:
+            cache_ids = {}
+            id_alias = {}
+            ids_equivalence = {}
+            working_elements = {}
+            grouped_elements = {}
+            aliases_equivalence = {}
+            for elem in self.elements:
+                if cache_ids.get(elem["id"]):
+                    # Prevent sending duplicate elements for ingest
+                    continue
+                if elem["type"] == "relationship":
+                    nb_deps = elem["nb_deps"]
+                    source_ref = (
+                        ids_equivalence.get(elem["source_ref"], elem["source_ref"])
+                        + "-"
+                        + str(nb_deps)
+                    )
+                    target_ref = (
+                        ids_equivalence.get(elem["target_ref"], elem["target_ref"])
+                        + "-"
+                        + str(nb_deps)
+                    )
+                    target_source = id_alias.get(source_ref)
+                    target_target = id_alias.get(target_ref)
+
+                    target = "generated-" + str(uuid.uuid4())
+                    if target_source is None and target_target is not None:
+                        target = target_target
+                        id_alias[source_ref] = target
+                    if target_source is not None and target_target is None:
+                        target = target_source
+                        id_alias[target_ref] = target
+                    if target_source is not None and target_target is not None:
+                        target = target_target
+
+                    if grouped_elements.get(target):
+                        targets = grouped_elements.get(target, [])
+                        targets.append(elem)
+                        grouped_elements[target] = targets
+                    else:
+                        grouped_elements[target] = [elem]
+                        id_alias[source_ref] = target
+                        id_alias[target_ref] = target
+                else:
+                    work_id = elem["id"]
+                    if elem.get("aliases"):
+                        for alias in elem.get("aliases"):
+                            alias_id = canonicalize(
+                                elem["type"] + "-" + alias, utf8=False
+                            )
+                            if aliases_equivalence.get(alias_id):
+                                work_id = aliases_equivalence.get(alias_id)
+                                continue
+                    if elem["id"] != work_id:
+                        ids_equivalence[elem["id"]] = work_id
+                    if working_elements.get(work_id):
+                        working_elements[work_id].append(elem)
+                    else:
+                        working_elements[work_id] = [elem]
+                    if elem.get("aliases"):
+                        for alias in elem.get("aliases"):
+                            alias_id = canonicalize(
+                                elem["type"] + "-" + alias, utf8=False
+                            )
+                            if aliases_equivalence.get(alias_id) is None:
+                                aliases_equivalence[alias_id] = work_id
+                cache_ids[elem["id"]] = elem["id"]
+            split_elements = list(working_elements.values()) + list(
+                grouped_elements.values()
+            )
+
+        number_expectations = 0
+        for entity in split_elements:
+            nb_deps = -1 if type(entity) in (tuple, list) else entity["nb_deps"]
+            entities = entity if type(entity) in (tuple, list) else [entity]
+            number_expectations += len(entities)
             bundles.append(
                 self.stix2_create_bundle(
                     bundle_data["id"],
-                    entity["nb_deps"],
-                    [entity],
+                    nb_deps,
+                    entities,
                     use_json,
                     event_version,
                 )
             )
+
+        return number_expectations, bundles
+
+    @deprecated("Use split_bundle_with_expectations instead")
+    def split_bundle(
+        self, bundle, use_json=True, event_version=None, relations_grouping=True
+    ) -> list:
+        expectations, bundles = self.split_bundle_with_expectations(
+            bundle, use_json, event_version, relations_grouping
+        )
         return bundles
 
     @staticmethod
