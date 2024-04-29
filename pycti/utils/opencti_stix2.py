@@ -4,10 +4,10 @@ import base64
 import datetime
 import json
 import os
+import random
 import time
 import traceback
 import uuid
-import random
 from typing import Any, Dict, List, Optional, Union
 
 import datefinder
@@ -15,7 +15,7 @@ import dateutil.parser
 import pytz
 from cachetools import LRUCache
 from opentelemetry import metrics
-from requests import Timeout, RequestException
+from requests import RequestException, Timeout
 
 from pycti.entities.opencti_identity import Identity
 from pycti.utils.constants import (
