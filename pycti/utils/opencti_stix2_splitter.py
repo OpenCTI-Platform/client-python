@@ -1,6 +1,7 @@
 import json
 import re
 import uuid
+from typing import Tuple
 
 from stix2.canonicalization.Canonicalize import canonicalize
 from typing_extensions import deprecated
@@ -63,7 +64,7 @@ class OpenCTIStix2Splitter:
 
     def split_bundle_with_expectations(
         self, bundle, use_json=True, event_version=None, relations_grouping=True
-    ) -> tuple[int, list]:
+    ) -> Tuple[int, list]:
         """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
             try:
