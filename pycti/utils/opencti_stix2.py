@@ -2082,7 +2082,6 @@ class OpenCTIStix2:
             if no_custom_attributes:
                 del entity["x_opencti_id"]
             # Export
-            reader = self.get_readers()
             # Get extra objects
             for entity_object in objects_to_get:
                 # Map types
@@ -2107,8 +2106,8 @@ class OpenCTIStix2:
                     lambda **kwargs: self.unknown_type({"type": entity_object["entity_type"]})
                 )
 
-                def find_entity(entity):
-                    return entity.id == entity_object["standard_id"]
+                def find_entity(current_entity: Dict):
+                    return current_entity.get("id") == entity_object["standard_id"]
 
                 entity_object_data = filter(find_entity, do_list(filters=access_filter))
                 if entity_object_data is not None:
@@ -2253,7 +2252,7 @@ class OpenCTIStix2:
             self,
             entity_type: str,
             search: Dict = None,
-            filters: List = None,
+            filters: Dict = None,
             orderBy: str = None,
             orderMode: str = None,
             getAll: bool = True,
@@ -2326,10 +2325,11 @@ class OpenCTIStix2:
             self,
             entity_type: str,
             search: Dict = None,
-            filters: List = None,
+            filters: Dict = None,
             order_by: str = None,
             order_mode: str = None,
             mode: str = "simple",
+            main_filter: Dict = None,
             access_filter: Dict = None,
     ) -> Dict:
         bundle = {
@@ -2337,10 +2337,15 @@ class OpenCTIStix2:
             "id": "bundle--" + str(uuid.uuid4()),
             "objects": [],
         }
+        export_query_filter = {
+            "mode": "and",
+            "filterGroups": [filters, access_filter],
+            "filters": [],
+        }
         entities_list = self.export_entities_list(
             entity_type=entity_type,
             search=search,
-            filters=filters,
+            filters=export_query_filter,
             orderBy=order_by,
             orderMode=order_mode,
             getAll=True,
@@ -2352,7 +2357,8 @@ class OpenCTIStix2:
                     self.generate_export(entity),
                     mode,
                     None,
-                    access_filter,
+                    main_filter,
+                    export_query_filter,
                 )
                 if entity_bundle is not None:
                     entity_bundle_filtered = self.filter_objects(uuids, entity_bundle)
