@@ -138,7 +138,10 @@ class OpenCTIStix2Splitter:
                         target_dict["elements"].append(elem)
                         grouped_elements[target] = target_dict
                     else:
-                        grouped_elements[target] = {"nb_deps": nb_deps, "elements": [elem]}
+                        grouped_elements[target] = {
+                            "nb_deps": nb_deps,
+                            "elements": [elem],
+                        }
                         id_alias[source_ref] = target
                         id_alias[target_ref] = target
                 else:
@@ -150,7 +153,9 @@ class OpenCTIStix2Splitter:
             )
             split_elements.sort(key=by_dep_size)
         else:
-            split_elements = list(map(lambda e: {"nb_deps": e["nb_deps"], "elements": [e]}, self.elements))
+            split_elements = list(
+                map(lambda e: {"nb_deps": e["nb_deps"], "elements": [e]}, self.elements)
+            )
 
         number_expectations = 0
         for entity in split_elements:
