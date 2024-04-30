@@ -3,7 +3,6 @@ import re
 import uuid
 from typing import Tuple
 
-from stix2.canonicalization.Canonicalize import canonicalize
 from typing_extensions import deprecated
 
 MITRE_X_CAPEC = (
