@@ -94,7 +94,6 @@ class OpenCTIStix2Splitter:
             return elem["nb_deps"]
 
         self.elements.sort(key=by_dep_size)
-        split_elements = self.elements
 
         # Algorithm to re-bundle elements
         # Bundle created group the relationships by dependencies
@@ -105,13 +104,12 @@ class OpenCTIStix2Splitter:
             ids_equivalence = {}
             working_elements = {}
             grouped_elements = {}
-            aliases_equivalence = {}
             for elem in self.elements:
                 if cache_ids.get(elem["id"]):
                     # Prevent sending duplicate elements for ingest
                     continue
+                nb_deps = elem["nb_deps"]
                 if elem["type"] == "relationship":
-                    nb_deps = elem["nb_deps"]
                     source_ref = (
                         ids_equivalence.get(elem["source_ref"], elem["source_ref"])
                         + "-"
@@ -136,51 +134,32 @@ class OpenCTIStix2Splitter:
                         target = target_target
 
                     if grouped_elements.get(target):
-                        targets = grouped_elements.get(target, [])
-                        targets.append(elem)
-                        grouped_elements[target] = targets
+                        target_dict = grouped_elements.get(target, [])
+                        target_dict["elements"].append(elem)
+                        grouped_elements[target] = target_dict
                     else:
-                        grouped_elements[target] = [elem]
+                        grouped_elements[target] = {"nb_deps": nb_deps, "elements": [elem]}
                         id_alias[source_ref] = target
                         id_alias[target_ref] = target
                 else:
                     work_id = elem["id"]
-                    if elem.get("aliases"):
-                        for alias in elem.get("aliases"):
-                            alias_id = canonicalize(
-                                elem["type"] + "-" + alias, utf8=False
-                            )
-                            if aliases_equivalence.get(alias_id):
-                                work_id = aliases_equivalence.get(alias_id)
-                                continue
-                    if elem["id"] != work_id:
-                        ids_equivalence[elem["id"]] = work_id
-                    if working_elements.get(work_id):
-                        working_elements[work_id].append(elem)
-                    else:
-                        working_elements[work_id] = [elem]
-                    if elem.get("aliases"):
-                        for alias in elem.get("aliases"):
-                            alias_id = canonicalize(
-                                elem["type"] + "-" + alias, utf8=False
-                            )
-                            if aliases_equivalence.get(alias_id) is None:
-                                aliases_equivalence[alias_id] = work_id
+                    working_elements[work_id] = {"nb_deps": nb_deps, "elements": [elem]}
                 cache_ids[elem["id"]] = elem["id"]
             split_elements = list(working_elements.values()) + list(
                 grouped_elements.values()
             )
+            split_elements.sort(key=by_dep_size)
+        else:
+            split_elements = list(map(lambda e: {"nb_deps": e["nb_deps"], "elements": [e]}, self.elements))
 
         number_expectations = 0
         for entity in split_elements:
-            nb_deps = -1 if type(entity) in (tuple, list) else entity["nb_deps"]
-            entities = entity if type(entity) in (tuple, list) else [entity]
-            number_expectations += len(entities)
+            number_expectations += len(entity["elements"])
             bundles.append(
                 self.stix2_create_bundle(
                     bundle_data["id"],
-                    nb_deps,
-                    entities,
+                    entity["nb_deps"],
+                    entity["elements"],
                     use_json,
                     event_version,
                 )
