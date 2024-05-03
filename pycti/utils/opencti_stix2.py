@@ -1689,7 +1689,7 @@ class OpenCTIStix2:
                         "operator": "eq",
                         "values": [
                             {"key": "id", "values": [entity["id"]]},
-                            {"key": "relationship_type", "values": ["objects"]},
+                            {"key": "relationship_type", "values": ["object"]},
                         ],
                     }
                 ]}
@@ -1883,22 +1883,106 @@ class OpenCTIStix2:
             entity["type"] = "sighting"
             entity["count"] = entity["attribute_count"]
             del entity["attribute_count"]
-            entity["sighting_of_ref"] = entity["from"]["standard_id"]
-            objects_to_get.append(entity["from"])  # what happen with unauthorized objects ?
-            entity["where_sighted_refs"] = [entity["to"]["standard_id"]]
-            objects_to_get.append(entity["to"])
+            from_to_check = entity["from"]["id"]
+            relationships_from_filter = {
+                "mode": "and",
+                "filterGroups": [
+                    {
+                        "mode": "or",
+                        "filters": [
+                            {
+                                "key": "id",
+                                "values": [from_to_check],
+                            }
+                        ],
+                        "filterGroups": [],
+                    },
+                    access_filter,
+                ],
+                "filters": [],
+            }
+            x = self.opencti.opencti_stix_object_or_stix_relationship.list(filters=relationships_from_filter)
+            if len(x) > 0:
+                entity["sighting_of_ref"] = entity["from"]["id"]
+                # handle from and to separately like Stix Core Relationship and call 2 requests
+                objects_to_get.append(entity["from"])  # what happen with unauthorized objects ?
+
+            to_to_check = [entity["to"]["id"]]
+            relationships_to_filter = {
+                "mode": "and",
+                "filterGroups": [
+                    {
+                        "mode": "or",
+                        "filters": [
+                            {
+                                "key": "id",
+                                "values": [to_to_check],
+                            }
+                        ],
+                        "filterGroups": [],
+                    },
+                    access_filter,
+                ],
+                "filters": [],
+            }
+            y = self.opencti.opencti_stix_object_or_stix_relationship.list(filters=relationships_to_filter)
+            if len(y) > 0:
+                entity["where_sighted_refs"] = [entity["to"]["id"]]
+                objects_to_get.append(entity["to"])
+
             del entity["from"]
             del entity["to"]
         # Stix Core Relationship
         if "from" in entity or "to" in entity:
             entity["type"] = "relationship"
         if "from" in entity:
-            entity["source_ref"] = entity["from"]["standard_id"]
-            objects_to_get.append(entity["from"])
+            from_to_check = entity["from"]["id"]
+            relationships_from_filter = {
+                "mode": "and",
+                "filterGroups": [
+                    {
+                        "mode": "or",
+                        "filters": [
+                            {
+                                "key": "id",
+                                "values": [from_to_check],
+                            }
+                        ],
+                        "filterGroups": [],
+                    },
+                    access_filter,
+                ],
+                "filters": [],
+            }
+            x = self.opencti.opencti_stix_object_or_stix_relationship.list(filters=relationships_from_filter)
+            if len(x) > 0:
+                entity["source_ref"] = entity["from"]["id"]
+                # handle from and to separately like Stix Core Relationship and call 2 requests
+                objects_to_get.append(entity["from"])  # what happen with unauthorized objects ?
             del entity["from"]
         if "to" in entity:
-            entity["target_ref"] = entity["to"]["standard_id"]
-            objects_to_get.append(entity["to"])
+            to_to_check = [entity["to"]["id"]]
+            relationships_to_filter = {
+                "mode": "and",
+                "filterGroups": [
+                    {
+                        "mode": "or",
+                        "filters": [
+                            {
+                                "key": "id",
+                                "values": [to_to_check],
+                            }
+                        ],
+                        "filterGroups": [],
+                    },
+                    access_filter,
+                ],
+                "filters": [],
+            }
+            y = self.opencti.opencti_stix_object_or_stix_relationship.list(filters=relationships_to_filter)
+            if len(y) > 0:
+                entity["target_ref"] = entity["to"]["id"]
+                objects_to_get.append(entity["to"])
             del entity["to"]
         # Stix Domain Object
         if "attribute_abstract" in entity:
@@ -1985,8 +2069,8 @@ class OpenCTIStix2:
             return result
         elif mode == "full":
             uuids = [entity["id"]]
-            for x in result:
-                uuids.append(x["id"])
+            for y in result:
+                uuids.append(y["id"])
             # Get extra refs
             for key in entity.keys():
                 if key.endswith("_ref"):
