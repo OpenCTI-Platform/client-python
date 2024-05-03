@@ -793,7 +793,7 @@ class OpenCTIStix2:
         }
 
     def get_listers(self):
-        return { # add Administrative-Area ?
+        return {
             "Stix-Core-Object": self.opencti.stix_core_object.list,
             "Stix-Domain-Object": self.opencti.stix_domain_object.list,
             "Administrative-Area": self.opencti.location.list,
@@ -1672,6 +1672,34 @@ class OpenCTIStix2:
         result = []
         objects_to_get = []
         relations_to_get = []
+
+        # Container
+        if (
+                "objects" in entity
+                and len(entity["objects"]) > 0
+        ):
+            del entity["objects"]
+            regarding_of_filter = {
+                "mode": "and",
+                "filterGroups": [],
+                "filters": [
+                    {
+                        "key": "regardingOf",
+                        "mode": "and",
+                        "operator": "eq",
+                        "values": [
+                            {"key": "id", "values": [entity["id"]]},
+                            {"key": "relationship_type", "values": ["objects"]},
+                        ],
+                    }
+                ]}
+            export_query_filter = {
+                "mode": "and",
+                "filterGroups": [regarding_of_filter, access_filter],
+                "filters": [],
+            }
+            entity["objects"] = self.opencti.stix_domain_object.list(filters=export_query_filter)
+
         # CreatedByRef
         if (
                 not no_custom_attributes
@@ -1783,7 +1811,7 @@ class OpenCTIStix2:
                 and len(entity["objects"]) > 0
         ):
             entity["object_refs"] = []
-            objects_to_get = entity["objects"]
+            objects_to_get = entity["objects"]  # To do differently
             for entity_object in entity["objects"]:
                 if (
                         entity["type"] == "report"
@@ -1856,7 +1884,7 @@ class OpenCTIStix2:
             entity["count"] = entity["attribute_count"]
             del entity["attribute_count"]
             entity["sighting_of_ref"] = entity["from"]["standard_id"]
-            objects_to_get.append(entity["from"])
+            objects_to_get.append(entity["from"])  # what happen with unauthorized objects ?
             entity["where_sighted_refs"] = [entity["to"]["standard_id"]]
             objects_to_get.append(entity["to"])
             del entity["from"]
@@ -2082,6 +2110,7 @@ class OpenCTIStix2:
             if no_custom_attributes:
                 del entity["x_opencti_id"]
             # Export
+            reader = self.get_readers()
             # Get extra objects
             for entity_object in objects_to_get:
                 # Map types
@@ -2099,17 +2128,13 @@ class OpenCTIStix2:
                 elif "stix-ref-relationship" in entity_object["parent_types"]:
                     entity_object["entity_type"] = "stix-ref-relationship"
 
-                # Lister
-                lister = self.get_listers()
-                do_list = lister.get(
+                do_read = reader.get(
                     entity_object["entity_type"],
-                    lambda **kwargs: self.unknown_type({"type": entity_object["entity_type"]})
+                    lambda **kwargs: self.unknown_type(
+                        {"type": entity_object["entity_type"]}
+                    ),
                 )
-
-                def find_entity(current_entity: Dict):
-                    return current_entity.get("id") == entity_object["standard_id"]
-
-                entity_object_data = filter(find_entity, do_list(filters=access_filter))
+                entity_object_data = do_read(id=entity_object["id"], filters=access_filter)
                 if entity_object_data is not None:
                     stix_entity_object = self.prepare_export(
                         self.generate_export(entity_object_data),
@@ -2415,7 +2440,8 @@ class OpenCTIStix2:
                     entity_bundle_filtered = self.filter_objects(uuids, entity_bundle)
                     for x in entity_bundle_filtered:
                         uuids.append(x["id"])
-                    bundle["objects"] = bundle["objects"] + entity_bundle_filtered #  unsupported operand type(s) for +: 'dict' and 'list'
+                    bundle["objects"] = bundle[
+                                            "objects"] + entity_bundle_filtered  # unsupported operand type(s) for +: 'dict' and 'list'
 
         return bundle
 
