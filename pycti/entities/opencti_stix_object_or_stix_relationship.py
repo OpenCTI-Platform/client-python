@@ -1,5 +1,6 @@
 import json
 
+
 class StixObjectOrStixRelationship:
     def __init__(self, opencti):
         self.opencti = opencti
@@ -331,7 +332,7 @@ class StixObjectOrStixRelationship:
             }
             ... on Case {
                 name
-            }            
+            }
             ... on StixCyberObservable {
                 observable_value
             }
@@ -477,16 +478,16 @@ class StixObjectOrStixRelationship:
                 "Reading StixObjectOrStixRelationship", {"id": id}
             )
             query = (
-                    """
+                """
                     query StixObjectOrStixRelationship($id: String!) {
                         stixObjectOrStixRelationship(id: $id) {
                             """
-                    + (
-                        custom_attributes
-                        if custom_attributes is not None
-                        else self.properties
-                    )
-                    + """
+                + (
+                    custom_attributes
+                    if custom_attributes is not None
+                    else self.properties
+                )
+                + """
                     }
                 }
              """
@@ -508,21 +509,18 @@ class StixObjectOrStixRelationship:
         custom_attributes = kwargs.get("customAttributes", None)
 
         self.opencti.app_logger.info(
-            "Listing StixObjectOrStixRelationships with filters", {"filters": json.dumps(filters)}
+            "Listing StixObjectOrStixRelationships with filters",
+            {"filters": json.dumps(filters)},
         )
         query = (
-                """
+            """
                         query StixObjectOrStixRelationships($filters: FilterGroup, $search: String, $first: Int, $after: ID) {
                             stixObjectOrStixRelationships(filters: $filters, search: $search, first: $first, after: $after) {
                                 edges {
                                     node {
                                         """
-                + (
-                    custom_attributes
-                    if custom_attributes is not None
-                    else self.properties
-                )
-                + """
+            + (custom_attributes if custom_attributes is not None else self.properties)
+            + """
                                 }
                             }
                             pageInfo {
@@ -546,4 +544,6 @@ class StixObjectOrStixRelationship:
             },
         )
 
-        return self.opencti.process_multiple(result["data"]["stixObjectOrStixRelationships"], with_pagination)
+        return self.opencti.process_multiple(
+            result["data"]["stixObjectOrStixRelationships"], with_pagination
+        )
