@@ -2471,7 +2471,7 @@ class OpenCTIStix2:
         }
         export_query_filter = {
             "mode": "and",
-            "filterGroups": [filters, access_filter],
+            "filterGroups": [filters, access_filter] if access_filter is not None else [filters],
             "filters": [],
         }
         entities_list = self.export_entities_list(
