@@ -2469,9 +2469,14 @@ class OpenCTIStix2:
             "id": "bundle--" + str(uuid.uuid4()),
             "objects": [],
         }
+        filterGroups = []
+        if filters is not None:
+            filterGroups.append(filters)
+        if access_filter is not None:
+            filterGroups.append(access_filter)
         export_query_filter = {
             "mode": "and",
-            "filterGroups": [filters, access_filter] if access_filter is not None else [filters],
+            "filterGroups": filterGroups,
             "filters": [],
         }
         entities_list = self.export_entities_list(
