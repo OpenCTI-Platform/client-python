@@ -1695,6 +1695,7 @@ class OpenCTIStix2:
                 ],
                 "filters": [],
             }
+
     def prepare_export(
         self,
         entity: Dict,
@@ -1926,7 +1927,9 @@ class OpenCTIStix2:
             entity["count"] = entity["attribute_count"]
             del entity["attribute_count"]
             from_to_check = entity["from"]["id"]
-            relationships_from_filter = self.prepare_filters_export(id=from_to_check, access_filter=access_filter)
+            relationships_from_filter = self.prepare_filters_export(
+                id=from_to_check, access_filter=access_filter
+            )
             x = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_from_filter
             )
@@ -1938,7 +1941,9 @@ class OpenCTIStix2:
                 )  # what happen with unauthorized objects ?
 
             to_to_check = [entity["to"]["id"]]
-            relationships_to_filter = self.prepare_filters_export(id=to_to_check, access_filter=access_filter)
+            relationships_to_filter = self.prepare_filters_export(
+                id=to_to_check, access_filter=access_filter
+            )
             y = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_to_filter
             )
@@ -1953,7 +1958,9 @@ class OpenCTIStix2:
             entity["type"] = "relationship"
         if "from" in entity:
             from_to_check = entity["from"]["id"]
-            relationships_from_filter = self.prepare_filters_export(id=from_to_check, access_filter=access_filter)
+            relationships_from_filter = self.prepare_filters_export(
+                id=from_to_check, access_filter=access_filter
+            )
             x = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_from_filter
             )
@@ -1966,7 +1973,9 @@ class OpenCTIStix2:
             del entity["from"]
         if "to" in entity:
             to_to_check = [entity["to"]["id"]]
-            relationships_to_filter = self.prepare_filters_export(id=to_to_check, access_filter=access_filter)
+            relationships_to_filter = self.prepare_filters_export(
+                id=to_to_check, access_filter=access_filter
+            )
             y = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_to_filter
             )
