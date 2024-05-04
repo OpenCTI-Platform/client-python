@@ -1684,7 +1684,7 @@ class OpenCTIStix2:
                         "mode": "and",
                         "operator": "eq",
                         "values": [
-                            {"key": "id", "values": [entity["id"]]},
+                            {"key": "id", "values": [entity["x_opencti_id"]]},
                             {"key": "relationship_type", "values": ["object"]},
                         ],
                     }
@@ -1695,8 +1695,10 @@ class OpenCTIStix2:
                 "filterGroups": [regarding_of_filter, access_filter],
                 "filters": [],
             }
-            entity["objects"] = self.opencti.stix_domain_object.list(
-                filters=export_query_filter
+            entity["objects"] = (
+                self.opencti.opencti_stix_object_or_stix_relationship.list(
+                    filters=export_query_filter
+                )
             )
 
         # CreatedByRef
@@ -2488,7 +2490,7 @@ class OpenCTIStix2:
                     mode,
                     None,
                     main_filter,
-                    export_query_filter,
+                    access_filter,
                 )
                 if entity_bundle is not None:
                     entity_bundle_filtered = self.filter_objects(uuids, entity_bundle)

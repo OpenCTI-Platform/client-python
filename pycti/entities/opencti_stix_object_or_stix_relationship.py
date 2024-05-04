@@ -337,6 +337,10 @@ class StixObjectOrStixRelationship:
                 observable_value
             }
             ... on StixCoreRelationship {
+                id
+                standard_id
+                entity_type
+                parent_types
                 createdBy {
                     ... on Identity {
                         id
@@ -399,6 +403,10 @@ class StixObjectOrStixRelationship:
                 stop_time
             }
             ... on StixSightingRelationship {
+                id
+                standard_id
+                entity_type
+                parent_types
                 createdBy {
                     ... on Identity {
                         id
