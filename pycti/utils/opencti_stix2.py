@@ -1659,6 +1659,42 @@ class OpenCTIStix2:
 
         return {k: v for k, v in entity.items() if self.opencti.not_empty(v)}
 
+    def prepare_filters_export(self, id: str, access_filter: Dict = None) -> Dict:
+        if access_filter is not None:
+            return {
+                "mode": "and",
+                "filterGroups": [
+                    {
+                        "mode": "or",
+                        "filters": [
+                            {
+                                "key": "id",
+                                "values": [id],
+                            }
+                        ],
+                        "filterGroups": [],
+                    },
+                    access_filter,
+                ],
+                "filters": [],
+            }
+        else:
+            return {
+                "mode": "and",
+                "filterGroups": [
+                    {
+                        "mode": "or",
+                        "filters": [
+                            {
+                                "key": "id",
+                                "values": [id],
+                            }
+                        ],
+                        "filterGroups": [],
+                    },
+                ],
+                "filters": [],
+            }
     def prepare_export(
         self,
         entity: Dict,
@@ -1690,9 +1726,14 @@ class OpenCTIStix2:
                     }
                 ],
             }
+            filter_groups = []
+            if regarding_of_filter is not None:
+                filter_groups.append(regarding_of_filter)
+            if access_filter is not None:
+                filter_groups.append(access_filter)
             export_query_filter = {
                 "mode": "and",
-                "filterGroups": [regarding_of_filter, access_filter],
+                "filterGroups": filter_groups,
                 "filters": [],
             }
             entity["objects"] = (
@@ -1885,23 +1926,7 @@ class OpenCTIStix2:
             entity["count"] = entity["attribute_count"]
             del entity["attribute_count"]
             from_to_check = entity["from"]["id"]
-            relationships_from_filter = {
-                "mode": "and",
-                "filterGroups": [
-                    {
-                        "mode": "or",
-                        "filters": [
-                            {
-                                "key": "id",
-                                "values": [from_to_check],
-                            }
-                        ],
-                        "filterGroups": [],
-                    },
-                    access_filter,
-                ],
-                "filters": [],
-            }
+            relationships_from_filter = self.prepare_filters_export(id=from_to_check, access_filter=access_filter)
             x = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_from_filter
             )
@@ -1913,23 +1938,7 @@ class OpenCTIStix2:
                 )  # what happen with unauthorized objects ?
 
             to_to_check = [entity["to"]["id"]]
-            relationships_to_filter = {
-                "mode": "and",
-                "filterGroups": [
-                    {
-                        "mode": "or",
-                        "filters": [
-                            {
-                                "key": "id",
-                                "values": [to_to_check],
-                            }
-                        ],
-                        "filterGroups": [],
-                    },
-                    access_filter,
-                ],
-                "filters": [],
-            }
+            relationships_to_filter = self.prepare_filters_export(id=to_to_check, access_filter=access_filter)
             y = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_to_filter
             )
@@ -1944,23 +1953,7 @@ class OpenCTIStix2:
             entity["type"] = "relationship"
         if "from" in entity:
             from_to_check = entity["from"]["id"]
-            relationships_from_filter = {
-                "mode": "and",
-                "filterGroups": [
-                    {
-                        "mode": "or",
-                        "filters": [
-                            {
-                                "key": "id",
-                                "values": [from_to_check],
-                            }
-                        ],
-                        "filterGroups": [],
-                    },
-                    access_filter,
-                ],
-                "filters": [],
-            }
+            relationships_from_filter = self.prepare_filters_export(id=from_to_check, access_filter=access_filter)
             x = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_from_filter
             )
@@ -1973,23 +1966,7 @@ class OpenCTIStix2:
             del entity["from"]
         if "to" in entity:
             to_to_check = [entity["to"]["id"]]
-            relationships_to_filter = {
-                "mode": "and",
-                "filterGroups": [
-                    {
-                        "mode": "or",
-                        "filters": [
-                            {
-                                "key": "id",
-                                "values": [to_to_check],
-                            }
-                        ],
-                        "filterGroups": [],
-                    },
-                    access_filter,
-                ],
-                "filters": [],
-            }
+            relationships_to_filter = self.prepare_filters_export(id=to_to_check, access_filter=access_filter)
             y = self.opencti.opencti_stix_object_or_stix_relationship.list(
                 filters=relationships_to_filter
             )
