@@ -206,7 +206,6 @@ class OpenCTIStix2:
         :type update: bool, optional
         :param types: list of stix2 types, defaults to None
         :type types: list, optional
-        :param retry_number retry_number: int, optional
         :param work_id work_id: str, optional
         :return: list of imported stix2 objects
         :rtype: List
