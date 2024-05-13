@@ -2635,9 +2635,7 @@ class OpenCTIStix2:
         )
         stix2_splitter = OpenCTIStix2Splitter()
         try:
-            bundles = stix2_splitter.split_bundle(
-                stix_bundle, False, event_version, False
-            )
+            bundles = stix2_splitter.split_bundle(stix_bundle, False, event_version)
         except RecursionError:
             bundles = [stix_bundle]
         # Import every element in a specific order

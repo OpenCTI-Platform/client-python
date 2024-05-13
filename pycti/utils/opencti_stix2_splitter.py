@@ -62,7 +62,7 @@ class OpenCTIStix2Splitter:
         return nb_deps
 
     def split_bundle_with_expectations(
-        self, bundle, use_json=True, event_version=None, relations_grouping=True
+        self, bundle, use_json=True, event_version=None
     ) -> Tuple[int, list]:
         """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
@@ -94,70 +94,12 @@ class OpenCTIStix2Splitter:
 
         self.elements.sort(key=by_dep_size)
 
-        # Algorithm to re-bundle elements
-        # Bundle created group the relationships by dependencies
-        # This grouping will improve relations sharding
-        if relations_grouping:
-            cache_ids = {}
-            id_alias = {}
-            ids_equivalence = {}
-            working_elements = {}
-            grouped_elements = {}
-            for elem in self.elements:
-                if cache_ids.get(elem["id"]):
-                    # Prevent sending duplicate elements for ingest
-                    continue
-                nb_deps = elem["nb_deps"]
-                if elem["type"] == "relationship":
-                    source_ref = (
-                        ids_equivalence.get(elem["source_ref"], elem["source_ref"])
-                        + "-"
-                        + str(nb_deps)
-                    )
-                    target_ref = (
-                        ids_equivalence.get(elem["target_ref"], elem["target_ref"])
-                        + "-"
-                        + str(nb_deps)
-                    )
-                    target_source = id_alias.get(source_ref)
-                    target_target = id_alias.get(target_ref)
-
-                    target = "generated-" + str(uuid.uuid4())
-                    if target_source is None and target_target is not None:
-                        target = target_target
-                        id_alias[source_ref] = target
-                    if target_source is not None and target_target is None:
-                        target = target_source
-                        id_alias[target_ref] = target
-                    if target_source is not None and target_target is not None:
-                        target = target_target
-
-                    if grouped_elements.get(target):
-                        target_dict = grouped_elements.get(target, [])
-                        target_dict["elements"].append(elem)
-                        grouped_elements[target] = target_dict
-                    else:
-                        grouped_elements[target] = {
-                            "nb_deps": nb_deps,
-                            "elements": [elem],
-                        }
-                        id_alias[source_ref] = target
-                        id_alias[target_ref] = target
-                else:
-                    work_id = elem["id"]
-                    working_elements[work_id] = {"nb_deps": nb_deps, "elements": [elem]}
-                cache_ids[elem["id"]] = elem["id"]
-            split_elements = list(working_elements.values()) + list(
-                grouped_elements.values()
-            )
-            split_elements.sort(key=by_dep_size)
-        else:
-            split_elements = list(
-                map(lambda e: {"nb_deps": e["nb_deps"], "elements": [e]}, self.elements)
-            )
+        elements_with_deps = list(
+            map(lambda e: {"nb_deps": e["nb_deps"], "elements": [e]}, self.elements)
+        )
 
         number_expectations = 0
-        for entity in split_elements:
+        for entity in elements_with_deps:
             number_expectations += len(entity["elements"])
             bundles.append(
                 self.stix2_create_bundle(
@@ -172,11 +114,9 @@ class OpenCTIStix2Splitter:
         return number_expectations, bundles
 
     @deprecated("Use split_bundle_with_expectations instead")
-    def split_bundle(
-        self, bundle, use_json=True, event_version=None, relations_grouping=True
-    ) -> list:
+    def split_bundle(self, bundle, use_json=True, event_version=None) -> list:
         expectations, bundles = self.split_bundle_with_expectations(
-            bundle, use_json, event_version, relations_grouping
+            bundle, use_json, event_version
         )
         return bundles
 
