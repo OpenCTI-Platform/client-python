@@ -1624,7 +1624,7 @@ class OpenCTIStix2:
 
     @staticmethod
     def prepare_id_filters_export(
-        id: Union[str, list[str]], access_filter: Dict = None
+        id: Union[str, List[str]], access_filter: Dict = None
     ) -> Dict:
         if access_filter is not None:
             return {
