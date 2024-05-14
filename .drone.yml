@@ -97,11 +97,12 @@ services:
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
       - UPSTREAM=$(echo $DRONE_REPO)
       - OPENCTI_BRANCH=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $(echo $BRANCH | cut -d "/" -f2-) || echo 'master' )
-      - OPENCTI_UPSTREAM=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $OPENCTI_UPSTREAM || echo 'OpenCTI-Platform' )
+      - OPENCTI_UPSTREAM=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $UPSTREAM || echo 'OpenCTI-Platform' )
+      - echo [INFO] upstream is $OPENCTI_UPSTREAM
       - git clone -b $OPENCTI_BRANCH https://github.com/${OPENCTI_UPSTREAM}/opencti.git /tmp/opencti
       - cd /tmp/opencti/opencti-platform/opencti-graphql
       - OPENCTI_COMMIT=$(git rev-parse --short HEAD)
-      - echo [INFO] using opencti@$OPENCTI_BRANCH:$OPENCTI_COMMIT (upstream is $OPENCTI_UPSTREAM)
+      - echo [INFO] using opencti@$OPENCTI_BRANCH:$OPENCTI_COMMIT (and upstream is $OPENCTI_UPSTREAM)
       - yarn install
       - yarn install:python
       - NODE_OPTIONS=--max_old_space_size=8192 yarn start
