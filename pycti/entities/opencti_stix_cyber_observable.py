@@ -1016,8 +1016,10 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                 }
             elif type == "Persona":
                 input_variables["Persona"] = {
-                    "name": (
-                        observable_data["name"] if "name" in observable_data else None
+                    "persona_name": (
+                        observable_data["persona_name"]
+                        if "persona_name" in observable_data
+                        else None
                     ),
                     "persona_type": (
                         observable_data["persona_type"]

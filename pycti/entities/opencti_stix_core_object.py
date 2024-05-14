@@ -640,7 +640,7 @@ class StixCoreObject:
                 holder_name
             }
             ... on Persona {
-                name
+                persona_name
                 persona_type
             }
             ... on MediaContent {
@@ -1305,7 +1305,7 @@ class StixCoreObject:
                 holder_name
             }
             ... on Persona {
-                name
+                persona_name
                 persona_type
             }
             ... on MediaContent {
