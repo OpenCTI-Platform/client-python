@@ -97,8 +97,9 @@ services:
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
       - UPSTREAM=$(echo $DRONE_REPO)
       - OPENCTI_BRANCH=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $(echo $BRANCH | cut -d "/" -f2-) || echo 'master' )
-      - OPENCTI_UPSTREAM=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $UPSTREAM || echo 'OpenCTI-Platform' )
-      - echo [INFO] upstream is $OPENCTI_UPSTREAM
+      - OPENCTI_UPSTREAM=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $(echo $UPSTREAM) || echo 'OpenCTI-Platform' )
+      - git branch -vv
+      - echo [INFO] PR upstream is ${UPSTREAM} and applied upstream is ${OPENCTI_UPSTREAM}
       - git clone -b $OPENCTI_BRANCH https://github.com/${OPENCTI_UPSTREAM}/opencti.git /tmp/opencti
       - cd /tmp/opencti/opencti-platform/opencti-graphql
       - OPENCTI_COMMIT=$(git rev-parse --short HEAD)
