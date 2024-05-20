@@ -262,15 +262,8 @@ class ListenQueue(threading.Thread):
                     raise ValueError(
                         "Internal enrichment must be based on a specific id"
                     )
-                default_reader_type = "Stix-Core-Object"
-                readers = self.helper.api.stix2.get_readers()
-                reader_type = (
-                    entity_type if entity_type is not None else default_reader_type
-                )
-                selected_reader = (
-                    readers[reader_type]
-                    if reader_type in readers
-                    else readers[default_reader_type]
+                selected_reader = self.helper.api.stix2.get_reader(
+                    entity_type if entity_type is not None else "Stix-Core-Object"
                 )
                 opencti_entity = selected_reader(id=entity_id, withFiles=True)
                 if opencti_entity is None:

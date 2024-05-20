@@ -754,49 +754,7 @@ class OpenCTIStix2:
             "reports": reports,
         }
 
-    def get_listers(self):
-        return {
-            "Stix-Core-Object": self.opencti.stix_core_object.list,
-            "Stix-Domain-Object": self.opencti.stix_domain_object.list,
-            "Administrative-Area": self.opencti.location.list,
-            "Attack-Pattern": self.opencti.attack_pattern.list,
-            "Campaign": self.opencti.campaign.list,
-            "Channel": self.opencti.channel.list,
-            "Event": self.opencti.event.list,
-            "Note": self.opencti.note.list,
-            "Observed-Data": self.opencti.observed_data.list,
-            "Opinion": self.opencti.opinion.list,
-            "Report": self.opencti.report.list,
-            "Grouping": self.opencti.grouping.list,
-            "Case-Incident": self.opencti.case_incident.list,
-            "Feedback": self.opencti.feedback.list,
-            "Case-Rfi": self.opencti.case_rfi.list,
-            "Case-Rft": self.opencti.case_rft.list,
-            "Task": self.opencti.task.list,
-            "Course-Of-Action": self.opencti.course_of_action.list,
-            "Data-Component": self.opencti.data_component.list,
-            "Data-Source": self.opencti.data_source.list,
-            "Identity": self.opencti.identity.list,
-            "Indicator": self.opencti.indicator.list,
-            "Infrastructure": self.opencti.infrastructure.list,
-            "Intrusion-Set": self.opencti.intrusion_set.list,
-            "Location": self.opencti.location.list,
-            "Language": self.opencti.language.list,
-            "Malware": self.opencti.malware.list,
-            "Malware-Analysis": self.opencti.malware_analysis.list,
-            "Threat-Actor": self.opencti.threat_actor_group.list,
-            "Threat-Actor-Group": self.opencti.threat_actor_group.list,
-            "Threat-Actor-Individual": self.opencti.threat_actor_individual.list,
-            "Tool": self.opencti.tool.list,
-            "Narrative": self.opencti.narrative.list,
-            "Vulnerability": self.opencti.vulnerability.list,
-            "Incident": self.opencti.incident.list,
-            "Stix-Cyber-Observable": self.opencti.stix_cyber_observable.list,
-            "stix-sighting-relationship": self.opencti.stix_sighting_relationship.list,
-            "stix-core-relationship": self.opencti.stix_core_relationship.list,
-        }
-
-    def get_readers(self):
+    def _get_readers(self):
         return {
             "Attack-Pattern": self.opencti.attack_pattern.read,
             "Campaign": self.opencti.campaign.read,
@@ -851,9 +809,12 @@ class OpenCTIStix2:
             entity_type = "Identity"
         if LocationTypes.has_value(entity_type):
             entity_type = "Location"
+        if entity_type == "Container":
+            entity_type = "Stix-Domain-Object"
         if StixCyberObservableTypes.has_value(entity_type):
             entity_type = "Stix-Cyber-Observable"
-        readers = self.get_readers()
+
+        readers = self._get_readers()
         return readers.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
         )
@@ -2095,32 +2056,14 @@ class OpenCTIStix2:
 
             if no_custom_attributes:
                 del entity["x_opencti_id"]
-            # Export
-            reader = self.get_readers()
             # Get extra objects
             for entity_object in objects_to_get:
-                # Map types
-                if entity_object["entity_type"] == "StixFile":
-                    entity_object["entity_type"] = "File"
-
-                if IdentityTypes.has_value(entity_object["entity_type"]):
-                    entity_object["entity_type"] = "Identity"
-                elif LocationTypes.has_value(entity_object["entity_type"]):
-                    entity_object["entity_type"] = "Location"
-                elif StixCyberObservableTypes.has_value(entity_object["entity_type"]):
-                    entity_object["entity_type"] = "Stix-Cyber-Observable"
-                elif "stix-core-relationship" in entity_object["parent_types"]:
-                    entity_object["entity_type"] = "stix-core-relationship"
-                elif "stix-ref-relationship" in entity_object["parent_types"]:
-                    entity_object["entity_type"] = "stix-ref-relationship"
-
-                do_read = reader.get(
-                    entity_object["entity_type"],
-                    lambda **kwargs: self.unknown_type(
-                        {"type": entity_object["entity_type"]}
-                    ),
-                )
-
+                resolve_type = entity_object["entity_type"]
+                if "stix-core-relationship" in entity_object["parent_types"]:
+                    resolve_type = "stix-core-relationship"
+                if "stix-ref-relationship" in entity_object["parent_types"]:
+                    resolve_type = "stix-ref-relationship"
+                do_read = self.get_reader(resolve_type)
                 query_filters = self.prepare_id_filters_export(
                     entity_object["id"], access_filter
                 )
@@ -2225,20 +2168,7 @@ class OpenCTIStix2:
             "id": "bundle--" + str(uuid.uuid4()),
             "objects": [],
         }
-
-        if entity_type == "StixFile":
-            entity_type = "File"
-
-        # Map types
-        if IdentityTypes.has_value(entity_type):
-            entity_type = "Identity"
-        if LocationTypes.has_value(entity_type):
-            entity_type = "Location"
-
-        readers = self.get_readers()
-        do_read = readers.get(
-            entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
-        )
+        do_read = self.get_reader(entity_type)
         entity = do_read(id=entity_id)
         if entity is None:
             self.opencti.app_logger.error(
