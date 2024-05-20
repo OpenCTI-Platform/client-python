@@ -754,7 +754,8 @@ class OpenCTIStix2:
             "reports": reports,
         }
 
-    def _get_readers(self):
+    # Please use get_reader instead of this definition
+    def get_readers(self):
         return {
             "Attack-Pattern": self.opencti.attack_pattern.read,
             "Campaign": self.opencti.campaign.read,
@@ -814,7 +815,7 @@ class OpenCTIStix2:
         if StixCyberObservableTypes.has_value(entity_type):
             entity_type = "Stix-Cyber-Observable"
 
-        readers = self._get_readers()
+        readers = self.get_readers()
         return readers.get(
             entity_type, lambda **kwargs: self.unknown_type({"type": entity_type})
         )
