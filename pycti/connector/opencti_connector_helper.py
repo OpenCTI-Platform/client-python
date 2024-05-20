@@ -262,10 +262,10 @@ class ListenQueue(threading.Thread):
                     raise ValueError(
                         "Internal enrichment must be based on a specific id"
                     )
-                selected_reader = self.helper.api.stix2.get_reader(
+                do_read = self.helper.api.stix2.get_reader(
                     entity_type if entity_type is not None else "Stix-Core-Object"
                 )
-                opencti_entity = selected_reader(id=entity_id, withFiles=True)
+                opencti_entity = do_read(id=entity_id, withFiles=True)
                 if opencti_entity is None:
                     raise ValueError(
                         "Unable to read/access to the entity, please check that the connector permission"
