@@ -95,13 +95,13 @@ services:
     commands:
       - apk add build-base git libffi-dev cargo
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
-      - UPSTREAM=$(git remote get-url origin | cut -d '/' -f1)
+      - UPSTREAM=$(git remote get-url origin | cut -d '/' -f3,4)
       - echo [INFO] using upstream $UPSTREAM
       - OPENCTI_BRANCH=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $(echo $BRANCH | cut -d "/" -f2-) || echo 'master' )
-      - git clone -b $OPENCTI_BRANCH https://github.com/OpenCTI-Platform/opencti.git /tmp/opencti
+      - git clone -b $OPENCTI_BRANCH ${UPSTREAM}/opencti.git /tmp/opencti
       - cd /tmp/opencti/opencti-platform/opencti-graphql
       - OPENCTI_COMMIT=$(git rev-parse --short HEAD)
-      - echo [INFO] using opencti@$OPENCTI_BRANCH:$OPENCTI_COMMIT
+      - echo [INFO] using opencti@$OPENCTI_BRANCH:$OPENCTI_COMMIT from ${UPSTREAM}
       - yarn install
       - yarn install:python
       - NODE_OPTIONS=--max_old_space_size=8192 yarn start
