@@ -93,9 +93,10 @@ services:
       EXPIRATION_SCHEDULER__ENABLED: false
       SUBSCRIPTION_SCHEDULER__ENABLED: false
     commands:
-      - env
       - apk add build-base git libffi-dev cargo
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
+      - UPSTREAM=$(git remote get-url origin | cut -d '/' -f1)
+      - echo [INFO] using upstream $UPSTREAM
       - OPENCTI_BRANCH=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $(echo $BRANCH | cut -d "/" -f2-) || echo 'master' )
       - git clone -b $OPENCTI_BRANCH https://github.com/OpenCTI-Platform/opencti.git /tmp/opencti
       - cd /tmp/opencti/opencti-platform/opencti-graphql
