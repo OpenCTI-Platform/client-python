@@ -1833,7 +1833,7 @@ class OpenCTIStix2:
                 filters=relationships_from_filter
             )
             if len(x) > 0:
-                entity["sighting_of_ref"] = entity["from"]["id"]
+                entity["sighting_of_ref"] = entity["from"]["standard_id"]
                 # handle from and to separately like Stix Core Relationship and call 2 requests
                 objects_to_get.append(
                     entity["from"]
@@ -1847,7 +1847,7 @@ class OpenCTIStix2:
                 filters=relationships_to_filter
             )
             if len(y) > 0:
-                entity["where_sighted_refs"] = [entity["to"]["id"]]
+                entity["where_sighted_refs"] = [entity["to"]["standard_id"]]
                 objects_to_get.append(entity["to"])
 
             del entity["from"]
@@ -1864,7 +1864,7 @@ class OpenCTIStix2:
                 filters=relationships_from_filter
             )
             if len(x) > 0:
-                entity["source_ref"] = entity["from"]["id"]
+                entity["source_ref"] = entity["from"]["standard_id"]
                 # handle from and to separately like Stix Core Relationship and call 2 requests
                 objects_to_get.append(
                     entity["from"]
@@ -1879,7 +1879,7 @@ class OpenCTIStix2:
                 filters=relationships_to_filter
             )
             if len(y) > 0:
-                entity["target_ref"] = entity["to"]["id"]
+                entity["target_ref"] = entity["to"]["standard_id"]
                 objects_to_get.append(entity["to"])
             del entity["to"]
         # Stix Domain Object
