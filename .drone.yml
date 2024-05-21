@@ -95,8 +95,9 @@ services:
     commands:
       - apk add build-base git libffi-dev cargo
       - env
-      - git show ${DRONE_COMMIT_REF}
+      - set -x
       - git fetch origin "+${DRONE_COMMIT_REF}"
+      - git show "+${DRONE_COMMIT_REF}"
       - git remote -v
       - git remote show origin
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
