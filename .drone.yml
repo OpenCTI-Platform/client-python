@@ -93,8 +93,8 @@ services:
       EXPIRATION_SCHEDULER__ENABLED: false
       SUBSCRIPTION_SCHEDULER__ENABLED: false
     commands:
-      - git remote -v
       - apk add build-base git libffi-dev cargo
+      - git remote -v
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
       - UPSTREAM=$(git remote get-url origin | cut -d '/' -f1-4)
       - echo [INFO] using upstream $UPSTREAM
