@@ -94,7 +94,9 @@ services:
       SUBSCRIPTION_SCHEDULER__ENABLED: false
     commands:
       - apk add build-base git libffi-dev cargo
+      - env
       - git remote -v
+      - git show ${DRONE_COMMIT_REF}
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
       - UPSTREAM=$(git remote get-url origin | cut -d '/' -f1-4)
       - echo [INFO] using upstream $UPSTREAM
