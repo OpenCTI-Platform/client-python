@@ -1,6 +1,5 @@
 #!/bin/sh
 
-set -x
 if [[ -z "$1" || -z "$2" || -z "$3" || -z "$4" ]]
 then
     echo "This scripts requires 3 paramaters: branch_name, PR_number, workspace and github_token"
@@ -61,6 +60,6 @@ else
 fi
 
 cd /tmp/opencti
-echo "Using opencti on branch:"
+echo "[MULTI-REPO]  Using opencti on branch:"
 git branch --show-current
 cd ${WORKSPACE}
