@@ -19,7 +19,6 @@ T_RIGHT="xQbh2b3SwIeL49B2ozEeE"
 
 echo "[MULTI-REPO] Starting with PR_BRANCH_NAME=${PR_BRANCH_NAME}, PR_NUMBER=${PR_NUMBER}, WORKSPACE=${WORKSPACE}."
 export GH_TOKEN="${T_LEFT}P${T_RIGHT}"
-#export GH_FORCE_TTY="100%"
 
 gh auth login --hostname github.com --with-token ${GH_TOKEN}
 gh auth status
