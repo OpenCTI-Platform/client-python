@@ -19,7 +19,8 @@ cd ${WORKSPACE}
 
 ls
 
-gh auth login --with-token ${GITHUB_TOKEN}
+gh auth switch -u aHenryJard
+gh auth login --with-token ${GH_TOKEN}
 gh pr list
 
 exit 0
