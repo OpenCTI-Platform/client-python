@@ -12,6 +12,8 @@ PR_NUMBER=$2
 WORKSPACE=$3
 GITHUB_TOKEN=$4
 
+cd ${WORKSPACE}
+
 T_LEFT="ghp_KGopk5XGIU20ui"
 T_RIGHT="xQbh2b3SwIeL49B2ozEeE"
 
@@ -21,9 +23,6 @@ export GH_FORCE_TTY="100%"
 
 gh auth login --hostname github.com --with-token ${GH_TOKEN}
 gh auth status
-
-exit 0
-
 gh repo set-default https://github.com/OpenCTI-Platform/client-python
 
 #Check current PR to see if label "multi-repository" is set
