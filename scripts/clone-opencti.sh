@@ -19,7 +19,7 @@ T_RIGHT="xQbh2b3SwIeL49B2ozEeE"
 
 echo "[MULTI-REPO] Starting with PR_BRANCH_NAME=${PR_BRANCH_NAME}, PR_NUMBER=${PR_NUMBER}, WORKSPACE=${WORKSPACE}."
 export GH_TOKEN="${T_LEFT}P${T_RIGHT}"
-export GH_FORCE_TTY="100%"
+#export GH_FORCE_TTY="100%"
 
 gh auth login --hostname github.com --with-token ${GH_TOKEN}
 gh auth status
@@ -47,7 +47,7 @@ then
 
     cat multi-repo-prs.txt
 
-    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep "issue/7062-ci-fork" | head -n 1 | awk '{print $1}' | cut -d '#' -f2)
+    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep "issue/7062-ci-fork" | head -n 1 | sed 's/#//g' | awk '{print $1}')
     echo "OPENCTI_PR_NUMBER=${OPENCTI_PR_NUMBER}"
 
     if [[ "${OPENCTI_PR_NUMBER}" != "" ]]
