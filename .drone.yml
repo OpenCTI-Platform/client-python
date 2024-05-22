@@ -92,12 +92,11 @@ services:
       RABBITMQ__HOSTNAME: rabbitmq
       EXPIRATION_SCHEDULER__ENABLED: false
       SUBSCRIPTION_SCHEDULER__ENABLED: false
+      GH_TOKEN: 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
     commands:
       - apk add build-base git libffi-dev cargo github-cli
       - ls 
-      - LEFT="ghp_mvZrXrxM3t4fVo4"
-      - RIGHT="oUGIianh6xEI9Ow3JePIM"
-      - gh auth login --with-token "${LEFT}${RIGHT}"
+      - gh auth login --with-token "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"
       - gh repo set-default https://github.com/OpenCTI-Platform/client-python
       - gh pr list
       - exit 1
