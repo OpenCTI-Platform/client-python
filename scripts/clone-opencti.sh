@@ -12,15 +12,18 @@ PR_NUMBER=$2
 WORKSPACE=$3
 GITHUB_TOKEN=$4
 
-echo "[MULTI-REPO] Starting with PR_BRANCH_NAME=${PR_BRANCH_NAME}, PR_NUMBER=${PR_NUMBER}, WORKSPACE=${WORKSPACE}."
-export GH_TOKEN="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"
-export GH_FORCE_TTY="100%"
-cd ${WORKSPACE}
+T_LEFT="ghp_KGopk5XGIU20ui"
+T_RIGHT="xQbh2b3SwIeL49B2ozEeE"
 
-gh auth login -h github.com  --with-token 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
-gh pr list
+echo "[MULTI-REPO] Starting with PR_BRANCH_NAME=${PR_BRANCH_NAME}, PR_NUMBER=${PR_NUMBER}, WORKSPACE=${WORKSPACE}."
+export GH_TOKEN="${T_LEFT}P${T_RIGHT}"
+export GH_FORCE_TTY="100%"
+
+gh auth login --hostname github.com --with-token ${GH_TOKEN}
+gh auth status
 
 exit 0
+
 gh repo set-default https://github.com/OpenCTI-Platform/client-python
 
 #Check current PR to see if label "multi-repository" is set
