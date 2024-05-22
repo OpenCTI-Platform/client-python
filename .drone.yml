@@ -96,6 +96,7 @@ services:
     commands:
       - apk add build-base git libffi-dev cargo github-cli
       - ls -lart
+      - git config --list --show-origin
       - chmod 777 scripts/*
       - ./scripts/clone-opencti.sh ${DRONE_SOURCE_BRANCH} ${DRONE_PULL_REQUEST} $(pwd) "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"
       - cd /tmp/opencti/opencti-platform/opencti-graphql

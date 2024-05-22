@@ -17,8 +17,6 @@ export GH_TOKEN="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"
 export GH_FORCE_TTY="100%"
 cd ${WORKSPACE}
 
-ls
-
 gh auth switch -u aHenryJard
 gh auth login --with-token ${GH_TOKEN}
 gh pr list
