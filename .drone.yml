@@ -93,7 +93,7 @@ services:
       EXPIRATION_SCHEDULER__ENABLED: false
       SUBSCRIPTION_SCHEDULER__ENABLED: false
     commands:
-      - apk add build-base git libffi-dev cargo
+      - apk add build-base git libffi-dev cargo github-cli
       - BRANCH=$(echo $DRONE_SOURCE_BRANCH)
       - OPENCTI_BRANCH=$([ $(echo $BRANCH | cut -d "/" -f 1) == opencti ] && echo $(echo $BRANCH | cut -d "/" -f2-) || echo 'master' )
       - git clone -b $OPENCTI_BRANCH https://github.com/OpenCTI-Platform/opencti.git /tmp/opencti
