@@ -44,9 +44,10 @@ then
     # search for the first opencti PR that matches OPENCTI_BRANCH
     gh repo set-default https://github.com/OpenCTI-Platform/opencti
     gh pr list --label "multi-repository" > multi-repo-prs.txt
-    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep ${OPENCTI_BRANCH} | head -n 1 | awk '{print $1}')
+    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep "issue/7062-ci-fork" | head -n 1 | awk '{print $1}' | cut -d '#' -f2)
+    echo "OPENCTI_PR_NUMBER=${OPENCTI_PR_NUMBER}"
 
-    if [[ -z "${OPENCTI_PR_NUMBER}" ]]
+    if [[ "${OPENCTI_PR_NUMBER}" != "" ]]
     then
         echo "[MULTI-REPO] Found a PR in opencti with number ${OPENCTI_PR_NUMBER}, using it."
         gh pr checkout ${OPENCTI_PR_NUMBER}
