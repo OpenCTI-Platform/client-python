@@ -97,8 +97,8 @@ services:
       - env
       - chmod 777 scripts/*
       - echo "DRONE_SOURCE_BRANCH:${DRONE_SOURCE_BRANCH}, DRONE_PULL_REQUEST:${DRONE_PULL_REQUEST}"
-      - ./scripts/clone-opencti.sh ${DRONE_SOURCE_BRANCH} ${DRONE_PULL_REQUEST} $(pwd) "TODO"
-      - cd /tmp/opencti/opencti-platform/opencti-graphql
+      - ./scripts/clone-opencti.sh "${DRONE_SOURCE_BRANCH}" "$(pwd)" "TODO" "${DRONE_PULL_REQUEST}"
+      - cd opencti/opencti-platform/opencti-graphql
       - yarn install
       - yarn install:python
       - NODE_OPTIONS=--max_old_space_size=8192 yarn start
