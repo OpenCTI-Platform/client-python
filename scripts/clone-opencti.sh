@@ -2,8 +2,10 @@
 
 if [[ -z "$1" || -z "$2" || -z "$3" || -z "$4" ]]
 then
-    echo "This scripts requires 3 paramaters: branch_name, PR_number, workspace and github_token"
-    exit 1
+    echo "[MULTI-REPO] This scripts requires 4 paramaters: branch_name:$1, PR_number:$2, workspace:$3 and github_token:$4"
+    echo "[MULTI-REPO] Fallback to default opencti:master branch"
+    git clone https://github.com/OpenCTI-Platform/opencti /tmp/opencti
+    exit 0
 fi
 
 PR_BRANCH_NAME=$1
