@@ -53,8 +53,8 @@ then
         echo "[MULTI-REPO] Found a PR in opencti with number ${OPENCTI_PR_NUMBER}, using it."
         gh pr checkout ${OPENCTI_PR_NUMBER}
     else
-        echo "[MULTI-REPO] No PR found in opencti side, cloning opencti:master"
-        gh repo clone https://github.com/OpenCTI-Platform/opencti /tmp/opencti
+        echo "[MULTI-REPO] No PR found in opencti side, keeping opencti:master"
+        # Repository already clone on master branch
     fi
     
 else
@@ -63,6 +63,5 @@ else
 fi
 
 cd /tmp/opencti
-echo "[MULTI-REPO]  Using opencti on branch:"
-git branch --show-current
+echo "[MULTI-REPO]  Using opencti on branch:$(git branch --show-current)"
 cd ${WORKSPACE}
