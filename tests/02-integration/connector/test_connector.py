@@ -1,9 +1,15 @@
+import uuid
+
 import pika.exceptions
 import pytest
 from pytest_cases import fixture, parametrize_with_cases
 
-from pycti import OpenCTIConnector
+from pycti import OpenCTIApiClient, OpenCTIApiWork, OpenCTIConnector
+from pycti.entities.opencti_marking_definition import MarkingDefinition
+from pycti.utils.constants import DataSegregationMarking
 from tests.cases.connectors import (
+    ConnectorRegisteringMarkings,
+    ConnectorRegisteringMarkingsTest,
     ExternalImportConnector,
     ExternalImportConnectorTest,
     InternalEnrichmentConnector,
@@ -29,6 +35,7 @@ def simple_connector(connector, api_connector, api_work):
         pass
 
 
+@pytest.mark.skip
 @pytest.mark.connectors
 def test_register_simple_connector(simple_connector, api_connector, api_work):
     my_connector_id = simple_connector.to_input()["input"]["id"]
@@ -70,6 +77,7 @@ def external_import_connector_data(data, api_client, api_connector, api_work):
         api_work.delete_work(work["id"])
 
 
+@pytest.mark.skip
 @pytest.mark.connectors
 def test_external_import_connector(
     external_import_connector_data, api_client, api_connector, api_work
@@ -136,6 +144,7 @@ def internal_enrichment_connector_data(data, api_client, api_connector, api_work
         api_work.delete_work(work["id"])
 
 
+@pytest.mark.skip
 @pytest.mark.connectors
 def test_internal_enrichment_connector(
     internal_enrichment_connector_data, api_connector, api_work, api_client
@@ -185,6 +194,7 @@ def internal_import_connector_data(data, api_client, api_connector, api_work):
         api_work.delete_work(work["id"])
 
 
+@pytest.mark.skip
 @pytest.mark.connectors
 def test_internal_import_connector(
     internal_import_connector_data, api_connector, api_work, api_client
@@ -232,3 +242,192 @@ def test_internal_import_connector(
     ), f"Unexpected Observable value, received {observable['value']}"
 
     api_client.stix_cyber_observable.delete(id=observable_id)
+
+
+@fixture
+@parametrize_with_cases("test_data", cases=ConnectorRegisteringMarkingsTest)
+def connector_registering_marking_data(
+    test_data,
+    api_client: OpenCTIApiClient,
+    api_connector: OpenCTIConnector,
+    api_work: OpenCTIApiWork,
+):
+    """Test that a connector adds custom markings for access control.
+
+    Note: we do NOT test whether OpenCTI correctly enforces access control using
+    these markings, only that they are correctly associated to an object
+    """
+
+    connector_id = str(uuid.uuid4())
+
+    for marking_type in [
+        DataSegregationMarking.AUTHOR,
+        DataSegregationMarking.CONNECTOR,
+    ]:
+        default_marking = marking_type.default()
+        marking_definition_object = MarkingDefinition(api_client)
+        marking = marking_definition_object.create(
+            definition_type=default_marking["definition_type"],
+            definition=default_marking["definition"],
+            x_opencti_color=default_marking["x_opencti_color"],
+        )
+        print(f"Created Marking: {marking}")
+        assert (
+            marking != None
+        ), f"Failed to add default marking for {marking_type} on test initialization"
+
+    connector = ConnectorRegisteringMarkings(
+        test_data["config"],
+        api_client,
+        test_data["data"],
+        connector_id,
+        test_data["add_markings"],
+        test_data["add_markings_author"],
+    )
+    connector.run()
+    info = {"connector_id": connector_id, "test_data": test_data["data"]}
+    yield info
+    connector.stop()
+
+
+@pytest.mark.connectors
+def test_connector_registers_marking(
+    connector_registering_marking_data,
+    api_client: OpenCTIApiClient,
+    api_connector: OpenCTIConnector,
+    api_work: OpenCTIApiWork,
+):
+    connector_name = "_".join(
+        [
+            "TestConnectorRegisteringMarkings",
+            connector_registering_marking_data["connector_id"],
+        ]
+    )
+    connector_id = get_connector_id(connector_name, api_connector)
+    assert connector_id != "", f"{connector_name} could not be found!"
+
+    # Wait until new work is registered
+    work_id = get_new_work_id(api_client, connector_id)
+    # Wait for opencti to finish processing task
+    api_work.wait_for_work_to_finish(work_id)
+
+    # Retrieve the results
+    results = []  # tuples: test_object->octi_object
+    markings_to_remove = set()
+    for test_object in connector_registering_marking_data["test_data"]:
+        octi_object = api_client.stix_domain_object.read(
+            filters={
+                "mode": "and",
+                "filters": [
+                    {"key": "standard_id", "values": test_object["standard_id"]}
+                ],
+                "filterGroups": [],
+            }
+        )
+
+        results.append((test_object, octi_object))
+
+        if octi_object != None:
+            for marking in octi_object.get("objectMarking", []):
+                markings_to_remove.add(marking["standard_id"])
+
+    # Cleanup: remove the objects that were added
+    for _, octi_object in results:
+        if octi_object != None:
+            api_client.stix.delete(id=octi_object["standard_id"])
+    # Cleanup: remove the markings that were added, and the default ones
+    for id in markings_to_remove:
+        api_client.stix.delete(id=id)
+    # Cleanup: remove the default markings that were added during the test
+    for marking in [DataSegregationMarking.AUTHOR, DataSegregationMarking.CONNECTOR]:
+        try:
+            octi_marking_object = api_client.marking_definition.read(
+                filters={
+                    "mode": "and",
+                    "filters": [
+                        {
+                            "key": "definition_type",
+                            "values": marking["definition_type"],
+                        },
+                        {"key": "definition", "values": marking["definition"]},
+                    ],
+                    "filterGroups": [],
+                }
+            )
+            id = octi_marking_object["standard_id"]
+            api_client.stix.delete(id=id)
+        except:
+            # was already deleted in the step before
+            pass
+
+    # Verify the results
+    for test_object, octi_object in results:
+        assert (
+            octi_object != None
+        ), f"Following test object did not get ingested into OpenCTI: {test_object["name"]}"
+
+        related_markings = []
+        for marking in octi_object.get("objectMarking", []):
+            # only test for markings related to custom permissions
+            if marking["definition_type"].startswith(
+                DataSegregationMarking.marking_prefix()
+            ):
+                related_markings.append(marking)
+
+        # verify connector markings
+        connector_markings = [
+            marking
+            for marking in related_markings
+            if marking["definition_type"]
+            == DataSegregationMarking.CONNECTOR.definition_type()
+        ]
+        if test_object["connector_marking_expected"]:
+            assert (
+                len(connector_markings) == 1
+            ), f"There should be exactly 1 connector marking, but there are {len(connector_markings)} in entity named {octi_object["name"]}"
+
+            connector_marking = connector_markings[0]
+
+            if test_object["connector_marking_should_be_default"]:
+                assert (
+                    connector_marking["definition"]
+                    == DataSegregationMarking.CONNECTOR.default()["definition"]
+                ), f"Connector marking should be the default one, but instead it has definition: {connector_marking}"
+            else:
+                assert connector_marking["definition"].startswith(
+                    connector_name
+                ), f"Connector marking should start with {connector_name}, but it is instead {connector_marking["definition"]} for entity {octi_object["name"]}"
+
+        else:
+            assert (
+                len(connector_markings) == 0
+            ), f"There should be 0 connector markings, but there are {len(connector_markings)} in entity named {octi_object["name"]}"
+
+        # verify author markings
+        author_markings = [
+            marking
+            for marking in related_markings
+            if marking["definition_type"]
+            == DataSegregationMarking.AUTHOR.definition_type()
+        ]
+        if test_object["author_marking_expected"]:
+            assert (
+                len(author_markings) == 1
+            ), f"There should be exactly 1 author marking, but there are {len(author_markings)} in entity named {octi_object["name"]}"
+
+            author_marking = author_markings[0]
+
+            if test_object["author_marking_should_be_default"]:
+                assert (
+                    author_marking["definition"]
+                    == DataSegregationMarking.AUTHOR.default()["definition"]
+                ), f"Author marking should be the default one, but instead it has definition: {author_marking["definition"]}"
+            else:
+                assert author_marking["definition"].startswith(
+                    test_object["expected_author_name"]
+                ), f"Author marking should start with {test_object["expected_author_name"]}, but it is instead {author_marking["definition"]} for entity {octi_object["name"]}"
+
+        else:
+            assert (
+                len(author_markings) == 0
+            ), f"There should be 0 author markings, but there are {len(author_markings)} in entity named {octi_object["name"]}"

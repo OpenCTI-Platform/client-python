@@ -9,6 +9,7 @@ import yaml
 
 from pycti import (
     Identity,
+    Malware,
     OpenCTIApiClient,
     OpenCTIConnectorHelper,
     Vulnerability,
@@ -287,6 +288,302 @@ class InternalImportConnector:
     def start(self):
         try:
             self.helper.listen(self._process_message)
+        except pika.exceptions.AMQPConnectionError:
+            self.stop()
+            raise ValueError(
+                "Connector was not able to establish the connection to RabbitMQ"
+            )
+
+
+class ConnectorRegisteringMarkingsTest:
+    @staticmethod
+    def case_no_markings() -> Dict:
+        """Adding no markings works as expected"""
+        author_id = Identity.generate_id("Anyhack", "organization")
+
+        return {
+            "add_markings": False,
+            "add_markings_author": True,
+            "data": [
+                {
+                    "connector_marking_expected": False,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": False,
+                    "author_marking_should_be_default": False,
+                    "expected_author_name": "",
+                    "class": stix2.Identity,
+                    "standard_id": author_id,
+                    "name": "Anyhack",
+                    "description": "Hack the world!",
+                },
+                {
+                    "connector_marking_expected": False,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": False,
+                    "author_marking_should_be_default": False,
+                    "expected_author_name": "",
+                    "class": stix2.Malware,
+                    "standard_id": Malware.generate_id("HackersSoftware"),
+                    "name": "HackersSoftware",
+                    "description": "A very malicious software.",
+                    "type": "malware",
+                    "is_family": False,
+                    "created_by_ref": author_id,
+                },
+            ],
+            "config": "tests/data/external_import_with_markings_config.yml",
+        }
+
+    @staticmethod
+    def case_valid_only_connector() -> Dict:
+        """Adding markings for the connector works as expected"""
+        return {
+            "add_markings": True,
+            "add_markings_author": False,
+            "data": [
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": False,
+                    "author_marking_should_be_default": False,
+                    "expected_author_name": "",
+                    "class": stix2.Malware,
+                    "standard_id": Malware.generate_id("Malwyo"),
+                    "name": "Malwyo",
+                    "description": "A very malicious malware.",
+                    "type": "malware",
+                    "is_family": False,
+                    "created_by_ref": None,
+                },
+            ],
+            "config": "tests/data/external_import_with_markings_config.yml",
+        }
+
+    @staticmethod
+    def case_valid_connector_and_author() -> Dict:
+        """Adding markings for the connector and authors works as expected"""
+        author_1_name = "SuperHackers"
+        author_2_name = "ChildrenOfTheScript"
+        author_1_id = Identity.generate_id(author_1_name, "organization")
+        author_2_id = Identity.generate_id(author_2_name, "organization")
+
+        return {
+            "add_markings": True,
+            "add_markings_author": True,
+            "data": [
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": True,
+                    "author_marking_should_be_default": True,
+                    "expected_author_name": "",
+                    "class": stix2.Identity,
+                    "standard_id": author_1_id,
+                    "name": author_1_name,
+                    "description": "Hack the world!",
+                },
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": True,
+                    "author_marking_should_be_default": True,
+                    "expected_author_name": "",
+                    "class": stix2.Identity,
+                    "standard_id": author_2_id,
+                    "name": author_2_name,
+                    "description": "We use ChatGPT.",
+                },
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": True,
+                    "author_marking_should_be_default": False,
+                    "expected_author_name": author_1_name,
+                    "class": stix2.Malware,
+                    "standard_id": Malware.generate_id("MaliciousMalware"),
+                    "name": "MaliciousMalware",
+                    "description": "A very malicious malware.",
+                    "type": "malware",
+                    "is_family": False,
+                    "created_by_ref": author_1_id,
+                },
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": True,
+                    "author_marking_should_be_default": False,
+                    "expected_author_name": author_1_name,
+                    "class": stix2.Malware,
+                    "standard_id": Malware.generate_id("SuperMaliciousMalware"),
+                    "name": "SuperMaliciousMalware",
+                    "description": "A super malicious malware.",
+                    "type": "malware",
+                    "is_family": False,
+                    "created_by_ref": author_1_id,
+                },
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": True,
+                    "author_marking_should_be_default": False,
+                    "expected_author_name": author_2_name,
+                    "class": stix2.Malware,
+                    "standard_id": Malware.generate_id("SophisticatedScript"),
+                    "name": "SophisticatedScript",
+                    "description": "A very sophisticated script.",
+                    "type": "malware",
+                    "is_family": False,
+                    "created_by_ref": author_2_id,
+                },
+            ],
+            "config": "tests/data/external_import_with_markings_config.yml",
+        }
+
+    @staticmethod
+    def case_default_author() -> Dict:
+        """Adding a marking for an author that does not exist uses the default
+        marking.
+        When no author is specified, a default marking is added.
+        """
+        return {
+            "add_markings": True,
+            "add_markings_author": True,
+            "data": [
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": True,
+                    "author_marking_should_be_default": True,
+                    "expected_author_name": "",
+                    "class": stix2.Malware,
+                    "standard_id": Malware.generate_id("RandomInternetPoC"),
+                    "name": "RandomInternetPoC",
+                    "description": "Just a PoC that was used maliciously.",
+                    "type": "malware",
+                    "is_family": False,
+                    "created_by_ref": Identity.generate_id(
+                        "idontexist", "organization"
+                    ),
+                },
+                {
+                    "connector_marking_expected": True,
+                    "connector_marking_should_be_default": False,
+                    "author_marking_expected": True,
+                    "author_marking_should_be_default": True,
+                    "expected_author_name": "",
+                    "class": stix2.Malware,
+                    "standard_id": Malware.generate_id("MalwareBySuperSensitiveGroup"),
+                    "name": "MalwareBySuperSensitiveGroup",
+                    "description": "Written by skilled engineers.",
+                    "type": "malware",
+                    "is_family": False,
+                    "created_by_ref": None,
+                },
+            ],
+            "config": "tests/data/external_import_with_markings_config.yml",
+        }
+
+
+class ConnectorRegisteringMarkings:
+    def __init__(
+        self,
+        config_file_path: str,
+        api_client: OpenCTIApiClient,
+        data: Dict,
+        random_uuid: str,
+        add_marking: bool,
+        add_author_marking: bool,
+    ):
+        # set OPENCTI settings from fixture
+        os.environ["OPENCTI_URL"] = api_client.api_url
+        os.environ["OPENCTI_TOKEN"] = api_client.api_token
+        os.environ["OPENCTI_SSL_VERIFY"] = str(api_client.ssl_verify)
+        if add_marking:
+            os.environ["CONNECTOR_ADD_MARKINGS"] = "true"
+        else:
+            os.environ["CONNECTOR_ADD_MARKINGS"] = "false"
+        if add_author_marking:
+            os.environ["CONNECTOR_ADD_AUTHOR_MARKINGS"] = "true"
+        else:
+            os.environ["CONNECTOR_ADD_AUTHOR_MARKINGS"] = "false"
+
+        config = (
+            yaml.load(open(config_file_path), Loader=yaml.FullLoader)
+            if os.path.isfile(config_file_path)
+            else {}
+        )
+
+        # add randomness to prevent concurrency issues during testing
+        config["connector"]["id"] = random_uuid
+        config["connector"]["name"] = "_".join(
+            [config["connector"]["name"], random_uuid]
+        )
+
+        self.helper = OpenCTIConnectorHelper(config)
+        self.interval = get_config_variable(
+            "INTERVAL", ["test", "interval"], config, True
+        )
+
+        self.data = data
+
+    def get_interval(self):
+        return int(self.interval)
+
+    def run(self):
+        now = datetime.fromtimestamp(time.time())
+        now_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        friendly_name = f"{self.helper.connect_name} run @ {now_time}"
+        work_id = self.helper.api.work.initiate_work(
+            self.helper.connect_id, friendly_name
+        )
+
+        bundle_objects = []
+        for elem in self.data:
+            cls = elem["class"]
+
+            match cls:
+                case stix2.Malware:
+                    sdo = cls(
+                        id=elem["standard_id"],
+                        name=elem["name"],
+                        description=elem["description"],
+                        created_by_ref=elem["created_by_ref"],
+                        is_family=elem["is_family"],
+                    )
+                case stix2.Identity:
+                    sdo = cls(
+                        id=elem["standard_id"],
+                        name=elem["name"],
+                        description=elem["description"],
+                    )
+                case _:
+                    raise Exception(
+                        f"This test implementation does not support this stix2 class, you have to add it: {cls}"
+                    )
+
+            bundle_objects.append(sdo)
+
+        # create stix bundle
+        bundle = stix2.Bundle(objects=bundle_objects).serialize()
+        # send data
+        self.helper.send_stix2_bundle(
+            bundle=bundle,
+            entities_types=self.helper.connect_scope,
+            update=True,
+            work_id=work_id,
+        )
+
+        message = "Connector successfully run, storing last_run as " + str(now_time)
+        self.helper.api.work.to_processed(work_id, message)
+
+        return "Foo"
+
+    def stop(self):
+        self.helper.stop()
+
+    def start(self):
+        try:
+            self.run()
         except pika.exceptions.AMQPConnectionError:
             self.stop()
             raise ValueError(

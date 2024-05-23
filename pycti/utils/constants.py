@@ -410,3 +410,40 @@ class CustomObservableUserAgent:
     """User-Agent observable."""
 
     pass
+
+
+# Markings for data segregation
+
+
+class DataSegregationMarking(Enum):
+    CONNECTOR = "connector"
+    AUTHOR = "author"
+
+    def definition_type(self) -> str:
+        return DataSegregationMarking.marking_prefix() + self.value
+
+    def color(self) -> str:
+        match self:
+            case self.CONNECTOR:
+                return "E0B0FF"
+            case self.AUTHOR:
+                return "BF40BF"
+
+    def default(self) -> dict:
+        match self:
+            case self.CONNECTOR:
+                return {
+                    "definition_type": self.definition_type(),
+                    "definition": "DEFAULT CONNECTOR MARKING",
+                    "x_opencti_color": self.color(),
+                }
+            case self.AUTHOR:
+                return {
+                    "definition_type": self.definition_type(),
+                    "definition": "DEFAULT AUTHOR MARKING",
+                    "x_opencti_color": self.color(),
+                }
+
+    @staticmethod
+    def marking_prefix() -> str:
+        return "source-"

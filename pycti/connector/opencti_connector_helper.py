@@ -16,12 +16,15 @@ from queue import Queue
 from typing import Callable, Dict, List, Optional, Union
 
 import pika
+import stix2
 from filigran_sseclient import SSEClient
 from pika.exceptions import NackError, UnroutableError
 
 from pycti.api.opencti_api_client import OpenCTIApiClient
 from pycti.connector.opencti_connector import OpenCTIConnector
 from pycti.connector.opencti_metric_handler import OpenCTIMetricHandler
+from pycti.entities.opencti_marking_definition import MarkingDefinition
+from pycti.utils.constants import DataSegregationMarking
 from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 
 TRUTHY: List[str] = ["yes", "true", "True"]
@@ -725,6 +728,22 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         self.connect_auto = get_config_variable(
             "CONNECTOR_AUTO", ["connector", "auto"], config, False, False
         )
+        self.connect_add_markings = get_config_variable(
+            "CONNECTOR_ADD_MARKINGS",
+            ["connector", "add_markings"],
+            config,
+            False,
+            False,
+            False,
+        )
+        self.connect_add_author_markings = get_config_variable(
+            "CONNECTOR_ADD_AUTHOR_MARKINGS",
+            ["connector", "add_author_markings"],
+            config,
+            False,
+            False,
+            False,
+        )
         self.bundle_send_to_queue = get_config_variable(
             "CONNECTOR_SEND_TO_QUEUE",
             ["connector", "send_to_queue"],
@@ -1113,6 +1132,13 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             "send_to_directory_retention", self.bundle_send_to_directory_retention
         )
 
+        # add markings used for access management to the objects contained in
+        # the bundle
+        if self.connect_add_markings:
+            bundle = self.add_markings_to_bundle(
+                bundle, self.connect_add_author_markings
+            )
+
         # In case of enrichment ingestion, ensure the sharing if needed
         if self.enrichment_shared_organizations is not None:
             # Every element of the bundle must be enriched with the same organizations
@@ -1429,6 +1455,140 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             else:
                 items = items + self.stix2_get_entity_objects(item)
         return items
+
+    def add_markings_to_bundle(self, bundle: str, add_author_markings: bool) -> str:
+        """
+        Add an object marking to the bundle linking the objects it contains to
+        the connector.
+        If author markings are requested, a second marking is added linking the
+        objects in the bundle to their author.
+
+        If there is a problem creating the marking, either because of an issue
+        in OpenCTI, or because of a missing author reference, a default marking
+        is added, intended to be only readable by an administrator.
+
+        These markings can then be used to enforce access control on the object.
+
+        :param bundle: valid stix2 bundle as a JSON formatted string
+        :param add_author_markings: true if a marking should be added on a
+            per-author basis, false otherwise
+        :return bundle: JSON formatted string containing a stix2 bundle with the
+            correct marking associated to each object
+        """
+
+        def get_default_marking(type: DataSegregationMarking) -> dict:
+            default_values = type.default()
+
+            marking_id = MarkingDefinition.generate_id(
+                default_values["definition"], default_values["definition_type"]
+            )
+            default_marking = stix2.MarkingDefinition(
+                id=marking_id,
+                definition_type="statement",
+                definition={"statement": "custom"},
+                allow_custom=True,
+                x_opencti_definition_type=default_values["definition_type"],
+                x_opencti_definition=default_values["definition"],
+                x_opencti_color=default_values["x_opencti_color"],
+                standard_id=marking_id,
+            )
+            default_marking = json.loads(default_marking.serialize())
+
+            return default_marking
+
+        def get_marking(
+            cache: dict, type: DataSegregationMarking, name: str, id: str
+        ) -> dict:
+            if id in cache:
+                return cache[id]
+
+            marking_definition_object = MarkingDefinition(self.api)
+            marking = marking_definition_object.create(
+                definition_type=type.definition_type(),
+                definition=f"{name} ({id})",
+                x_opencti_color=type.color(),
+            )
+
+            if marking != None:
+                cache[id] = marking
+
+            return marking
+
+        def find_author_name(bundle_data: dict, author_ref: str) -> str:
+            # the author is provided along with the bundle
+            for item in bundle_data["objects"]:
+                # depending on how the author object was created, the id will be
+                # in either of the two fields
+                if author_ref in [item.get("standard_id", ""), item.get("id", "")]:
+                    return item["name"]
+
+            # the author is already in the platform
+            author = self.api.identity.read(id=author_ref)
+            if author != None:
+                return author["name"]
+
+            return ""
+
+        bundle_data = json.loads(bundle)
+        markings_cache = {}
+
+        key_object_marking_refs = "object_marking_refs"
+        key_created_by_ref = "created_by_ref"
+
+        for item in bundle_data["objects"]:
+            # Get already existing markings
+            item_marking_refs = item.get(key_object_marking_refs, [])
+
+            # Add marking for connector
+            marking_connector = get_marking(
+                markings_cache,
+                DataSegregationMarking.CONNECTOR,
+                self.connect_name,
+                self.connect_id,
+            )
+
+            # If the connector marking could not get created, generate default
+            # one and send it along with the bundle
+            if marking_connector == None:
+                marking_connector = get_default_marking(
+                    DataSegregationMarking.CONNECTOR
+                )
+                bundle_data["objects"] = [marking_connector] + bundle_data["objects"]
+
+            item_marking_refs.append(marking_connector["standard_id"])
+
+            # If required, add marking for author
+            if add_author_markings:
+                author_ref = item.get(key_created_by_ref, "")
+                if author_ref != "":
+                    author_name = find_author_name(bundle_data, author_ref)
+                else:
+                    author_name = ""
+
+                if author_name == "":
+                    marking_author = None
+                else:
+                    marking_author = get_marking(
+                        markings_cache,
+                        DataSegregationMarking.AUTHOR,
+                        author_name,
+                        author_ref,
+                    )
+
+                # If the author marking could not get created, generate default
+                # one and send it along with the bundle
+                if marking_author == None:
+                    marking_author = get_default_marking(DataSegregationMarking.AUTHOR)
+                    bundle_data["objects"] = [marking_author] + bundle_data["objects"]
+
+                item_marking_refs.append(marking_author["standard_id"])
+
+            # Update item markings
+            item[key_object_marking_refs] = item_marking_refs
+
+        bundle_with_markings = json.dumps(bundle_data)
+
+        return bundle_with_markings
 
     @staticmethod
     def stix2_deduplicate_objects(items) -> list:

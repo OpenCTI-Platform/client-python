@@ -1,0 +1,11 @@
+connector:
+  id: '' # MUST be generated in code
+  type: 'EXTERNAL_IMPORT'
+  name: 'TestConnectorRegisteringMarkings' # MUST be suffixed in code by id
+  scope: 'identity,malware'
+  confidence_level: 80 # From 0 (Unknown) to 100 (Fully trusted)
+  update_existing_data: True
+  log_level: 'debug'
+
+test:
+  interval: 1
