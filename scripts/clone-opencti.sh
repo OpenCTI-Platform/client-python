@@ -45,7 +45,7 @@ then
 
     cat multi-repo-prs.txt
 
-    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep "issue/7062-ci-fork" | head -n 1 | sed 's/#//g' | awk '{print $1}')
+    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep "${OPENCTI_BRANCH}" | head -n 1 | sed 's/#//g' | awk '{print $1}')
     echo "OPENCTI_PR_NUMBER=${OPENCTI_PR_NUMBER}"
 
     if [[ "${OPENCTI_PR_NUMBER}" != "" ]]
