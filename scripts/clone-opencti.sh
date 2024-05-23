@@ -2,8 +2,10 @@
 
 if [[ -z "$1" || -z "$2" || -z "$3" || -z "$4" ]]
 then
-    echo "This scripts requires 3 paramaters: branch_name, PR_number, workspace and github_token"
-    exit 1
+    echo "[MULTI-REPO] This scripts requires 4 paramaters: branch_name:$1, PR_number:$2, workspace:$3 and github_token:$4"
+    echo "[MULTI-REPO] Fallback to default opencti:master branch"
+    git clone https://github.com/OpenCTI-Platform/opencti /tmp/opencti
+    exit 0
 fi
 
 PR_BRANCH_NAME=$1
@@ -45,7 +47,7 @@ then
 
     cat multi-repo-prs.txt
 
-    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep "issue/7062-ci-fork" | head -n 1 | sed 's/#//g' | awk '{print $1}')
+    OPENCTI_PR_NUMBER=$(cat multi-repo-prs.txt | grep "${OPENCTI_BRANCH}" | head -n 1 | sed 's/#//g' | awk '{print $1}')
     echo "OPENCTI_PR_NUMBER=${OPENCTI_PR_NUMBER}"
 
     if [[ "${OPENCTI_PR_NUMBER}" != "" ]]
@@ -53,8 +55,8 @@ then
         echo "[MULTI-REPO] Found a PR in opencti with number ${OPENCTI_PR_NUMBER}, using it."
         gh pr checkout ${OPENCTI_PR_NUMBER}
     else
-        echo "[MULTI-REPO] No PR found in opencti side, cloning opencti:master"
-        gh repo clone https://github.com/OpenCTI-Platform/opencti /tmp/opencti
+        echo "[MULTI-REPO] No PR found in opencti side, keeping opencti:master"
+        # Repository already clone on master branch
     fi
     
 else
@@ -63,6 +65,5 @@ else
 fi
 
 cd /tmp/opencti
-echo "[MULTI-REPO]  Using opencti on branch:"
-git branch --show-current
+echo "[MULTI-REPO]  Using opencti on branch:$(git branch --show-current)"
 cd ${WORKSPACE}
