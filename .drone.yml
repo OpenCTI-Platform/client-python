@@ -102,6 +102,4 @@ services:
       - yarn install
       - yarn install:python
       - NODE_OPTIONS=--max_old_space_size=8192 yarn start
-    depends_on:
-      - dependencies-checkout
 
