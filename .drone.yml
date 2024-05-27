@@ -12,36 +12,12 @@ steps:
       - ./scripts/clone-opencti.sh "${DRONE_SOURCE_BRANCH}" "$(pwd)" "TODO" "${DRONE_PULL_REQUEST}"
       - ls -lart
 
-  - name: opencti
-    image: nikolaik/python-nodejs:python3.10-nodejs18-alpine
-    detach: true # same as service but it's possible to use depends_on
-    environment:
-      APP__ADMIN__PASSWORD: admin
-      APP__ADMIN__TOKEN: bfa014e0-e02e-4aa6-a42b-603b19dcf159
-      REDIS__HOSTNAME: redis
-      REDIS__NAMESPACE: raw-start
-      ELASTICSEARCH__URL: http://elastic:9200
-      ELASTICSEARCH__INDEX_PREFIX: raw-start
-      MINIO__ENDPOINT: minio
-      MINIO__BUCKET_NAME: raw-start-bucket
-      RABBITMQ__HOSTNAME: rabbitmq
-      EXPIRATION_SCHEDULER__ENABLED: false
-      SUBSCRIPTION_SCHEDULER__ENABLED: false
-    commands:
-      - apk add build-base git libffi-dev cargo
-      - cd opencti/opencti-platform/opencti-graphql
-      - yarn install
-      - yarn install:python
-      - NODE_OPTIONS=--max_old_space_size=8192 yarn start
-    depends_on:
-      - dependencies-checkout
-
   - name: sleep-for-opencti
     image: python:3.11
     commands:
-      - sleep 30
+      - sleep 180
     depends_on:
-      - opencti
+      - dependencies-checkout
   - name: client-test-38
     image: python:3.8
     commands:
@@ -49,7 +25,7 @@ steps:
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
     depends_on:
-      - opencti
+      - sleep-for-opencti
   - name: client-test-39
     image: python:3.9
     commands:
@@ -57,7 +33,7 @@ steps:
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
     depends_on:
-      - opencti
+      - sleep-for-opencti
   - name: client-test-310
     image: python:3.10
     commands:
@@ -65,7 +41,7 @@ steps:
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
     depends_on:
-      - opencti
+      - sleep-for-opencti
   - name: client-test-311
     image: python:3.11
     commands:
@@ -73,7 +49,7 @@ steps:
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
     depends_on:
-      - opencti
+      - sleep-for-opencti
   - name: client-test-312
     image: python:3.12
     commands:
@@ -81,7 +57,7 @@ steps:
       - pip3 install -r test-requirements.txt --user
       - python3 -m pytest --no-header -vv --disable-warnings --cov=pycti --drone
     depends_on:
-      - opencti
+      - sleep-for-opencti
 
   # always run the examples last since they don't clean up
   - name: example-tests
@@ -92,7 +68,7 @@ steps:
       - cd examples/
       - /bin/bash run_all.sh
     depends_on:
-      - dependencies-checkout
+      - sleep-for-opencti
 
   - name: slack
     image: plugins/slack
@@ -125,4 +101,26 @@ services:
     command: [ server, /data ]
   - name: rabbitmq
     image: rabbitmq:3.13-management
+  - name: opencti
+    image: nikolaik/python-nodejs:python3.10-nodejs18-alpine
+    environment:
+      APP__ADMIN__PASSWORD: admin
+      APP__ADMIN__TOKEN: bfa014e0-e02e-4aa6-a42b-603b19dcf159
+      REDIS__HOSTNAME: redis
+      REDIS__NAMESPACE: raw-start
+      ELASTICSEARCH__URL: http://elastic:9200
+      ELASTICSEARCH__INDEX_PREFIX: raw-start
+      MINIO__ENDPOINT: minio
+      MINIO__BUCKET_NAME: raw-start-bucket
+      RABBITMQ__HOSTNAME: rabbitmq
+      EXPIRATION_SCHEDULER__ENABLED: false
+      SUBSCRIPTION_SCHEDULER__ENABLED: false
+    commands:
+      - apk add build-base git libffi-dev cargo
+      - cd opencti/opencti-platform/opencti-graphql
+      - yarn install
+      - yarn install:python
+      - NODE_OPTIONS=--max_old_space_size=8192 yarn start
+    depends_on:
+      - dependencies-checkout
 
