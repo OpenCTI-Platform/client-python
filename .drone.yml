@@ -63,7 +63,7 @@ steps:
 
 services:
   - name: redis
-    image: redis:7.2.4
+    image: redis:7.2.5
   - name: elastic
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     environment:
@@ -94,11 +94,12 @@ services:
       SUBSCRIPTION_SCHEDULER__ENABLED: false
     commands:
       - apk add build-base git libffi-dev cargo github-cli
-      - env
       - chmod 777 scripts/*
       - echo "DRONE_SOURCE_BRANCH:${DRONE_SOURCE_BRANCH}, DRONE_PULL_REQUEST:${DRONE_PULL_REQUEST}"
       - ./scripts/clone-opencti.sh "${DRONE_SOURCE_BRANCH}" "$(pwd)" "TODO" "${DRONE_PULL_REQUEST}"
+      - ls -lart
       - cd opencti/opencti-platform/opencti-graphql
       - yarn install
       - yarn install:python
       - NODE_OPTIONS=--max_old_space_size=8192 yarn start
+
