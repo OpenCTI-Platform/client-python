@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [[ -z "$1" || -z "$2" || -z "$3" ]]
+if [[ -z "$1" ]] || [[ -z "$2" ]] || [[ -z "$3" ]]
 then
     echo "[CLONE-DEPS] This scripts $0 requires 3 paramaters: branch_name:$1, workspace:$2, github_token:$3 (optional: PR_number:$4)"
     exit 0
@@ -71,7 +71,7 @@ clone_for_push_build() {
 }
 
 echo "[CLONE-DEPS] START; with PR_BRANCH_NAME=${PR_BRANCH_NAME}, PR_NUMBER=${PR_NUMBER}, OPENCTI_DIR=${OPENCTI_DIR}."
-if [[ ${PR_NUMBER} == "" ]]
+if [[ -z ${PR_NUMBER} ]] || [[ ${PR_NUMBER} == "" ]]
 then
     # No PR number from Drone = "Push build". And it's only for repository branch (not fork)
     # Only check branches from OpenCTI-Platform org
