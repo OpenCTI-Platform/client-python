@@ -852,6 +852,50 @@ class OpenCTIStix2:
 
     # endregion
 
+    def get_stix_helper(self):
+        # Import
+        return {
+            "attack-pattern": self.opencti.attack_pattern,
+            "campaign": self.opencti.campaign,
+            "note": self.opencti.note,
+            "observed-data": self.opencti.observed_data,
+            "opinion": self.opencti.opinion,
+            "report": self.opencti.report,
+            "course-of-action": self.opencti.course_of_action,
+            "identity": self.opencti.identity,
+            "infrastructure": self.opencti.infrastructure,
+            "intrusion-set": self.opencti.intrusion_set,
+            "location": self.opencti.location,
+            "malware": self.opencti.malware,
+            "threat-actor": self.opencti.threat_actor,
+            "tool": self.opencti.tool,
+            "vulnerability": self.opencti.vulnerability,
+            "incident": self.opencti.incident,
+            "marking-definition": self.opencti.marking_definition,
+            "case-rfi": self.opencti.case_rfi,
+            "x-opencti-case-rfi": self.opencti.case_rfi,
+            "case-rft": self.opencti.case_rft,
+            "x-opencti-case-rft": self.opencti.case_rft,
+            "case-incident": self.opencti.case_incident,
+            "x-opencti-case-incident": self.opencti.case_incident,
+            "feedback": self.opencti.feedback,
+            "x-opencti-feedback": self.opencti.feedback,
+            "channel": self.opencti.channel,
+            "data-component": self.opencti.data_component,
+            "x-mitre-data-component": self.opencti.data_component,
+            "data-source": self.opencti.data_source,
+            "x-mitre-data-source": self.opencti.data_source,
+            "event": self.opencti.event,
+            "grouping": self.opencti.grouping,
+            "indicator": self.opencti.indicator,
+            "language": self.opencti.language,
+            "malware-analysis": self.opencti.malware_analysis,
+            "narrative": self.opencti.narrative,
+            "task": self.opencti.task,
+            "x-opencti-task": self.opencti.task,
+            "vocabulary": self.opencti.vocabulary,
+        }
+
     # region import
     def import_object(
         self, stix_object: Dict, update: bool = False, types: List = None
@@ -898,53 +942,16 @@ class OpenCTIStix2:
             "sample_ids": sample_refs_ids,
         }
 
-        # Import
-        importer = {
-            "marking-definition": self.opencti.marking_definition.import_from_stix2,
-            "attack-pattern": self.opencti.attack_pattern.import_from_stix2,
-            "campaign": self.opencti.campaign.import_from_stix2,
-            "channel": self.opencti.channel.import_from_stix2,
-            "event": self.opencti.event.import_from_stix2,
-            "note": self.opencti.note.import_from_stix2,
-            "observed-data": self.opencti.observed_data.import_from_stix2,
-            "opinion": self.opencti.opinion.import_from_stix2,
-            "report": self.opencti.report.import_from_stix2,
-            "grouping": self.opencti.grouping.import_from_stix2,
-            "case-rfi": self.opencti.case_rfi.import_from_stix2,
-            "x-opencti-case-rfi": self.opencti.case_rfi.import_from_stix2,
-            "case-rft": self.opencti.case_rft.import_from_stix2,
-            "x-opencti-case-rft": self.opencti.case_rft.import_from_stix2,
-            "task": self.opencti.task.import_from_stix2,
-            "x-opencti-task": self.opencti.task.import_from_stix2,
-            "case-incident": self.opencti.case_incident.import_from_stix2,
-            "x-opencti-case-incident": self.opencti.case_incident.import_from_stix2,
-            "feedback": self.opencti.feedback.import_from_stix2,
-            "x-opencti-feedback": self.opencti.feedback.import_from_stix2,
-            "course-of-action": self.opencti.course_of_action.import_from_stix2,
-            "data-component": self.opencti.data_component.import_from_stix2,
-            "x-mitre-data-component": self.opencti.data_component.import_from_stix2,
-            "data-source": self.opencti.data_source.import_from_stix2,
-            "x-mitre-data-source": self.opencti.data_source.import_from_stix2,
-            "identity": self.opencti.identity.import_from_stix2,
-            "indicator": self.opencti.indicator.import_from_stix2,
-            "infrastructure": self.opencti.infrastructure.import_from_stix2,
-            "intrusion-set": self.opencti.intrusion_set.import_from_stix2,
-            "location": self.opencti.location.import_from_stix2,
-            "malware": self.opencti.malware.import_from_stix2,
-            "malware-analysis": self.opencti.malware_analysis.import_from_stix2,
-            "threat-actor": self.opencti.threat_actor.import_from_stix2,
-            "tool": self.opencti.tool.import_from_stix2,
-            "narrative": self.opencti.narrative.import_from_stix2,
-            "vulnerability": self.opencti.vulnerability.import_from_stix2,
-            "incident": self.opencti.incident.import_from_stix2,
-        }
-        do_import = importer.get(
-            stix_object["type"],
-            lambda **kwargs: self.unknown_type(stix_object),
-        )
-        stix_object_results = do_import(
-            stixObject=stix_object, extras=extras, update=update
-        )
+        stix_helper = self.get_stix_helper().get(stix_object["type"])
+        if stix_helper:
+            stix_object_results = stix_helper.import_from_stix2(
+                stixObject=stix_object, extras=extras, update=update
+            )
+        else:
+            stix_object_results = None
+            self.opencti.app_logger.error(
+                "Unknown object type, doing nothing...", {"type": stix_object["type"]}
+            )
 
         if stix_object_results is None:
             return None
@@ -2375,6 +2382,49 @@ class OpenCTIStix2:
 
         return bundle
 
+    def prepare_bundle_ids(self, bundle, use_json=True, keep_original_id=False):
+        if use_json:
+            try:
+                bundle_data = json.loads(bundle)
+            except:
+                raise Exception("File data is not a valid JSON")
+        else:
+            bundle_data = bundle
+        cache_ids = {}
+        # First iteration to cache all entity ids
+        stix_helpers = self.get_stix_helper()
+        for item in bundle_data["objects"]:
+            if item["type"] != "relationship" and item["type"] != "sighting":
+                helper = stix_helpers.get(item["type"])
+                if hasattr(helper, "generate_id_from_data"):
+                    standard_id = helper.generate_id_from_data(item)
+                    cache_ids[item["id"]] = standard_id
+        # Second iteration to replace and remap
+        for item in bundle_data["objects"]:
+            # For entities, try to replace the main id
+            # Keep the current one if needed
+            if item["type"] != "relationship" and item["type"] != "sighting":
+                if cache_ids.get(item["id"]):
+                    original_id = item["id"]
+                    item["id"] = cache_ids[original_id]
+                    if keep_original_id:
+                        item["x_opencti_stix_ids"] = item.get(
+                            "x_opencti_stix_ids", []
+                        ) + [original_id]
+            # For all elements, replace all refs (source_ref, object_refs, ...)
+            ref_keys = list(
+                filter(lambda i: i.endswith("_ref") or i.endswith("_refs"), item.keys())
+            )
+            for ref_key in ref_keys:
+                if ref_key.endswith("_refs"):
+                    item[ref_key] = list(
+                        map(lambda id_ref: cache_ids.get(id_ref, id_ref), item[ref_key])
+                    )
+                else:
+                    item[ref_key] = cache_ids.get(item[ref_key], item[ref_key])
+
+        return json.dumps(bundle_data) if use_json else bundle_data
+
     def import_item(
         self,
         item,
@@ -2623,6 +2673,12 @@ class OpenCTIStix2:
             if "x_opencti_event_version" in stix_bundle
             else None
         )
+
+        # Bundle ids must be rewritten
+        stix_bundle = self.prepare_bundle_ids(
+            bundle=stix_bundle, use_json=False, keep_original_id=False
+        )
+
         stix2_splitter = OpenCTIStix2Splitter()
         _, bundles = stix2_splitter.split_bundle_with_expectations(
             stix_bundle, False, event_version
