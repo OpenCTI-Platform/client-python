@@ -896,6 +896,11 @@ class OpenCTIStix2:
             "vocabulary": self.opencti.vocabulary,
         }
 
+    def generate_standard_id_from_stix(self, data):
+        stix_helpers = self.get_stix_helper()
+        helper = stix_helpers.get(data["type"])
+        return helper.generate_id_from_data(data)
+
     # region import
     def import_object(
         self, stix_object: Dict, update: bool = False, types: List = None
