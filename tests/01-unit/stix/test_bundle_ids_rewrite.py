@@ -11,7 +11,7 @@ def get_cti_helper():
 
 
 def load_test_file():
-    with open("../../data/bundle_ids_sample.json", "r") as content_file:
+    with open("tests/data/bundle_ids_sample.json", "r") as content_file:
         content = content_file.read()
     bundle_data = json.loads(content)
     return bundle_data
