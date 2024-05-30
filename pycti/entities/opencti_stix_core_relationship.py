@@ -336,6 +336,7 @@ class StixCoreRelationship:
             start_time = start_time.isoformat()
         if isinstance(stop_time, datetime.datetime):
             stop_time = stop_time.isoformat()
+
         if start_time is not None and stop_time is not None:
             data = {
                 "relationship_type": relationship_type,
@@ -375,6 +376,16 @@ class StixCoreRelationship:
         :param after: ID of the first row for pagination
         :return List of stix_core_relationship objects
     """
+
+    @staticmethod
+    def generate_id_from_data(data):
+        return StixCoreRelationship.generate_id(
+            data["relationship_type"],
+            data["source_ref"],
+            data["target_ref"],
+            data.get("start_time"),
+            data.get("stop_time"),
+        )
 
     def list(self, **kwargs):
         from_or_to_id = kwargs.get("fromOrToId", None)

@@ -59,7 +59,7 @@
       ]
     },
     {
-      "id": "relationship--ba52fced-422a-4bee-816a-85aa21c9eaca",
+      "id": "relationship--ba52fced-422a-4bee-816a-85aa21c9eacc",
       "type": "relationship",
       "spec_version": "2.1",
       "relationship_type": "related-to",
@@ -71,6 +71,19 @@
       "stop_time": "1900-01-01T00:00:00.000Z",
       "created_by_ref": "identity--7b82b010-b1c0-4dae-981f-7756374a17da",
       "object_marking_refs": ["marking-definition--78ca4366-f5b8-4764-83f7-34ce38198e27"]
+    },
+    {
+      "type": "sighting",
+      "spec_version": "2.1",
+      "id": "sighting--ee20065d-2555-424f-ad9e-0f8428623c75",
+      "created": "2016-08-06T20:08:31.000Z",
+      "modified": "2016-09-06T20:08:31.000Z",
+      "sighting_of_ref": "malware--d650c5b9-4b43-5781-8576-ea52bd6c7ce5",
+      "where_sighted_refs": ["identity--7b82b010-b1c0-4dae-981f-7756374a17da"],
+      "first_seen": "2016-08-06T20:08:31.000Z",
+      "last_seen": "2016-08-07T20:08:31.000Z",
+      "count": 12,
+      "x_opencti_negative": true
     }
   ]
 }
