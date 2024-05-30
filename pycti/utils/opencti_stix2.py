@@ -855,6 +855,7 @@ class OpenCTIStix2:
     def get_stix_helper(self):
         # Import
         return {
+            # entities
             "attack-pattern": self.opencti.attack_pattern,
             "campaign": self.opencti.campaign,
             "note": self.opencti.note,
@@ -894,6 +895,9 @@ class OpenCTIStix2:
             "task": self.opencti.task,
             "x-opencti-task": self.opencti.task,
             "vocabulary": self.opencti.vocabulary,
+            # relationships
+            "relationship": self.opencti.stix_core_relationship,
+            "sighting": self.opencti.stix_sighting_relationship,
         }
 
     def generate_standard_id_from_stix(self, data):
@@ -2399,23 +2403,21 @@ class OpenCTIStix2:
         # First iteration to cache all entity ids
         stix_helpers = self.get_stix_helper()
         for item in bundle_data["objects"]:
-            if item["type"] != "relationship" and item["type"] != "sighting":
-                helper = stix_helpers.get(item["type"])
-                if hasattr(helper, "generate_id_from_data"):
-                    standard_id = helper.generate_id_from_data(item)
-                    cache_ids[item["id"]] = standard_id
+            helper = stix_helpers.get(item["type"])
+            if hasattr(helper, "generate_id_from_data"):
+                standard_id = helper.generate_id_from_data(item)
+                cache_ids[item["id"]] = standard_id
         # Second iteration to replace and remap
         for item in bundle_data["objects"]:
             # For entities, try to replace the main id
             # Keep the current one if needed
-            if item["type"] != "relationship" and item["type"] != "sighting":
-                if cache_ids.get(item["id"]):
-                    original_id = item["id"]
-                    item["id"] = cache_ids[original_id]
-                    if keep_original_id:
-                        item["x_opencti_stix_ids"] = item.get(
-                            "x_opencti_stix_ids", []
-                        ) + [original_id]
+            if cache_ids.get(item["id"]):
+                original_id = item["id"]
+                item["id"] = cache_ids[original_id]
+                if keep_original_id:
+                    item["x_opencti_stix_ids"] = item.get("x_opencti_stix_ids", []) + [
+                        original_id
+                    ]
             # For all elements, replace all refs (source_ref, object_refs, ...)
             ref_keys = list(
                 filter(lambda i: i.endswith("_ref") or i.endswith("_refs"), item.keys())

@@ -17,6 +17,7 @@ def load_test_file():
     return bundle_data
 
 
+# !! WARNING !!, this need to be changed along with 01-unit/domain/identifier-test.js
 # fmt: off
 def test_ids_generation():
     gen_id = get_cti_helper().generate_standard_id_from_stix
@@ -95,6 +96,16 @@ def test_ids_generation():
     assert gen_id({"type": "threat-actor", "name": "CARD04", "x_opencti_type": "Threat-Actor-Individual"}) == "threat-actor--af15b6ae-a3dd-54d3-8fa0-3adfe0391d01"
     # vocabulary
     assert gen_id({"type": "vocabulary", "name": "facebook", "category": "account_type_ov"}) == "vocabulary--85ae7185-ff6f-509b-a011-3069921614aa"
+    # relationship
+    base_relationship = {"type": "relationship", "relationship_type": "based-on", "source_ref": "from_id", "target_ref": "to_id"}
+    assert gen_id(base_relationship) == "relationship--0b11fa67-da01-5d34-9864-67d4d71c3740"
+    assert gen_id({**base_relationship, "start_time": "2022-11-25T19:00:05.000Z"}) == "relationship--c5e1e2ce-14d6-535b-911d-267e92119e01"
+    assert gen_id({**base_relationship, "start_time": "2022-11-25T19:00:05.000Z", "stop_time": "2022-11-26T19:00:05.000Z"}) == "relationship--a7778a7d-a743-5193-9912-89f88f9ed0b4"
+    # sighting
+    base_sighting = {"type": "sighting", "sighting_of_ref": "from_id", "where_sighted_refs": ["to_id"]}
+    assert gen_id(base_sighting) == 'sighting--161901df-21bb-527a-b96b-354119279fe2'
+    assert gen_id({**base_sighting, "first_seen": "2022-11-25T19:00:05.000Z"}) == "sighting--3c59ceea-8e41-5adb-a257-d070d19e6d2b"
+    assert gen_id({**base_sighting, "first_seen": "2022-11-25T19:00:05.000Z", "last_seen": "2022-11-26T19:00:05.000Z"}) == "sighting--b4d307b6-d22c-5f22-b530-876c298493da"
 # fmt: on
 
 
