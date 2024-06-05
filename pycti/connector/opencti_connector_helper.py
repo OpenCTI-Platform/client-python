@@ -793,6 +793,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.opencti_url,
             self.opencti_token,
             self.log_level,
+            self.opencti_ssl_verify,
             json_logging=self.opencti_json_logging,
             bundle_send_to_queue=self.bundle_send_to_queue,
         )
@@ -802,6 +803,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.opencti_url,
             self.opencti_token,
             self.log_level,
+            self.opencti_ssl_verify,
             json_logging=self.opencti_json_logging,
             bundle_send_to_queue=self.bundle_send_to_queue,
         )
