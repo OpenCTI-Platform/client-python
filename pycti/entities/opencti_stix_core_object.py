@@ -1508,13 +1508,13 @@ class StixCoreObject:
         )
 
     def push_analysis(
-            self,
-            entity_id,
-            file_name,
-            data,
-            content_source,
-            content_type,
-            analysis_type,
+        self,
+        entity_id,
+        file_name,
+        data,
+        content_source,
+        content_type,
+        analysis_type,
     ):
         query = """
             mutation StixCoreObjectEdit(
