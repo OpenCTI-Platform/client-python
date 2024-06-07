@@ -1877,7 +1877,12 @@ class StixCyberObservable:
                 + (
                     custom_attributes
                     if custom_attributes is not None
-                    else (self.properties_with_files if with_files else self.properties)
+                    else (
+                        """
+                        id
+                        entity_type
+                        """
+                    )
                 )
                 + """
                             }
