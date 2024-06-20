@@ -1396,6 +1396,11 @@ class OpenCTIStix2:
             objectOrganization=(
                 extras["granted_refs_ids"] if "granted_refs_ids" in extras else []
             ),
+            x_opencti_workflow_id=(
+                stix_sighting["x_opencti_workflow_id"]
+                if "x_opencti_workflow_id" in stix_sighting
+                else None
+            ),
             update=update,
             ignore_dates=(
                 stix_sighting["x_opencti_ignore_dates"]
