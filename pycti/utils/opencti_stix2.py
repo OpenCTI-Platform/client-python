@@ -2188,7 +2188,7 @@ class OpenCTIStix2:
             "objects": [],
         }
         do_read = self.get_reader(entity_type)
-        entity = do_read(id=entity_id)
+        entity = do_read(id=entity_id, withFiles=(mode == "full"))
         if entity is None:
             self.opencti.app_logger.error(
                 "Cannot export entity (not found)", {"id": entity_id}
