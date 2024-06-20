@@ -583,7 +583,9 @@ class Report:
         custom_attributes = kwargs.get("customAttributes", None)
         with_files = kwargs.get("withFiles", False)
         if id is not None:
-            self.opencti.app_logger.info("Reading Report", {"id": id, "with_files": with_files})
+            self.opencti.app_logger.info(
+                "Reading Report", {"id": id, "with_files": with_files}
+            )
             query = (
                 """
                 query Report($id: String!) {
