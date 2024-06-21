@@ -543,7 +543,7 @@ class Identity:
             if "x_opencti_workflow_id" not in stix_object:
                 stix_object["x_opencti_workflow_id"] = (
                     self.opencti.get_attribute_in_extension(
-                        "x_opencti_workflow_id", stix_object
+                        "workflow_id", stix_object
                     )
                 )
 
