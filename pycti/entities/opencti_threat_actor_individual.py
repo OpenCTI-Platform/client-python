@@ -404,15 +404,9 @@ class ThreatActorIndividual:
                 stix_object["x_opencti_granted_refs"] = (
                     self.opencti.get_attribute_in_extension("granted_refs", stix_object)
                 )
-            if "x_opencti_reliability" not in stix_object:
-                stix_object["x_opencti_reliability"] = (
-                    self.opencti.get_attribute_in_extension("reliability", stix_object)
-                )
             if "x_opencti_workflow_id" not in stix_object:
                 stix_object["x_opencti_workflow_id"] = (
-                    self.opencti.get_attribute_in_extension(
-                        "workflow_id", stix_object
-                    )
+                    self.opencti.get_attribute_in_extension("workflow_id", stix_object)
                 )
 
             return self.create(

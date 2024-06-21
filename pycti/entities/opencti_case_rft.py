@@ -839,9 +839,7 @@ class CaseRft:
                 )
             if "x_opencti_workflow_id" not in stix_object:
                 stix_object["x_opencti_workflow_id"] = (
-                    self.opencti.get_attribute_in_extension(
-                        "workflow_id", stix_object
-                    )
+                    self.opencti.get_attribute_in_extension("workflow_id", stix_object)
                 )
 
             return self.create(
