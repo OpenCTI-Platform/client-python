@@ -12,7 +12,7 @@ opencti_api_client = OpenCTIApiClient(api_url, api_token)
 process = opencti_api_client.stix_cyber_observable.create(
     observableData={
         "type": "Financial-Asset",
-        "name": "Joe's Big Boat",
+        "asset_name": "Joe's Big Boat",
         "asset_type": "boat",
         "asset_value": 12000000,
         "currency_code": "belarusian_ruble_(byr)",

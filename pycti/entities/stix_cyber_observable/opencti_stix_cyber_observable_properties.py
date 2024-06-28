@@ -289,7 +289,7 @@ SCO_PROPERTIES = """
         currency_code
     }
     ... on FinancialAsset {
-        name
+        asset_name
         asset_type
         asset_value
         currency_code
@@ -613,7 +613,7 @@ SCO_PROPERTIES_WITH_FILES = """
         currency_code
     }
     ... on FinancialAsset {
-        name
+        asset_name
         asset_type
         asset_value
         currency_code
