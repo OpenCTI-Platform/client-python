@@ -1038,7 +1038,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                 type == "Financial-Asset" or type.lower() == "x-opencti-financial-asset"
             ):
                 input_variables["FinancialAsset"] = {
-                    "name": observable_data.get("name"),
+                    "asset_name": observable_data.get("asset_name"),
                     "asset_type": observable_data.get("asset_type"),
                     "asset_value": observable_data.get("asset_value"),
                     "currency_code": observable_data.get("currency_code"),

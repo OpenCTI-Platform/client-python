@@ -63,6 +63,7 @@ PATTERN_MAPPING = {
     "Windows-Registry-Key": ["key"],
     "Windows-Registry-Value-Type": ["name"],
     "Hostname": ["value"],
+    # "Bank-Account": ["iban"],
     "Phone-Number": ["value"],
     "Payment-Card": ["card_number"],
     "Tracking-Number": ["value"],

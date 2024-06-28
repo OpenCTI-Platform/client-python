@@ -43,6 +43,7 @@ class StixCyberObservableTypes(Enum):
     FINANCIAL_TRANSACTION = "Financial-Transaction"
     TEXT = "Text"
     USER_AGENT = "User-Agent"
+    # BANK_ACCOUNT = "Bank-Account"
     PHONE_NUMBER = "Phone-Number"
     CREDENTIAL = "Credential"
     TRACKING_NUMBER = "Tracking-Number"
@@ -483,7 +484,7 @@ class CustomObservableFinancialAccount:
 @CustomObservable(
     "financial-asset",
     [
-        ("name", StringProperty()),
+        ("asset_name", StringProperty()),
         ("asset_type", StringProperty()),
         ("asset_value", StringProperty()),
         ("currency_code", StringProperty()),

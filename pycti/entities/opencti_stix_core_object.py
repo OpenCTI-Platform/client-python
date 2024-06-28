@@ -644,7 +644,7 @@ class StixCoreObject:
                 currency_code
             }
             ... on FinancialAsset {
-                name
+                asset_name
                 asset_type
                 asset_value
                 currency_code
@@ -1313,7 +1313,7 @@ class StixCoreObject:
                 currency_code
             }
             ... on FinancialAsset {
-                name
+                asset_name
                 asset_type
                 asset_value
                 currency_code
