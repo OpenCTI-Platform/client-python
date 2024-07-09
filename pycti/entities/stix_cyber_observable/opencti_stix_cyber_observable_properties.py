@@ -249,6 +249,9 @@ SCO_PROPERTIES = """
     ... on CryptographicKey {
         value
     }
+    ... on CryptocurrencyWallet {
+        value
+    }
     ... on Hostname {
         value
     }
@@ -284,8 +287,8 @@ SCO_PROPERTIES = """
         account_number
         account_status
         account_type
-        iban_number
-        bic_number
+        iban
+        bic
         currency_code
     }
     ... on FinancialAsset {
@@ -560,6 +563,9 @@ SCO_PROPERTIES_WITH_FILES = """
     ... on CryptographicKey {
         value
     }
+    ... on CryptocurrencyWallet {
+        value
+    }
     ... on Hostname {
         value
     }
@@ -608,8 +614,8 @@ SCO_PROPERTIES_WITH_FILES = """
         account_number
         account_status
         account_type
-        iban_number
-        bic_number
+        iban
+        bic
         currency_code
     }
     ... on FinancialAsset {

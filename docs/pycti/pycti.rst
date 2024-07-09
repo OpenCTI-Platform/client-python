@@ -200,6 +200,9 @@ Classes
 - :py:class:`CustomObservableFinancialTransaction`:
   Financial Transaction observable.
 
+- :py:class:`CustomObservableCryptocurrencyWallet`:
+  Cryptocurrency wallet observable.
+
 - :py:class:`CustomObservableText`:
   Text observable.
 
@@ -615,6 +618,13 @@ Classes
 
    .. rubric:: Inheritance
    .. inheritance-diagram:: CustomObservableFinancialTransaction
+      :parts: 1
+
+.. autoclass:: CustomObservableCryptocurrencyWallet
+   :members:
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: CustomObservableCryptocurrencyWallet
       :parts: 1
 
 .. autoclass:: CustomObservableText

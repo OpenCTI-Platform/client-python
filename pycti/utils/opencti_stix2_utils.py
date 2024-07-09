@@ -25,7 +25,7 @@ STIX_CYBER_OBSERVABLE_MAPPING = {
     "windows-registry-value-type": "Windows-Registry-Value-Type",
     "hostname": "Hostname",
     "cryptographic-key": "Cryptographic-Key",
-    # "cryptocurrency-wallet": "Cryptocurrency-Wallet",
+    "cryptocurrency-wallet": "Cryptocurrency-Wallet",
     "text": "Text",
     "user-agent": "User-Agent",
     # "bank-account": "Bank-Account",

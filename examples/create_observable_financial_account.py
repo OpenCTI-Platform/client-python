@@ -16,8 +16,8 @@ process = opencti_api_client.stix_cyber_observable.create(
         "account_status": "active",
         "account_type": "credit_credit_card",
         "x_opencti_score": 90,
-        "iban_number": "55667",
-        "bic_number": "009998877",
+        "iban": "55667",
+        "bic": "009998877",
         "currency_code": "bahraini_dinar_(bhd)",
     }
 )

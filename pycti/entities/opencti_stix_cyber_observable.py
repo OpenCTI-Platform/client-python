@@ -394,6 +394,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     $WindowsRegistryKey: WindowsRegistryKeyAddInput,
                     $WindowsRegistryValueType: WindowsRegistryValueTypeAddInput,
                     $CryptographicKey: CryptographicKeyAddInput,
+                    $CryptocurrencyWallet: CryptocurrencyWalletAddInput,
                     $Hostname: HostnameAddInput
                     $Text: TextAddInput,
                     $UserAgent: UserAgentAddInput
@@ -439,6 +440,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                         WindowsRegistryKey: $WindowsRegistryKey,
                         WindowsRegistryValueType: $WindowsRegistryValueType,
                         CryptographicKey: $CryptographicKey,
+                        CryptocurrencyWallet: $CryptocurrencyWallet,
                         Hostname: $Hostname,
                         Text: $Text,
                         UserAgent: $UserAgent
@@ -999,15 +1001,15 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                         else None
                     ),
                 }
-            # elif (
-            #     type == "Cryptocurrency-Wallet"
-            #     or type.lower() == "x-opencti-cryptocurrency-wallet"
-            # ):
-            #     input_variables["CryptocurrencyWallet"] = {
-            #         "value": (
-            #             observable_data["value"] if "value" in observable_data else None
-            #         ),
-            #     }
+            elif (
+                type == "Cryptocurrency-Wallet"
+                or type.lower() == "x-opencti-cryptocurrency-wallet"
+            ):
+                input_variables["CryptocurrencyWallet"] = {
+                    "value": (
+                        observable_data["value"] if "value" in observable_data else None
+                    ),
+                }
             elif type == "Credential" or type.lower() == "x-opencti-credential":
                 input_variables["Credential"] = {
                     "value": (
@@ -1027,8 +1029,8 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                 or type.lower() == "x-opencti-financial-account"
             ):
                 input_variables["FinancialAccount"] = {
-                    "iban_number": observable_data.get("iban_number"),
-                    "bic_number": observable_data.get("bic_number"),
+                    "iban": observable_data.get("iban"),
+                    "bic": observable_data.get("bic"),
                     "account_number": observable_data.get("account_number"),
                     "account_status": observable_data.get("account_status"),
                     "account_type": observable_data.get("account_type"),
