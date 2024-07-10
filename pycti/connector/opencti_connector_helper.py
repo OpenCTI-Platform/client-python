@@ -1174,7 +1174,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     def schedule_unit(
         self,
         message_callback: Callable[[], None],
-        duration_period: Union[int | float | str],
+        duration_period: Union[int, float, str],
         time_unit: TimeUnit,
     ) -> None:
         """
