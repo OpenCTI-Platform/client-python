@@ -44,9 +44,7 @@ class OpenCTIApiConnector:
                 }
               }
         """
-        result = self.api.query(
-            query, {"id": connector_id}
-        )
+        result = self.api.query(query, {"id": connector_id})
         return result["data"]["connector"]
 
     def list(self) -> Dict:
@@ -80,7 +78,9 @@ class OpenCTIApiConnector:
         result = self.api.query(query)
         return result["data"]["connectorsForWorker"]
 
-    def ping(self, connector_id: str, connector_state: Any, connector_info: Dict) -> Dict:
+    def ping(
+        self, connector_id: str, connector_state: Any, connector_info: Dict
+    ) -> Dict:
         """pings a connector by id and state
 
         :param connector_id: the connectors id
@@ -109,7 +109,12 @@ class OpenCTIApiConnector:
             }
            """
         result = self.api.query(
-            query, {"id": connector_id, "state": json.dumps(connector_state), "connector_info": connector_info}
+            query,
+            {
+                "id": connector_id,
+                "state": json.dumps(connector_state),
+                "connector_info": connector_info,
+            },
         )
         return result["data"]["pingConnector"]
 

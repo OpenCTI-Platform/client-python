@@ -4,8 +4,8 @@ import copy
 import datetime
 import json
 import os
-import sched
 import queue
+import sched
 import signal
 import ssl
 import sys
@@ -13,14 +13,14 @@ import tempfile
 import threading
 import time
 import uuid
-from pydantic import TypeAdapter
-from queue import Queue
 from enum import Enum
+from queue import Queue
 from typing import Callable, Dict, List, Optional, Union
 
 import pika
 from filigran_sseclient import SSEClient
 from pika.exceptions import NackError, UnroutableError
+from pydantic import TypeAdapter
 
 from pycti.api.opencti_api_client import OpenCTIApiClient
 from pycti.connector.opencti_connector import OpenCTIConnector
@@ -422,7 +422,14 @@ class ListenQueue(threading.Thread):
 
 class PingAlive(threading.Thread):
     def __init__(
-        self, connector_logger, connector_id, api, get_state, set_state, metric, connector_info
+        self,
+        connector_logger,
+        connector_id,
+        api,
+        get_state,
+        set_state,
+        metric,
+        connector_info,
     ) -> None:
         threading.Thread.__init__(self, daemon=True)
         self.connector_logger = connector_logger
@@ -441,8 +448,12 @@ class PingAlive(threading.Thread):
                 self.connector_logger.debug("PingAlive running.")
                 initial_state = self.get_state()
                 connector_info = self.connector_info.all_details
-                self.connector_logger.debug("PingAlive ConnectorInfo", {"connector_info": connector_info})
-                result = self.api.connector.ping(self.connector_id, initial_state, connector_info)
+                self.connector_logger.debug(
+                    "PingAlive ConnectorInfo", {"connector_info": connector_info}
+                )
+                result = self.api.connector.ping(
+                    self.connector_id, initial_state, connector_info
+                )
                 remote_state = (
                     json.loads(result["connector_state"])
                     if result["connector_state"] is not None
@@ -654,12 +665,12 @@ class ListenStream(threading.Thread):
 
 class ConnectorInfo:
     def __init__(
-            self,
-            run_and_terminate: bool = False,
-            buffering: bool = False,
-            queue_threshold: int = 0,
-            queue_messages_size: int = 0,
-            next_run_datetime: str = None
+        self,
+        run_and_terminate: bool = False,
+        buffering: bool = False,
+        queue_threshold: int = 0,
+        queue_messages_size: int = 0,
+        next_run_datetime: str = None,
     ):
         self._run_and_terminate = run_and_terminate
         self._buffering = buffering
@@ -724,13 +735,14 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     :param config: dict standard config
     :type config: Dict
     """
+
     class TimeUnit(Enum):
-        SECONDS = 1,
-        MINUTES = 60,
-        HOURS = 3600,
-        DAYS = 86400,
-        WEEKS = 604800,
-        YEARS = 31536000,
+        SECONDS = (1,)
+        MINUTES = (60,)
+        HOURS = (3600,)
+        DAYS = (86400,)
+        WEEKS = (604800,)
+        YEARS = (31536000,)
 
     def __init__(self, config: Dict, playbook_compatible=False) -> None:
         sys.excepthook = killProgramHook
@@ -761,12 +773,10 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             ["connector", "queue_threshold"],
             config,
             isNumber=True,
-            default=524288000  # in byte = 500 Mo
+            default=524288000,  # in byte = 500 Mo
         )
         self.connect_duration_period = get_config_variable(
-            "CONNECTOR_DURATION_PERIOD",
-            ["connector", "duration_period"],
-            config
+            "CONNECTOR_DURATION_PERIOD", ["connector", "duration_period"], config
         )
         self.connect_live_stream_id = get_config_variable(
             "CONNECTOR_LIVE_STREAM_ID",
@@ -1067,8 +1077,12 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         try:
             initial_state = self.get_state()
             connector_info = self.connector_info.all_details
-            self.connector_logger.debug("ForcePing ConnectorInfo", {"connector_info": connector_info})
-            result = self.api.connector.ping(self.connector_id, initial_state, connector_info)
+            self.connector_logger.debug(
+                "ForcePing ConnectorInfo", {"connector_info": connector_info}
+            )
+            result = self.api.connector.ping(
+                self.connector_id, initial_state, connector_info
+            )
             remote_state = (
                 json.loads(result["connector_state"])
                 if result["connector_state"] is not None
@@ -1076,7 +1090,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 else None
             )
             if initial_state != remote_state:
-                self.api.connector.ping(self.connector_id, initial_state, connector_info)
+                self.api.connector.ping(
+                    self.connector_id, initial_state, connector_info
+                )
         except Exception as e:  # pylint: disable=broad-except
             self.metric.inc("error_count")
             self.connector_logger.error("Error pinging the API", {"reason": str(e)})
@@ -1098,7 +1114,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         except Exception as err:
             self.metric.inc("error_count")
             self.connector_logger.error(
-                "[ERROR] An error occurred while calculating the next run in datetime", {"reason": str(err)}
+                "[ERROR] An error occurred while calculating the next run in datetime",
+                {"reason": str(err)},
             )
             sys.excepthook(*sys.exc_info())
 
@@ -1121,7 +1138,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                         "queue_threshold": self.connect_queue_threshold,
                         "messages_number": connector_queue_details["messages_number"],
                         "messages_size": connector_queue_details["messages_size"],
-                    })
+                    },
+                )
 
                 queue_messages_size = connector_queue_details["messages_size"]
                 queue_threshold = self.connect_queue_threshold
@@ -1141,20 +1159,23 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
             else:
                 self.metric.inc("error_count")
-                self.connector_logger.error("[ERROR] An error occurred while retrieving connector details")
+                self.connector_logger.error(
+                    "[ERROR] An error occurred while retrieving connector details"
+                )
                 sys.excepthook(*sys.exc_info())
         except Exception as err:
             self.metric.inc("error_count")
             self.connector_logger.error(
-                "[ERROR] An error occurred while checking the queue size", {"reason": str(err)}
+                "[ERROR] An error occurred while checking the queue size",
+                {"reason": str(err)},
             )
             sys.excepthook(*sys.exc_info())
 
     def schedule_unit(
-            self,
-            message_callback: Callable[[], None],
-            duration_period: Union[int | float | str],
-            time_unit: TimeUnit
+        self,
+        message_callback: Callable[[], None],
+        duration_period: Union[int | float | str],
+        time_unit: TimeUnit,
     ) -> None:
         """
         This (deprecated) method is there to manage backward compatibility of intervals on connectors,
@@ -1171,7 +1192,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         try:
             # Calculates the duration period in seconds
             time_unit_in_seconds = time_unit.value[0]
-            duration_period_in_seconds = int(float(duration_period) * time_unit_in_seconds)
+            duration_period_in_seconds = int(
+                float(duration_period) * time_unit_in_seconds
+            )
 
             # Start schedule_process
             self.schedule_process(message_callback, duration_period_in_seconds)
@@ -1180,14 +1203,12 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.metric.inc("error_count")
             self.connector_logger.error(
                 "[ERROR] An unexpected error occurred during schedule_unit",
-                {"reason": str(err)}
+                {"reason": str(err)},
             )
             sys.excepthook(*sys.exc_info())
 
     def schedule_iso(
-        self,
-        message_callback: Callable[[], None],
-        duration_period: str
+        self, message_callback: Callable[[], None], duration_period: str
     ) -> None:
         """
         This method allows you to calculate the duration period of connectors in seconds from ISO 8601 format
@@ -1210,15 +1231,15 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.metric.inc("error_count")
             self.connector_logger.error(
                 "[ERROR] An unexpected error occurred during schedule_iso",
-                {"reason": str(err)}
+                {"reason": str(err)},
             )
             sys.excepthook(*sys.exc_info())
 
     def _schedule_process(
-            self,
-            scheduler: sched.scheduler,
-            message_callback: Callable[[], None],
-            duration_period: int,
+        self,
+        scheduler: sched.scheduler,
+        message_callback: Callable[[], None],
+        duration_period: int,
     ) -> None:
         """
         When scheduling, the function retrieves the details of the connector queue,
@@ -1241,7 +1262,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         except Exception as err:
             self.metric.inc("error_count")
             self.connector_logger.error(
-                "[ERROR] An error occurred while checking the queue size", {"reason": str(err)}
+                "[ERROR] An error occurred while checking the queue size",
+                {"reason": str(err)},
             )
             sys.excepthook(*sys.exc_info())
 
@@ -1249,7 +1271,12 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             # Lets you know what the next run of the scheduler will be (confirmed)
             self.next_run_datetime(duration_period)
             # Then schedule the next execution
-            scheduler.enter(duration_period, 1, self._schedule_process, (scheduler, message_callback, duration_period))
+            scheduler.enter(
+                duration_period,
+                1,
+                self._schedule_process,
+                (scheduler, message_callback, duration_period),
+            )
 
     def schedule_process(self, message_callback, duration_period) -> None:
         try:
@@ -1280,7 +1307,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                     duration_period,
                     1,
                     self._schedule_process,
-                    (self.scheduler, message_callback, duration_period)
+                    (self.scheduler, message_callback, duration_period),
                 )
                 self.scheduler.run()
 
@@ -1295,7 +1322,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.metric.inc("error_count")
             self.connector_logger.error(
                 "[ERROR] An unexpected error occurred during schedule",
-                {"reason": str(err)}
+                {"reason": str(err)},
             )
             sys.excepthook(*sys.exc_info())
 
