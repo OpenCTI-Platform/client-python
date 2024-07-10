@@ -4,6 +4,7 @@ import copy
 import datetime
 import json
 import os
+import sched
 import queue
 import signal
 import ssl
@@ -12,7 +13,9 @@ import tempfile
 import threading
 import time
 import uuid
+from pydantic import TypeAdapter
 from queue import Queue
+from enum import Enum
 from typing import Callable, Dict, List, Optional, Union
 
 import pika
@@ -419,7 +422,7 @@ class ListenQueue(threading.Thread):
 
 class PingAlive(threading.Thread):
     def __init__(
-        self, connector_logger, connector_id, api, get_state, set_state, metric
+        self, connector_logger, connector_id, api, get_state, set_state, metric, connector_info
     ) -> None:
         threading.Thread.__init__(self, daemon=True)
         self.connector_logger = connector_logger
@@ -430,13 +433,16 @@ class PingAlive(threading.Thread):
         self.set_state = set_state
         self.exit_event = threading.Event()
         self.metric = metric
+        self.connector_info = connector_info
 
     def ping(self) -> None:
         while not self.exit_event.is_set():
             try:
                 self.connector_logger.debug("PingAlive running.")
                 initial_state = self.get_state()
-                result = self.api.connector.ping(self.connector_id, initial_state)
+                connector_info = self.connector_info.all_details
+                self.connector_logger.debug("PingAlive ConnectorInfo", {"connector_info": connector_info})
+                result = self.api.connector.ping(self.connector_id, initial_state, connector_info)
                 remote_state = (
                     json.loads(result["connector_state"])
                     if result["connector_state"] is not None
@@ -646,12 +652,85 @@ class ListenStream(threading.Thread):
         self.exit_event.set()
 
 
+class ConnectorInfo:
+    def __init__(
+            self,
+            run_and_terminate: bool = False,
+            buffering: bool = False,
+            queue_threshold: int = 0,
+            queue_messages_size: int = 0,
+            next_run_datetime: str = None
+    ):
+        self._run_and_terminate = run_and_terminate
+        self._buffering = buffering
+        self._queue_threshold = queue_threshold
+        self._queue_messages_size = queue_messages_size
+        self._next_run_datetime = next_run_datetime
+
+    @property
+    def all_details(self):
+        return {
+            "run_and_terminate": self._run_and_terminate,
+            "buffering": self._buffering,
+            "queue_threshold": self._queue_threshold,
+            "queue_messages_size": self._queue_messages_size,
+            "next_run_datetime": self._next_run_datetime,
+        }
+
+    @property
+    def run_and_terminate(self) -> bool:
+        return self._run_and_terminate
+
+    @run_and_terminate.setter
+    def run_and_terminate(self, value):
+        self._run_and_terminate = value
+
+    @property
+    def buffering(self) -> bool:
+        return self._buffering
+
+    @buffering.setter
+    def buffering(self, value):
+        self._buffering = value
+
+    @property
+    def queue_threshold(self) -> int:
+        return self._queue_threshold
+
+    @queue_threshold.setter
+    def queue_threshold(self, value):
+        self._queue_threshold = value
+
+    @property
+    def queue_messages_size(self) -> int:
+        return self._queue_messages_size
+
+    @queue_messages_size.setter
+    def queue_messages_size(self, value):
+        self._queue_messages_size = value
+
+    @property
+    def next_run_datetime(self) -> str:
+        return self._next_run_datetime
+
+    @next_run_datetime.setter
+    def next_run_datetime(self, value):
+        self._next_run_datetime = value
+
+
 class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     """Python API for OpenCTI connector
 
     :param config: dict standard config
     :type config: Dict
     """
+    class TimeUnit(Enum):
+        SECONDS = 1,
+        MINUTES = 60,
+        HOURS = 3600,
+        DAYS = 86400,
+        WEEKS = 604800,
+        YEARS = 31536000,
 
     def __init__(self, config: Dict, playbook_compatible=False) -> None:
         sys.excepthook = killProgramHook
@@ -676,6 +755,18 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         )
         self.connect_type = get_config_variable(
             "CONNECTOR_TYPE", ["connector", "type"], config
+        )
+        self.connect_queue_threshold = get_config_variable(
+            "CONNECTOR_QUEUE_THRESHOLD",
+            ["connector", "queue_threshold"],
+            config,
+            isNumber=True,
+            default=524288000  # in byte = 500 Mo
+        )
+        self.connect_duration_period = get_config_variable(
+            "CONNECTOR_DURATION_PERIOD",
+            ["connector", "duration_period"],
+            config
         )
         self.connect_live_stream_id = get_config_variable(
             "CONNECTOR_LIVE_STREAM_ID",
@@ -775,6 +866,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             False,
             False,
         )
+        self.scheduler = sched.scheduler(time.time, time.sleep)
         # Start up the server to expose the metrics.
         expose_metrics = get_config_variable(
             "CONNECTOR_EXPOSE_METRICS",
@@ -786,7 +878,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         metrics_port = get_config_variable(
             "CONNECTOR_METRICS_PORT", ["connector", "metrics_port"], config, True, 9095
         )
-
+        # Initialize ConnectorInfo instance
+        self.connector_info = ConnectorInfo()
         # Initialize configuration
         # - Classic API that will be directly attached to the connector rights
         self.api = OpenCTIApiClient(
@@ -888,6 +981,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 self.get_state,
                 self.set_state,
                 self.metric,
+                self.connector_info,
             )
             self.ping.start()
 
@@ -972,7 +1066,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     def force_ping(self):
         try:
             initial_state = self.get_state()
-            result = self.api.connector.ping(self.connector_id, initial_state)
+            connector_info = self.connector_info.all_details
+            self.connector_logger.debug("ForcePing ConnectorInfo", {"connector_info": connector_info})
+            result = self.api.connector.ping(self.connector_id, initial_state, connector_info)
             remote_state = (
                 json.loads(result["connector_state"])
                 if result["connector_state"] is not None
@@ -980,10 +1076,228 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 else None
             )
             if initial_state != remote_state:
-                self.api.connector.ping(self.connector_id, initial_state)
+                self.api.connector.ping(self.connector_id, initial_state, connector_info)
         except Exception as e:  # pylint: disable=broad-except
             self.metric.inc("error_count")
             self.connector_logger.error("Error pinging the API", {"reason": str(e)})
+
+    def next_run_datetime(self, duration_period_in_seconds: int) -> str:
+        """
+        Lets you know what the next run of the scheduler will be in iso datetime format
+
+        :param duration_period_in_seconds: Corresponds to the next execution date in iso format datetime
+        :return: String format '%Y-%m-%dT%H:%M:%SZ'
+        """
+        try:
+            duration_timedelta = datetime.timedelta(seconds=duration_period_in_seconds)
+            next_datetime = datetime.datetime.now() + duration_timedelta
+            next_datetime_explicit = next_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
+            # Set next_run_datetime
+            self.connector_info.next_run_datetime = next_datetime_explicit
+            return next_datetime_explicit
+        except Exception as err:
+            self.metric.inc("error_count")
+            self.connector_logger.error(
+                "[ERROR] An error occurred while calculating the next run in datetime", {"reason": str(err)}
+            )
+            sys.excepthook(*sys.exc_info())
+
+    def check_connector_buffering(self) -> bool:
+        """
+        Lets you know if the RabbitMQ queue has exceeded the allowed threshold defined by the connector or not
+        :return: boolean
+        """
+        try:
+            connector_details = self.api.connector.read(connector_id=self.connector_id)
+
+            if connector_details and connector_details.get("id") is not None:
+                connector_queue_id = connector_details["id"]
+                connector_queue_details = connector_details["connector_queue_details"]
+
+                self.connector_logger.debug(
+                    "[DEBUG] Connector queue details ...",
+                    {
+                        "connector_queue_id": connector_queue_id,
+                        "queue_threshold": self.connect_queue_threshold,
+                        "messages_number": connector_queue_details["messages_number"],
+                        "messages_size": connector_queue_details["messages_size"],
+                    })
+
+                queue_messages_size = connector_queue_details["messages_size"]
+                queue_threshold = self.connect_queue_threshold
+
+                # Set the connector info
+                self.connector_info.queue_messages_size = queue_messages_size
+                self.connector_info.queue_threshold = queue_threshold
+
+                if int(queue_messages_size) < int(queue_threshold):
+                    # Set buffering = False
+                    self.connector_info.buffering = False
+                    return False
+                else:
+                    # Set buffering = True
+                    self.connector_info.buffering = True
+                    return True
+
+            else:
+                self.metric.inc("error_count")
+                self.connector_logger.error("[ERROR] An error occurred while retrieving connector details")
+                sys.excepthook(*sys.exc_info())
+        except Exception as err:
+            self.metric.inc("error_count")
+            self.connector_logger.error(
+                "[ERROR] An error occurred while checking the queue size", {"reason": str(err)}
+            )
+            sys.excepthook(*sys.exc_info())
+
+    def schedule_unit(
+            self,
+            message_callback: Callable[[], None],
+            duration_period: Union[int | float | str],
+            time_unit: TimeUnit
+    ) -> None:
+        """
+        This (deprecated) method is there to manage backward compatibility of intervals on connectors,
+        allows you to calculate the duration period of connectors in seconds with time_unit and will be
+        replaced by the "schedule_iso" method. It uses a TimeUnit enum.
+
+        :param message_callback: Corresponds to the connector process
+        :param duration_period: Corresponds to the connector interval, it can vary depending on the connector
+        configuration.
+        :param time_unit: The unit of time for the duration_period.
+        Enum TimeUnit Valid (YEARS, WEEKS, DAYS, HOURS, MINUTES, SECONDS)
+        :return: None
+        """
+        try:
+            # Calculates the duration period in seconds
+            time_unit_in_seconds = time_unit.value[0]
+            duration_period_in_seconds = int(float(duration_period) * time_unit_in_seconds)
+
+            # Start schedule_process
+            self.schedule_process(message_callback, duration_period_in_seconds)
+
+        except Exception as err:
+            self.metric.inc("error_count")
+            self.connector_logger.error(
+                "[ERROR] An unexpected error occurred during schedule_unit",
+                {"reason": str(err)}
+            )
+            sys.excepthook(*sys.exc_info())
+
+    def schedule_iso(
+        self,
+        message_callback: Callable[[], None],
+        duration_period: str
+    ) -> None:
+        """
+        This method allows you to calculate the duration period of connectors in seconds from ISO 8601 format
+        and start the scheduler process.
+
+        :param message_callback: Corresponds to the connector process
+        :param duration_period: Corresponds to a string in ISO 8601 format "P18Y9W4DT11H9M8S"
+        :return: None
+        """
+        try:
+            # Calculates the duration period in seconds
+            timedelta_adapter = TypeAdapter(datetime.timedelta)
+            td = timedelta_adapter.validate_python(duration_period)
+            duration_period_in_seconds = int(td.total_seconds())
+
+            # Start schedule_process
+            self.schedule_process(message_callback, duration_period_in_seconds)
+
+        except Exception as err:
+            self.metric.inc("error_count")
+            self.connector_logger.error(
+                "[ERROR] An unexpected error occurred during schedule_iso",
+                {"reason": str(err)}
+            )
+            sys.excepthook(*sys.exc_info())
+
+    def _schedule_process(
+            self,
+            scheduler: sched.scheduler,
+            message_callback: Callable[[], None],
+            duration_period: int,
+    ) -> None:
+        """
+        When scheduling, the function retrieves the details of the connector queue,
+        and the connector process starts only if the size of the queue messages is less than or
+        equal to the queue_threshold variable.
+
+        :param scheduler: Scheduler contains a list of all tasks to be started
+        :param message_callback: Corresponds to the connector process
+        :param duration_period: Corresponds to the connector's interval
+        :return: None
+        """
+        try:
+            self.connector_logger.info("[INFO] Starting schedule")
+            check_connector_buffering = self.check_connector_buffering()
+
+            if not check_connector_buffering:
+                # Start running the connector
+                message_callback()
+
+        except Exception as err:
+            self.metric.inc("error_count")
+            self.connector_logger.error(
+                "[ERROR] An error occurred while checking the queue size", {"reason": str(err)}
+            )
+            sys.excepthook(*sys.exc_info())
+
+        finally:
+            # Lets you know what the next run of the scheduler will be (confirmed)
+            self.next_run_datetime(duration_period)
+            # Then schedule the next execution
+            scheduler.enter(duration_period, 1, self._schedule_process, (scheduler, message_callback, duration_period))
+
+    def schedule_process(self, message_callback, duration_period) -> None:
+        try:
+            # In the case where the duration_period_converted is zero, we consider it to be a run and terminate
+            if self.connect_run_and_terminate or duration_period == 0:
+                self.connector_logger.info("[INFO] Starting run and terminate")
+                # Set run_and_terminate = True
+                self.connector_info.run_and_terminate = True
+                check_connector_buffering = self.check_connector_buffering()
+
+                if not check_connector_buffering:
+                    # Start running the connector
+                    message_callback()
+
+                self.connector_logger.info("[INFO] Closing run and terminate")
+                self.force_ping()
+                sys.exit(0)
+            else:
+                # Lets you know what the next run of the scheduler will be (estimate)
+                self.next_run_datetime(duration_period)
+                # Start running the connector
+                message_callback()
+                # Lets you know what the next run of the scheduler will be (confirmed)
+                self.next_run_datetime(duration_period)
+
+                # Then schedule the next execution
+                self.scheduler.enter(
+                    duration_period,
+                    1,
+                    self._schedule_process,
+                    (self.scheduler, message_callback, duration_period)
+                )
+                self.scheduler.run()
+
+        except SystemExit:
+            self.connector_logger.info("SystemExit caught, stopping the scheduler")
+            if self.connect_run_and_terminate:
+                self.connector_logger.info("[INFO] Closing run and terminate")
+                self.force_ping()
+                sys.exit(0)
+
+        except Exception as err:
+            self.metric.inc("error_count")
+            self.connector_logger.error(
+                "[ERROR] An unexpected error occurred during schedule",
+                {"reason": str(err)}
+            )
+            sys.excepthook(*sys.exc_info())
 
     def listen(
         self,
