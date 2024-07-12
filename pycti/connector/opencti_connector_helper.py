@@ -670,7 +670,7 @@ class ConnectorInfo:
         buffering: bool = False,
         queue_threshold: int = 0,
         queue_messages_size: int = 0,
-        next_run_datetime: str = None,
+        next_run_datetime: datetime = None,
     ):
         self._run_and_terminate = run_and_terminate
         self._buffering = buffering
@@ -721,7 +721,7 @@ class ConnectorInfo:
         self._queue_messages_size = value
 
     @property
-    def next_run_datetime(self) -> str:
+    def next_run_datetime(self) -> datetime:
         return self._next_run_datetime
 
     @next_run_datetime.setter
@@ -737,12 +737,12 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
     """
 
     class TimeUnit(Enum):
-        SECONDS = (1,)
-        MINUTES = (60,)
-        HOURS = (3600,)
-        DAYS = (86400,)
-        WEEKS = (604800,)
-        YEARS = (31536000,)
+        SECONDS = 1
+        MINUTES = 60
+        HOURS = 3600
+        DAYS = 86400
+        WEEKS = 604800
+        YEARS = 31536000
 
     def __init__(self, config: Dict, playbook_compatible=False) -> None:
         sys.excepthook = killProgramHook
@@ -984,16 +984,34 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
         # Start ping thread
         if not self.connect_run_and_terminate:
-            self.ping = PingAlive(
-                self.connector_logger,
-                self.connector.id,
-                self.api,
-                self.get_state,
-                self.set_state,
-                self.metric,
-                self.connector_info,
-            )
-            self.ping.start()
+
+            is_run_and_terminate = False
+            if self.connect_duration_period == 0:
+                is_run_and_terminate = True
+
+            if isinstance(self.connect_duration_period, str):
+                if self.connect_duration_period == "0":
+                    is_run_and_terminate = True
+                else:
+                    # Calculates and validate the duration period in seconds
+                    timedelta_adapter = TypeAdapter(datetime.timedelta)
+                    td = timedelta_adapter.validate_python(self.connect_duration_period)
+                    duration_period_in_seconds = int(td.total_seconds())
+
+                    if duration_period_in_seconds == 0:
+                        is_run_and_terminate = True
+
+            if self.connect_duration_period is None or not is_run_and_terminate:
+                self.ping = PingAlive(
+                    self.connector_logger,
+                    self.connector.id,
+                    self.api,
+                    self.get_state,
+                    self.set_state,
+                    self.metric,
+                    self.connector_info,
+                )
+                self.ping.start()
 
         # self.listen_stream = None
         self.listen_queue = None
@@ -1097,7 +1115,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.metric.inc("error_count")
             self.connector_logger.error("Error pinging the API", {"reason": str(e)})
 
-    def next_run_datetime(self, duration_period_in_seconds: int) -> str:
+    def next_run_datetime(self, duration_period_in_seconds: int) -> datetime:
         """
         Lets you know what the next run of the scheduler will be in iso datetime format
 
@@ -1107,10 +1125,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         try:
             duration_timedelta = datetime.timedelta(seconds=duration_period_in_seconds)
             next_datetime = datetime.datetime.now() + duration_timedelta
-            next_datetime_explicit = next_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
             # Set next_run_datetime
-            self.connector_info.next_run_datetime = next_datetime_explicit
-            return next_datetime_explicit
+            self.connector_info.next_run_datetime = next_datetime
+            return next_datetime
         except Exception as err:
             self.metric.inc("error_count")
             self.connector_logger.error(
@@ -1219,10 +1236,13 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         :return: None
         """
         try:
-            # Calculates the duration period in seconds
-            timedelta_adapter = TypeAdapter(datetime.timedelta)
-            td = timedelta_adapter.validate_python(duration_period)
-            duration_period_in_seconds = int(td.total_seconds())
+            if duration_period == "0":
+                duration_period_in_seconds = 0
+            else:
+                # Calculates and validate the duration period in seconds
+                timedelta_adapter = TypeAdapter(datetime.timedelta)
+                td = timedelta_adapter.validate_python(duration_period)
+                duration_period_in_seconds = int(td.total_seconds())
 
             # Start schedule_process
             self.schedule_process(message_callback, duration_period_in_seconds)
@@ -1295,8 +1315,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 self.force_ping()
                 sys.exit(0)
             else:
-                # Lets you know what the next run of the scheduler will be (estimate)
-                self.next_run_datetime(duration_period)
                 # Start running the connector
                 message_callback()
                 # Lets you know what the next run of the scheduler will be (confirmed)
