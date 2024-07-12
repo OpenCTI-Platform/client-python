@@ -1119,8 +1119,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         """
         Lets you know what the next run of the scheduler will be in iso datetime format
 
-        :param duration_period_in_seconds: Corresponds to the next execution date in iso format datetime
-        :return: String format '%Y-%m-%dT%H:%M:%SZ'
+        :param duration_period_in_seconds: Corresponds to the next execution date in iso datetime format
+        :return: datetime
         """
         try:
             duration_timedelta = datetime.timedelta(seconds=duration_period_in_seconds)
