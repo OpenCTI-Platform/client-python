@@ -772,7 +772,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             "CONNECTOR_QUEUE_THRESHOLD",
             ["connector", "queue_threshold"],
             config,
-            default=500, # Mo
+            default=500,  # Mo
         )
         self.connect_duration_period = get_config_variable(
             "CONNECTOR_DURATION_PERIOD", ["connector", "duration_period"], config
@@ -1114,7 +1114,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.metric.inc("error_count")
             self.connector_logger.error("Error pinging the API", {"reason": str(e)})
 
-    def next_run_datetime(self, duration_period_in_seconds: Union[int, float]) -> datetime:
+    def next_run_datetime(
+        self, duration_period_in_seconds: Union[int, float]
+    ) -> datetime:
         """
         Lets you know what the next run of the scheduler will be in iso datetime format
 
@@ -1298,7 +1300,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 (scheduler, message_callback, duration_period),
             )
 
-    def schedule_process(self, message_callback: Callable[[], None], duration_period: Union[int, float]) -> None:
+    def schedule_process(
+        self, message_callback: Callable[[], None], duration_period: Union[int, float]
+    ) -> None:
         """
         This method schedules the execution of a connector process.
         If `duration_period' is zero or `self.connect_run_and_terminate' is True, the process will run and terminate.
