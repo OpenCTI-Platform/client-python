@@ -668,8 +668,8 @@ class ConnectorInfo:
         self,
         run_and_terminate: bool = False,
         buffering: bool = False,
-        queue_threshold: int = 0,
-        queue_messages_size: int = 0,
+        queue_threshold: float = 500,
+        queue_messages_size: float = 0,
         next_run_datetime: datetime = None,
     ):
         self._run_and_terminate = run_and_terminate
@@ -705,7 +705,7 @@ class ConnectorInfo:
         self._buffering = value
 
     @property
-    def queue_threshold(self) -> int:
+    def queue_threshold(self) -> float:
         return self._queue_threshold
 
     @queue_threshold.setter
@@ -713,7 +713,7 @@ class ConnectorInfo:
         self._queue_threshold = value
 
     @property
-    def queue_messages_size(self) -> int:
+    def queue_messages_size(self) -> float:
         return self._queue_messages_size
 
     @queue_messages_size.setter
@@ -772,8 +772,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             "CONNECTOR_QUEUE_THRESHOLD",
             ["connector", "queue_threshold"],
             config,
-            isNumber=True,
-            default=524288000,  # in byte = 500 Mo
+            default=500, # Mo
         )
         self.connect_duration_period = get_config_variable(
             "CONNECTOR_DURATION_PERIOD", ["connector", "duration_period"], config
@@ -1115,11 +1114,11 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.metric.inc("error_count")
             self.connector_logger.error("Error pinging the API", {"reason": str(e)})
 
-    def next_run_datetime(self, duration_period_in_seconds: int) -> datetime:
+    def next_run_datetime(self, duration_period_in_seconds: Union[int, float]) -> datetime:
         """
         Lets you know what the next run of the scheduler will be in iso datetime format
 
-        :param duration_period_in_seconds: Corresponds to the next execution date in iso datetime format
+        :param duration_period_in_seconds: Duration in seconds
         :return: datetime
         """
         try:
@@ -1148,29 +1147,32 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 connector_queue_id = connector_details["id"]
                 connector_queue_details = connector_details["connector_queue_details"]
 
+                queue_messages_size_byte = connector_queue_details["messages_size"]
+                queue_threshold = self.connect_queue_threshold
+
+                # Convert queue_messages_size to Mo (decimal)
+                queue_messages_size_mo = queue_messages_size_byte / 1000000
+
                 self.connector_logger.debug(
                     "[DEBUG] Connector queue details ...",
                     {
                         "connector_queue_id": connector_queue_id,
-                        "queue_threshold": self.connect_queue_threshold,
+                        "queue_threshold": queue_threshold,
                         "messages_number": connector_queue_details["messages_number"],
-                        "messages_size": connector_queue_details["messages_size"],
+                        "queue_messages_size": queue_messages_size_mo,
                     },
                 )
 
-                queue_messages_size = connector_queue_details["messages_size"]
-                queue_threshold = self.connect_queue_threshold
-
                 # Set the connector info
-                self.connector_info.queue_messages_size = queue_messages_size
+                self.connector_info.queue_messages_size = queue_messages_size_mo
                 self.connector_info.queue_threshold = queue_threshold
 
-                if int(queue_messages_size) < int(queue_threshold):
-                    # Set buffering = False
+                if float(queue_messages_size_mo) < float(queue_threshold):
+                    # Set buffering
                     self.connector_info.buffering = False
                     return False
                 else:
-                    # Set buffering = True
+                    # Set buffering
                     self.connector_info.buffering = True
                     return True
 
@@ -1208,10 +1210,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         """
         try:
             # Calculates the duration period in seconds
-            time_unit_in_seconds = time_unit.value[0]
-            duration_period_in_seconds = int(
-                float(duration_period) * time_unit_in_seconds
-            )
+            time_unit_in_seconds = time_unit.value
+            duration_period_in_seconds = float(duration_period) * time_unit_in_seconds
 
             # Start schedule_process
             self.schedule_process(message_callback, duration_period_in_seconds)
@@ -1259,7 +1259,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         self,
         scheduler: sched.scheduler,
         message_callback: Callable[[], None],
-        duration_period: int,
+        duration_period: Union[int, float],
     ) -> None:
         """
         When scheduling, the function retrieves the details of the connector queue,
@@ -1288,7 +1288,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             sys.excepthook(*sys.exc_info())
 
         finally:
-            # Lets you know what the next run of the scheduler will be (confirmed)
+            # Lets you know what the next run of the scheduler will be
             self.next_run_datetime(duration_period)
             # Then schedule the next execution
             scheduler.enter(
@@ -1298,12 +1298,21 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 (scheduler, message_callback, duration_period),
             )
 
-    def schedule_process(self, message_callback, duration_period) -> None:
+    def schedule_process(self, message_callback: Callable[[], None], duration_period: Union[int, float]) -> None:
+        """
+        This method schedules the execution of a connector process.
+        If `duration_period' is zero or `self.connect_run_and_terminate' is True, the process will run and terminate.
+        Otherwise, it schedules the next run based on the interval.
+
+        :param message_callback: Corresponds to the connector process
+        :param duration_period: Corresponds to the connector's interval in seconds
+        :return: None
+        """
         try:
             # In the case where the duration_period_converted is zero, we consider it to be a run and terminate
             if self.connect_run_and_terminate or duration_period == 0:
                 self.connector_logger.info("[INFO] Starting run and terminate")
-                # Set run_and_terminate = True
+                # Set run_and_terminate
                 self.connector_info.run_and_terminate = True
                 check_connector_buffering = self.check_connector_buffering()
 
@@ -1317,7 +1326,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             else:
                 # Start running the connector
                 message_callback()
-                # Lets you know what the next run of the scheduler will be (confirmed)
+                # Lets you know what the next run of the scheduler will be
                 self.next_run_datetime(duration_period)
 
                 # Then schedule the next execution
