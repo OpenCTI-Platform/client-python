@@ -94,8 +94,8 @@ class OpenCTIApiConnector:
         """
 
         query = """
-            mutation PingConnector($id: ID!, $state: String, $connector_info: ConnectorInfoInput! ) {
-                pingConnector(id: $id, state: $state, connector_info: $connector_info) {
+            mutation PingConnector($id: ID!, $state: String, $connectorInfo: ConnectorInfoInput ) {
+                pingConnector(id: $id, state: $state, connectorInfo: $connectorInfo) {
                     id
                     connector_state
                     connector_info {
@@ -113,7 +113,7 @@ class OpenCTIApiConnector:
             {
                 "id": connector_id,
                 "state": json.dumps(connector_state),
-                "connector_info": connector_info,
+                "connectorInfo": connector_info,
             },
         )
         return result["data"]["pingConnector"]
