@@ -1114,9 +1114,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.metric.inc("error_count")
             self.connector_logger.error("Error pinging the API", {"reason": str(e)})
 
-    def next_run_datetime(
-        self, duration_period_in_seconds: Union[int, float]
-    ) -> None:
+    def next_run_datetime(self, duration_period_in_seconds: Union[int, float]) -> None:
         """
         Lets you know what the next run of the scheduler will be in iso datetime format
 
@@ -1127,7 +1125,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             duration_timedelta = datetime.timedelta(seconds=duration_period_in_seconds)
             next_datetime = datetime.datetime.now() + duration_timedelta
             # Set next_run_datetime
-            self.connector_info.next_run_datetime = next_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
+            self.connector_info.next_run_datetime = next_datetime.strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
             return
         except Exception as err:
             self.metric.inc("error_count")
