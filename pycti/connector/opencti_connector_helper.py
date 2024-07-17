@@ -671,12 +671,14 @@ class ConnectorInfo:
         queue_threshold: float = 500,
         queue_messages_size: float = 0,
         next_run_datetime: datetime = None,
+        last_run_datetime: datetime = None,
     ):
         self._run_and_terminate = run_and_terminate
         self._buffering = buffering
         self._queue_threshold = queue_threshold
         self._queue_messages_size = queue_messages_size
         self._next_run_datetime = next_run_datetime
+        self._last_run_datetime = last_run_datetime
 
     @property
     def all_details(self):
@@ -686,6 +688,7 @@ class ConnectorInfo:
             "queue_threshold": self._queue_threshold,
             "queue_messages_size": self._queue_messages_size,
             "next_run_datetime": self._next_run_datetime,
+            "last_run_datetime": self._last_run_datetime,
         }
 
     @property
@@ -727,6 +730,14 @@ class ConnectorInfo:
     @next_run_datetime.setter
     def next_run_datetime(self, value):
         self._next_run_datetime = value
+
+    @property
+    def last_run_datetime(self) -> datetime:
+        return self._last_run_datetime
+
+    @last_run_datetime.setter
+    def last_run_datetime(self, value):
+        self._last_run_datetime = value
 
 
 class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
@@ -1128,11 +1139,36 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.connector_info.next_run_datetime = next_datetime.strftime(
                 "%Y-%m-%dT%H:%M:%SZ"
             )
+            self.connector_logger.info(
+                "[INFO] Schedule next run of connector: ",
+                {"next_run_datetime": self.connector_info.next_run_datetime},
+            )
             return
         except Exception as err:
             self.metric.inc("error_count")
             self.connector_logger.error(
                 "[ERROR] An error occurred while calculating the next run in datetime",
+                {"reason": str(err)},
+            )
+            sys.excepthook(*sys.exc_info())
+
+    def last_run_datetime(self) -> None:
+        """
+        Lets you know what the last run of the connector the scheduler processed, will be in iso datetime format
+
+        :return: None
+        """
+        try:
+            current_datetime = datetime.datetime.now()
+            # Set last_run_datetime
+            self.connector_info.last_run_datetime = current_datetime.strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
+            return
+        except Exception as err:
+            self.metric.inc("error_count")
+            self.connector_logger.error(
+                "[ERROR] An error occurred while converting the last run in datetime",
                 {"reason": str(err)},
             )
             sys.excepthook(*sys.exc_info())
@@ -1280,6 +1316,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             if not check_connector_buffering:
                 # Start running the connector
                 message_callback()
+                # Lets you know what is the last run of the connector datetime
+                self.last_run_datetime()
 
         except Exception as err:
             self.metric.inc("error_count")
@@ -1323,6 +1361,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 if not check_connector_buffering:
                     # Start running the connector
                     message_callback()
+                    # Lets you know what is the last run of the connector datetime
+                    self.last_run_datetime()
 
                 self.connector_logger.info("[INFO] Closing run and terminate")
                 self.force_ping()
@@ -1330,6 +1370,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             else:
                 # Start running the connector
                 message_callback()
+                # Lets you know what is the last run of the connector datetime
+                self.last_run_datetime()
                 # Lets you know what the next run of the scheduler will be
                 self.next_run_datetime(duration_period)
 
