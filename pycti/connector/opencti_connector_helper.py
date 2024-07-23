@@ -1134,7 +1134,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         """
         try:
             duration_timedelta = datetime.timedelta(seconds=duration_period_in_seconds)
-            next_datetime = datetime.datetime.now() + duration_timedelta
+            next_datetime = datetime.datetime.utcnow() + duration_timedelta
             # Set next_run_datetime
             self.connector_info.next_run_datetime = next_datetime.strftime(
                 "%Y-%m-%dT%H:%M:%SZ"
@@ -1159,7 +1159,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         :return: None
         """
         try:
-            current_datetime = datetime.datetime.now()
+            current_datetime = datetime.datetime.utcnow()
             # Set last_run_datetime
             self.connector_info.last_run_datetime = current_datetime.strftime(
                 "%Y-%m-%dT%H:%M:%SZ"
@@ -1370,6 +1370,8 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             else:
                 # Start running the connector
                 message_callback()
+                # Set queue_threshold and queue_messages_size for the first run
+                self.check_connector_buffering()
                 # Lets you know what is the last run of the connector datetime
                 self.last_run_datetime()
                 # Lets you know what the next run of the scheduler will be
