@@ -1210,6 +1210,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                     self.connector_info.buffering = False
                     return False
                 else:
+                    self.connector_logger.info(
+                        "[INFO] Connector will not run until the queue messages size is reduced under queue threshold"
+                    )
                     # Set buffering
                     self.connector_info.buffering = True
                     return True
