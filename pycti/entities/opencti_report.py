@@ -896,7 +896,9 @@ class Report:
                 )
             if "x_opencti_participant_ids" not in stix_object:
                 stix_object["x_opencti_participant_ids"] = (
-                    self.opencti.get_attribute_in_extension("participant_ids", stix_object)
+                    self.opencti.get_attribute_in_extension(
+                        "participant_ids", stix_object
+                    )
                 )
             return self.create(
                 stix_id=stix_object["id"],
