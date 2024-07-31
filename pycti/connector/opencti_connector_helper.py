@@ -1364,9 +1364,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 if not check_connector_buffering:
                     # Start running the connector
                     message_callback()
-                    # Lets you know what is the last run of the connector datetime
-                    self.last_run_datetime()
 
+                # Lets you know what is the last run of the connector datetime
+                self.last_run_datetime()
                 self.connector_logger.info("[INFO] Closing run and terminate")
                 self.force_ping()
                 sys.exit(0)
