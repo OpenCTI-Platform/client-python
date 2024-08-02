@@ -18,7 +18,7 @@ class OpenCTIApiConnector:
         """
         self.api.app_logger.info("[INFO] Getting connector details ...")
         query = """
-            query GetConnectors($id: String!) {
+            query GetConnector($id: String!) {
                 connector(id: $id) {
                     id
                     name
