@@ -1627,14 +1627,11 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         # Upload workbench in case of pending validation
         if not file_name and work_id:
             file_name = f"{work_id}.json"
+        id = ""
         if self.connect_validate_before_import and not bypass_validation and file_name:
-            self.api.upload_pending_file(
-                file_name=file_name,
-                data=bundle,
-                mime_type="application/json",
-                entity_id=entity_id,
-            )
-            return []
+            id = self.api.create_draft(file_name=file_name)
+            if id == "":
+                return []
 
         # If directory setup, write the bundle to the target directory
         if bundle_send_to_directory and bundle_send_to_directory_path is not None:
@@ -1749,6 +1746,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                         entities_types=entities_types,
                         sequence=sequence,
                         update=update,
+                        draft_id=id,
                     )
                 channel.close()
                 pika_connection.close()
@@ -1774,11 +1772,14 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         :type entities_types: list, optional
         :param update: whether to update data in the database, defaults to False
         :type update: bool, optional
+        :param draft_id: if draft_id is set, bundle must be set in draft context
+        :type draft_id:
         """
         work_id = kwargs.get("work_id", None)
         sequence = kwargs.get("sequence", 0)
         update = kwargs.get("update", False)
         entities_types = kwargs.get("entities_types", None)
+        draft_id = kwargs.get("draft_id", None)
 
         if entities_types is None:
             entities_types = []
@@ -1800,6 +1801,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 "utf-8"
             ),
             "update": update,
+            "draft_id": draft_id,
         }
         if work_id is not None:
             message["work_id"] = work_id

@@ -213,6 +213,9 @@ class OpenCTIApiClient:
     def set_event_id(self, event_id):
         self.request_headers["opencti-event-id"] = event_id
 
+    def set_draft_id(self, draft_id):
+        self.request_headers["opencti-draft-id"] = draft_id
+
     def set_synchronized_upsert_header(self, synchronized):
         self.request_headers["synchronized-upsert"] = (
             "true" if synchronized is True else "false"
@@ -662,6 +665,34 @@ class OpenCTIApiClient:
             if file_markings is not None:
                 query_vars["fileMarkings"] = file_markings
             return self.query(query, query_vars)
+        else:
+            self.app_logger.error("[upload] Missing parameter: file_name")
+            return None
+
+    def create_draft(self, **kwargs):
+        """create a draft in OpenCTI API
+
+        :param `**kwargs`: arguments for file name creating draft
+        :return: returns the query response for the draft creation
+        :rtype: id
+        """
+
+        file_name = kwargs.get("file_name", None)
+
+        if file_name is not None:
+            self.app_logger.info("Creating a draft.")
+            query = """
+                    mutation draftWorkspaceAdd($input: DraftWorkspaceAddInput!) {
+                        draftWorkspaceAdd(input: $input) {
+                            id
+                        }
+                    }
+                 """
+            queryResult = self.query(
+                query,
+                {"input": { "name": file_name }},
+            )
+            return queryResult['data']['draftWorkspaceAdd']['id']
         else:
             self.app_logger.error("[upload] Missing parameter: file_name")
             return None
