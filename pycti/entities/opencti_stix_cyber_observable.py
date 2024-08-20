@@ -275,6 +275,8 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
             type = "IPv4-Addr"
         elif type.lower() == "ipv6-addr":
             type = "IPv6-Addr"
+        elif type.lower() == "persona":
+            type = "Persona"
         elif type.lower() == "hostname" or type.lower() == "x-opencti-hostname":
             type = "Hostname"
         elif type.lower() == "payment-card" or type.lower() == "x-opencti-payment-card":
