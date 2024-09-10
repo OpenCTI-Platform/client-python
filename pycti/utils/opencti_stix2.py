@@ -2396,7 +2396,10 @@ class OpenCTIStix2:
             elif item["type"] == "sighting":
                 # region Resolve the to
                 to_ids = []
-                if "where_sighted_refs" in item:
+                if "x_opencti_where_sighted_refs" in item:
+                    for where_sighted_ref in item["_opencti_where_sighted_refs"]:
+                        to_ids.append(where_sighted_ref)
+                elif "where_sighted_refs" in item:
                     for where_sighted_ref in item["where_sighted_refs"]:
                         to_ids.append(where_sighted_ref)
                 # endregion
@@ -2404,13 +2407,8 @@ class OpenCTIStix2:
                 from_id = None
                 if "x_opencti_sighting_of_ref" in item:
                     from_id = item["x_opencti_sighting_of_ref"]
-                elif (
-                    self.opencti.get_attribute_in_extension("sighting_of_ref", item)
-                    is not None
-                ):
-                    from_id = self.opencti.get_attribute_in_extension(
-                        "sighting_of_ref", item
-                    )
+                elif "sighting_of_ref" in item:
+                    from_id = item["sighting_of_ref"]
                 # endregion
                 # region create the sightings
                 if len(to_ids) > 0:
