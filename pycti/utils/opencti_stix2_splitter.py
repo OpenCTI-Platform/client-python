@@ -10,10 +10,10 @@ from pycti.utils.opencti_stix2_identifier import (
 )
 from pycti.utils.opencti_stix2_utils import (
     STIX_CYBER_OBSERVABLE_MAPPING,
-    SUPPORTED_TIX_DOMAIN_OBJECTS,
+    SUPPORTED_STIX_DOMAIN_OBJECTS,
 )
 
-supported_types = SUPPORTED_TIX_DOMAIN_OBJECTS + list(
+supported_types = SUPPORTED_STIX_DOMAIN_OBJECTS + list(
     STIX_CYBER_OBSERVABLE_MAPPING.keys()
 )
 

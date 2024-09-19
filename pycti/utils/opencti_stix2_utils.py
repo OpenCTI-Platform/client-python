@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from stix2 import EqualityComparisonExpression, ObjectPath, ObservationExpression
 
-SUPPORTED_TIX_DOMAIN_OBJECTS = [
+SUPPORTED_STIX_DOMAIN_OBJECTS = [
     "marking-definition",
     "attack-pattern",
     "campaign",
