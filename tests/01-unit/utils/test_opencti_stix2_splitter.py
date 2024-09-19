@@ -45,7 +45,10 @@ def test_split_cyclic_bundle():
             )  # References are duplicated
             assert len(object_json["object_refs"]) == 2  # Cleaned cyclic refs
             assert len(object_json["object_marking_refs"]) == 1
-            assert object_json["object_marking_refs"][0] == "marking-definition--78ca4366-f5b8-4764-83f7-34ce38198e27"
+            assert (
+                object_json["object_marking_refs"][0]
+                == "marking-definition--78ca4366-f5b8-4764-83f7-34ce38198e27"
+            )
 
 
 def test_create_bundle():
