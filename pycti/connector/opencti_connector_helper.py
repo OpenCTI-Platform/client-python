@@ -1569,6 +1569,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         entity_id = kwargs.get("entity_id", None)
         file_name = kwargs.get("file_name", None)
         bundle_send_to_queue = kwargs.get("send_to_queue", self.bundle_send_to_queue)
+        cleanup_inconsistent_bundle = kwargs.get("cleanup_inconsistent_bundle", False)
         bundle_send_to_directory = kwargs.get(
             "send_to_directory", self.bundle_send_to_directory
         )
@@ -1699,7 +1700,10 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 expectations_number,
                 bundles,
             ) = stix2_splitter.split_bundle_with_expectations(
-                bundle, True, event_version
+                bundle=bundle,
+                use_json=True,
+                event_version=event_version,
+                cleanup_inconsistent_bundle=cleanup_inconsistent_bundle,
             )
 
         if len(bundles) == 0:

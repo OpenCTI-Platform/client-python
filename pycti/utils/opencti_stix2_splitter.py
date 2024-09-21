@@ -29,7 +29,9 @@ class OpenCTIStix2Splitter:
         self.cache_refs = {}
         self.elements = []
 
-    def enlist_element(self, item_id, raw_data, parent_acc):
+    def enlist_element(
+        self, item_id, raw_data, cleanup_inconsistent_bundle, parent_acc
+    ):
         nb_deps = 1
         if item_id not in raw_data:
             return 0
@@ -48,6 +50,8 @@ class OpenCTIStix2Splitter:
                 to_keep = []
                 for element_ref in item[key]:
                     # We need to check if this ref is not already a reference
+                    is_missing_ref = raw_data.get(element_ref) is None
+                    must_be_cleaned = is_missing_ref and cleanup_inconsistent_bundle
                     not_dependency_ref = (
                         self.cache_refs.get(element_ref) is None
                         or item_id not in self.cache_refs[element_ref]
@@ -55,18 +59,24 @@ class OpenCTIStix2Splitter:
                     # Prevent any self reference
                     if (
                         is_id_supported(element_ref)
+                        and not must_be_cleaned
                         and element_ref not in parent_acc
                         and element_ref != item_id
                         and not_dependency_ref
                     ):
                         self.cache_refs[item_id].append(element_ref)
                         nb_deps += self.enlist_element(
-                            element_ref, raw_data, parent_acc + [element_ref]
+                            element_ref,
+                            raw_data,
+                            cleanup_inconsistent_bundle,
+                            parent_acc + [element_ref],
                         )
                         if element_ref not in to_keep:
                             to_keep.append(element_ref)
                     item[key] = to_keep
             elif key.endswith("_ref"):
+                is_missing_ref = raw_data.get(value) is None
+                must_be_cleaned = is_missing_ref and cleanup_inconsistent_bundle
                 not_dependency_ref = (
                     self.cache_refs.get(value) is None
                     or item_id not in self.cache_refs[value]
@@ -74,6 +84,7 @@ class OpenCTIStix2Splitter:
                 # Prevent any self reference
                 if (
                     value is not None
+                    and not must_be_cleaned
                     and value not in parent_acc
                     and is_id_supported(value)
                     and value != item_id
@@ -81,7 +92,10 @@ class OpenCTIStix2Splitter:
                 ):
                     self.cache_refs[item_id].append(value)
                     nb_deps += self.enlist_element(
-                        value, raw_data, parent_acc + [value]
+                        value,
+                        raw_data,
+                        cleanup_inconsistent_bundle,
+                        parent_acc + [value],
                     )
                 else:
                     item[key] = None
@@ -161,7 +175,11 @@ class OpenCTIStix2Splitter:
         return nb_deps
 
     def split_bundle_with_expectations(
-        self, bundle, use_json=True, event_version=None
+        self,
+        bundle,
+        use_json=True,
+        event_version=None,
+        cleanup_inconsistent_bundle=False,
     ) -> Tuple[int, list]:
         """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
@@ -183,7 +201,7 @@ class OpenCTIStix2Splitter:
         for item in bundle_data["objects"]:
             raw_data[item["id"]] = item
         for item in bundle_data["objects"]:
-            self.enlist_element(item["id"], raw_data, [])
+            self.enlist_element(item["id"], raw_data, cleanup_inconsistent_bundle, [])
 
         # Build the bundles
         bundles = []
