@@ -22,7 +22,7 @@ def test_split_mono_bundle():
     assert expectations == 1
     json_bundle = json.loads(bundles[0])["objects"][0]
     assert json_bundle["created_by_ref"] == "identity--not-available"
-
+    # Split with cleanup_inconsistent_bundle
     stix_splitter = OpenCTIStix2Splitter()
     expectations, bundles = stix_splitter.split_bundle_with_expectations(
         bundle=content, cleanup_inconsistent_bundle=True
@@ -46,12 +46,11 @@ def test_split_missing_refs_bundle():
         content = file.read()
     expectations, bundles = stix_splitter.split_bundle_with_expectations(content)
     assert expectations == 4
-
+    # Split with cleanup_inconsistent_bundle
     stix_splitter = OpenCTIStix2Splitter()
     expectations, bundles = stix_splitter.split_bundle_with_expectations(
         bundle=content, cleanup_inconsistent_bundle=True
     )
-    print(json.dumps(bundles))
     assert expectations == 3
 
 
