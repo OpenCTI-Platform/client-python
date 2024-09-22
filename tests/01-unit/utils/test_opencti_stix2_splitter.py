@@ -14,6 +14,28 @@ def test_split_bundle():
     assert expectations == 7016
 
 
+def test_split_test_bundle():
+    stix_splitter = OpenCTIStix2Splitter()
+    with open("./tests/data/DATA-TEST-STIX2_v2.json") as file:
+        content = file.read()
+    expectations, bundles = stix_splitter.split_bundle_with_expectations(content)
+    assert expectations == 59
+    base_bundles = json.loads(content)["objects"]
+    for base in base_bundles:
+        found = None
+        for bundle in bundles:
+            json_bundle = json.loads(bundle)
+            object_json = json_bundle["objects"][0]
+            if object_json["id"] == base["id"]:
+                found = object_json
+                break
+        assert found is not None, "Every object of the bundle must be available"
+        del found["nb_deps"]
+        assert json.dumps(base) == json.dumps(
+            found
+        ), "Splitter must not have change the content"
+
+
 def test_split_mono_bundle():
     stix_splitter = OpenCTIStix2Splitter()
     with open("./tests/data/mono-bundle.json") as file:

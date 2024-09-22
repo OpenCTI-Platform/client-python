@@ -13,8 +13,10 @@ from pycti.utils.opencti_stix2_utils import (
     SUPPORTED_STIX_DOMAIN_OBJECTS,
 )
 
-supported_types = SUPPORTED_STIX_DOMAIN_OBJECTS + list(
-    STIX_CYBER_OBSERVABLE_MAPPING.keys()
+supported_types = (
+    SUPPORTED_STIX_DOMAIN_OBJECTS  # entities
+    + list(STIX_CYBER_OBSERVABLE_MAPPING.keys())  # observables
+    + ["relationship", "sighting"]  # relationships
 )
 
 
