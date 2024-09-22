@@ -36,9 +36,9 @@ def test_split_test_bundle():
         ), "Splitter must not have change the content"
 
 
-def test_split_mono_bundle():
+def test_split_mono_entity_bundle():
     stix_splitter = OpenCTIStix2Splitter()
-    with open("./tests/data/mono-bundle.json") as file:
+    with open("./tests/data/mono-bundle-entity.json") as file:
         content = file.read()
     expectations, bundles = stix_splitter.split_bundle_with_expectations(content)
     assert expectations == 1
@@ -52,6 +52,20 @@ def test_split_mono_bundle():
     assert expectations == 1
     json_bundle = json.loads(bundles[0])["objects"][0]
     assert json_bundle["created_by_ref"] is None
+
+
+def test_split_mono_relationship_bundle():
+    stix_splitter = OpenCTIStix2Splitter()
+    with open("../../../tests/data/mono-bundle-relationship.json") as file:
+        content = file.read()
+    expectations, bundles = stix_splitter.split_bundle_with_expectations(content)
+    assert expectations == 1
+    # Split with cleanup_inconsistent_bundle
+    stix_splitter = OpenCTIStix2Splitter()
+    expectations, bundles = stix_splitter.split_bundle_with_expectations(
+        bundle=content, cleanup_inconsistent_bundle=True
+    )
+    assert expectations == 0
 
 
 def test_split_capec_bundle():
