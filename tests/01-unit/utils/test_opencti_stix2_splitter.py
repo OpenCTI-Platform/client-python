@@ -56,7 +56,7 @@ def test_split_mono_entity_bundle():
 
 def test_split_mono_relationship_bundle():
     stix_splitter = OpenCTIStix2Splitter()
-    with open("../../../tests/data/mono-bundle-relationship.json") as file:
+    with open("./tests/data/mono-bundle-relationship.json") as file:
         content = file.read()
     expectations, bundles = stix_splitter.split_bundle_with_expectations(content)
     assert expectations == 1
