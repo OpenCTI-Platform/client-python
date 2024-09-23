@@ -78,6 +78,8 @@ STIX_CYBER_OBSERVABLE_MAPPING = {
     "tracking-number": "Tracking-Number",
     "payment-card": "Payment-Card",
     "media-content": "Media-Content",
+    "simple-observable": "Simple-Observable",
+    "persona": "Persona",
 }
 
 PATTERN_MAPPING = {
