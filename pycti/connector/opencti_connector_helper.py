@@ -1556,7 +1556,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         :type entities_types: list, optional
         :param update: whether to updated data in the database, defaults to False
         :type update: bool, optional
-        :param bypass_split: @deprecated use to prevent splitting of the bundle. Not used anymore
+        :param bypass_split: @deprecated [>=6.3 & <6.6] use to prevent splitting of the bundle. Not used anymore
         :type bypass_split: bool, optional
         :raises ValueError: if the bundle is empty
         :return: list of bundles
