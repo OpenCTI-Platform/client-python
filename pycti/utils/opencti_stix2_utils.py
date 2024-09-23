@@ -2,44 +2,48 @@ from typing import Any, Dict
 
 from stix2 import EqualityComparisonExpression, ObjectPath, ObservationExpression
 
-SUPPORTED_STIX_DOMAIN_OBJECTS = [
-    "marking-definition",
+SUPPORTED_STIX_ENTITY_OBJECTS = [
     "attack-pattern",
     "campaign",
-    "channel",
-    "event",
-    "note",
-    "observed-data",
-    "opinion",
-    "report",
-    "grouping",
+    "case-incident",
+    "x-opencti-case-incident",
     "case-rfi",
     "x-opencti-case-rfi",
     "case-rft",
     "x-opencti-case-rft",
-    "task",
-    "x-opencti-task",
-    "case-incident",
-    "x-opencti-case-incident",
-    "feedback",
-    "x-opencti-feedback",
+    "channel",
     "course-of-action",
     "data-component",
     "x-mitre-data-component",
     "data-source",
     "x-mitre-data-source",
+    "event",
+    "external-reference"
+    "feedback",
+    "x-opencti-feedback",
+    "grouping",
     "identity",
+    "incident",
     "indicator",
     "infrastructure",
     "intrusion-set",
+    "kill-chain-phase"
+    "label"
+    "language"
     "location",
     "malware",
     "malware-analysis",
+    "marking-definition",
+    "narrative",
+    "note",
+    "observed-data",
+    "opinion",
+    "report",
+    "task",
+    "x-opencti-task",
     "threat-actor",
     "tool",
-    "narrative",
     "vulnerability",
-    "incident",
 ]
 
 STIX_CYBER_OBSERVABLE_MAPPING = {
