@@ -1,8 +1,9 @@
 # coding: utf-8
 
 import json
+import uuid
 
-from pycti.utils.opencti_stix2_identifier import kill_chain_phase_generate_id
+from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class KillChainPhase:
@@ -24,9 +25,10 @@ class KillChainPhase:
 
     @staticmethod
     def generate_id(phase_name, kill_chain_name):
-        return kill_chain_phase_generate_id(
-            phase_name=phase_name, kill_chain_name=kill_chain_name
-        )
+        data = {"phase_name": phase_name, "kill_chain_name": kill_chain_name}
+        data = canonicalize(data, utf8=False)
+        id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
+        return "kill-chain-phase--" + id
 
     """
         List Kill-Chain-Phase objects
