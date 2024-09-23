@@ -43,6 +43,7 @@ SUPPORTED_STIX_ENTITY_OBJECTS = [
     "x-opencti-task",
     "threat-actor",
     "tool",
+    "vocabulary",
     "vulnerability",
 ]
 
