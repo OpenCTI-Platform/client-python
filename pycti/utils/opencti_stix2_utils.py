@@ -18,7 +18,7 @@ SUPPORTED_STIX_ENTITY_OBJECTS = [
     "data-source",
     "x-mitre-data-source",
     "event",
-    "external-reference"
+    "external-reference",
     "feedback",
     "x-opencti-feedback",
     "grouping",
@@ -27,9 +27,9 @@ SUPPORTED_STIX_ENTITY_OBJECTS = [
     "indicator",
     "infrastructure",
     "intrusion-set",
-    "kill-chain-phase"
-    "label"
-    "language"
+    "kill-chain-phase",
+    "label",
+    "language",
     "location",
     "malware",
     "malware-analysis",
