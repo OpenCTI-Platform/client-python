@@ -76,6 +76,20 @@ def test_split_capec_bundle():
     assert expectations == 2610
 
 
+def test_split_internal_ids_bundle():
+    stix_splitter = OpenCTIStix2Splitter()
+    with open("./tests/data/bundle_with_internal_ids.json") as file:
+        content = file.read()
+    expectations, bundles = stix_splitter.split_bundle_with_expectations(content)
+    assert expectations == 4
+    # Split with cleanup_inconsistent_bundle
+    stix_splitter = OpenCTIStix2Splitter()
+    expectations, bundles = stix_splitter.split_bundle_with_expectations(
+        bundle=content, cleanup_inconsistent_bundle=True
+    )
+    assert expectations == 4
+
+
 def test_split_missing_refs_bundle():
     stix_splitter = OpenCTIStix2Splitter()
     with open("./tests/data/missing_refs.json") as file:
