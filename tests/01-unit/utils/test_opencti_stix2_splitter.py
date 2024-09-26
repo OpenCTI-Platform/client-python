@@ -43,7 +43,7 @@ def test_split_mono_entity_bundle():
     expectations, bundles = stix_splitter.split_bundle_with_expectations(content)
     assert expectations == 1
     json_bundle = json.loads(bundles[0])["objects"][0]
-    assert json_bundle["created_by_ref"] == "identity--not-available"
+    assert json_bundle["created_by_ref"] == "fa42a846-8d90-4e51-bc29-71d5b4802168"
     # Split with cleanup_inconsistent_bundle
     stix_splitter = OpenCTIStix2Splitter()
     expectations, bundles = stix_splitter.split_bundle_with_expectations(

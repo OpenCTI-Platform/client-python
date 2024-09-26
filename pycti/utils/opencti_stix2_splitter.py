@@ -21,8 +21,11 @@ supported_types = (
 
 
 def is_id_supported(key):
-    id_type = key.split("--")[0]
-    return id_type in supported_types
+    if "--" in key:
+        id_type = key.split("--")[0]
+        return id_type in supported_types
+    # If not a stix id, don't try to filter
+    return True
 
 
 class OpenCTIStix2Splitter:
