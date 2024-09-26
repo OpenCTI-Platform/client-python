@@ -40,7 +40,11 @@ class OpenCTIStix2Splitter:
         ids = []
         if item.get("x_opencti_id"):
             ids.append(item["x_opencti_id"])
-        if item.get("extensions") and item["extensions"].get(OPENCTI_EXTENSION) and item["extensions"].get(OPENCTI_EXTENSION).get("id"):
+        if (
+            item.get("extensions")
+            and item["extensions"].get(OPENCTI_EXTENSION)
+            and item["extensions"].get(OPENCTI_EXTENSION).get("id")
+        ):
             ids.append(item["extensions"][OPENCTI_EXTENSION]["id"])
         return ids
 
