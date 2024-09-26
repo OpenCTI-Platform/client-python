@@ -553,7 +553,7 @@ class StixCoreRelationship:
                 return result[0]
             else:
                 return None
-        elif from_id is not None and to_id is not None:
+        elif from_or_to_id is not None or (from_id is not None and to_id is not None):
             result = self.list(
                 fromOrToId=from_or_to_id,
                 fromId=from_id,
