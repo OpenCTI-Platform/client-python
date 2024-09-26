@@ -88,6 +88,13 @@ def test_split_internal_ids_bundle():
         bundle=content, cleanup_inconsistent_bundle=True
     )
     assert expectations == 4
+    for bundle in bundles:
+        json_bundle = json.loads(bundle)
+        object_json = json_bundle["objects"][0]
+        if object_json["id"] == "relationship--10e8c71d-a1b4-4e35-bca8-2e4a3785ea04":
+            assert (
+                object_json["created_by_ref"] == "ced3e53e-9663-4c96-9c60-07d2e778d931"
+            )
 
 
 def test_split_missing_refs_bundle():
