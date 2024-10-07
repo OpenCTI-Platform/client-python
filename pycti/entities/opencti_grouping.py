@@ -408,7 +408,7 @@ class Grouping:
 
     @staticmethod
     def generate_id_from_data(data):
-        return Grouping.generate_id(data["name"], data["context"])
+        return Grouping.generate_id(data["name"], data["context"], data["created"])
 
     """
         List Grouping objects
