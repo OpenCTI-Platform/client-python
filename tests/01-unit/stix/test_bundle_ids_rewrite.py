@@ -82,7 +82,7 @@ def test_ids_generation():
     # data-source
     assert gen_id({"type": "data-source", "name": "data-source"}) == "data-source--f0925972-35e1-5172-9161-4d7180908339"
     # grouping
-    assert gen_id({"type": "grouping", "name": "grouping", "context": "context"}) == "grouping--8462bd42-4cad-54ae-a261-efc1a762d83d"
+    assert gen_id({"type": "grouping", "name": "grouping", "context": "context", "created": "2022-11-25T19:00:05.000Z"}) == "grouping--7c3e3534-9c09-568a-9485-377054b4c588"
     # language
     assert gen_id({"type": "language", "name": "fr"}) == "language--0ef28873-9d49-5cdb-a53a-eb7613391ee9"
     # malware-analysis
