@@ -1589,11 +1589,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             "send_to_directory_retention", self.bundle_send_to_directory_retention
         )
 
-        # Bundle ids must be rewritten
-        bundle = self.api.stix2.prepare_bundle_ids(
-            bundle=bundle, use_json=True, keep_original_id=keep_original_id
-        )
-
         # In case of enrichment ingestion, ensure the sharing if needed
         if self.enrichment_shared_organizations is not None:
             # Every element of the bundle must be enriched with the same organizations
