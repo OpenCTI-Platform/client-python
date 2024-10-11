@@ -180,7 +180,6 @@ class OpenCTIStix2:
         file_path: str,
         update: bool = False,
         types: List = None,
-        keep_original_id: bool = False,
     ) -> Optional[List]:
         """import a stix2 bundle from a file
 
@@ -190,8 +189,6 @@ class OpenCTIStix2:
         :type update: bool, optional
         :param types: list of stix2 types, defaults to None
         :type types: list, optional
-        :param keep_original_id: import need to keep original id
-        :type keep_original_id: bool, optional
         :return: list of imported stix2 objects
         :rtype: List
         """
@@ -200,7 +197,7 @@ class OpenCTIStix2:
             return None
         with open(os.path.join(file_path), encoding="utf-8") as file:
             data = json.load(file)
-        return self.import_bundle(data, update, types, None, keep_original_id)
+        return self.import_bundle(data, update, types, None)
 
     def import_bundle_from_json(
         self,
@@ -2639,7 +2636,6 @@ class OpenCTIStix2:
         update: bool = False,
         types: List = None,
         work_id: str = None,
-        keep_original_id: bool = False,
     ) -> List:
         # Check if the bundle is correctly formatted
         if "type" not in stix_bundle or stix_bundle["type"] != "bundle":

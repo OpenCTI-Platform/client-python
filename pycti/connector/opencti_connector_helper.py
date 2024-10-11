@@ -849,13 +849,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             False,
             True,
         )
-        self.keep_original_id = get_config_variable(
-            "CONNECTOR_KEEP_ORIGINAL_ID",
-            ["connector", "keep_original_id"],
-            config,
-            False,
-            False,
-        )
         self.bundle_send_to_directory = get_config_variable(
             "CONNECTOR_SEND_TO_DIRECTORY",
             ["connector", "send_to_directory"],
@@ -1578,7 +1571,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         file_name = kwargs.get("file_name", None)
         bundle_send_to_queue = kwargs.get("send_to_queue", self.bundle_send_to_queue)
         cleanup_inconsistent_bundle = kwargs.get("cleanup_inconsistent_bundle", False)
-        keep_original_id = kwargs.get("keep_original_id", self.keep_original_id)
         bundle_send_to_directory = kwargs.get(
             "send_to_directory", self.bundle_send_to_directory
         )
