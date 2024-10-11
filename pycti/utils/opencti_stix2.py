@@ -1395,6 +1395,11 @@ class OpenCTIStix2:
                 if "x_opencti_workflow_id" in stix_sighting
                 else None
             ),
+            x_opencti_stix_ids=(
+                stix_sighting["x_opencti_stix_ids"]
+                if "x_opencti_stix_ids" in stix_sighting
+                else None
+            ),
             update=update,
             ignore_dates=(
                 stix_sighting["x_opencti_ignore_dates"]
