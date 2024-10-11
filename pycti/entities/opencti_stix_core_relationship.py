@@ -610,6 +610,7 @@ class StixCoreRelationship:
         kill_chain_phases = kwargs.get("killChainPhases", None)
         granted_refs = kwargs.get("objectOrganization", None)
         x_opencti_workflow_id = kwargs.get("x_opencti_workflow_id", None)
+        x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         update = kwargs.get("update", False)
 
         self.opencti.app_logger.info(
@@ -653,6 +654,7 @@ class StixCoreRelationship:
                     "externalReferences": external_references,
                     "killChainPhases": kill_chain_phases,
                     "x_opencti_workflow_id": x_opencti_workflow_id,
+                    "x_opencti_stix_ids": x_opencti_stix_ids,
                     "update": update,
                 }
             },
@@ -1143,6 +1145,10 @@ class StixCoreRelationship:
         default_date = kwargs.get("defaultDate", False)
         if stix_relation is not None:
             # Search in extensions
+            if "x_opencti_stix_ids" not in stix_relation:
+                stix_relation["x_opencti_stix_ids"] = (
+                    self.opencti.get_attribute_in_extension("stix_ids", stix_relation)
+                )
             if "x_opencti_granted_refs" not in stix_relation:
                 stix_relation["x_opencti_granted_refs"] = (
                     self.opencti.get_attribute_in_extension(
@@ -1222,6 +1228,11 @@ class StixCoreRelationship:
                 x_opencti_workflow_id=(
                     stix_relation["x_opencti_workflow_id"]
                     if "x_opencti_workflow_id" in stix_relation
+                    else None
+                ),
+                x_opencti_stix_ids=(
+                    stix_relation["x_opencti_stix_ids"]
+                    if "x_opencti_stix_ids" in stix_relation
                     else None
                 ),
                 update=update,

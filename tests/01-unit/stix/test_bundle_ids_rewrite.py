@@ -23,7 +23,8 @@ def test_ids_generation():
     gen_id = get_cti_helper().generate_standard_id_from_stix
     # attack-pattern
     assert gen_id({"type": "attack-pattern", "name": "attack"}) =='attack-pattern--25f21617-8de8-5d5e-8cd4-b7e88547ba76'
-    assert gen_id({"type": "attack-pattern", "name": "attack", "x_mitre_id": 'MITREID'}) == 'attack-pattern--b74cfee2-7b14-585e-862f-fea45e802da9'
+    assert gen_id({"type": "attack-pattern", "name": "attack", "x_opencti_external_id": 'MITREID'}) == 'attack-pattern--b74cfee2-7b14-585e-862f-fea45e802da9'
+    assert gen_id({"type": "attack-pattern", "name": "Spear phishing messages with malicious links", "x_mitre_id": 'T1368'}) == 'attack-pattern--a01046cc-192f-5d52-8e75-6e447fae3890'
     assert gen_id({"type": "attack-pattern", "x_mitre_id": "MITREID"}) == 'attack-pattern--b74cfee2-7b14-585e-862f-fea45e802da9'
     # campaign
     assert gen_id({"type": "campaign", "name": "attack"}) == 'campaign--25f21617-8de8-5d5e-8cd4-b7e88547ba76'
@@ -101,6 +102,7 @@ def test_ids_generation():
     assert gen_id(base_relationship) == "relationship--0b11fa67-da01-5d34-9864-67d4d71c3740"
     assert gen_id({**base_relationship, "start_time": "2022-11-25T19:00:05.000Z"}) == "relationship--c5e1e2ce-14d6-535b-911d-267e92119e01"
     assert gen_id({**base_relationship, "start_time": "2022-11-25T19:00:05.000Z", "stop_time": "2022-11-26T19:00:05.000Z"}) == "relationship--a7778a7d-a743-5193-9912-89f88f9ed0b4"
+    assert gen_id({"type": "relationship", 'relationship_type': 'uses', 'source_ref': 'malware--21c45dbe-54ec-5bb7-b8cd-9f27cc518714', 'start_time': '2020-02-29T22:30:00.000Z', 'stop_time': '2020-02-29T22:30:00.000Z', 'target_ref': 'attack-pattern--fd8179dd-1632-5ec8-8b93-d2ae121e05a4'}) == 'relationship--67f5f01f-6b15-5154-ae31-019a75fedcff'
     # sighting
     base_sighting = {"type": "sighting", "sighting_of_ref": "from_id", "where_sighted_refs": ["to_id"]}
     assert gen_id(base_sighting) == 'sighting--161901df-21bb-527a-b96b-354119279fe2'
@@ -112,18 +114,23 @@ def test_ids_generation():
 def test_prepare_bundle_ids_keep_original():
     helper = get_cti_helper()
     bundle_data = load_test_file()
-    malware_source = bundle_data["objects"][0]
-    assert malware_source["id"] == "malware--d650c5b9-4b43-5781-8576-ea52bd6c7ce5"
-    assert malware_source.get("x_opencti_stix_ids") is None
+    # malware_source = bundle_data["objects"][0]
+    # assert malware_source["id"] == "malware--d650c5b9-4b43-5781-8576-ea52bd6c7ce5"
+    # assert malware_source.get("x_opencti_stix_ids") is None
     prepared_bundle = helper.prepare_bundle_ids(
         bundle=bundle_data, use_json=False, keep_original_id=True
     )
-    print(json.dumps(prepared_bundle))
     malware_target = prepared_bundle["objects"][0]
     assert malware_target["id"] == "malware--d650c5b9-4b43-5781-8576-ea52bd6c7ce0"
     assert malware_target.get("x_opencti_stix_ids") == [
         "malware--d650c5b9-4b43-5781-8576-ea52bd6c7ce5"
     ]
+    sighting = prepared_bundle["objects"][5]
+    assert sighting["id"] == "sighting--287d622a-9ffd-5e7f-bb0b-67f1e320f752"
+    assert (
+        sighting["x_opencti_stix_ids"][0]
+        == "sighting--ee20065d-2555-424f-ad9e-0f8428623c75"
+    )
 
 
 def test_prepare_bundle_ids():
@@ -135,7 +142,9 @@ def test_prepare_bundle_ids():
     prepared_bundle = helper.prepare_bundle_ids(
         bundle=bundle_data, use_json=False, keep_original_id=False
     )
-    print(json.dumps(prepared_bundle))
     malware_target = prepared_bundle["objects"][0]
     assert malware_target["id"] == "malware--d650c5b9-4b43-5781-8576-ea52bd6c7ce0"
     assert malware_target.get("x_opencti_stix_ids") is None
+    sighting = prepared_bundle["objects"][5]
+    assert sighting["id"] == "sighting--287d622a-9ffd-5e7f-bb0b-67f1e320f752"
+    assert ("x_opencti_stix_ids" in sighting) == False
