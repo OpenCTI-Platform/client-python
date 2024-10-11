@@ -232,7 +232,8 @@ class AttackPattern:
 
     @staticmethod
     def generate_id_from_data(data):
-        return AttackPattern.generate_id(data.get("name"), data.get("x_mitre_id"))
+        external_id = data.get("x_mitre_id") or data.get("x_opencti_external_id")
+        return AttackPattern.generate_id(data.get("name"), external_id)
 
     """
         List Attack-Pattern objects

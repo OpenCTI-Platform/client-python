@@ -2412,7 +2412,22 @@ class OpenCTIStix2:
             helper = stix_helpers.get(item["type"])
             if hasattr(helper, "generate_id_from_data"):
                 standard_id = helper.generate_id_from_data(item)
-                cache_ids[item["id"]] = standard_id
+                if item["id"] != standard_id:
+                    cache_ids[item["id"]] = standard_id
+
+        # If no id to rewrite, return the processed bundle
+        if not bool(cache_ids):
+            # As rewrite can have multiple roundtrip
+            # we kept the first original id in a meta attribute
+            # final behavior is to rewrite this in the x_opencti_stix_ids
+            for item in bundle_data["objects"]:
+                if "x_keep_original_id" in item:
+                    item["x_opencti_stix_ids"] = item.get("x_opencti_stix_ids", []) + [
+                        item["x_keep_original_id"]
+                    ]
+                    del item["x_keep_original_id"]
+            return json.dumps(bundle_data) if use_json else bundle_data
+
         # Second iteration to replace and remap
         for item in bundle_data["objects"]:
             # For entities, try to replace the main id
@@ -2420,10 +2435,8 @@ class OpenCTIStix2:
             if cache_ids.get(item["id"]):
                 original_id = item["id"]
                 item["id"] = cache_ids[original_id]
-                if keep_original_id:
-                    item["x_opencti_stix_ids"] = item.get("x_opencti_stix_ids", []) + [
-                        original_id
-                    ]
+                if keep_original_id and "x_keep_original_id" not in item:
+                    item["x_keep_original_id"] = original_id
             # For all elements, replace all refs (source_ref, object_refs, ...)
             ref_keys = list(
                 filter(lambda i: i.endswith("_ref") or i.endswith("_refs"), item.keys())
@@ -2436,7 +2449,9 @@ class OpenCTIStix2:
                 else:
                     item[ref_key] = cache_ids.get(item[ref_key], item[ref_key])
 
-        return json.dumps(bundle_data) if use_json else bundle_data
+        return self.prepare_bundle_ids(
+            bundle_data, False, keep_original_id=keep_original_id
+        )
 
     def import_item(
         self,
