@@ -2402,62 +2402,6 @@ class OpenCTIStix2:
 
         return bundle
 
-    def prepare_bundle_ids(self, bundle, use_json=True, keep_original_id=False):
-        if use_json:
-            try:
-                bundle_data = json.loads(bundle)
-            except:
-                raise Exception("File data is not a valid JSON")
-        else:
-            bundle_data = bundle
-        cache_ids = {}
-        # First iteration to cache all entity ids
-        stix_helpers = self.get_stix_helper()
-        for item in bundle_data["objects"]:
-            helper = stix_helpers.get(item["type"])
-            if hasattr(helper, "generate_id_from_data"):
-                standard_id = helper.generate_id_from_data(item)
-                if item["id"] != standard_id:
-                    cache_ids[item["id"]] = standard_id
-
-        # If no id to rewrite, return the processed bundle
-        if not bool(cache_ids):
-            # As rewrite can have multiple roundtrip
-            # we kept the first original id in a meta attribute
-            # final behavior is to rewrite this in the x_opencti_stix_ids
-            for item in bundle_data["objects"]:
-                if "x_keep_original_id" in item:
-                    item["x_opencti_stix_ids"] = item.get("x_opencti_stix_ids", []) + [
-                        item["x_keep_original_id"]
-                    ]
-                    del item["x_keep_original_id"]
-            return json.dumps(bundle_data) if use_json else bundle_data
-
-        # Second iteration to replace and remap
-        for item in bundle_data["objects"]:
-            # For entities, try to replace the main id
-            # Keep the current one if needed
-            if cache_ids.get(item["id"]):
-                original_id = item["id"]
-                item["id"] = cache_ids[original_id]
-                if keep_original_id and "x_keep_original_id" not in item:
-                    item["x_keep_original_id"] = original_id
-            # For all elements, replace all refs (source_ref, object_refs, ...)
-            ref_keys = list(
-                filter(lambda i: i.endswith("_ref") or i.endswith("_refs"), item.keys())
-            )
-            for ref_key in ref_keys:
-                if ref_key.endswith("_refs"):
-                    item[ref_key] = list(
-                        map(lambda id_ref: cache_ids.get(id_ref, id_ref), item[ref_key])
-                    )
-                else:
-                    item[ref_key] = cache_ids.get(item[ref_key], item[ref_key])
-
-        return self.prepare_bundle_ids(
-            bundle_data, False, keep_original_id=keep_original_id
-        )
-
     def import_item(
         self,
         item,
@@ -2706,11 +2650,6 @@ class OpenCTIStix2:
             stix_bundle["x_opencti_event_version"]
             if "x_opencti_event_version" in stix_bundle
             else None
-        )
-
-        # Bundle ids must be rewritten
-        stix_bundle = self.prepare_bundle_ids(
-            bundle=stix_bundle, use_json=False, keep_original_id=keep_original_id
         )
 
         stix2_splitter = OpenCTIStix2Splitter()
