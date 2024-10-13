@@ -263,7 +263,6 @@ class StixSightingRelationship:
 
     @staticmethod
     def generate_id(
-        relationship_type,
         sighting_of_ref,
         where_sighted_refs,
         first_seen=None,
@@ -276,7 +275,7 @@ class StixSightingRelationship:
 
         if first_seen is not None and last_seen is not None:
             data = {
-                "type": relationship_type,
+                "type": "sighting",
                 "sighting_of_ref": sighting_of_ref,
                 "where_sighted_refs": where_sighted_refs,
                 "first_seen": first_seen,
@@ -284,14 +283,14 @@ class StixSightingRelationship:
             }
         elif first_seen is not None:
             data = {
-                "type": relationship_type,
+                "type": "sighting",
                 "sighting_of_ref": sighting_of_ref,
                 "where_sighted_refs": where_sighted_refs,
                 "first_seen": first_seen,
             }
         else:
             data = {
-                "type": relationship_type,
+                "type": "sighting",
                 "sighting_of_ref": sighting_of_ref,
                 "where_sighted_refs": where_sighted_refs,
             }
@@ -302,7 +301,6 @@ class StixSightingRelationship:
     @staticmethod
     def generate_id_from_data(data):
         return StixSightingRelationship.generate_id(
-            data["type"],
             data["sighting_of_ref"],
             data["where_sighted_refs"],
             data.get("first_seen"),
