@@ -109,7 +109,7 @@ class OpenCTIApiClient:
         proxies: dict[str,str] | None = None,
         json_logging=False,
         bundle_send_to_queue=True,
-        cert: str | tuple[str, str] |None = None,
+        cert: str | tuple[str, str] | None = None,
         auth=None,
         perform_health_check=True,
     ):
