@@ -214,7 +214,6 @@ class Indicator:
         x_opencti_main_observable_type = kwargs.get(
             "x_opencti_main_observable_type", None
         )
-        x_opencti_observables_values = kwargs.get("x_opencti_observables_values", None)
         x_mitre_platforms = kwargs.get("x_mitre_platforms", None)
         kill_chain_phases = kwargs.get("killChainPhases", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
@@ -277,7 +276,6 @@ class Indicator:
                         "x_opencti_score": x_opencti_score,
                         "x_opencti_detection": x_opencti_detection,
                         "x_opencti_main_observable_type": x_opencti_main_observable_type,
-                        "x_opencti_observables_values": x_opencti_observables_values,
                         "x_mitre_platforms": x_mitre_platforms,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "killChainPhases": kill_chain_phases,
@@ -477,11 +475,6 @@ class Indicator:
                 x_opencti_main_observable_type=(
                     stix_object["x_opencti_main_observable_type"]
                     if "x_opencti_main_observable_type" in stix_object
-                    else "Unknown"
-                ),
-                x_opencti_observables_values=(
-                    stix_object["x_opencti_observables_values"]
-                    if "x_opencti_observables_values" in stix_object
                     else "Unknown"
                 ),
                 killChainPhases=(
