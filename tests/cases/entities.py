@@ -278,6 +278,7 @@ class IndicatorTest(EntityTest):
             "pattern_type": "stix",
             "pattern": "[domain-name:value = 'www.5z8.info' AND domain-name:resolves_to_refs[*].value = '198.51.100.1/32']",
             "x_opencti_main_observable_type": "IPv4-Addr",
+            "x_opencti_observables_values": [],
             "confidence": 60,
             "x_opencti_score": 80,
             "x_opencti_detection": True,
