@@ -2427,7 +2427,7 @@ class OpenCTIStix2:
                 # region Resolve the to
                 to_ids = []
                 if "x_opencti_where_sighted_refs" in item:
-                    for where_sighted_ref in item["_opencti_where_sighted_refs"]:
+                    for where_sighted_ref in item["x_opencti_where_sighted_refs"]:
                         to_ids.append(where_sighted_ref)
                 elif "where_sighted_refs" in item:
                     for where_sighted_ref in item["where_sighted_refs"]:
