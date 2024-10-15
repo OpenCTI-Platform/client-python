@@ -396,7 +396,7 @@ class Grouping:
         """
 
     @staticmethod
-    def generate_id(name, context, created = None):
+    def generate_id(name, context, created=None):
         name = name.lower().strip()
         context = context.lower().strip()
         if isinstance(created, datetime.datetime):
