@@ -3,7 +3,7 @@ import base64
 import datetime
 import io
 import json
-from typing import Union
+from typing import Union, Dict, Tuple
 
 import magic
 import requests
@@ -106,10 +106,10 @@ class OpenCTIApiClient:
         token: str,
         log_level="info",
         ssl_verify: Union[bool, str] = False,
-        proxies: Union[dict[str, str], None] = None,
+        proxies: Union[Dict[str, str], None] = None,
         json_logging=False,
         bundle_send_to_queue=True,
-        cert: Union[str, tuple[str, str], None] = None,
+        cert: Union[str, Tuple[str, str], None] = None,
         auth=None,
         perform_health_check=True,
     ):
