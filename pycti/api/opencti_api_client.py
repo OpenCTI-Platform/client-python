@@ -3,7 +3,7 @@ import base64
 import datetime
 import io
 import json
-from typing import Union, Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import magic
 import requests
