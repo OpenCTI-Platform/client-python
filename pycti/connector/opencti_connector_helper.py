@@ -259,6 +259,13 @@ class ListenQueue(threading.Thread):
             self.helper.work_id = work_id
             self.helper.draft_id = draft_id
 
+            if not draft_id:
+                self.helper.api.set_draft_id("")
+                self.helper.api_impersonate.set_draft_id("")
+            else:
+                self.helper.api.set_draft_id(draft_id)
+                self.helper.api_impersonate.set_draft_id(draft_id)
+
             self.helper.playbook = None
             self.helper.enrichment_shared_organizations = None
             if self.helper.connect_type == "INTERNAL_ENRICHMENT":
