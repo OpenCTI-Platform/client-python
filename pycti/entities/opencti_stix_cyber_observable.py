@@ -408,7 +408,6 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     $Credential: CredentialAddInput
                     $TrackingNumber: TrackingNumberAddInput
                     $PaymentCard: PaymentCardAddInput
-                    $Persona: PersonaAddInput
                     $MediaContent: MediaContentAddInput
                 ) {
                     stixCyberObservableAdd(
@@ -453,7 +452,6 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                         Credential: $Credential
                         TrackingNumber: $TrackingNumber
                         PaymentCard: $PaymentCard
-                        Persona: $Persona
                         MediaContent: $MediaContent
                     ) {
                         id
