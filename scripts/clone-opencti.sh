@@ -65,7 +65,7 @@ clone_for_push_build() {
     echo "[CLONE-DEPS] Build from a commit, checking if a dedicated branch is required."
     BRANCH_PREFIX=$(echo $PR_BRANCH_NAME | cut -d "/" -f 1 | grep -c "opencti")
     if [[ "${BRANCH_PREFIX}" -eq "1" ]]
-    tthen
+    then
         echo "[CLONE-DEPS] Dedicated OpenCTI branch found, using it"
         OPENCTI_BRANCH=$(echo $PR_BRANCH_NAME | cut -d "/" -f2-)
         git clone -b $OPENCTI_BRANCH https://github.com/OpenCTI-Platform/opencti.git
