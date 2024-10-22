@@ -51,9 +51,8 @@ clone_for_pr_build() {
             echo "[CLONE-DEPS] Found a PR in opencti with number ${OPENCTI_PR_NUMBER}, using it."
             gh pr checkout ${OPENCTI_PR_NUMBER}
         else
-                echo "[CLONE-DEPS] No PR found in opencti side, keeping opencti:${PR_TARGET_BRANCH}"
-                # Repository already clone on PR target branch
-            fi
+            echo "[CLONE-DEPS] No PR found in opencti side, keeping opencti:${PR_TARGET_BRANCH}"
+            # Repository already clone on PR target branch
         fi
         
     else
