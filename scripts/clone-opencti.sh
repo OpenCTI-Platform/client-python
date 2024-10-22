@@ -62,18 +62,16 @@ clone_for_pr_build() {
 }
 
 clone_for_push_build() {
-    echo "[CLONE-DEPS]  Build from a commit, checking if a dedicated branch is required."
-    gh pr view ${PR_BRANCH_NAME}
-
+    echo "[CLONE-DEPS] Build from a commit, checking if a dedicated branch is required."
     BRANCH_PREFIX=$(echo $PR_BRANCH_NAME | cut -d "/" -f 1 | grep -c "opencti")
     if [[ "${BRANCH_PREFIX}" -eq "1" ]]
-    then
+    tthen
         echo "[CLONE-DEPS] Dedicated OpenCTI branch found, using it"
         OPENCTI_BRANCH=$(echo $PR_BRANCH_NAME | cut -d "/" -f2-)
-        gh repo clone https://github.com/OpenCTI-Platform/opencti ${OPENCTI_DIR} -- --branch ${OPENCTI_BRANCH}  --depth=1
+        git clone -b $OPENCTI_BRANCH https://github.com/OpenCTI-Platform/opencti.git
     else
-        echo "[CLONE-DEPS] No dedicated OpenCTI branch found, using ${PR_TARGET_BRANCH}"
-        gh repo clone https://github.com/OpenCTI-Platform/opencti ${OPENCTI_DIR} -- --branch ${PR_TARGET_BRANCH}  --depth=1
+        echo "[CLONE-DEPS] No dedicated OpenCTI branch found, using master"
+        git clone https://github.com/OpenCTI-Platform/opencti.git
     fi
 }
 
@@ -81,10 +79,18 @@ echo "[CLONE-DEPS] START; with PR_BRANCH_NAME=${PR_BRANCH_NAME},PR_TARGET_BRANCH
 if [[ -z ${PR_NUMBER} ]] || [[ ${PR_NUMBER} == "" ]]
 then
     # No PR number from Drone = "Push build". And it's only for repository branch (not fork)
+    # Using github cli to get PR number anyway
     PR_NUMBER=$(gh pr view ${PR_BRANCH_NAME} --json number --jq '.number')
     PR_TARGET_BRANCH=$(gh pr view ${PR_BRANCH_NAME} --json baseRefName --jq '.baseRefName')
-    echo "[CLONE-DEPS] Got data from github cli, continue with: PR_TARGET_BRANCH=${PR_TARGET_BRANCH}, PR_NUMBER=${PR_NUMBER}."
-    clone_for_pr_build
+
+    if [[ -z ${PR_NUMBER} ]] || [[ ${PR_NUMBER} == "" ]]
+    then
+        echo "[CLONE-DEPS] PR is not created on github yet, using clone without PR number and default fallback to master"
+        clone_for_push_build
+    else
+        echo "[CLONE-DEPS] Got data from github cli, continue with: PR_TARGET_BRANCH=${PR_TARGET_BRANCH}, PR_NUMBER=${PR_NUMBER}."
+        clone_for_pr_build
+    fi
 else
     # PR build is trigger from Pull Request coming both from branch and forks.
     # We need to have this clone accross repository that works for forks (community PR)
