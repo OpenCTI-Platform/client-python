@@ -253,10 +253,11 @@ class ListenQueue(threading.Thread):
             event_data = json_data["event"]
             entity_id = event_data.get("entity_id")
             entity_type = event_data.get("entity_type")
-            draft_id = event_data.get("draft_id", "")
             validation_mode = event_data.get("validation_mode", "workbench")
             # Set the API headers
-            work_id = json_data["internal"]["work_id"]
+            internal_data = json_data["internal"]
+            work_id = internal_data["work_id"]
+            draft_id = internal_data.get("draft_id", "")
             self.helper.work_id = work_id
 
             self.helper.validation_mode = validation_mode
