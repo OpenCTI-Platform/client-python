@@ -694,7 +694,7 @@ class OpenCTIApiClient:
             )
             return queryResult["data"]["draftWorkspaceAdd"]["id"]
         else:
-            self.app_logger.error("[upload] Missing parameter: file_name")
+            self.app_logger.error("[create_draft] Missing parameter: draft_name")
             return None
 
     def upload_pending_file(self, **kwargs):
