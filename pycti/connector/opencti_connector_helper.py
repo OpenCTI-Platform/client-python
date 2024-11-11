@@ -885,13 +885,21 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             "CONNECTOR_GRAYLOG_PORT", ["connector", "graylog_port"], config, True, 12201
         )
         self.graylog_adapter = get_config_variable(
-            "CONNECTOR_GRAYLOG_ADAPTER", ["connector", "graylog_adapter"], config, default="udp"
+            "CONNECTOR_GRAYLOG_ADAPTER",
+            ["connector", "graylog_adapter"],
+            config,
+            default="udp",
         )
         self.log_shipping_level = get_config_variable(
-            "CONNECTOR_LOG_SHIPPING_LEVEL", ["connector", "log_shipping_level"], config, default="INFO"
+            "CONNECTOR_LOG_SHIPPING_LEVEL",
+            ["connector", "log_shipping_level"],
+            config,
+            default="INFO",
         ).upper()
         self.log_shipping_env_var_prefix = get_config_variable(
-            "CONNECTOR_LOG_SHIPPING_ENV_VAR_PREFIX", ["connector", "log_shipping_env_var_prefix"], config
+            "CONNECTOR_LOG_SHIPPING_ENV_VAR_PREFIX",
+            ["connector", "log_shipping_env_var_prefix"],
+            config,
         )
         self.connect_run_and_terminate = get_config_variable(
             "CONNECTOR_RUN_AND_TERMINATE",

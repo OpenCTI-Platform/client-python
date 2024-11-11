@@ -143,9 +143,15 @@ class OpenCTIApiClient:
             raise ValueError("A TOKEN must be set")
 
         # Configure logger
-        self.logger_class = logger(log_level.upper(), json_logging, graylog_host, graylog_port, graylog_adapter,
-                                   log_shipping_level.upper() if log_shipping_level is not None else None,
-                                   log_shipping_env_var_prefix)
+        self.logger_class = logger(
+            log_level.upper(),
+            json_logging,
+            graylog_host,
+            graylog_port,
+            graylog_adapter,
+            log_shipping_level.upper() if log_shipping_level is not None else None,
+            log_shipping_env_var_prefix,
+        )
         self.app_logger = self.logger_class("api")
 
         # Define API
