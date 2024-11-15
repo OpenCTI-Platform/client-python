@@ -191,7 +191,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
         if id is not None and file_name is not None:
             final_file_name = os.path.basename(file_name)
             query = """
-                    mutation StixCyberObservableEdit($id: ID!, $file: Upload!, fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
+                    mutation StixCyberObservableEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
                         stixCyberObservableEdit(id: $id) {
                             importPush(file: $file, version: $version, fileMarkings: $fileMarkings, noTriggerImport: $noTriggerImport) {
                                 id

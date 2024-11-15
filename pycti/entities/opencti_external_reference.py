@@ -275,7 +275,7 @@ class ExternalReference:
         if id is not None and file_name is not None:
             final_file_name = os.path.basename(file_name)
             query = """
-                mutation ExternalReferenceEdit($id: ID!, $file: Upload!, fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
+                mutation ExternalReferenceEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
                     externalReferenceEdit(id: $id) {
                         importPush(file: $file, fileMarkings: $fileMarkings, version: $version, noTriggerImport: $noTriggerImport) {
                             id
