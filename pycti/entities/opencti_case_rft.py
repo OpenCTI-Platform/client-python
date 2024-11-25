@@ -673,6 +673,7 @@ class CaseRft:
         objects = kwargs.get("objects", None)
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
+        object_assignee = kwargs.get("objectAssignee", None)
         external_references = kwargs.get("externalReferences", None)
         revoked = kwargs.get("revoked", None)
         confidence = kwargs.get("confidence", None)
@@ -708,6 +709,7 @@ class CaseRft:
                         "objectMarking": object_marking,
                         "objectLabel": object_label,
                         "objectOrganization": granted_refs,
+                        "objectAssignee": object_assignee,
                         "objects": objects,
                         "externalReferences": external_references,
                         "revoked": revoked,
@@ -845,7 +847,10 @@ class CaseRft:
                 stix_object["x_opencti_workflow_id"] = (
                     self.opencti.get_attribute_in_extension("workflow_id", stix_object)
                 )
-
+            if "x_opencti_assignee_ids" not in stix_object:
+                stix_object["x_opencti_assignee_ids"] = (
+                    self.opencti.get_attribute_in_extension("assignee_ids", stix_object)
+                )
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=(
@@ -891,6 +896,11 @@ class CaseRft:
                 objectOrganization=(
                     stix_object["x_opencti_granted_refs"]
                     if "x_opencti_granted_refs" in stix_object
+                    else None
+                ),
+                objectAssignee=(
+                    stix_object["x_opencti_assignee_ids"]
+                    if "x_opencti_assignee_ids" in stix_object
                     else None
                 ),
                 x_opencti_workflow_id=(
