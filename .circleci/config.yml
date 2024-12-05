@@ -64,7 +64,7 @@ jobs:
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker buildx create --use --name mybuilder || true
             docker buildx inspect mybuilder --bootstrap            
-            docker buildx build \
+            docker buildx build . \
               --platform linux/amd64,linux/arm64 \
               -t $BASE_REPO/client-python:${CIRCLE_TAG} \
               -t $BASE_REPO/client-python:latest \
