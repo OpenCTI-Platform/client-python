@@ -171,9 +171,6 @@ workflows:
               only: /.*/
             branches:
               ignore: /.*/
-          requires:
-            - ensure_formatting
-            - linter
       - deploy:
           requires:
             - build-library
