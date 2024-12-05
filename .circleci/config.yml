@@ -61,11 +61,14 @@ jobs:
             CIRCLE_TAG=${CIRCLE_TAG:-nightly}
             echo "CIRCLE_TAG=${CIRCLE_TAG}"
             BASE_REPO="renizmy"
-            docker build -t $BASE_REPO/client-python:${CIRCLE_TAG} .
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin            
-            docker tag $BASE_REPO/client-python:${CIRCLE_TAG} $BASE_REPO/client-python:latest
-            docker push $BASE_REPO/client-python:${CIRCLE_TAG}
-            docker push $BASE_REPO/client-python:latest
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker buildx create --use --name mybuilder || true
+            docker buildx inspect mybuilder --bootstrap            
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              -t $BASE_REPO/client-python:${CIRCLE_TAG} \
+              -t $BASE_REPO/client-python:latest \
+              --push
   build-library:
     working_directory: ~/opencti-client
     docker:
