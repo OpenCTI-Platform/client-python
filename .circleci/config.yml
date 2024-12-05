@@ -168,7 +168,7 @@ workflows:
       - build-container:
           filters:
             tags:
-              only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
+              only: /.*/
             branches:
               ignore: /.*/
           requires:
