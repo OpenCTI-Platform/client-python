@@ -55,16 +55,17 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Build opencti/python-cliente
+          name: Build opencti/python-client
           command: |
             docker run --privileged --rm tonistiigi/binfmt --install all
             CIRCLE_TAG=${CIRCLE_TAG:-nightly}
             echo "CIRCLE_TAG=${CIRCLE_TAG}"
-            docker build -t opencti/client-python:${CIRCLE_TAG} .
+            BASE_REPO="renizmy"
+            docker build -t $BASE_REPO/client-python:${CIRCLE_TAG} .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin            
-            docker tag opencti/client-python:${CIRCLE_TAG} opencti/client-python:latest
-            docker push opencti/client-python:${CIRCLE_TAG}
-            docker push opencti/client-python:latest
+            docker tag $BASE_REPO/client-python:${CIRCLE_TAG} $BASE_REPO/client-python:latest
+            docker push $BASE_REPO/client-python:${CIRCLE_TAG}
+            docker push $BASE_REPO/client-python:latest
   build-library:
     working_directory: ~/opencti-client
     docker:
