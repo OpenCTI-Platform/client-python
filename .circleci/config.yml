@@ -58,6 +58,7 @@ jobs:
           name: Build opencti/python-cliente
           command: |
             docker run --privileged --rm tonistiigi/binfmt --install all
+            echo "CIRCLE_TAG=${CIRCLE_TAG}"
             docker build -t opencti/client-python:${CIRCLE_TAG} .
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin            
             docker tag opencti/client-python:${CIRCLE_TAG} opencti/client-python:latest
