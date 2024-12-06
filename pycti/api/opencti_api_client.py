@@ -122,7 +122,7 @@ class OpenCTIApiClient:
         self.proxies = proxies
         if not url:
             raise ValueError("An URL must be set")
-        if token is None or len(token) == 0 or token == "ChangeMe":
+        if not token or token == "ChangeMe":
             raise ValueError("A TOKEN must be set")
 
         # Configure logger
