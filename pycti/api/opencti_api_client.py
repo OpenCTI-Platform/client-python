@@ -137,11 +137,9 @@ class OpenCTIApiClient:
             "Authorization": "Bearer " + token,
         }
 
-        if auth is not None:
-            self.session = requests.session()
+        self.session = requests.session()
+        if auth:
             self.session.auth = auth
-        else:
-            self.session = requests.session()
 
         # Define the dependencies
         self.work = OpenCTIApiWork(self)
