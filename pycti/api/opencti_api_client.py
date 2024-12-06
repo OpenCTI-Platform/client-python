@@ -120,9 +120,9 @@ class OpenCTIApiClient:
         self.ssl_verify = ssl_verify
         self.cert = cert
         self.proxies = proxies
-        if url is None or len(url) == 0:
+        if not url:
             raise ValueError("An URL must be set")
-        if token is None or len(token) == 0 or token == "ChangeMe":
+        if not token or token == "ChangeMe":
             raise ValueError("A TOKEN must be set")
 
         # Configure logger
@@ -137,11 +137,9 @@ class OpenCTIApiClient:
             "Authorization": "Bearer " + token,
         }
 
-        if auth is not None:
-            self.session = requests.session()
+        self.session = requests.session()
+        if auth:
             self.session.auth = auth
-        else:
-            self.session = requests.session()
 
         # Define the dependencies
         self.work = OpenCTIApiWork(self)
