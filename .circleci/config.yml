@@ -60,7 +60,7 @@ jobs:
             docker run --privileged --rm tonistiigi/binfmt --install all
             CIRCLE_TAG=${CIRCLE_TAG:-nightly}
             echo "CIRCLE_TAG=${CIRCLE_TAG}"
-            BASE_REPO="renizmy"
+            BASE_REPO="opencti"
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker buildx create --platform linux/amd64,linux/arm64 --use --name mybuilder || true
             docker buildx inspect mybuilder --bootstrap            
@@ -168,7 +168,7 @@ workflows:
       - build-container:
           filters:
             tags:
-              only: /.*/
+              only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
       - build-library:
           filters:
             tags:
