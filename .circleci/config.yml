@@ -62,7 +62,7 @@ jobs:
             echo "CIRCLE_TAG=${CIRCLE_TAG}"
             BASE_REPO="renizmy"
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker buildx create --use --name mybuilder || true
+            docker buildx create --platform linux/amd64,linux/arm64 --use --name mybuilder || true
             docker buildx inspect mybuilder --bootstrap            
             docker buildx build . \
               --platform linux/amd64,linux/arm64 \
