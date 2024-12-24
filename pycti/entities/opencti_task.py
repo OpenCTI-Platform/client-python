@@ -226,13 +226,16 @@ class Task:
 
     @staticmethod
     def generate_id(name, created):
-        name = name.lower().strip()
         if isinstance(created, datetime.datetime):
             created = created.isoformat()
-        data = {"name": name, "created": created}
+        data = {"name": name.lower().strip(), "created": created}
         data = canonicalize(data, utf8=False)
         id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
         return "task--" + id
+
+    @staticmethod
+    def generate_id_from_data(data):
+        return Task.generate_id(data["name"], data["created"])
 
     """
         List Task objects
@@ -445,6 +448,7 @@ class Task:
         object_marking = kwargs.get("objectMarking", None)
         object_label = kwargs.get("objectLabel", None)
         object_assignee = kwargs.get("objectAssignee", None)
+        object_participant = kwargs.get("objectParticipant", None)
         granted_refs = kwargs.get("objectOrganization", None)
         x_opencti_workflow_id = kwargs.get("x_opencti_workflow_id", None)
         update = kwargs.get("update", False)
@@ -475,6 +479,7 @@ class Task:
                         "objectMarking": object_marking,
                         "objectOrganization": granted_refs,
                         "objectAssignee": object_assignee,
+                        "objectParticipant": object_participant,
                         "x_opencti_workflow_id": x_opencti_workflow_id,
                         "update": update,
                     }
@@ -625,7 +630,12 @@ class Task:
                 stix_object["x_opencti_assignee_ids"] = (
                     self.opencti.get_attribute_in_extension("assignee_ids", stix_object)
                 )
-
+            if "x_opencti_participant_ids" not in stix_object:
+                stix_object["x_opencti_participant_ids"] = (
+                    self.opencti.get_attribute_in_extension(
+                        "participant_ids", stix_object
+                    )
+                )
             return self.create(
                 stix_id=stix_object["id"],
                 createdBy=(
@@ -656,6 +666,11 @@ class Task:
                 objectAssignee=(
                     stix_object["x_opencti_assignee_ids"]
                     if "x_opencti_assignee_ids" in stix_object
+                    else None
+                ),
+                objectParticipant=(
+                    stix_object["x_opencti_participant_ids"]
+                    if "x_opencti_participant_ids" in stix_object
                     else None
                 ),
                 x_opencti_workflow_id=(
