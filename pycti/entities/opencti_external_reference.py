@@ -68,6 +68,12 @@ class ExternalReference:
         id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
         return "external-reference--" + id
 
+    @staticmethod
+    def generate_id_from_data(data):
+        return ExternalReference.generate_id(
+            data.get("url"), data.get("source_name"), data.get("external_id")
+        )
+
     """
         List External-Reference objects
 
@@ -269,14 +275,15 @@ class ExternalReference:
         file_name = kwargs.get("file_name", None)
         data = kwargs.get("data", None)
         version = kwargs.get("version", None)
+        file_markings = kwargs.get("fileMarkings", None)
         mime_type = kwargs.get("mime_type", "text/plain")
         no_trigger_import = kwargs.get("no_trigger_import", False)
         if id is not None and file_name is not None:
             final_file_name = os.path.basename(file_name)
             query = """
-                mutation ExternalReferenceEdit($id: ID!, $file: Upload!, $version: DateTime, $noTriggerImport: Boolean) {
+                mutation ExternalReferenceEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
                     externalReferenceEdit(id: $id) {
-                        importPush(file: $file, version: $version, noTriggerImport: $noTriggerImport) {
+                        importPush(file: $file, fileMarkings: $fileMarkings, version: $version, noTriggerImport: $noTriggerImport) {
                             id
                             name
                         }
@@ -298,6 +305,7 @@ class ExternalReference:
                 {
                     "id": id,
                     "file": (self.file(final_file_name, data, mime_type)),
+                    "fileMarkings": file_markings,
                     "version": version,
                     "noTriggerImport": (
                         no_trigger_import
