@@ -48,7 +48,28 @@ jobs:
       - ms-teams/report:
           only_on_fail: true
           webhook_url: $MS_TEAMS_WEBHOOK_URL
-  build:
+  build-container:
+    docker:
+      - image: cimg/base:stable-20.04
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build opencti/python-client
+          command: |
+            docker run --privileged --rm tonistiigi/binfmt --install all
+            CIRCLE_TAG=${CIRCLE_TAG:-nightly}
+            echo "CIRCLE_TAG=${CIRCLE_TAG}"
+            BASE_REPO="opencti"
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker buildx create --platform linux/amd64,linux/arm64 --use --name mybuilder || true
+            docker buildx inspect mybuilder --bootstrap            
+            docker buildx build . \
+              --platform linux/amd64,linux/arm64 \
+              -t $BASE_REPO/client-python:${CIRCLE_TAG} \
+              -t $BASE_REPO/client-python:latest \
+              --push
+  build-library:
     working_directory: ~/opencti-client
     docker:
       - image: cimg/python:3.12
@@ -144,18 +165,19 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - build:
+      - build-container:
+          filters:
+            tags:
+              only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
+      - build-library:
           filters:
             tags:
               only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
             branches:
               ignore: /.*/
-          requires:
-            - ensure_formatting
-            - linter
       - deploy:
           requires:
-            - build
+            - build-library
           filters:
             tags:
               only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
@@ -163,7 +185,7 @@ workflows:
               ignore: /.*/
       - notify_rolling:
           requires:
-            - build
+            - build-library
       - notify:
           requires:
             - deploy
