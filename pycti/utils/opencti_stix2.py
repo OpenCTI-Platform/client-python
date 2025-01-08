@@ -2407,6 +2407,41 @@ class OpenCTIStix2:
 
         return bundle
 
+    def build_patch_input(
+        self,
+        raw_field_patch
+    ):
+        parsed_patch = json.loads(raw_field_patch)
+        full_input = []
+        for key in parsed_patch:
+            value = parsed_patch[key]
+            if len(value['replacedValue']) > 0:
+                replace_input = {'key': key, 'value': value['replacedValue'], 'operation': 'replace'}
+                full_input.append(replace_input)
+            else:
+                if len(value['addedValue']) > 0:
+                    add_input = {'key': key, 'value': value['addedValue'], 'operation': 'add'}
+                    full_input.append(add_input)
+                if len(value['removedValue']) > 0:
+                    add_input = {'key': key, 'value': value['removedValue'], 'operation': 'remove'}
+                    full_input.append(add_input)
+
+        return full_input
+
+    def apply_patch(
+        self,
+        item
+    ):
+        input = self.build_patch_input(item["opencti_field_patch"])
+        if item["type"] == "relationship":
+            self.opencti.stix_core_relationship.update_field(id=item["id"], input=input)
+        elif item["type"] == "sighting":
+            self.opencti.stix_sighting_relationship.update_field(id=item["id"], input=input)
+        elif StixCyberObservableTypes.has_value(item["type"]):
+            self.opencti.stix_cyber_observable.update_field(id=item["id"], input=input)
+        else:
+            self.opencti.stix_domain_object.update_field(id=item["id"], input=input)
+
     def import_item(
         self,
         item,
@@ -2426,6 +2461,8 @@ class OpenCTIStix2:
                     target_id = item["merge_target_id"]
                     source_ids = item["merge_source_ids"]
                     self.opencti.stix.merge(id=target_id, object_ids=source_ids)
+                elif item["opencti_operation"] == "patch":
+                    self.apply_patch(item=item)
                 else:
                     raise ValueError("Not supported opencti_operation")
             elif item["type"] == "relationship":
