@@ -2407,12 +2407,8 @@ class OpenCTIStix2:
 
         return bundle
 
-    def get_patch_input(self, raw_field_patch):
-        parsed_patch = json.loads(raw_field_patch)
-        return parsed_patch
-
     def apply_patch(self, item):
-        input = self.get_patch_input(item["opencti_field_patch"])
+        input = item["opencti_field_patch"]
         if item["type"] == "relationship":
             self.opencti.stix_core_relationship.update_field(id=item["id"], input=input)
         elif item["type"] == "sighting":
