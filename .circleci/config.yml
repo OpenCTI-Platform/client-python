@@ -3,6 +3,8 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.13.3
   ms-teams: cloudradar-monitoring/ms-teams@0.0.1
+env:
+  BASE_REPO: opencti
 jobs:
   ensure_formatting:
     docker:
@@ -48,7 +50,42 @@ jobs:
       - ms-teams/report:
           only_on_fail: true
           webhook_url: $MS_TEAMS_WEBHOOK_URL
-  build-container:
+  build-container-python-3-11:
+    docker:
+      - image: cimg/base:stable-20.04
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build opencti/python-client-container
+          command: |
+            docker run --privileged --rm tonistiigi/binfmt --install all
+            CIRCLE_TAG=${CIRCLE_TAG:-nightly}
+            echo "CIRCLE_TAG=${CIRCLE_TAG}"
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker buildx create --platform linux/amd64,linux/arm64 --use --name mybuilder || true
+            docker buildx inspect mybuilder --bootstrap            
+            docker buildx build . \
+              --platform linux/amd64,linux/arm64 \
+              -t ${{ env.BASE_REPO }}/client-python-3-11:${CIRCLE_TAG} \
+              -t ${{ env.BASE_REPO }}client-python-3-11:latest \
+              --build-arg BASE_IMAGE="python:3.11-alpine3.20" \
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.BASE_REPO }}/client-python-3-11:latest
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - run:
+          name: Push image to regsitry
+          command: docker push ${{ env.BASE_REPO }}/client-python-3-11:latest --all-tags
+
+  build-container-python-3-12:
     docker:
       - image: cimg/base:stable-20.04
     steps:
@@ -60,15 +97,29 @@ jobs:
             docker run --privileged --rm tonistiigi/binfmt --install all
             CIRCLE_TAG=${CIRCLE_TAG:-nightly}
             echo "CIRCLE_TAG=${CIRCLE_TAG}"
-            BASE_REPO="opencti"
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker buildx create --platform linux/amd64,linux/arm64 --use --name mybuilder || true
-            docker buildx inspect mybuilder --bootstrap            
+            docker buildx inspect mybuilder --bootstrap
             docker buildx build . \
               --platform linux/amd64,linux/arm64 \
-              -t $BASE_REPO/client-python:${CIRCLE_TAG} \
-              -t $BASE_REPO/client-python:latest \
-              --push
+              -t ${{ env.BASE_REPO }}/client-python-3-12:${CIRCLE_TAG} \
+              -t ${{ env.BASE_REPO }}/client-python-3-12:latest \
+              --build-arg BASE_IMAGE="python:3.12-alpine3.20" \
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.BASE_REPO }}/client-python-3-11:latest
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - run:
+          name: Push image to regsitry
+          command: docker push ${{ env.BASE_REPO }}/client-python-3-12:latest --all-tags
+
   build-library:
     working_directory: ~/opencti-client
     docker:
