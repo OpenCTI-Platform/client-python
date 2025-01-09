@@ -2407,36 +2407,18 @@ class OpenCTIStix2:
 
         return bundle
 
-    def build_patch_input(
-        self,
-        raw_field_patch
-    ):
+    def get_patch_input(self, raw_field_patch):
         parsed_patch = json.loads(raw_field_patch)
-        full_input = []
-        for key in parsed_patch:
-            value = parsed_patch[key]
-            if len(value['replacedValue']) > 0:
-                replace_input = {'key': key, 'value': value['replacedValue'], 'operation': 'replace'}
-                full_input.append(replace_input)
-            else:
-                if len(value['addedValue']) > 0:
-                    add_input = {'key': key, 'value': value['addedValue'], 'operation': 'add'}
-                    full_input.append(add_input)
-                if len(value['removedValue']) > 0:
-                    add_input = {'key': key, 'value': value['removedValue'], 'operation': 'remove'}
-                    full_input.append(add_input)
+        return parsed_patch
 
-        return full_input
-
-    def apply_patch(
-        self,
-        item
-    ):
-        input = self.build_patch_input(item["opencti_field_patch"])
+    def apply_patch(self, item):
+        input = self.get_patch_input(item["opencti_field_patch"])
         if item["type"] == "relationship":
             self.opencti.stix_core_relationship.update_field(id=item["id"], input=input)
         elif item["type"] == "sighting":
-            self.opencti.stix_sighting_relationship.update_field(id=item["id"], input=input)
+            self.opencti.stix_sighting_relationship.update_field(
+                id=item["id"], input=input
+            )
         elif StixCyberObservableTypes.has_value(item["type"]):
             self.opencti.stix_cyber_observable.update_field(id=item["id"], input=input)
         else:
