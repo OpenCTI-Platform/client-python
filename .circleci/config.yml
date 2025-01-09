@@ -216,7 +216,11 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - build-container:
+      - build-container-python-3-11:
+          filters:
+            tags:
+              only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
+      - build-container-python-3-12:
           filters:
             tags:
               only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
