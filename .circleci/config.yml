@@ -69,17 +69,7 @@ jobs:
               --platform linux/amd64,linux/arm64 \
               -t ${{ env.BASE_REPO }}/client-python-3-11:${CIRCLE_TAG} \
               -t ${{ env.BASE_REPO }}client-python-3-11:latest \
-              --build-arg BASE_IMAGE="python:3.11-alpine3.20" \
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.BASE_REPO }}/client-python-3-11:latest
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+              --build-arg BASE_IMAGE="python:3.11-alpine3.20" 
 
       - run:
           name: Push image to regsitry
@@ -104,17 +94,7 @@ jobs:
               --platform linux/amd64,linux/arm64 \
               -t ${{ env.BASE_REPO }}/client-python-3-12:${CIRCLE_TAG} \
               -t ${{ env.BASE_REPO }}/client-python-3-12:latest \
-              --build-arg BASE_IMAGE="python:3.12-alpine3.20" \
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: ${{ env.BASE_REPO }}/client-python-3-11:latest
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+              --build-arg BASE_IMAGE="python:3.12-alpine3.20" 
 
       - run:
           name: Push image to regsitry
