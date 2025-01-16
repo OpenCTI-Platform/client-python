@@ -61,6 +61,8 @@ from pycti.entities.opencti_threat_actor_individual import ThreatActorIndividual
 from pycti.entities.opencti_tool import Tool
 from pycti.entities.opencti_vocabulary import Vocabulary
 from pycti.entities.opencti_vulnerability import Vulnerability
+from pycti.entities.opencti_capability import Capability
+from pycti.entities.opencti_role import Role
 from pycti.utils.opencti_logger import logger
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
@@ -128,6 +130,7 @@ class OpenCTIApiClient:
         # Configure logger
         self.logger_class = logger(log_level.upper(), json_logging)
         self.app_logger = self.logger_class("api")
+        self.admin_logger = self.logger_class("admin")
 
         # Define API
         self.api_token = token
@@ -197,6 +200,10 @@ class OpenCTIApiClient:
         self.opinion = Opinion(self)
         self.grouping = Grouping(self)
         self.indicator = Indicator(self)
+
+        # Admin functionality
+        self.capability = Capability(self)
+        self.role = Role(self)
 
         # Check if openCTI is available
         if perform_health_check and not self.health_check():
@@ -623,6 +630,27 @@ class OpenCTIApiClient:
         if "importFiles" in data:
             data["importFiles"] = self.process_multiple(data["importFiles"])
             data["importFilesIds"] = self.process_multiple_ids(data["importFiles"])
+
+        # Administrative data
+        if "groups" in data:
+            data["groups"] = self.process_multiple(data["group"])
+            data["groupsIds"] = self.process_multiple_ids(data["groups"])
+        if "objectOrganization" in data:
+            data["objectOrganization"] = self.process_multiple(
+                data["objectOrganization"]
+            )
+            data["objectOrganizationIds"] = self.process_multiple_ids(
+                data["objectOrganization"]
+            )
+        if "roles" in data:
+            data["roles"] = self.process_multiple(data["roles"])
+            data["rolesIds"] = self.process_multiple_ids(data["roles"])
+        if "capabilities" in data:
+            data["capabilities"] = self.process_multiple(data["capabilities"])
+            data["capabilitiesIds"] = self.process_multiple_ids(
+                data["capabilities"]
+            )
+
         # See aliases of GraphQL query in stix_core_object method
         if "name_alt" in data:
             data["name"] = data["name_alt"]

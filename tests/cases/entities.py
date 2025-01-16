@@ -171,6 +171,10 @@ class EntityTestCases:
     def task(api_client):
         return TaskTest(api_client)
 
+    @staticmethod
+    def case_role(api_client):
+        return RoleTest(api_client)
+
 
 class EntityTest:
     def __init__(self, api_client):
@@ -211,6 +215,9 @@ class EntityTest:
             ],
             "filterGroups": [],
         }
+
+    def get_search(self) -> str:
+        return None
 
     def stix_class(self):
         pass
@@ -1151,3 +1158,26 @@ class ThreatActorIndividualTest(EntityTest):
 
     def own_class(self):
         return self.api_client.threat_actor_individual
+
+
+class RoleTest(EntityTest):
+    def data(self) -> Dict:
+        return {
+            "name": "TestRole",
+            "description": "This is a role for testing",
+        }
+
+    def own_class(self):
+        return self.api_client.role
+
+    def base_class(self):
+        return self.own_class()
+
+    def update_data(self) -> Dict[str, bool]:
+        return {"can_manage_sensitive_config": True}
+
+    def get_filter(self) -> Dict[str, str]:
+        return {}
+
+    def get_search(self) -> str:
+        return "TestRole"
