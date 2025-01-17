@@ -94,8 +94,6 @@ class StixNestedRefRelationship:
         custom_attributes = kwargs.get("customAttributes", None)
         get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
-        if get_all:
-            first = 500
 
         self.opencti.app_logger.info(
             "Listing stix_nested_ref_relationships",
