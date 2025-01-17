@@ -48,7 +48,6 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
         with_pagination = kwargs.get("withPagination", False)
         with_files = kwargs.get("withFiles", False)
 
-
         self.opencti.app_logger.info(
             "Listing StixCyberObservables with filters",
             {"filters": json.dumps(filters)},
