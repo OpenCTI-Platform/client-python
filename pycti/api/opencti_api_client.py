@@ -63,6 +63,7 @@ from pycti.entities.opencti_vocabulary import Vocabulary
 from pycti.entities.opencti_vulnerability import Vulnerability
 from pycti.entities.opencti_capability import Capability
 from pycti.entities.opencti_role import Role
+from pycti.entities.opencti_group import Group
 from pycti.utils.opencti_logger import logger
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
@@ -204,6 +205,7 @@ class OpenCTIApiClient:
         # Admin functionality
         self.capability = Capability(self)
         self.role = Role(self)
+        self.group = Group(self)
 
         # Check if openCTI is available
         if perform_health_check and not self.health_check():
@@ -722,7 +724,8 @@ class OpenCTIApiClient:
             )
             return queryResult["data"]["draftWorkspaceAdd"]["id"]
         else:
-            self.app_logger.error("[create_draft] Missing parameter: draft_name")
+            self.app_logger.error(
+                "[create_draft] Missing parameter: draft_name")
             return None
 
     def upload_pending_file(self, **kwargs):

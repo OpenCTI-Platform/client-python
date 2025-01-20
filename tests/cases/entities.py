@@ -175,6 +175,10 @@ class EntityTestCases:
     def case_role(api_client):
         return RoleTest(api_client)
 
+    @staticmethod
+    def case_group(api_client):
+        return GroupTest(api_client)
+
 
 class EntityTest:
     def __init__(self, api_client):
@@ -1181,3 +1185,36 @@ class RoleTest(EntityTest):
 
     def get_search(self) -> str:
         return "TestRole"
+
+
+class GroupTest(EntityTest):
+    def data(self) -> Dict:
+        return {
+            "name": "TestGroup",
+            "group_confidence_level": {
+                "max_confidence": 80,
+                "overrides": []
+            }
+        }
+
+    def own_class(self):
+        return self.api_client.group
+
+    def base_class(self):
+        return self.own_class()
+
+    def update_data(self) -> Dict:
+        return {
+            "description": "This is a test group",
+            "no_creators": True,
+            "group_confidence_level": {
+                "max_confidence": 90,
+                "overrides": [{
+                    "entity_type": "Indicator",
+                    "max_confidence": 80
+                }]
+            }
+        }
+
+    def get_search(self) -> str:
+        return "TestGroup"
