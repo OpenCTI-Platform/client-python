@@ -1,4 +1,4 @@
-from tests.cases.entities import RoleTest, MarkingDefinitionTest
+from tests.cases.entities import RoleTest
 
 
 def test_role_capabilities(api_client):
@@ -18,5 +18,5 @@ def test_role_capabilities(api_client):
         id=test_role["id"], capability_id=capability_id)
     result = role_test.own_class().read(id=test_role["id"])
     assert capability_id not in result["capabilitiesIds"]
-    
+
     role_test.base_class().delete(id=test_role["id"])
