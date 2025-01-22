@@ -65,6 +65,7 @@ from pycti.entities.opencti_capability import Capability
 from pycti.entities.opencti_role import Role
 from pycti.entities.opencti_group import Group
 from pycti.entities.opencti_user import User
+from pycti.entities.opencti_settings import Settings
 from pycti.utils.opencti_logger import logger
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
@@ -208,6 +209,7 @@ class OpenCTIApiClient:
         self.role = Role(self)
         self.group = Group(self)
         self.user = User(self)
+        self.settings = Settings(self)
 
         # Check if openCTI is available
         if perform_health_check and not self.health_check():

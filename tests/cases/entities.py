@@ -183,6 +183,10 @@ class EntityTestCases:
     def case_user(api_client):
         return UserTest(api_client)
 
+    @staticmethod
+    def case_settings(api_client):
+        return SettingsTest(api_client)
+
 
 class EntityTest:
     def __init__(self, api_client):
@@ -1255,3 +1259,31 @@ class UserTest(EntityTest):
 
     def get_search(self):
         return '"Test User"'
+
+
+class SettingsTest(EntityTest):
+    def setup(self):
+        # Save current platform information
+        return
+
+    def teardown(self):
+        # Restore platform information
+        return
+
+    def data(self) -> Dict:
+        return {}
+
+    def own_class(self):
+        return self.api_client.settings
+
+    def base_class(self):
+        return self.own_class()
+
+    def update_data(self):
+        return {
+            "platform_title": "This is a test platform",
+            "platform_theme": "dark"
+        }
+
+    def get_filter(self):
+        return None
