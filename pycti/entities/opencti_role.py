@@ -348,24 +348,27 @@ class Role:
         })
         query = (
             """
-            mutation RoleAddCapability($id: ID!, input: InternalRelationshipAddInput!) {
+            mutation RoleAddCapability($id: ID!, $input: InternalRelationshipAddInput!) {
                 roleEdit(id: $id) {
                     relationAdd(input: $input) {
                         id
-                        standard_id
                         entity_type
                         parent_types
                         created_at
                         updated_at
 
                         from {
-                            """
+                            ... on Role {
+                                """
             + self.properties
             + """
+                            }
                         }
 
                         to {
-                            id, name, description
+                            ... on Capability {
+                                id, name, description
+                            }
                         }
                     }
                 }
@@ -402,9 +405,9 @@ class Role:
         })
         query = (
             """
-            mutation RoleDelCapability($id: ID!, toId: ID!) {
+            mutation RoleDelCapability($id: ID!, $toId: StixRef!) {
                 roleEdit(id: $id) {
-                    relationDelete(fromId: $id, toId: $toId, relationship_type: "has-capability") {
+                    relationDelete(toId: $toId, relationship_type: "has-capability") {
                         """
             + self.properties
             + """

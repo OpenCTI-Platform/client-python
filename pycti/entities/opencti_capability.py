@@ -24,7 +24,7 @@ class Capability:
         """
 
     def list(self) -> List[Dict]:
-        self.opencti.logger.info("Listing capabilities")
+        self.opencti.admin_logger.info("Listing capabilities")
         query = (
             """
             query Capabilities {
