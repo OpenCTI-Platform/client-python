@@ -654,6 +654,10 @@ class OpenCTIApiClient:
             data["capabilitiesIds"] = self.process_multiple_ids(
                 data["capabilities"]
             )
+        if "members" in data:
+            data["members"] = self.process_multiple(data["members"])
+            data["membersIds"] = self.process_multiple_ids(data["members"])
+
 
         # See aliases of GraphQL query in stix_core_object method
         if "name_alt" in data:

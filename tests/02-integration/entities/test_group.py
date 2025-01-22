@@ -1,4 +1,5 @@
-from tests.cases.entities import GroupTest, RoleTest, MarkingDefinitionTest
+from tests.cases.entities import (
+    GroupTest, RoleTest, MarkingDefinitionTest, UserTest)
 
 
 def test_group_roles(api_client):
@@ -49,7 +50,29 @@ def test_group_default_markings(api_client):
 
 
 def test_group_membership(api_client):
-    pass
+    group_test = GroupTest(api_client)
+    user_test = UserTest(api_client)
+
+    test_group = group_test.own_class().create(**group_test.data())
+    test_user = user_test.own_class().create(**user_test.data())
+
+    try:
+        assert test_group is not None, "Create group response is NoneType"
+        assert test_user is not None, "Create user response is NoneType"
+
+        group_test.own_class().add_member(
+            id=test_group["id"], user_id=test_user["id"])
+        result = group_test.own_class().read(id=test_group["id"])
+        assert result["membersIds"][0] == test_user["id"]
+
+        group_test.own_class().delete_member(
+            id=test_group["id"],
+            user_id=test_user["id"])
+        result = group_test.own_class().read(id=test_group["id"])
+        assert len(result["membersIds"]) == 0
+    finally:
+        group_test.base_class().delete(id=test_group["id"])
+        user_test.base_class().delete(id=test_user["id"])
 
 
 def test_group_allowed_markings(api_client):
