@@ -179,6 +179,10 @@ class EntityTestCases:
     def case_group(api_client):
         return GroupTest(api_client)
 
+    @staticmethod
+    def case_user(api_client):
+        return UserTest(api_client)
+
 
 class EntityTest:
     def __init__(self, api_client):
@@ -1218,3 +1222,36 @@ class GroupTest(EntityTest):
 
     def get_search(self) -> str:
         return "TestGroup"
+
+
+class UserTest(EntityTest):
+    def data(self) -> Dict:
+        return {
+            "name": "Test User",
+            "user_email": "test@localhost.local",
+        }
+
+    def own_class(self):
+        return self.api_client.user
+
+    def base_class(self):
+        return self.own_class()
+
+    def update_data(self) -> Dict:
+        return {
+            "description": "This is a test user",
+            "firstname": "Test",
+            "lastname": "User",
+            "user_confidence_level": {
+                "max_confidence": 70,
+                "overrides": [{
+                    "entity_type": "Indicator",
+                    "max_confidence": 80
+                }]
+            },
+            "account_status": "Locked",
+            "submenu_show_icons": True
+        }
+
+    def get_search(self):
+        return '"Test User"'

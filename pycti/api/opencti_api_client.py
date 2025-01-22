@@ -64,6 +64,7 @@ from pycti.entities.opencti_vulnerability import Vulnerability
 from pycti.entities.opencti_capability import Capability
 from pycti.entities.opencti_role import Role
 from pycti.entities.opencti_group import Group
+from pycti.entities.opencti_user import User
 from pycti.utils.opencti_logger import logger
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
@@ -206,6 +207,7 @@ class OpenCTIApiClient:
         self.capability = Capability(self)
         self.role = Role(self)
         self.group = Group(self)
+        self.user = User(self)
 
         # Check if openCTI is available
         if perform_health_check and not self.health_check():
@@ -635,7 +637,7 @@ class OpenCTIApiClient:
 
         # Administrative data
         if "groups" in data:
-            data["groups"] = self.process_multiple(data["group"])
+            data["groups"] = self.process_multiple(data["groups"])
             data["groupsIds"] = self.process_multiple_ids(data["groups"])
         if "objectOrganization" in data:
             data["objectOrganization"] = self.process_multiple(
