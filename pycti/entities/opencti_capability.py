@@ -27,7 +27,7 @@ class Capability:
         self.opencti.admin_logger.info("Listing capabilities")
         query = (
             """
-            query Capabilities {
+            query CapabilityList {
                 capabilities(first: 500) {
                     edges {
                         node {

@@ -148,16 +148,7 @@ class Group:
             }
         """
 
-    def list(self,
-             first: int = 500,
-             after: str = None,
-             orderBy: str = None,
-             orderMode: str = None,
-             search: str = None,
-             filters: dict = None,
-             customAttributes: str = None,
-             getAll: bool = False,
-             withPagination: bool = False) -> List[Dict]:
+    def list(self, **kwargs) -> List[Dict]:
         """Lists groups based on a number of filters.
 
         :param first:  Retrieve this number of results. If 0
@@ -193,6 +184,16 @@ class Group:
         :return: List of groups in dictionary representation.
         :rtype: list[dict]
         """
+        first = kwargs.get("first", 500)
+        after = kwargs.get("after", None)
+        orderBy = kwargs.get("orderBy", None)
+        orderMode = kwargs.get("orderMode", None)
+        search = kwargs.get("search", None)
+        filters = kwargs.get("filters", None)
+        customAttributes = kwargs.get("customAttributes", None)
+        getAll = kwargs.get("getAll", False)
+        withPagination = kwargs.get("withPagination", False)
+
         if getAll:
             first = 100
 
@@ -251,11 +252,7 @@ class Group:
             return self.opencti.process_multiple(result["data"]["groups"],
                                                  withPagination)
 
-    def read(self,
-             id: str = None,
-             filters: dict = None,
-             search: str = None,
-             customAttributes: str = None) -> dict:
+    def read(self, **kwargs) -> Dict:
         """Fetch a given group from OpenCTI
 
         :param id: ID of the group to fetch
@@ -267,6 +264,10 @@ class Group:
         :return: Representation of a group.
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        filters = kwargs.get("filters", None)
+        search = kwargs.get("search", None)
+        customAttributes = kwargs.get("customAttributes", None)
         if id is not None:
             self.opencti.admin_logger.info(
                 "Fetching group with ID", {"id": id})
@@ -293,15 +294,7 @@ class Group:
                 "[opencti_group] Missing parameters: id or filters")
             return None
 
-    def create(self,
-               name: str,
-               group_confidence_level: dict,
-               description: str = None,
-               default_assignation: bool = False,
-               no_creators: bool = False,
-               restrict_delete: bool = False,
-               auto_new_marking: bool = False,
-               customAttributes: str = None) -> dict:
+    def create(self, **kwargs) -> dict:
         """Create a group with required details
 
         Groups can be configured after creation using other functions.
@@ -331,6 +324,21 @@ class Group:
         :return: Representation of the group.
         :rtype: dict
         """
+        name = kwargs.get("name", None)
+        group_confidence_level = kwargs.get("group_confidence_level", None)
+        description = kwargs.get("description", None)
+        default_assignation = kwargs.get("default_assignation", False)
+        no_creators = kwargs.get("no_creators", False)
+        restrict_delete = kwargs.get("restrict_delete", False)
+        auto_new_marking = kwargs.get("auto_new_marking", False)
+        customAttributes = kwargs.get("customAttributes", None)
+
+        if name is None or group_confidence_level is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: name and "
+                "group_confidence_level")
+            return None
+
         self.opencti.admin_logger.info(
             "Creating new group with parameters", {
                 "name": name,
@@ -382,10 +390,7 @@ class Group:
         """
         self.opencti.query(query, {"id": id})
 
-    def update_field(self,
-                     id: str,
-                     input: List[Dict],
-                     customAttributes: str = None) -> Dict:
+    def update_field(self, **kwargs) -> Dict:
         """Update a group using fieldPatch
 
         :param id: ID of the group to update
@@ -397,6 +402,15 @@ class Group:
         :return: Representation of a group
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        input = kwargs.get("input", None)
+        customAttributes = kwargs.get("customAttributes", None)
+
+        if id is None or input is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and input")
+            return None
+
         self.opencti.admin_logger.info("Editing group with input", {
             "input": input})
         query = (
@@ -417,9 +431,7 @@ class Group:
         return self.opencti.process_multiple_fields(
             result["data"]["groupEdit"]["fieldPatch"])
 
-    def add_member(self,
-                   id: str,
-                   user_id: str) -> dict:
+    def add_member(self, **kwargs) -> dict:
         """Add a member to a given group.
 
         :param id: ID of the group to add a member to
@@ -429,6 +441,14 @@ class Group:
         :return: Representation of the relationship
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        user_id = kwargs.get("user_id", None)
+
+        if id is None or user_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and user_id")
+            return None
+
         self.opencti.admin_logger.info(
             "Adding member to group", {"groupId": id, "userId": user_id}
         )
@@ -457,9 +477,7 @@ class Group:
         return self.opencti.process_multiple_fields(
             result["data"]["groupEdit"]["relationAdd"])
 
-    def delete_member(self,
-                      id: str,
-                      user_id: str) -> dict:
+    def delete_member(self, **kwargs) -> dict:
         """Remove a given user from a group
 
         :param id: ID to remove a user from
@@ -469,6 +487,14 @@ class Group:
         :return: Representation of the group after the member has been removed
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        user_id = kwargs.get("user_id", None)
+
+        if id is None or user_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and user_id")
+            return None
+
         self.opencti.admin_logger.info(
             "Removing member from group", {"groupId": id, "userId": user_id}
         )
@@ -489,9 +515,7 @@ class Group:
         return self.opencti.process_multiple_fields(
             result["data"]["groupEdit"]["relationDelete"])
 
-    def add_role(self,
-                 id: str,
-                 role_id: str) -> dict:
+    def add_role(self, **kwargs) -> Dict:
         """Add a role to a given group
 
         :param id: ID to add a role to
@@ -501,6 +525,14 @@ class Group:
         :return: Representation of the group after a role has been added
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        role_id = kwargs.get("role_id", None)
+
+        if id is None or role_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and role_id")
+            return None
+
         self.opencti.admin_logger.info(
             "Adding role to group", {"groupId": id, "roleId": role_id})
         query = (
@@ -527,9 +559,7 @@ class Group:
         return self.opencti.process_multiple_fields(
             result["data"]["groupEdit"]["relationAdd"])
 
-    def delete_role(self,
-                    id: str,
-                    role_id: str) -> dict:
+    def delete_role(self, **kwargs) -> Dict:
         """Removes a role from a given group
 
         :param id: ID to remove role from
@@ -539,6 +569,14 @@ class Group:
         :return: Representation of the group after role is removed
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        role_id = kwargs.get("role_id", None)
+
+        if id is None or role_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and role_id")
+            return None
+
         self.opencti.admin_logger.info(
             "Removing role from group", {"groupId": id, "roleId": role_id})
         query = (
@@ -558,10 +596,7 @@ class Group:
         return self.opencti.process_multiple_fields(
             result["data"]["groupEdit"]["relationDelete"])
 
-    def edit_default_marking(self,
-                             id: str,
-                             marking_ids: List[str],
-                             entity_type: str = "GLOBAL") -> dict:
+    def edit_default_marking(self, **kwargs) -> Dict:
         """Adds a default marking to the group.
 
         :param id: ID of the group.
@@ -576,6 +611,15 @@ class Group:
         :return: Group after adding the default marking.
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        marking_ids = kwargs.get("marking_ids", None)
+        entity_type = kwargs.get("entity_type", "GLOBAL")
+
+        if id is None or marking_ids is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and marking_ids")
+            return None
+
         self.opencti.admin_logger.info(
             "Setting default markings for entity on group", {
                 "markings": marking_ids,
@@ -607,18 +651,24 @@ class Group:
         return self.opencti.process_multiple_fields(
             result["data"]["groupEdit"]["editDefaultMarking"])
 
-    def add_allowed_marking(self,
-                            id: str,
-                            marking_id: str) -> dict:
+    def add_allowed_marking(self, **kwargs) -> Dict:
         """Allow a group to access a marking
 
         :param id: ID of group to authorise
         :type id: str
-        :param marking: ID of marking to authorise
-        :type marking: str
+        :param marking_id: ID of marking to authorise
+        :type marking_id: str
         :return: Relationship from the group to the marking definition
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        marking_id = kwargs.get("marking_id", None)
+
+        if id is None or marking_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and marking_id")
+            return None
+
         self.opencti.admin_logger.info(
             "Granting group access to marking definition", {
                 "groupId": id, "markingId": marking_id
@@ -668,18 +718,24 @@ class Group:
         return self.opencti.process_multiple_fields(
             result["data"]["groupEdit"]["relationAdd"])
 
-    def delete_allowed_marking(self,
-                               id: str,
-                               marking_id: str) -> dict:
+    def delete_allowed_marking(self, **kwargs) -> Dict:
         """Removes access to a marking for a group
 
         :param id: ID of group to forbid
         :type id: str
-        :param marking: ID of marking to deny
-        :type marking: str
+        :param marking_id: ID of marking to deny
+        :type marking_id: str
         :return: Group after denying access to marking definition
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        marking_id = kwargs.get("marking_id", None)
+
+        if id is None or marking_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_group] Missing parameters: id and marking_id")
+            return None
+
         self.opencti.admin_logger.info(
             "Forbidding group access to marking definition", {
                 "groupId": id, "markingId": marking_id

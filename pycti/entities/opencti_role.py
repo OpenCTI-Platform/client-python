@@ -100,7 +100,7 @@ class Role:
 
         query = (
             """
-            query Roles($first: Int, $after: ID, $orderBy: RolesOrdering, $orderMode: OrderingMode, $search: String) {
+            query RoleList($first: Int, $after: ID, $orderBy: RolesOrdering, $orderMode: OrderingMode, $search: String) {
                 roles(first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, search: $search) {
                     edges {
                         node {
@@ -177,7 +177,7 @@ class Role:
             self.opencti.admin_logger.info("Reading role", {"id": id})
             query = (
                 """
-                query Role($id: String!) {
+                query RoleRead($id: String!) {
                     role(id: $id) {
                         """
                 + (self.properties if customAttributes is None
@@ -250,7 +250,7 @@ class Role:
         })
         query = (
             """
-            mutation RoleAdd($input: RoleAddInput!) {
+            mutation RoleCreate($input: RoleAddInput!) {
                 roleAdd(input: $input) {
                     """
             + (self.properties if customAttributes is None
@@ -308,7 +308,7 @@ class Role:
         })
         query = (
             """
-            mutation RoleFieldPatch($id: ID!, $input: [EditInput]!) {
+            mutation RoleUpdate($id: ID!, $input: [EditInput]!) {
                 roleEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
@@ -405,7 +405,7 @@ class Role:
         })
         query = (
             """
-            mutation RoleDelCapability($id: ID!, $toId: StixRef!) {
+            mutation RoleDeleteCapability($id: ID!, $toId: StixRef!) {
                 roleEdit(id: $id) {
                     relationDelete(toId: $toId, relationship_type: "has-capability") {
                         """

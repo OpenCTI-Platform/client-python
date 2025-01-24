@@ -273,17 +273,7 @@ class User:
             }
         """
 
-    def list(self,
-             first: int = 500,
-             after: str = None,
-             orderBy: str = "name",
-             orderMode: str = "asc",
-             filters: dict = {},
-             search: str = None,
-             include_sessions: bool = False,
-             customAttributes: str = None,
-             getAll: bool = False,
-             withPagination: bool = False) -> List[Dict]:
+    def list(self, **kwargs) -> List[Dict]:
         """Search/list users on the platform
 
         Searches users given some conditions. Defaults to listing all users.
@@ -324,6 +314,17 @@ class User:
         :return: Returns a list of users, sorted as specified.
         :rtype: list[dict]
         """
+        first = kwargs.get("first", 500)
+        after = kwargs.get("after", None)
+        orderBy = kwargs.get("orderBy", "name")
+        orderMode = kwargs.get("orderMode", "asc")
+        filters = kwargs.get("filters", None)
+        search = kwargs.get("search", None)
+        include_sessions = kwargs.get("include_sessions", False)
+        customAttributes = kwargs.get("customAttributes", None)
+        getAll = kwargs.get("getAll", False)
+        withPagination = kwargs.get("withPagination", False)
+
         if getAll:
             first = 100
 
@@ -331,7 +332,7 @@ class User:
                                        {"filters": filters})
         query = (
             """
-            query ListUsers($first: Int, $after: ID, $orderBy: UsersOrdering, $orderMode: OrderingMode, $filters: FilterGroup, $search: String) {
+            query UserList($first: Int, $after: ID, $orderBy: UsersOrdering, $orderMode: OrderingMode, $filters: FilterGroup, $search: String) {
                 users(first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode, filters: $filters, search: $search) {
                     edges {
                         node {
@@ -381,13 +382,7 @@ class User:
             return self.opencti.process_multiple(result["data"]["users"],
                                                  withPagination)
 
-    def read(self,
-             id: str = None,
-             include_sessions: bool = False,
-             include_token: bool = False,
-             customAttributes: str = None,
-             filters: dict = None,
-             search: str = None) -> dict:
+    def read(self, **kwargs) -> Dict:
         """Reads user details from the platform.
 
         :param id: ID of the user to fetch
@@ -408,13 +403,19 @@ class User:
         :return: Representation of the user as a Python dictionary.
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        include_sessions = kwargs.get("include_sessions", False)
+        include_token = kwargs.get("include_token", False)
+        customAttributes = kwargs.get("customAttributes", None)
+        filters = kwargs.get("filters", None)
+        search = kwargs.get("search", None)
         if id is not None:
             self.opencti.admin_logger.info(
                 "Fetching user with ID", {"id": id}
             )
             query = (
                 """
-                query User($id: String!) {
+                query UserRead($id: String!) {
                     user(id: $id) {
                         """
                 + (self.properties if customAttributes is None
@@ -449,26 +450,7 @@ class User:
                 "[opencti_user] Missing paramters: id, search, or filters")
             return None
 
-    def create(self,
-               name: str,
-               user_email: str,
-               password: str = None,
-               firstname: str = None,
-               lastname: str = None,
-               description: str = None,
-               language: str = None,
-               theme: str = None,
-               objectOrganization: List[str] = None,
-               account_status: str = None,
-               account_lock_after_date: str = None,
-               unit_system: str = None,
-               submenu_show_icons: bool = False,
-               submenu_auto_collapse: bool = False,
-               monochrome_labels: bool = False,
-               groups: List[str] = None,
-               user_confidence_level: Dict = None,
-               customAttributes: str = None,
-               include_token: bool = False) -> dict:
+    def create(self, **kwargs) -> Dict:
         """Creates a new user with basic details
 
         Note that when SSO is connected users generally do not need to be
@@ -529,6 +511,32 @@ class User:
         :return: Representation of the user without sessions or API token.
         :rtype: dict
         """
+        name = kwargs.get("name", None)
+        user_email = kwargs.get("user_email", None)
+        password = kwargs.get("password", None)
+        firstname = kwargs.get("firstname", None)
+        lastname = kwargs.get("lastname", None)
+        description = kwargs.get("description", None)
+        language = kwargs.get("language", None)
+        theme = kwargs.get("theme", None)
+        objectOrganization = kwargs.get("objectOrganization", None)
+        account_status = kwargs.get("account_status", None)
+        account_lock_after_date = kwargs.get(
+            "account_lock_after_date", None)
+        unit_system = kwargs.get("unit_system", None)
+        submenu_show_icons = kwargs.get("submenu_show_icons", False)
+        submenu_auto_collapse = kwargs.get("submenu_auto_collapse", False)
+        monochrome_labels = kwargs.get("monochrome_labels", False)
+        groups = kwargs.get("groups", None)
+        user_confidence_level = kwargs.get("user_confidence_level", None)
+        customAttributes = kwargs.get("customAttributes", None)
+        include_token = kwargs.get("include_token", False)
+
+        if name is None or user_email is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameters: name and user_email")
+            return None
+
         self.opencti.admin_logger.info(
             "Creating a new user", {"name": name, "email": user_email})
         if password is None:
@@ -572,12 +580,18 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userAdd"])
 
-    def delete(self, id: str):
+    def delete(self, **kwargs):
         """Deletes the given user from the platform.
 
         :param id: ID of the user to delete.
         :type id: str
         """
+        id = kwargs.get("id", None)
+        if id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameter: id")
+            return None
+
         self.opencti.admin_logger.info("Deleting user", {"id": id})
         query = """
             mutation DeleteUser($id: ID!) {
@@ -588,9 +602,7 @@ class User:
         """
         self.opencti.query(query, {"id": id})
 
-    def me(self,
-           include_token: bool = False,
-           customAttributes: str = None) -> dict:
+    def me(self, **kwargs) -> Dict:
         """Reads the currently authenticated user.
 
         :param include_token:  Whether to inclued the API
@@ -601,6 +613,9 @@ class User:
         :return: Representation of the user.
         :rtype: dict
         """
+        include_token = kwargs.get("include_token", False)
+        customAttributes = kwargs.get("customAttributes", None)
+
         self.opencti.admin_logger.info("Reading MeUser")
         query = (
             """
@@ -618,10 +633,7 @@ class User:
         result = self.opencti.query(query)
         return self.opencti.process_multiple_fields(result["data"]["me"])
 
-    def update_field(self,
-                     id: str,
-                     input: List[Dict],
-                     customAttributes: str = None) -> Dict:
+    def update_field(self, **kwargs) -> Dict:
         """Update a given user using fieldPatch
 
         :param id: ID of the user to update.
@@ -633,6 +645,14 @@ class User:
         :return: Representation of the user without sessions or API token.
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        input = kwargs.get("input", None)
+        customAttributes = kwargs.get("customAttributes", None)
+        if id is None or input is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameters: id and input")
+            return None
+
         self.opencti.admin_logger.info(
             "Editing user with input (not shown to hide password and API token"
             " changes)", {"id": id})
@@ -654,9 +674,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["fieldPatch"])
 
-    def add_membership(self,
-                       id: str,
-                       group_id: str) -> dict:
+    def add_membership(self, **kwargs) -> Dict:
         """Adds the user to a given group.
 
         :param id: User ID to add to the group.
@@ -666,6 +684,13 @@ class User:
         :return: Representation of the InternalRelationship
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        group_id = kwargs.get("group_id", None)
+        if id is None or group_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameters: id and group_id")
+            return None
+
         self.opencti.admin_logger.info("Adding user to group", {
             "id": id, "group_id": group_id
         })
@@ -695,9 +720,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["relationAdd"])
 
-    def delete_membership(self,
-                          id: str,
-                          group_id: str) -> dict:
+    def delete_membership(self, **kwargs) -> Dict:
         """Removes the user from the given group.
 
         :param id: User ID to remove from the group.
@@ -707,6 +730,13 @@ class User:
         :return: Representation of the user without sessions or API token
         :rtype: dict
         """
+        id = kwargs.get("id", None)
+        group_id = kwargs.get("group_id", None)
+        if id is None or group_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameters: id and group_id")
+            return None
+
         self.opencti.admin_logger.info("Removing used from group", {
             "id": id, "group_id": group_id})
         query = (
@@ -788,9 +818,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["organizationDelete"])
 
-    def token_renew(self,
-                     id: str,
-                     include_token: bool = False) -> str:
+    def token_renew(self, **kwargs) -> Dict:
         """Rotates the API token for the given user
 
         :param user: User ID to rotate API token for.
@@ -798,9 +826,16 @@ class User:
         :param include_token:  Whether to include new API
             token in response from server, defaults to False.
         :type include_token: bool, optional
-        :return: API token if include_token else None.
-        :rtype: str
+        :return: Representation of user
+        :rtype: Dict
         """
+        id = kwargs.get("id", None)
+        include_token = kwargs.get("include_token", False)
+        if id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameter: id")
+            return None
+
         self.opencti.admin_logger.info("Rotating API key for user", {"id": id})
         query = (
             """
