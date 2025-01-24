@@ -1,5 +1,3 @@
-import json
-
 from typing import Dict, List, Union
 
 from stix2 import TLP_GREEN, TLP_WHITE, AttackPattern
