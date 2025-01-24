@@ -4,13 +4,8 @@ from typing import List, Dict
 class Capability:
     """Represents a role capability on the OpenCTI platform
 
-    The dictionary representation of a Capability has the following form::
-
-        {
-            "id": "UUID",
-            "name": "Name of the capability, e.g. KNUPDATE",
-            "description": "Create/Update knowledge"
-        }.
+    See the properties attribute to understand which properties are fetched by
+    default from the graphql queries.
     """
 
     def __init__(self, opencti):
@@ -24,6 +19,7 @@ class Capability:
         """
 
     def list(self) -> List[Dict]:
+        """Lists all capabilities available on the platform"""
         self.opencti.admin_logger.info("Listing capabilities")
         query = (
             """

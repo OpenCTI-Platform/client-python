@@ -51,6 +51,14 @@ from .entities.opencti_threat_actor_group import ThreatActorGroup
 from .entities.opencti_threat_actor_individual import ThreatActorIndividual
 from .entities.opencti_tool import Tool
 from .entities.opencti_vulnerability import Vulnerability
+
+# Administrative entities
+from .entities.opencti_capability import Capability
+from .entities.opencti_role import Role
+from .entities.opencti_group import Group
+from .entities.opencti_user import User
+from .entities.opencti_settings import Settings
+
 from .utils.constants import (
     CustomObjectCaseIncident,
     CustomObjectChannel,
@@ -151,4 +159,9 @@ __all__ = [
     "STIX_EXT_MITRE",
     "STIX_EXT_OCTI_SCO",
     "STIX_EXT_OCTI",
+    "Capability",
+    "Role",
+    "Group",
+    "User",
+    "Settings",
 ]

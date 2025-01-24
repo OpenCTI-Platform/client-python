@@ -8,22 +8,6 @@ class Role:
     capabilities of those roles determine what a group of users can do on the
     platform.
 
-    The dictionary representation of a role might look as below::
-
-        {
-            "id": "UUID",
-            "name": "Name of the role",
-            "description": "Description of the role",
-            "created_at": "YYYY-MM-DDThh:mm:ss.000Z",
-            "updated_at": "YYYY-MM-DDThh:mm:ss.000Z",
-            "can_manage_sensitive_config": false,
-            "capabilities": [{
-                "id": "UUID",
-                "name": "Name of the capability",
-                "description": "Description of the capability"
-            }]
-        }.
-
     Check the properties attribute of the class to understand what default
     properties are fetched.
     """

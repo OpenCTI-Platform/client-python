@@ -2,6 +2,16 @@ from typing import Dict
 
 
 class Settings:
+    """Represents the Settings object in OpenCTI
+
+    These are the properties which are viewable in the customization and
+    security policies views on OpenCTI platform. This also includes all
+    messages on the platform.
+
+    See the properties attribute to understand which properties are fetched by
+    default on graphql queries.
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """

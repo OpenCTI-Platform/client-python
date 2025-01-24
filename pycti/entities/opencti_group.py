@@ -17,73 +17,8 @@ class Group:
     created by members of a group, and max shareable definitions which
     determine which objects users can export from the platform to share.
 
-    Representation of a group in Python looks like::
-
-        {
-            "id": "UUID",
-            "name": "Group name",
-            "description": "Group description",
-            "created_at": "ISO 8901 datetime",
-            "updated_at": "ISO 8901 datetime",
-            "default_assignation": False,
-            "no_creators": True,
-            "restrict_delete": True,
-            "default_hidden_types": ["STIX type"],
-            "auto_new_marking": False,
-            "allowed_marking": [{
-                "id": "UUID",
-                "standard_id": "marking-definition--UUID",
-                "definition_type": "TLP",
-                "definition": "TLP:GREEN"
-            }],
-            "default_marking": [{
-                "entity_type": "STIX type",
-                "values": [{
-                    "id": "UUID",
-                    "standard_id": "marking-definition--UUID",
-                    "definition_type": "TLP",
-                    "deinition": "TLP:GREEN"
-                }]
-            }],
-            not_shareable_marking_types: [
-                "PAP"
-            ],
-            max_shareable_marking: [{
-                "id": "UUID",
-                "standard_id": "marking-definition--UUID",
-                "definition_type": "TLP",
-                "definition": "TLP:GREEN"
-            }],
-            group_confidence_level: {
-                "max_confidence": 90,
-                "overrides": [{
-                    "entity_type": "STIX type",
-                    "max_confidence": 80
-                }]
-            },
-            "roles": {
-                "edges": [{
-                    "node": {
-                        "id": "UUID",
-                        "name": "Role name",
-                        "capabilities": [{
-                            "id": "UUID",
-                            "name": "Capability name"
-                        }]
-                    }
-                }]
-            },
-            "members": {
-                "edges": [{
-                    "node": {
-                        "id": "UUID",
-                        "individual_id": "UUID",
-                        "user_email": "email address",
-                        "name": "Username"
-                    }
-                }]
-            }
-        }.
+    See the properties attribute to understand what properties are fetched by
+    default from GraphQL queries.
     """
 
     def __init__(self, opencti):
