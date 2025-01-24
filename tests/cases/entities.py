@@ -1,3 +1,5 @@
+import json
+
 from typing import Dict, List, Union
 
 from stix2 import TLP_GREEN, TLP_WHITE, AttackPattern
@@ -1264,10 +1266,23 @@ class UserTest(EntityTest):
 class SettingsTest(EntityTest):
     def setup(self):
         # Save current platform information
+        custom_attributes = self.own_class().editable_properties
+        self.own_class().create()
+        self._saved_settings = self.own_class().read(
+            customAttributes=custom_attributes)
+        if self._saved_settings["platform_organization"] is not None:
+            self._saved_settings[
+                "platform_organization"] = self._saved_settings[
+                "platform_organization"]["id"]
         return
 
     def teardown(self):
         # Restore platform information
+        id = self._saved_settings.pop("id")
+        input = [{"key": key, "value": value}
+                 for key, value in self._saved_settings.items()
+                 if value is not None]
+        self.own_class().update_field(id=id, input=input)
         return
 
     def data(self) -> Dict:
@@ -1282,7 +1297,7 @@ class SettingsTest(EntityTest):
     def update_data(self):
         return {
             "platform_title": "This is a test platform",
-            "platform_theme": "dark"
+            "platform_theme": "light"
         }
 
     def get_filter(self):

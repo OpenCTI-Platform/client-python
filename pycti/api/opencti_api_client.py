@@ -659,7 +659,21 @@ class OpenCTIApiClient:
         if "members" in data:
             data["members"] = self.process_multiple(data["members"])
             data["membersIds"] = self.process_multiple_ids(data["members"])
-
+        if "platform_messages" in data:
+            data["platform_messages"] = self.process_multiple(
+                data["platform_messages"])
+            data["platform_messages_ids"] = self.process_multiple_ids(
+                data["platform_messages"])
+        if "messages_administration" in data:
+            data["messages_administration"] = self.process_multiple(
+                data["messages_administration"])
+            data["messages_administration_ids"] = self.process_multiple_ids(
+                data["messages_administration"])
+        if "recipients" in data:
+            data["recipients"] = self.process_multiple(
+                data["recipients"])
+            data["recipientsIds"] = self.process_multiple_ids(
+                data["recipients"])
 
         # See aliases of GraphQL query in stix_core_object method
         if "name_alt" in data:
