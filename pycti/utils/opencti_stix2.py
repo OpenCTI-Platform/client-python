@@ -2422,6 +2422,14 @@ class OpenCTIStix2:
         else:
             self.opencti.stix_domain_object.update_field(id=item["id"], input=input)
 
+    def rule_apply(self, item):
+        rule_id = item["opencti_rule"]
+        self.opencti.stix_core_object.rule_apply(element_id=item["id"], rule_id=rule_id)
+
+    def rule_clear(self, item):
+        rule_id = item["opencti_rule"]
+        self.opencti.stix_core_object.rule_clear(element_id=item["id"], rule_id=rule_id)
+
     def import_item(
         self,
         item,
@@ -2443,6 +2451,10 @@ class OpenCTIStix2:
                     self.opencti.stix.merge(id=target_id, object_ids=source_ids)
                 elif item["opencti_operation"] == "patch":
                     self.apply_patch(item=item)
+                elif item["opencti_operation"] == "rule_apply":
+                    self.rule_apply(item=item)
+                elif item["opencti_operation"] == "rule_clear":
+                    self.rule_clear(item=item)
                 else:
                     raise ValueError("Not supported opencti_operation")
             elif item["type"] == "relationship":
