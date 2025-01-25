@@ -2467,6 +2467,14 @@ class OpenCTIStix2:
                 )
         self.apply_patch_files(item)
 
+    def rule_apply(self, item):
+        rule_id = item["opencti_rule"]
+        self.opencti.stix_core_object.rule_apply(element_id=item["id"], rule_id=rule_id)
+
+    def rule_clear(self, item):
+        rule_id = item["opencti_rule"]
+        self.opencti.stix_core_object.rule_clear(element_id=item["id"], rule_id=rule_id)
+
     def apply_opencti_operation(self, item, operation):
         if operation == "delete":
             delete_id = item["id"]
@@ -2477,6 +2485,10 @@ class OpenCTIStix2:
             self.opencti.stix.merge(id=target_id, object_ids=source_ids)
         elif operation == "patch":
             self.apply_patch(item=item)
+        elif operation == "rule_apply":
+            self.rule_apply(item=item)
+        elif operation == "rule_clear":
+            self.rule_clear(item=item)
         else:
             raise ValueError("Not supported opencti_operation")
 
