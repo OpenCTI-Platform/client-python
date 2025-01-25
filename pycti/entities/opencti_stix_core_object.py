@@ -1683,6 +1683,52 @@ class StixCoreObject:
             return None
 
     """
+        Apply rule to Stix-Core-Object object
+
+        :param element_id: the Stix-Core-Object id
+        :param rule_id: the rule to apply
+        :return void
+    """
+
+    def rule_apply(self, **kwargs):
+        rule_id = kwargs.get("rule_id", None)
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None and rule_id is not None:
+            self.opencti.app_logger.info("Apply rule stix_core_object", {"id": element_id})
+            query = """
+                mutation StixCoreApplyRule($elementId: ID!, $ruleId: ID!) {
+                    ruleApply(elementId: $elementId, ruleId: $ruleId)
+                }
+            """
+            self.opencti.query(query, {"elementId": element_id, "ruleId": rule_id})
+        else:
+            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            return None
+
+    """
+        Apply rule clear to Stix-Core-Object object
+
+        :param element_id: the Stix-Core-Object id
+        :param rule_id: the rule to apply
+        :return void
+    """
+
+    def rule_clear(self, **kwargs):
+        rule_id = kwargs.get("rule_id", None)
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None and rule_id is not None:
+            self.opencti.app_logger.info("Apply rule clear stix_core_object", {"id": element_id})
+            query = """
+                mutation StixCoreClearRule($elementId: ID!, $ruleId: ID!) {
+                    ruleClear(elementId: $elementId, ruleId: $ruleId)
+                }
+            """
+            self.opencti.query(query, {"elementId": element_id, "ruleId": rule_id})
+        else:
+            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            return None
+
+    """
         Delete a Stix-Core-Object object
 
         :param id: the Stix-Core-Object id
