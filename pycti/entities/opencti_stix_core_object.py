@@ -1694,7 +1694,9 @@ class StixCoreObject:
         rule_id = kwargs.get("rule_id", None)
         element_id = kwargs.get("element_id", None)
         if element_id is not None and rule_id is not None:
-            self.opencti.app_logger.info("Apply rule stix_core_object", {"id": element_id})
+            self.opencti.app_logger.info(
+                "Apply rule stix_core_object", {"id": element_id}
+            )
             query = """
                 mutation StixCoreApplyRule($elementId: ID!, $ruleId: ID!) {
                     ruleApply(elementId: $elementId, ruleId: $ruleId)
@@ -1717,7 +1719,9 @@ class StixCoreObject:
         rule_id = kwargs.get("rule_id", None)
         element_id = kwargs.get("element_id", None)
         if element_id is not None and rule_id is not None:
-            self.opencti.app_logger.info("Apply rule clear stix_core_object", {"id": element_id})
+            self.opencti.app_logger.info(
+                "Apply rule clear stix_core_object", {"id": element_id}
+            )
             query = """
                 mutation StixCoreClearRule($elementId: ID!, $ruleId: ID!) {
                     ruleClear(elementId: $elementId, ruleId: $ruleId)
@@ -1727,6 +1731,81 @@ class StixCoreObject:
         else:
             self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
             return None
+
+    """
+        Apply rules rescan to Stix-Core-Object object
+
+        :param element_id: the Stix-Core-Object id
+        :return void
+    """
+
+    def rules_rescan(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None:
+            self.opencti.app_logger.info(
+                "Apply rules rescan stix_core_object", {"id": element_id}
+            )
+            query = """
+                mutation StixCoreRescanRules($elementId: ID!) {
+                    rulesRescan(elementId: $elementId)
+                }
+            """
+            self.opencti.query(query, {"elementId": element_id})
+        else:
+            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            return None
+
+    """
+        Share element to multiple organizations
+
+        :param entity_id: the Stix-Core-Object id
+        :param organization_id:s the organization to share with
+        :return void
+    """
+
+    def organization_share(self, entity_id, organization_ids):
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!) {
+                stixCoreObjectEdit(id: $id) {
+                    restrictionOrganizationAdd(organizationId: $organizationId) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+            },
+        )
+
+    """
+        Unshare element from multiple organizations
+
+        :param entity_id: the Stix-Core-Object id
+        :param organization_id:s the organization to share with
+        :return void
+    """
+
+    def organization_unshare(self, entity_id, organization_ids):
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!) {
+                stixCoreObjectEdit(id: $id) {
+                    restrictionOrganizationDelete(organizationId: $organizationId) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+            },
+        )
 
     """
         Delete a Stix-Core-Object object
