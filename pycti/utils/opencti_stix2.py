@@ -2475,6 +2475,17 @@ class OpenCTIStix2:
         rule_id = item["opencti_rule"]
         self.opencti.stix_core_object.rule_clear(element_id=item["id"], rule_id=rule_id)
 
+    def rules_rescan(self, item):
+        self.opencti.stix_core_object.rules_rescan(element_id=item["id"])
+
+    def organization_share(self, item):
+        organization_ids = item["organization_ids"]
+        self.opencti.stix_core_object.organization_share(item["id"], organization_ids)
+
+    def organization_unshare(self, item):
+        organization_ids = item["organization_ids"]
+        self.opencti.stix_core_object.organization_unshare(item["id"], organization_ids)
+
     def apply_opencti_operation(self, item, operation):
         if operation == "delete":
             delete_id = item["id"]
@@ -2489,8 +2500,17 @@ class OpenCTIStix2:
             self.rule_apply(item=item)
         elif operation == "rule_clear":
             self.rule_clear(item=item)
+        elif operation == "rules_rescan":
+            self.rules_rescan(item=item)
+        elif operation == "share":
+            self.organization_share(item=item)
+        elif operation == "unshare":
+            self.organization_unshare(item=item)
         else:
-            raise ValueError("Not supported opencti_operation")
+            raise ValueError(
+                "Not supported opencti_operation",
+                {"operation": operation},
+            )
 
     def import_item(
         self,
