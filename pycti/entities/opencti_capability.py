@@ -32,7 +32,7 @@ class Capability:
         query = (
             """
             query CapabilityList {
-                capabilities(first: 500) {
+                capabilities {
                     edges {
                         node {
                             """
