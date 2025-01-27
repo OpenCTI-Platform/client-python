@@ -1,4 +1,4 @@
-from tests.cases.entities import GroupTest, UserTest, IdentityOrganizationTest
+from tests.cases.entities import GroupTest, IdentityOrganizationTest, UserTest
 
 
 def test_user_membership(api_client):

@@ -1,5 +1,4 @@
-from tests.cases.entities import (
-    GroupTest, RoleTest, MarkingDefinitionTest, UserTest)
+from tests.cases.entities import GroupTest, MarkingDefinitionTest, RoleTest, UserTest
 
 
 def test_group_roles(api_client):

@@ -14,6 +14,7 @@ from pycti.api.opencti_api_playbook import OpenCTIApiPlaybook
 from pycti.api.opencti_api_work import OpenCTIApiWork
 from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_campaign import Campaign
+from pycti.entities.opencti_capability import Capability
 from pycti.entities.opencti_case_incident import CaseIncident
 from pycti.entities.opencti_case_rfi import CaseRfi
 from pycti.entities.opencti_case_rft import CaseRft
@@ -24,6 +25,7 @@ from pycti.entities.opencti_data_source import DataSource
 from pycti.entities.opencti_event import Event
 from pycti.entities.opencti_external_reference import ExternalReference
 from pycti.entities.opencti_feedback import Feedback
+from pycti.entities.opencti_group import Group
 from pycti.entities.opencti_grouping import Grouping
 from pycti.entities.opencti_identity import Identity
 from pycti.entities.opencti_incident import Incident
@@ -42,6 +44,8 @@ from pycti.entities.opencti_note import Note
 from pycti.entities.opencti_observed_data import ObservedData
 from pycti.entities.opencti_opinion import Opinion
 from pycti.entities.opencti_report import Report
+from pycti.entities.opencti_role import Role
+from pycti.entities.opencti_settings import Settings
 from pycti.entities.opencti_stix import Stix
 from pycti.entities.opencti_stix_core_object import StixCoreObject
 from pycti.entities.opencti_stix_core_relationship import StixCoreRelationship
@@ -59,13 +63,9 @@ from pycti.entities.opencti_threat_actor import ThreatActor
 from pycti.entities.opencti_threat_actor_group import ThreatActorGroup
 from pycti.entities.opencti_threat_actor_individual import ThreatActorIndividual
 from pycti.entities.opencti_tool import Tool
+from pycti.entities.opencti_user import User
 from pycti.entities.opencti_vocabulary import Vocabulary
 from pycti.entities.opencti_vulnerability import Vulnerability
-from pycti.entities.opencti_capability import Capability
-from pycti.entities.opencti_role import Role
-from pycti.entities.opencti_group import Group
-from pycti.entities.opencti_user import User
-from pycti.entities.opencti_settings import Settings
 from pycti.utils.opencti_logger import logger
 from pycti.utils.opencti_stix2 import OpenCTIStix2
 from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
