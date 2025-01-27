@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 class Role:
@@ -138,7 +138,7 @@ class Role:
             return self.opencti.process_multiple(result["data"]["roles"],
                                                  withPagination)
 
-    def read(self, **kwargs) -> Dict:
+    def read(self, **kwargs) -> Optional[Dict]:
         """Get a role given its ID or a search term
 
         One of id or search must be provided.
@@ -151,7 +151,7 @@ class Role:
         :type customAttributes: str, optional
 
         :return: Representation of the role
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         search = kwargs.get("search", None)
@@ -185,8 +185,8 @@ class Role:
     def delete(self, **kwargs):
         """Delete a role given its ID
 
-        :param role: ID for the role on the platform.
-        :type role: str
+        :param id: ID for the role on the platform.
+        :type id: str
         """
         id = kwargs.get("id", None)
 
@@ -206,7 +206,7 @@ class Role:
         """
         self.opencti.query(query, {"id": id})
 
-    def create(self, **kwargs) -> Dict:
+    def create(self, **kwargs) -> Optional[Dict]:
         """Add a new role to OpenCTI.
 
         :param name: Name to assign to the role.
@@ -217,7 +217,7 @@ class Role:
         :param customAttributes: Custom attributes to return on role
         :type customAttributes: str, optional
         :return: Representation of the role.
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
@@ -252,7 +252,7 @@ class Role:
         })
         return self.opencti.process_multiple_fields(result["data"]["roleAdd"])
 
-    def update_field(self, **kwargs) -> Dict:
+    def update_field(self, **kwargs) -> Optional[Dict]:
         """Updates a given role with the given inputs
 
         Example of input::
@@ -276,7 +276,7 @@ class Role:
         :type customAttributes: str, optional
 
         :return: Representation of the role
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
@@ -308,7 +308,7 @@ class Role:
         return self.opencti.process_multiple_fields(
             result["data"]["roleEdit"]["fieldPatch"])
 
-    def add_capability(self, **kwargs) -> Dict:
+    def add_capability(self, **kwargs) -> Optional[Dict]:
         """Adds a capability to a role
 
         :param id: ID of the role.
@@ -317,7 +317,7 @@ class Role:
         :type capability_id: str
         :return: Representation of the relationship, including the role and
             capability
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         capability_id = kwargs.get("capability_id", None)
@@ -366,7 +366,7 @@ class Role:
         return self.opencti.process_multiple_fields(
             result["data"]["roleEdit"]["relationAdd"])
 
-    def delete_capability(self, **kwargs) -> Dict:
+    def delete_capability(self, **kwargs) -> Optional[Dict]:
         """Removes a capability from a role
 
         :param id: ID of the role
@@ -374,7 +374,7 @@ class Role:
         :param capability_id: ID of the capability to remove
         :type capability_id: str
         :return: Representation of the role after removing the capability
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         capability_id = kwargs.get("capability_id", None)

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 
 class Settings:
@@ -247,7 +247,7 @@ class Settings:
         result = self.opencti.query(query)
         return self.opencti.process_multiple_fields(result["data"]["settings"])
 
-    def update_field(self, **kwargs) -> Dict:
+    def update_field(self, **kwargs) -> Optional[Dict]:
         """Update settings using input to fieldPatch
 
         :param id: ID of the settings object to update
@@ -263,7 +263,7 @@ class Settings:
             in query response.
         :type include_messages: bool, optional
         :return: Representation of the platform settings
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
@@ -302,7 +302,7 @@ class Settings:
         return self.opencti.process_multiple_fields(
             result["data"]["settingsEdit"]["fieldPatch"])
 
-    def edit_message(self, **kwargs) -> Dict:
+    def edit_message(self, **kwargs) -> Optional[Dict]:
         """Edit or add a message to the platform
 
         To add a message, don't include an ID in the input object. To edit a
@@ -313,7 +313,7 @@ class Settings:
         :param input: SettingsMessageInput object
         :type input: Dict
         :return: Settings ID and message objects
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
@@ -341,7 +341,7 @@ class Settings:
         return self.opencti.process_multiple_fields(
             result["data"]["settingsEdit"]["editMessage"])
 
-    def delete_message(self, **kwargs) -> Dict:
+    def delete_message(self, **kwargs) -> Optional[Dict]:
         """Delete a message from the platform
 
         :param id: ID of the settings object on the platform
@@ -349,7 +349,7 @@ class Settings:
         :param input: ID of the message to delete
         :type input: str
         :return: Settings ID and message objects
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)

@@ -1,6 +1,6 @@
 import secrets
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 class User:
@@ -287,7 +287,7 @@ class User:
             return self.opencti.process_multiple(result["data"]["users"],
                                                  withPagination)
 
-    def read(self, **kwargs) -> Dict:
+    def read(self, **kwargs) -> Optional[Dict]:
         """Reads user details from the platform.
 
         :param id: ID of the user to fetch
@@ -306,7 +306,7 @@ class User:
         :param search: Search term to use to find a single user
         :type search: str, optional
         :return: Representation of the user as a Python dictionary.
-        :rtype: dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         include_sessions = kwargs.get("include_sessions", False)
@@ -355,7 +355,7 @@ class User:
                 "[opencti_user] Missing paramters: id, search, or filters")
             return None
 
-    def create(self, **kwargs) -> Dict:
+    def create(self, **kwargs) -> Optional[Dict]:
         """Creates a new user with basic details
 
         Note that when SSO is connected users generally do not need to be
@@ -414,7 +414,7 @@ class User:
             token for the new user in the response.
         :type include_token: bool, optional
         :return: Representation of the user without sessions or API token.
-        :rtype: dict
+        :rtype: Optional[Dict]
         """
         name = kwargs.get("name", None)
         user_email = kwargs.get("user_email", None)
@@ -538,7 +538,7 @@ class User:
         result = self.opencti.query(query)
         return self.opencti.process_multiple_fields(result["data"]["me"])
 
-    def update_field(self, **kwargs) -> Dict:
+    def update_field(self, **kwargs) -> Optional[Dict]:
         """Update a given user using fieldPatch
 
         :param id: ID of the user to update.
@@ -548,7 +548,7 @@ class User:
         :param customAttributes: Custom attributes to return from the mutation
         :type customAttributes: str, optional
         :return: Representation of the user without sessions or API token.
-        :rtype: dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
@@ -579,7 +579,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["fieldPatch"])
 
-    def add_membership(self, **kwargs) -> Dict:
+    def add_membership(self, **kwargs) -> Optional[Dict]:
         """Adds the user to a given group.
 
         :param id: User ID to add to the group.
@@ -587,7 +587,7 @@ class User:
         :param group_id: Group ID to add the user to.
         :type group_id: str
         :return: Representation of the InternalRelationship
-        :rtype: dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         group_id = kwargs.get("group_id", None)
@@ -625,7 +625,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["relationAdd"])
 
-    def delete_membership(self, **kwargs) -> Dict:
+    def delete_membership(self, **kwargs) -> Optional[Dict]:
         """Removes the user from the given group.
 
         :param id: User ID to remove from the group.
@@ -633,7 +633,7 @@ class User:
         :param group_id: Group ID to remove the user from.
         :type group_id: str
         :return: Representation of the user without sessions or API token
-        :rtype: dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         group_id = kwargs.get("group_id", None)
@@ -661,7 +661,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["relationDelete"])
 
-    def add_organization(self, id: str, organization_id: str) -> Dict:
+    def add_organization(self, **kwargs) -> Optional[Dict]:
         """Adds a user to an organization
 
         :param id: User ID to add to organization
@@ -669,8 +669,14 @@ class User:
         :param organization_id: ID of organization to add to
         :type organization_id: str
         :return: Representation of user without sessions or API key
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
+        id = kwargs.get("id", None)
+        organization_id = kwargs.get("organization_id", None)
+        if id is None or organization_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameters: id and organization_id")
+
         self.opencti.admin_logger.info("Adding user to organization", {
             "id": id, "organization_id": organization_id
         })
@@ -692,7 +698,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["organizationAdd"])
 
-    def delete_organization(self, id: str, organization_id: str) -> Dict:
+    def delete_organization(self, **kwargs) -> Optional[Dict]:
         """Delete a user from an organization
 
         :param id: User ID to remove from organization
@@ -700,8 +706,14 @@ class User:
         :param organization_id: ID of organization to remove from
         :type organization_id: str
         :return: Representation of user without sessions or API key
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
+        id = kwargs.get("id", None)
+        organization_id = kwargs.get("organization_id", None)
+        if id is None or organization_id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_user] Missing parameters: id and organization_id")
+
         self.opencti.admin_logger.info("Removing user from organization", {
             "id": id, "organization_id": organization_id
         })
@@ -723,7 +735,7 @@ class User:
         return self.opencti.process_multiple_fields(
             result["data"]["userEdit"]["organizationDelete"])
 
-    def token_renew(self, **kwargs) -> Dict:
+    def token_renew(self, **kwargs) -> Optional[Dict]:
         """Rotates the API token for the given user
 
         :param user: User ID to rotate API token for.
@@ -732,7 +744,7 @@ class User:
             token in response from server, defaults to False.
         :type include_token: bool, optional
         :return: Representation of user
-        :rtype: Dict
+        :rtype: Optional[Dict]
         """
         id = kwargs.get("id", None)
         include_token = kwargs.get("include_token", False)
