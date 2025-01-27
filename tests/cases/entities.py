@@ -1200,10 +1200,7 @@ class GroupTest(EntityTest):
     def data(self) -> Dict:
         return {
             "name": "TestGroup",
-            "group_confidence_level": {
-                "max_confidence": 80,
-                "overrides": []
-            }
+            "group_confidence_level": {"max_confidence": 80, "overrides": []},
         }
 
     def own_class(self):
@@ -1218,11 +1215,8 @@ class GroupTest(EntityTest):
             "no_creators": True,
             "group_confidence_level": {
                 "max_confidence": 90,
-                "overrides": [{
-                    "entity_type": "Indicator",
-                    "max_confidence": 80
-                }]
-            }
+                "overrides": [{"entity_type": "Indicator", "max_confidence": 80}],
+            },
         }
 
     def get_search(self) -> str:
@@ -1249,13 +1243,10 @@ class UserTest(EntityTest):
             "lastname": "User",
             "user_confidence_level": {
                 "max_confidence": 70,
-                "overrides": [{
-                    "entity_type": "Indicator",
-                    "max_confidence": 80
-                }]
+                "overrides": [{"entity_type": "Indicator", "max_confidence": 80}],
             },
             "account_status": "Locked",
-            "submenu_show_icons": True
+            "submenu_show_icons": True,
         }
 
     def get_search(self):
@@ -1276,14 +1267,16 @@ class SettingsTest(EntityTest):
             :rtype: Dict
             """
             self.opencti.admin_logger.info(
-                "Settings.create called with arguments", kwargs)
+                "Settings.create called with arguments", kwargs
+            )
             self._deleted = False
             return self.read()
 
         def delete(self, **kwargs):
             """Stub function for tests"""
             self.opencti.admin_logger.info(
-                "Settings.delete called with arguments", kwargs)
+                "Settings.delete called with arguments", kwargs
+            )
             self._deleted = True
 
         def read(self, **kwargs):
@@ -1297,20 +1290,21 @@ class SettingsTest(EntityTest):
         # Save current platform information
         custom_attributes = self.own_class().editable_properties
         self.own_class().create()
-        self._saved_settings = self.own_class().read(
-            customAttributes=custom_attributes)
+        self._saved_settings = self.own_class().read(customAttributes=custom_attributes)
         if self._saved_settings["platform_organization"] is not None:
-            self._saved_settings[
-                "platform_organization"] = self._saved_settings[
-                "platform_organization"]["id"]
+            self._saved_settings["platform_organization"] = self._saved_settings[
+                "platform_organization"
+            ]["id"]
         return
 
     def teardown(self):
         # Restore platform information
         id = self._saved_settings.pop("id")
-        input = [{"key": key, "value": value}
-                 for key, value in self._saved_settings.items()
-                 if value is not None]
+        input = [
+            {"key": key, "value": value}
+            for key, value in self._saved_settings.items()
+            if value is not None
+        ]
         self.own_class().update_field(id=id, input=input)
         return
 
@@ -1324,10 +1318,7 @@ class SettingsTest(EntityTest):
         return self.own_class()
 
     def update_data(self):
-        return {
-            "platform_title": "This is a test platform",
-            "platform_theme": "light"
-        }
+        return {"platform_title": "This is a test platform", "platform_theme": "light"}
 
     def get_filter(self):
         return None

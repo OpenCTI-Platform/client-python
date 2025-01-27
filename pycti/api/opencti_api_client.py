@@ -656,27 +656,25 @@ class OpenCTIApiClient:
             data["rolesIds"] = self.process_multiple_ids(data["roles"])
         if "capabilities" in data:
             data["capabilities"] = self.process_multiple(data["capabilities"])
-            data["capabilitiesIds"] = self.process_multiple_ids(
-                data["capabilities"]
-            )
+            data["capabilitiesIds"] = self.process_multiple_ids(data["capabilities"])
         if "members" in data:
             data["members"] = self.process_multiple(data["members"])
             data["membersIds"] = self.process_multiple_ids(data["members"])
         if "platform_messages" in data:
-            data["platform_messages"] = self.process_multiple(
-                data["platform_messages"])
+            data["platform_messages"] = self.process_multiple(data["platform_messages"])
             data["platform_messages_ids"] = self.process_multiple_ids(
-                data["platform_messages"])
+                data["platform_messages"]
+            )
         if "messages_administration" in data:
             data["messages_administration"] = self.process_multiple(
-                data["messages_administration"])
+                data["messages_administration"]
+            )
             data["messages_administration_ids"] = self.process_multiple_ids(
-                data["messages_administration"])
+                data["messages_administration"]
+            )
         if "recipients" in data:
-            data["recipients"] = self.process_multiple(
-                data["recipients"])
-            data["recipientsIds"] = self.process_multiple_ids(
-                data["recipients"])
+            data["recipients"] = self.process_multiple(data["recipients"])
+            data["recipientsIds"] = self.process_multiple_ids(data["recipients"])
 
         # See aliases of GraphQL query in stix_core_object method
         if "name_alt" in data:
@@ -749,8 +747,7 @@ class OpenCTIApiClient:
             )
             return queryResult["data"]["draftWorkspaceAdd"]["id"]
         else:
-            self.app_logger.error(
-                "[create_draft] Missing parameter: draft_name")
+            self.app_logger.error("[create_draft] Missing parameter: draft_name")
             return None
 
     def upload_pending_file(self, **kwargs):

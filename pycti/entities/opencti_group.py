@@ -132,8 +132,9 @@ class Group:
         if getAll:
             first = 100
 
-        self.opencti.admin_logger.info("Fetching groups with filters",
-                                       {"filters": filters})
+        self.opencti.admin_logger.info(
+            "Fetching groups with filters", {"filters": filters}
+        )
         query = (
             """
             query Groups($first: Int, $after: ID, $orderBy: GroupsOrdering, $orderMode: OrderingMode, $search: String, $filters: FilterGroup) {
@@ -141,8 +142,7 @@ class Group:
                     edges {
                         node {
                                 """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                         }
                     }
@@ -157,14 +157,17 @@ class Group:
             }
             """
         )
-        result = self.opencti.query(query, {
-            "first": first,
-            "after": after,
-            "orderBy": orderBy,
-            "orderMode": orderMode,
-            "search": search,
-            "filters": filters
-        })
+        result = self.opencti.query(
+            query,
+            {
+                "first": first,
+                "after": after,
+                "orderBy": orderBy,
+                "orderMode": orderMode,
+                "search": search,
+                "filters": filters,
+            },
+        )
 
         if getAll:
             final_data = []
@@ -172,20 +175,24 @@ class Group:
             final_data = final_data + data
             while result["data"]["groups"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["groups"]["pageInfo"]["endCursor"]
-                result = self.opencti.query(query, {
-                    "first": first,
-                    "after": after,
-                    "orderBy": orderBy,
-                    "orderMode": orderMode,
-                    "search": search,
-                    "filters": filters
-                })
+                result = self.opencti.query(
+                    query,
+                    {
+                        "first": first,
+                        "after": after,
+                        "orderBy": orderBy,
+                        "orderMode": orderMode,
+                        "search": search,
+                        "filters": filters,
+                    },
+                )
                 data = self.opencti.process_multiple(result["data"]["groups"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(result["data"]["groups"],
-                                                 withPagination)
+            return self.opencti.process_multiple(
+                result["data"]["groups"], withPagination
+            )
 
     def read(self, **kwargs) -> Optional[Dict]:
         """Fetch a given group from OpenCTI
@@ -206,30 +213,29 @@ class Group:
         search = kwargs.get("search", None)
         customAttributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.admin_logger.info(
-                "Fetching group with ID", {"id": id})
+            self.opencti.admin_logger.info("Fetching group with ID", {"id": id})
             query = (
                 """
                 query Group($id: String!) {
                     group(id: $id) {
                         """
-                + (self.properties if customAttributes is None
-                   else customAttributes)
+                + (self.properties if customAttributes is None else customAttributes)
                 + """
                     }
                 }
                 """
             )
             result = self.opencti.query(query, {"id": id})
-            return self.opencti.process_multiple_fields(
-                result["data"]["group"])
+            return self.opencti.process_multiple_fields(result["data"]["group"])
         elif filters is not None or search is not None:
-            results = self.list(filters=filters, search=search,
-                                customAttributes=customAttributes)
+            results = self.list(
+                filters=filters, search=search, customAttributes=customAttributes
+            )
             return results[0] if results else None
         else:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id or filters")
+                "[opencti_group] Missing parameters: id or filters"
+            )
             return None
 
     def create(self, **kwargs) -> Optional[Dict]:
@@ -273,44 +279,48 @@ class Group:
 
         if name is None or group_confidence_level is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: name and "
-                "group_confidence_level")
+                "[opencti_group] Missing parameters: name and " "group_confidence_level"
+            )
             return None
 
         self.opencti.admin_logger.info(
-            "Creating new group with parameters", {
+            "Creating new group with parameters",
+            {
                 "name": name,
                 "group_confidence_level": group_confidence_level,
                 "description": description,
                 "default_assignation": default_assignation,
                 "no_creators": no_creators,
                 "restrict_delete": restrict_delete,
-                "auto_new_marking": auto_new_marking
-            }
+                "auto_new_marking": auto_new_marking,
+            },
         )
         query = (
             """
             mutation GroupAdd($input: GroupAddInput!) {
                 groupAdd(input: $input) {
                     """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                 }
             }
             """
         )
-        result = self.opencti.query(query, {"input": {
-            "name": name,
-            "description": description,
-            "default_assignation": default_assignation,
-            "no_creators": no_creators,
-            "restrict_delete": restrict_delete,
-            "auto_new_marking": auto_new_marking,
-            "group_confidence_level": group_confidence_level
-        }})
-        return self.opencti.process_multiple_fields(
-            result["data"]["groupAdd"])
+        result = self.opencti.query(
+            query,
+            {
+                "input": {
+                    "name": name,
+                    "description": description,
+                    "default_assignation": default_assignation,
+                    "no_creators": no_creators,
+                    "restrict_delete": restrict_delete,
+                    "auto_new_marking": auto_new_marking,
+                    "group_confidence_level": group_confidence_level,
+                }
+            },
+        )
+        return self.opencti.process_multiple_fields(result["data"]["groupAdd"])
 
     def delete(self, id: str):
         """Delete a given group from OpenCTI
@@ -346,19 +356,18 @@ class Group:
 
         if id is None or input is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and input")
+                "[opencti_group] Missing parameters: id and input"
+            )
             return None
 
-        self.opencti.admin_logger.info("Editing group with input", {
-            "input": input})
+        self.opencti.admin_logger.info("Editing group with input", {"input": input})
         query = (
             """
             mutation GroupEdit($id: ID!, $input:[EditInput]!) {
                 groupEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                     }
                 }
@@ -367,7 +376,8 @@ class Group:
         )
         result = self.opencti.query(query, {"id": id, "input": input})
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["fieldPatch"])
+            result["data"]["groupEdit"]["fieldPatch"]
+        )
 
     def add_member(self, **kwargs) -> Optional[Dict]:
         """Add a member to a given group.
@@ -384,14 +394,14 @@ class Group:
 
         if id is None or user_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and user_id")
+                "[opencti_group] Missing parameters: id and user_id"
+            )
             return None
 
         self.opencti.admin_logger.info(
             "Adding member to group", {"groupId": id, "userId": user_id}
         )
-        query = (
-            """
+        query = """
             mutation MemberAdd($groupId: ID!, $userId: ID!) {
                 groupEdit(id: $groupId) {
                     relationAdd(input: {
@@ -410,10 +420,10 @@ class Group:
                 }
             }
             """
-        )
         result = self.opencti.query(query, {"groupId": id, "userId": user_id})
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["relationAdd"])
+            result["data"]["groupEdit"]["relationAdd"]
+        )
 
     def delete_member(self, **kwargs) -> Optional[Dict]:
         """Remove a given user from a group
@@ -430,7 +440,8 @@ class Group:
 
         if id is None or user_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and user_id")
+                "[opencti_group] Missing parameters: id and user_id"
+            )
             return None
 
         self.opencti.admin_logger.info(
@@ -451,7 +462,8 @@ class Group:
         )
         result = self.opencti.query(query, {"groupId": id, "userId": user_id})
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["relationDelete"])
+            result["data"]["groupEdit"]["relationDelete"]
+        )
 
     def add_role(self, **kwargs) -> Optional[Dict]:
         """Add a role to a given group
@@ -468,13 +480,14 @@ class Group:
 
         if id is None or role_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and role_id")
+                "[opencti_group] Missing parameters: id and role_id"
+            )
             return None
 
         self.opencti.admin_logger.info(
-            "Adding role to group", {"groupId": id, "roleId": role_id})
-        query = (
-            """
+            "Adding role to group", {"groupId": id, "roleId": role_id}
+        )
+        query = """
             mutation RoleAdd($groupId: ID!, $roleId: ID!) {
                 groupEdit(id: $groupId) {
                     relationAdd(input: {
@@ -492,10 +505,10 @@ class Group:
                 }
             }
             """
-        )
         result = self.opencti.query(query, {"groupId": id, "roleId": role_id})
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["relationAdd"])
+            result["data"]["groupEdit"]["relationAdd"]
+        )
 
     def delete_role(self, **kwargs) -> Optional[Dict]:
         """Removes a role from a given group
@@ -512,11 +525,13 @@ class Group:
 
         if id is None or role_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and role_id")
+                "[opencti_group] Missing parameters: id and role_id"
+            )
             return None
 
         self.opencti.admin_logger.info(
-            "Removing role from group", {"groupId": id, "roleId": role_id})
+            "Removing role from group", {"groupId": id, "roleId": role_id}
+        )
         query = (
             """
             mutation RoleDelete($groupId: ID!, $roleId: StixRef!) {
@@ -532,7 +547,8 @@ class Group:
         )
         result = self.opencti.query(query, {"groupId": id, "roleId": role_id})
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["relationDelete"])
+            result["data"]["groupEdit"]["relationDelete"]
+        )
 
     def edit_default_marking(self, **kwargs) -> Optional[Dict]:
         """Adds a default marking to the group.
@@ -555,15 +571,13 @@ class Group:
 
         if id is None or marking_ids is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and marking_ids")
+                "[opencti_group] Missing parameters: id and marking_ids"
+            )
             return None
 
         self.opencti.admin_logger.info(
-            "Setting default markings for entity on group", {
-                "markings": marking_ids,
-                "entity_type": entity_type,
-                "groupId": id
-            }
+            "Setting default markings for entity on group",
+            {"markings": marking_ids, "entity_type": entity_type, "groupId": id},
         )
         query = (
             """
@@ -581,13 +595,12 @@ class Group:
             }
             """
         )
-        result = self.opencti.query(query, {
-            "id": id,
-            "entity_type": entity_type,
-            "values": marking_ids
-        })
+        result = self.opencti.query(
+            query, {"id": id, "entity_type": entity_type, "values": marking_ids}
+        )
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["editDefaultMarking"])
+            result["data"]["groupEdit"]["editDefaultMarking"]
+        )
 
     def add_allowed_marking(self, **kwargs) -> Optional[Dict]:
         """Allow a group to access a marking
@@ -604,13 +617,14 @@ class Group:
 
         if id is None or marking_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and marking_id")
+                "[opencti_group] Missing parameters: id and marking_id"
+            )
             return None
 
         self.opencti.admin_logger.info(
-            "Granting group access to marking definition", {
-                "groupId": id, "markingId": marking_id
-            })
+            "Granting group access to marking definition",
+            {"groupId": id, "markingId": marking_id},
+        )
         query = """
             mutation GroupEditionMarkingsMarkingDefinitionsRelationAddMutation(
                 $id: ID!
@@ -649,12 +663,16 @@ class Group:
                 }
             }
         """
-        result = self.opencti.query(query, {"id": id, "input": {
-            "relationship_type": "accesses-to",
-            "toId": marking_id
-        }})
+        result = self.opencti.query(
+            query,
+            {
+                "id": id,
+                "input": {"relationship_type": "accesses-to", "toId": marking_id},
+            },
+        )
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["relationAdd"])
+            result["data"]["groupEdit"]["relationAdd"]
+        )
 
     def delete_allowed_marking(self, **kwargs) -> Optional[Dict]:
         """Removes access to a marking for a group
@@ -671,13 +689,14 @@ class Group:
 
         if id is None or marking_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: id and marking_id")
+                "[opencti_group] Missing parameters: id and marking_id"
+            )
             return None
 
         self.opencti.admin_logger.info(
-            "Forbidding group access to marking definition", {
-                "groupId": id, "markingId": marking_id
-            })
+            "Forbidding group access to marking definition",
+            {"groupId": id, "markingId": marking_id},
+        )
         query = (
             """
             mutation MarkingForbid($groupId: ID!, $markingId: StixRef!) {
@@ -691,7 +710,7 @@ class Group:
             }
             """
         )
-        result = self.opencti.query(
-            query, {"groupId": id, "markingId": marking_id})
+        result = self.opencti.query(query, {"groupId": id, "markingId": marking_id})
         return self.opencti.process_multiple_fields(
-            result["data"]["groupEdit"]["relationDelete"])
+            result["data"]["groupEdit"]["relationDelete"]
+        )

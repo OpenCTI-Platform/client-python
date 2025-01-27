@@ -89,8 +89,7 @@ class Role:
                     edges {
                         node {
                             """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                         }
                     }
@@ -112,8 +111,8 @@ class Role:
                 "after": after,
                 "orderBy": orderBy,
                 "orderMode": orderMode,
-                "search": search
-            }
+                "search": search,
+            },
         )
         if getAll:
             final_data = []
@@ -128,15 +127,16 @@ class Role:
                         "after": after,
                         "orderBy": orderBy,
                         "orderMode": orderMode,
-                        "search": search
-                    }
+                        "search": search,
+                    },
                 )
                 data = self.opencti.process_multiple(result["data"]["roles"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(result["data"]["roles"],
-                                                 withPagination)
+            return self.opencti.process_multiple(
+                result["data"]["roles"], withPagination
+            )
 
     def read(self, **kwargs) -> Optional[Dict]:
         """Get a role given its ID or a search term
@@ -164,8 +164,7 @@ class Role:
                 query RoleRead($id: String!) {
                     role(id: $id) {
                         """
-                + (self.properties if customAttributes is None
-                   else customAttributes)
+                + (self.properties if customAttributes is None else customAttributes)
                 + """
                     }
                 }
@@ -191,9 +190,7 @@ class Role:
         id = kwargs.get("id", None)
 
         if id is None:
-            self.opencti.admin_logger.error(
-                "[opencti_role] Missing parameter: id"
-            )
+            self.opencti.admin_logger.error("[opencti_role] Missing parameter: id")
             return None
 
         self.opencti.admin_logger.info("Deleting role", {"id": id})
@@ -224,32 +221,26 @@ class Role:
         customAttributes = kwargs.get("customAttributes", None)
 
         if name is None:
-            self.opencti.admin_logger.error(
-                "[opencti_role] Missing parameter: name"
-            )
+            self.opencti.admin_logger.error("[opencti_role] Missing parameter: name")
             return None
 
-        self.opencti.admin_logger.info("Creating new role", {
-            "name": name, "description": description
-        })
+        self.opencti.admin_logger.info(
+            "Creating new role", {"name": name, "description": description}
+        )
         query = (
             """
             mutation RoleCreate($input: RoleAddInput!) {
                 roleAdd(input: $input) {
                     """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                 }
             }
             """
         )
-        result = self.opencti.query(query, {
-            "input": {
-                "name": name,
-                "description": description
-            }
-        })
+        result = self.opencti.query(
+            query, {"input": {"name": name, "description": description}}
+        )
         return self.opencti.process_multiple_fields(result["data"]["roleAdd"])
 
     def update_field(self, **kwargs) -> Optional[Dict]:
@@ -284,20 +275,20 @@ class Role:
 
         if id is None or input is None:
             self.opencti.admin_logger.error(
-                "[opencti_role] Missing parameters: id and input")
+                "[opencti_role] Missing parameters: id and input"
+            )
             return None
 
-        self.opencti.admin_logger.info("Editing role with input", {
-            "id": id, "input": input
-        })
+        self.opencti.admin_logger.info(
+            "Editing role with input", {"id": id, "input": input}
+        )
         query = (
             """
             mutation RoleUpdate($id: ID!, $input: [EditInput]!) {
                 roleEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                     }
                 }
@@ -306,7 +297,8 @@ class Role:
         )
         result = self.opencti.query(query, {"id": id, "input": input})
         return self.opencti.process_multiple_fields(
-            result["data"]["roleEdit"]["fieldPatch"])
+            result["data"]["roleEdit"]["fieldPatch"]
+        )
 
     def add_capability(self, **kwargs) -> Optional[Dict]:
         """Adds a capability to a role
@@ -324,12 +316,13 @@ class Role:
 
         if id is None or capability_id is None:
             self.opencti.admin_logger(
-                "[opencti_role] Missing parameters: id and capability_id")
+                "[opencti_role] Missing parameters: id and capability_id"
+            )
             return None
 
-        self.opencti.admin_logger.info("Adding capability to role", {
-            "roleId": id, "capabilityId": capability_id
-        })
+        self.opencti.admin_logger.info(
+            "Adding capability to role", {"roleId": id, "capabilityId": capability_id}
+        )
         query = (
             """
             mutation RoleAddCapability($id: ID!, $input: InternalRelationshipAddInput!) {
@@ -359,12 +352,16 @@ class Role:
             }
             """
         )
-        result = self.opencti.query(query, {"id": id, "input": {
-            "relationship_type": "has-capability",
-            "toId": capability_id
-        }})
+        result = self.opencti.query(
+            query,
+            {
+                "id": id,
+                "input": {"relationship_type": "has-capability", "toId": capability_id},
+            },
+        )
         return self.opencti.process_multiple_fields(
-            result["data"]["roleEdit"]["relationAdd"])
+            result["data"]["roleEdit"]["relationAdd"]
+        )
 
     def delete_capability(self, **kwargs) -> Optional[Dict]:
         """Removes a capability from a role
@@ -381,12 +378,14 @@ class Role:
 
         if id is None or capability_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_role] Missing parameters: id and capability_id")
+                "[opencti_role] Missing parameters: id and capability_id"
+            )
             return None
 
-        self.opencti.admin_logger.info("Removing capability from role", {
-            "roleId": id, "capabilityId": capability_id
-        })
+        self.opencti.admin_logger.info(
+            "Removing capability from role",
+            {"roleId": id, "capabilityId": capability_id},
+        )
         query = (
             """
             mutation RoleDeleteCapability($id: ID!, $toId: StixRef!) {

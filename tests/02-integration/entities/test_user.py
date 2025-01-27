@@ -13,15 +13,13 @@ def test_user_membership(api_client):
         assert test_group is not None, "Group create response returned NoneType"
 
         user_test.own_class().add_membership(
-            id=test_user["id"],
-            group_id=test_group["id"]
+            id=test_user["id"], group_id=test_group["id"]
         )
         result = user_test.own_class().read(id=test_user["id"])
         assert test_group["id"] in result["groupsIds"]
 
         user_test.own_class().delete_membership(
-            id=test_user["id"],
-            group_id=test_group["id"]
+            id=test_user["id"], group_id=test_group["id"]
         )
         result = user_test.own_class().read(id=test_user["id"])
         assert test_group["id"] not in result["groupsIds"]
@@ -42,15 +40,13 @@ def test_user_organization(api_client):
         assert test_org is not None, "Organization create response returned NoneType"
 
         user_test.own_class().add_organization(
-            id=test_user["id"],
-            organization_id=test_org["id"]
+            id=test_user["id"], organization_id=test_org["id"]
         )
         result = user_test.own_class().read(id=test_user["id"])
         assert test_org["id"] in result["objectOrganizationIds"]
 
         user_test.own_class().delete_organization(
-            id=test_user["id"],
-            organization_id=test_org["id"]
+            id=test_user["id"], organization_id=test_org["id"]
         )
         result = user_test.own_class().read(id=test_user["id"])
         assert test_org["id"] not in result["objectOrganizationIds"]
@@ -61,14 +57,14 @@ def test_user_organization(api_client):
 
 def test_user_token_renew(api_client):
     user_test = UserTest(api_client)
-    test_user = user_test.own_class().create(**user_test.data(),
-                                             include_token=True)
+    test_user = user_test.own_class().create(**user_test.data(), include_token=True)
     try:
         assert test_user is not None, "User create response returned NoneType"
 
         old_token = test_user["api_token"]
-        result = user_test.own_class().token_renew(id=test_user["id"],
-                                                include_token=True)
+        result = user_test.own_class().token_renew(
+            id=test_user["id"], include_token=True
+        )
         assert old_token != result["api_token"]
     finally:
         user_test.own_class().delete(id=test_user["id"])

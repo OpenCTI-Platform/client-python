@@ -232,8 +232,9 @@ class User:
         if getAll:
             first = 100
 
-        self.opencti.admin_logger.info("Fetching users with filters",
-                                       {"filters": filters})
+        self.opencti.admin_logger.info(
+            "Fetching users with filters", {"filters": filters}
+        )
         query = (
             """
             query UserList($first: Int, $after: ID, $orderBy: UsersOrdering, $orderMode: OrderingMode, $filters: FilterGroup, $search: String) {
@@ -241,8 +242,7 @@ class User:
                     edges {
                         node {
                     """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + (self.session_properties if include_sessions else "")
             + """
                         }
@@ -256,14 +256,17 @@ class User:
             }
             """
         )
-        result = self.opencti.query(query, {
-            "first": first,
-            "after": after,
-            "orderBy": orderBy,
-            "orderMode": orderMode,
-            "filters": filters,
-            "search": search
-        })
+        result = self.opencti.query(
+            query,
+            {
+                "first": first,
+                "after": after,
+                "orderBy": orderBy,
+                "orderMode": orderMode,
+                "filters": filters,
+                "search": search,
+            },
+        )
 
         if getAll:
             final_data = []
@@ -271,20 +274,24 @@ class User:
             final_data = final_data + data
             while result["data"]["users"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["users"]["pageInfo"]["endCursor"]
-                result = self.opencti.query(query, {
-                    "first": first,
-                    "after": after,
-                    "orderBy": orderBy,
-                    "orderMode": orderMode,
-                    "filters": filters,
-                    "search": search
-                })
+                result = self.opencti.query(
+                    query,
+                    {
+                        "first": first,
+                        "after": after,
+                        "orderBy": orderBy,
+                        "orderMode": orderMode,
+                        "filters": filters,
+                        "search": search,
+                    },
+                )
                 data = self.opencti.process_multiple(result["data"]["users"])
                 final_data = final_data + data
             return final_data
         else:
-            return self.opencti.process_multiple(result["data"]["users"],
-                                                 withPagination)
+            return self.opencti.process_multiple(
+                result["data"]["users"], withPagination
+            )
 
     def read(self, **kwargs) -> Optional[Dict]:
         """Reads user details from the platform.
@@ -314,16 +321,13 @@ class User:
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         if id is not None:
-            self.opencti.admin_logger.info(
-                "Fetching user with ID", {"id": id}
-            )
+            self.opencti.admin_logger.info("Fetching user with ID", {"id": id})
             query = (
                 """
                 query UserRead($id: String!) {
                     user(id: $id) {
                         """
-                + (self.properties if customAttributes is None
-                   else customAttributes)
+                + (self.properties if customAttributes is None else customAttributes)
                 + (self.token_properties if include_token else "")
                 + (self.session_properties if include_sessions else "")
                 + """
@@ -338,7 +342,8 @@ class User:
                 filters=filters,
                 search=search,
                 include_sessions=include_sessions,
-                customAttributes=customAttributes)
+                customAttributes=customAttributes,
+            )
             user = results[0] if results else None
             if not include_token or user is None:
                 return user
@@ -347,11 +352,12 @@ class User:
                     id=user["id"],
                     include_sessions=include_sessions,
                     include_token=include_token,
-                    customAttributes=customAttributes
+                    customAttributes=customAttributes,
                 )
         else:
             self.opencti.admin_logger.error(
-                "[opencti_user] Missing paramters: id, search, or filters")
+                "[opencti_user] Missing paramters: id, search, or filters"
+            )
             return None
 
     def create(self, **kwargs) -> Optional[Dict]:
@@ -425,8 +431,7 @@ class User:
         theme = kwargs.get("theme", None)
         objectOrganization = kwargs.get("objectOrganization", None)
         account_status = kwargs.get("account_status", None)
-        account_lock_after_date = kwargs.get(
-            "account_lock_after_date", None)
+        account_lock_after_date = kwargs.get("account_lock_after_date", None)
         unit_system = kwargs.get("unit_system", None)
         submenu_show_icons = kwargs.get("submenu_show_icons", False)
         submenu_auto_collapse = kwargs.get("submenu_auto_collapse", False)
@@ -438,51 +443,56 @@ class User:
 
         if name is None or user_email is None:
             self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameters: name and user_email")
+                "[opencti_user] Missing parameters: name and user_email"
+            )
             return None
 
         self.opencti.admin_logger.info(
-            "Creating a new user", {"name": name, "email": user_email})
+            "Creating a new user", {"name": name, "email": user_email}
+        )
         if password is None:
             self.opencti.admin_logger.info(
-                "Generating random password for user", {
-                    "name": name, "user_email": user_email
-                })
+                "Generating random password for user",
+                {"name": name, "user_email": user_email},
+            )
             password = secrets.token_urlsafe(64)
         query = (
             """
             mutation UserAdd($input: UserAddInput!) {
                 userAdd(input: $input) {
                     """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + (self.token_properties if include_token else "")
             + """
                 }
             }
             """
         )
-        result = self.opencti.query(query, {"input": {
-            "user_email": user_email,
-            "name": name,
-            "password": password,
-            "firstname": firstname,
-            "lastname": lastname,
-            "description": description,
-            "language": language,
-            "theme": theme,
-            "objectOrganization": objectOrganization,
-            "account_status": account_status,
-            "account_lock_after_date": account_lock_after_date,
-            "unit_system": unit_system,
-            "submenu_show_icons": submenu_show_icons,
-            "submenu_auto_collapse": submenu_auto_collapse,
-            "monochrome_labels": monochrome_labels,
-            "groups": groups,
-            "user_confidence_level": user_confidence_level
-        }})
-        return self.opencti.process_multiple_fields(
-            result["data"]["userAdd"])
+        result = self.opencti.query(
+            query,
+            {
+                "input": {
+                    "user_email": user_email,
+                    "name": name,
+                    "password": password,
+                    "firstname": firstname,
+                    "lastname": lastname,
+                    "description": description,
+                    "language": language,
+                    "theme": theme,
+                    "objectOrganization": objectOrganization,
+                    "account_status": account_status,
+                    "account_lock_after_date": account_lock_after_date,
+                    "unit_system": unit_system,
+                    "submenu_show_icons": submenu_show_icons,
+                    "submenu_auto_collapse": submenu_auto_collapse,
+                    "monochrome_labels": monochrome_labels,
+                    "groups": groups,
+                    "user_confidence_level": user_confidence_level,
+                }
+            },
+        )
+        return self.opencti.process_multiple_fields(result["data"]["userAdd"])
 
     def delete(self, **kwargs):
         """Deletes the given user from the platform.
@@ -492,8 +502,7 @@ class User:
         """
         id = kwargs.get("id", None)
         if id is None:
-            self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameter: id")
+            self.opencti.admin_logger.error("[opencti_user] Missing parameter: id")
             return None
 
         self.opencti.admin_logger.info("Deleting user", {"id": id})
@@ -526,8 +535,7 @@ class User:
             query Me {
                 me {
                     """
-            + (self.me_properties if customAttributes is None
-               else customAttributes)
+            + (self.me_properties if customAttributes is None else customAttributes)
             + (self.token_properties if include_token else "")
             + """
                 }
@@ -554,20 +562,22 @@ class User:
         customAttributes = kwargs.get("customAttributes", None)
         if id is None or input is None:
             self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameters: id and input")
+                "[opencti_user] Missing parameters: id and input"
+            )
             return None
 
         self.opencti.admin_logger.info(
             "Editing user with input (not shown to hide password and API token"
-            " changes)", {"id": id})
+            " changes)",
+            {"id": id},
+        )
         query = (
             """
             mutation UserEdit($id: ID!, $input: [EditInput]!) {
                 userEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                     }
                 }
@@ -576,7 +586,8 @@ class User:
         )
         result = self.opencti.query(query, {"id": id, "input": input})
         return self.opencti.process_multiple_fields(
-            result["data"]["userEdit"]["fieldPatch"])
+            result["data"]["userEdit"]["fieldPatch"]
+        )
 
     def add_membership(self, **kwargs) -> Optional[Dict]:
         """Adds the user to a given group.
@@ -592,12 +603,13 @@ class User:
         group_id = kwargs.get("group_id", None)
         if id is None or group_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameters: id and group_id")
+                "[opencti_user] Missing parameters: id and group_id"
+            )
             return None
 
-        self.opencti.admin_logger.info("Adding user to group", {
-            "id": id, "group_id": group_id
-        })
+        self.opencti.admin_logger.info(
+            "Adding user to group", {"id": id, "group_id": group_id}
+        )
         query = """
             mutation UserAddMembership($id: ID!, $group_id: ID!) {
                 userEdit(id: $id) {
@@ -622,7 +634,8 @@ class User:
         """
         result = self.opencti.query(query, {"id": id, "group_id": group_id})
         return self.opencti.process_multiple_fields(
-            result["data"]["userEdit"]["relationAdd"])
+            result["data"]["userEdit"]["relationAdd"]
+        )
 
     def delete_membership(self, **kwargs) -> Optional[Dict]:
         """Removes the user from the given group.
@@ -638,11 +651,13 @@ class User:
         group_id = kwargs.get("group_id", None)
         if id is None or group_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameters: id and group_id")
+                "[opencti_user] Missing parameters: id and group_id"
+            )
             return None
 
-        self.opencti.admin_logger.info("Removing used from group", {
-            "id": id, "group_id": group_id})
+        self.opencti.admin_logger.info(
+            "Removing used from group", {"id": id, "group_id": group_id}
+        )
         query = (
             """
             mutation UserDeleteMembership($id: ID!, $group_id: StixRef!) {
@@ -658,7 +673,8 @@ class User:
         )
         result = self.opencti.query(query, {"id": id, "group_id": group_id})
         return self.opencti.process_multiple_fields(
-            result["data"]["userEdit"]["relationDelete"])
+            result["data"]["userEdit"]["relationDelete"]
+        )
 
     def add_organization(self, **kwargs) -> Optional[Dict]:
         """Adds a user to an organization
@@ -674,11 +690,13 @@ class User:
         organization_id = kwargs.get("organization_id", None)
         if id is None or organization_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameters: id and organization_id")
+                "[opencti_user] Missing parameters: id and organization_id"
+            )
 
-        self.opencti.admin_logger.info("Adding user to organization", {
-            "id": id, "organization_id": organization_id
-        })
+        self.opencti.admin_logger.info(
+            "Adding user to organization",
+            {"id": id, "organization_id": organization_id},
+        )
         query = (
             """
             mutation UserAddOrganization($id: ID!, $organization_id: ID!) {
@@ -692,10 +710,12 @@ class User:
             }
             """
         )
-        result = self.opencti.query(query, {
-            "id": id, "organization_id": organization_id})
+        result = self.opencti.query(
+            query, {"id": id, "organization_id": organization_id}
+        )
         return self.opencti.process_multiple_fields(
-            result["data"]["userEdit"]["organizationAdd"])
+            result["data"]["userEdit"]["organizationAdd"]
+        )
 
     def delete_organization(self, **kwargs) -> Optional[Dict]:
         """Delete a user from an organization
@@ -711,11 +731,13 @@ class User:
         organization_id = kwargs.get("organization_id", None)
         if id is None or organization_id is None:
             self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameters: id and organization_id")
+                "[opencti_user] Missing parameters: id and organization_id"
+            )
 
-        self.opencti.admin_logger.info("Removing user from organization", {
-            "id": id, "organization_id": organization_id
-        })
+        self.opencti.admin_logger.info(
+            "Removing user from organization",
+            {"id": id, "organization_id": organization_id},
+        )
         query = (
             """
             mutation UserDeleteOrganization($id: ID!, $organization_id: ID!) {
@@ -729,10 +751,12 @@ class User:
             }
             """
         )
-        result = self.opencti.query(query, {
-            "id": id, "organization_id": organization_id})
+        result = self.opencti.query(
+            query, {"id": id, "organization_id": organization_id}
+        )
         return self.opencti.process_multiple_fields(
-            result["data"]["userEdit"]["organizationDelete"])
+            result["data"]["userEdit"]["organizationDelete"]
+        )
 
     def token_renew(self, **kwargs) -> Optional[Dict]:
         """Rotates the API token for the given user
@@ -748,8 +772,7 @@ class User:
         id = kwargs.get("id", None)
         include_token = kwargs.get("include_token", False)
         if id is None:
-            self.opencti.admin_logger.error(
-                "[opencti_user] Missing parameter: id")
+            self.opencti.admin_logger.error("[opencti_user] Missing parameter: id")
             return None
 
         self.opencti.admin_logger.info("Rotating API key for user", {"id": id})
@@ -769,4 +792,5 @@ class User:
         )
         result = self.opencti.query(query, {"id": id})
         return self.opencti.process_multiple_fields(
-            result["data"]["userEdit"]["tokenRenew"])
+            result["data"]["userEdit"]["tokenRenew"]
+        )

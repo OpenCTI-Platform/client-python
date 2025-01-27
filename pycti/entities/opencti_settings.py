@@ -167,7 +167,8 @@ class Settings:
             password_policy_min_uppercase
         """
 
-        self.editable_properties = """
+        self.editable_properties = (
+            """
             id
 
             platform_organization {
@@ -208,7 +209,9 @@ class Settings:
             platform_whitemark
             analytics_google_analytics_v4
             enterprise_edition
-        """ + self.password_policy_properties
+        """
+            + self.password_policy_properties
+        )
 
     def read(self, **kwargs) -> Dict:
         """Reads settings from the platform
@@ -234,10 +237,8 @@ class Settings:
             query PlatformSettings {
                 settings {
                     """
-            + (self.properties if custom_attributes is None
-               else custom_attributes)
-            + (self.password_policy_properties if include_password_policy
-               else "")
+            + (self.properties if custom_attributes is None else custom_attributes)
+            + (self.password_policy_properties if include_password_policy else "")
             + (self.messages_properties if include_messages else "")
             + """
                 }
@@ -277,20 +278,17 @@ class Settings:
             )
             return None
 
-        self.opencti.admin_logger.info("Updating settings with input", {
-            "id": id,
-            "input": input
-        })
+        self.opencti.admin_logger.info(
+            "Updating settings with input", {"id": id, "input": input}
+        )
         query = (
             """
             mutation SettingsUpdateField($id: ID!, $input: [EditInput]!) {
                 settingsEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
-            + (self.properties if custom_attributes is None
-               else custom_attributes)
-            + (self.password_policy_properties if include_password_policy
-               else "")
+            + (self.properties if custom_attributes is None else custom_attributes)
+            + (self.password_policy_properties if include_password_policy else "")
             + (self.messages_properties if include_messages else "")
             + """
                     }
@@ -300,7 +298,8 @@ class Settings:
         )
         result = self.opencti.query(query, {"id": id, "input": input})
         return self.opencti.process_multiple_fields(
-            result["data"]["settingsEdit"]["fieldPatch"])
+            result["data"]["settingsEdit"]["fieldPatch"]
+        )
 
     def edit_message(self, **kwargs) -> Optional[Dict]:
         """Edit or add a message to the platform
@@ -319,10 +318,10 @@ class Settings:
         input = kwargs.get("input", None)
         if id is None or input is None:
             self.opencti.admin_logger.error(
-                "[opencti_settings] Missing parameters: id and input")
+                "[opencti_settings] Missing parameters: id and input"
+            )
             return None
-        self.opencti.admin_logger.info(
-            "Editing message", {"id": id, "input": input})
+        self.opencti.admin_logger.info("Editing message", {"id": id, "input": input})
 
         query = (
             """
@@ -331,7 +330,8 @@ class Settings:
                     editMessage(input: $input) {
                         id
                         """
-            + self.messages_properties + """
+            + self.messages_properties
+            + """
                     }
                 }
             }
@@ -339,7 +339,8 @@ class Settings:
         )
         result = self.opencti.query(query, {"id": id, "input": input})
         return self.opencti.process_multiple_fields(
-            result["data"]["settingsEdit"]["editMessage"])
+            result["data"]["settingsEdit"]["editMessage"]
+        )
 
     def delete_message(self, **kwargs) -> Optional[Dict]:
         """Delete a message from the platform
@@ -354,8 +355,7 @@ class Settings:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         if id is None:
-            self.opencti.admin_logger.info(
-                "[opencti_settings] Missing parameters: id")
+            self.opencti.admin_logger.info("[opencti_settings] Missing parameters: id")
             return None
 
         query = (
@@ -365,7 +365,8 @@ class Settings:
                     deleteMessage(input: $input) {
                         id
                         """
-            + self.messages_properties + """
+            + self.messages_properties
+            + """
                     }
                 }
             }
@@ -373,4 +374,5 @@ class Settings:
         )
         result = self.opencti.query(query, {"id": id, "input": input})
         return self.opencti.process_multiple_fields(
-            result["data"]["settingsEdit"]["deleteMessage"])
+            result["data"]["settingsEdit"]["deleteMessage"]
+        )

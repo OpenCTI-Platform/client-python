@@ -13,11 +13,9 @@ def test_settings_messages(api_client):
         test_message_data = {
             "message": "This is a test message",
             "activated": True,
-            "dismissible": True
+            "dismissible": True,
         }
-        result = settings_test.own_class().edit_message(
-            id=id,
-            input=test_message_data)
+        result = settings_test.own_class().edit_message(id=id, input=test_message_data)
         assert len(result["platform_messages"]) == num_messages + 1
 
         test_message = result["platform_messages"][-1]
@@ -30,8 +28,8 @@ def test_settings_messages(api_client):
                 "id": test_message["id"],
                 "message": "This is an updated test message",
                 "activated": True,
-                "dismissible": False
-            }
+                "dismissible": False,
+            },
         )
         assert len(result["platform_messages"]) == num_messages + 1
 

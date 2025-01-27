@@ -36,8 +36,7 @@ class Capability:
                     edges {
                         node {
                             """
-            + (self.properties if customAttributes is None
-               else customAttributes)
+            + (self.properties if customAttributes is None else customAttributes)
             + """
                         }
                     }
