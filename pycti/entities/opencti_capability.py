@@ -18,8 +18,16 @@ class Capability:
             attribute_order
         """
 
-    def list(self) -> List[Dict]:
-        """Lists all capabilities available on the platform"""
+    def list(self, **kwargs) -> List[Dict]:
+        """Lists all capabilities available on the platform
+
+        :param customAttributes: Custom attributes to retrieve from the GraphQL
+            query.
+        :type customAttributes: str, optional
+        :return: List of capabilities
+        :rtype: List[Dict]
+        """
+        customAttributes = kwargs.get("customAttributes")
         self.opencti.admin_logger.info("Listing capabilities")
         query = (
             """
@@ -28,7 +36,8 @@ class Capability:
                     edges {
                         node {
                             """
-            + self.properties
+            + (self.properties if customAttributes is None
+               else customAttributes)
             + """
                         }
                     }
