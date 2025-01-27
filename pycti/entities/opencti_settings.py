@@ -209,24 +209,6 @@ class Settings:
             analytics_google_analytics_v4
             enterprise_edition
         """ + self.password_policy_properties
-        self._deleted = False
-
-    def create(self, **kwargs) -> Dict:
-        """Stub function for tests
-
-        :return: Settings as defined by self.read()
-        :rtype: Dict
-        """
-        self.opencti.admin_logger.info(
-            "Settings.create called with arguments", kwargs)
-        self._deleted = False
-        return self.read()
-
-    def delete(self, **kwargs):
-        """Stub function for tests"""
-        self.opencti.admin_logger.info(
-            "Settings.delete called with arguments", kwargs)
-        self._deleted = True
 
     def read(self, **kwargs) -> Dict:
         """Reads settings from the platform
@@ -242,9 +224,6 @@ class Settings:
         :return: Representation of the platform settings
         :rtype: Dict
         """
-        if self._deleted:
-            return None
-
         custom_attributes = kwargs.get("customAttributes", None)
         include_password_policy = kwargs.get("include_password_policy", False)
         include_messages = kwargs.get("include_messages", False)

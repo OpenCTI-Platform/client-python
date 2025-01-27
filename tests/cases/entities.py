@@ -3,6 +3,7 @@ from typing import Dict, List, Union
 from stix2 import TLP_GREEN, TLP_WHITE, AttackPattern
 
 from pycti.utils.constants import ContainerTypes, IdentityTypes, LocationTypes
+from pycti.entities.opencti_settings import Settings
 from tests.utils import get_incident_end_date, get_incident_start_date
 
 
@@ -1262,7 +1263,37 @@ class UserTest(EntityTest):
 
 
 class SettingsTest(EntityTest):
+
+    class SettingsWrapper(Settings):
+        def __init__(self, opencti):
+            self._deleted = False
+            super().__init__(opencti)
+
+        def create(self, **kwargs) -> Dict:
+            """Stub function for tests
+
+            :return: Settings as defined by self.read()
+            :rtype: Dict
+            """
+            self.opencti.admin_logger.info(
+                "Settings.create called with arguments", kwargs)
+            self._deleted = False
+            return self.read()
+
+        def delete(self, **kwargs):
+            """Stub function for tests"""
+            self.opencti.admin_logger.info(
+                "Settings.delete called with arguments", kwargs)
+            self._deleted = True
+
+        def read(self, **kwargs):
+            """Stub function for tests"""
+            if self._deleted:
+                return None
+            return super().read(**kwargs)
+
     def setup(self):
+        self._ownclass = self.SettingsWrapper(self.api_client)
         # Save current platform information
         custom_attributes = self.own_class().editable_properties
         self.own_class().create()
@@ -1287,7 +1318,7 @@ class SettingsTest(EntityTest):
         return {}
 
     def own_class(self):
-        return self.api_client.settings
+        return self._ownclass
 
     def base_class(self):
         return self.own_class()
