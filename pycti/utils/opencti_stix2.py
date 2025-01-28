@@ -2487,8 +2487,9 @@ class OpenCTIStix2:
         self.opencti.stix_core_object.organization_unshare(item["id"], organization_ids)
 
     def apply_opencti_operation(self, item, operation):
-        if operation == "delete":
+        if operation == "delete" or operation == "delete-force":
             delete_id = item["id"]
+            force_delete = operation == "delete-force"
             self.opencti.stix.delete(id=delete_id)
         elif operation == "merge":
             target_id = item["merge_target_id"]
@@ -2506,6 +2507,11 @@ class OpenCTIStix2:
             self.organization_share(item=item)
         elif operation == "unshare":
             self.organization_unshare(item=item)
+        elif operation == "enrichment":
+            connector_ids = item["connector_ids"]
+            self.opencti.stix_core_object.ask_enrichment(
+                element_id=item["id"], connector_ids=connector_ids
+            )
         else:
             raise ValueError(
                 "Not supported opencti_operation",
