@@ -1756,6 +1756,34 @@ class StixCoreObject:
             return None
 
     """
+        Ask enrichment with multiple connectors
+
+        :param element_id: the Stix-Core-Object id
+        :param connector_ids the connectors
+        :return void
+    """
+
+    def ask_enrichment(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        connector_ids = kwargs.get("connector_ids", None)
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $connectorId: [ID!]!) {
+                stixCoreObjectEdit(id: $id) {
+                    askEnrichment(connectorId: $connectorId) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": element_id,
+                "connectorId": connector_ids,
+            },
+        )
+
+    """
         Share element to multiple organizations
 
         :param entity_id: the Stix-Core-Object id

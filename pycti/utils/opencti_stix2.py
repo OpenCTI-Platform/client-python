@@ -2489,9 +2489,13 @@ class OpenCTIStix2:
         try:
             self.opencti.set_retry_number(processing_count)
             if "opencti_operation" in item:
-                if item["opencti_operation"] == "delete":
+                if (
+                    item["opencti_operation"] == "delete"
+                    or item["opencti_operation"] == "delete-force"
+                ):
                     delete_id = item["id"]
-                    self.opencti.stix.delete(id=delete_id)
+                    force_delete = item["opencti_operation"] == "delete-force"
+                    self.opencti.stix.delete(id=delete_id, force_delete=force_delete)
                 elif item["opencti_operation"] == "merge":
                     target_id = item["merge_target_id"]
                     source_ids = item["merge_source_ids"]
@@ -2508,6 +2512,11 @@ class OpenCTIStix2:
                     self.organization_share(item=item)
                 elif item["opencti_operation"] == "unshare":
                     self.organization_unshare(item=item)
+                elif item["opencti_operation"] == "enrichment":
+                    connector_ids = item["connector_ids"]
+                    self.opencti.stix_core_object.ask_enrichment(
+                        element_id=item["id"], connector_ids=connector_ids
+                    )
                 else:
                     raise ValueError(
                         "Not supported opencti_operation",
