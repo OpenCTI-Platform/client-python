@@ -2479,12 +2479,18 @@ class OpenCTIStix2:
         self.opencti.stix_core_object.rules_rescan(element_id=item["id"])
 
     def organization_share(self, item):
-        organization_ids = item["organization_ids"]
-        self.opencti.stix_core_object.organization_share(item["id"], organization_ids)
+        organization_ids = item["sharing_organization_ids"]
+        sharing_direct_container = item["sharing_direct_container"]
+        self.opencti.stix_core_object.organization_share(
+            item["id"], organization_ids, sharing_direct_container
+        )
 
     def organization_unshare(self, item):
-        organization_ids = item["organization_ids"]
-        self.opencti.stix_core_object.organization_unshare(item["id"], organization_ids)
+        organization_ids = item["sharing_organization_ids"]
+        sharing_direct_container = item["sharing_direct_container"]
+        self.opencti.stix_core_object.organization_unshare(
+            item["id"], organization_ids, sharing_direct_container
+        )
 
     def apply_opencti_operation(self, item, operation):
         if operation == "delete" or operation == "delete-force":
@@ -2507,7 +2513,11 @@ class OpenCTIStix2:
             self.organization_share(item=item)
         elif operation == "unshare":
             self.organization_unshare(item=item)
-        elif operation == "enrichment":
+        elif operation == "clear_access_restriction":
+                    self.opencti.stix_core_object.clear_access_restriction(
+                        element_id=item["id"]
+                    )
+                elif item["opencti_operation"] == "enrichment":
             connector_ids = item["connector_ids"]
             self.opencti.stix_core_object.ask_enrichment(
                 element_id=item["id"], connector_ids=connector_ids
