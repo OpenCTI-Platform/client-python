@@ -1756,6 +1756,33 @@ class StixCoreObject:
             return None
 
     """
+        Ask clear restriction
+
+        :param element_id: the Stix-Core-Object id
+        :return void
+    """
+
+    def clear_access_restriction(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None:
+            query = """
+                mutation StixCoreObjectEdit($id: ID!) {
+                    stixCoreObjectEdit(id: $id) {
+                        clearAccessRestriction
+                    }
+                }
+            """
+            self.opencti.query(
+                query,
+                {
+                    "id": element_id,
+                },
+            )
+        else:
+            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            return None
+
+    """
         Ask enrichment with multiple connectors
 
         :param element_id: the Stix-Core-Object id
@@ -1791,11 +1818,11 @@ class StixCoreObject:
         :return void
     """
 
-    def organization_share(self, entity_id, organization_ids):
+    def organization_share(self, entity_id, organization_ids, sharing_direct_container):
         query = """
-            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!) {
+            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
                 stixCoreObjectEdit(id: $id) {
-                    restrictionOrganizationAdd(organizationId: $organizationId) {
+                    restrictionOrganizationAdd(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
                       id
                     }
                 }
@@ -1806,6 +1833,7 @@ class StixCoreObject:
             {
                 "id": entity_id,
                 "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
             },
         )
 
@@ -1817,11 +1845,13 @@ class StixCoreObject:
         :return void
     """
 
-    def organization_unshare(self, entity_id, organization_ids):
+    def organization_unshare(
+        self, entity_id, organization_ids, sharing_direct_container
+    ):
         query = """
-            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!) {
+            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
                 stixCoreObjectEdit(id: $id) {
-                    restrictionOrganizationDelete(organizationId: $organizationId) {
+                    restrictionOrganizationDelete(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
                       id
                     }
                 }
@@ -1832,6 +1862,7 @@ class StixCoreObject:
             {
                 "id": entity_id,
                 "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
             },
         )
 
