@@ -1766,7 +1766,9 @@ class StixCoreObject:
             query = """
                 mutation StixCoreObjectEdit($id: ID!) {
                     stixCoreObjectEdit(id: $id) {
-                        clearAccessRestriction
+                        clearAccessRestriction {
+                          id
+                        }
                     }
                 }
             """
