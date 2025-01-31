@@ -13,9 +13,13 @@ class Capability:
         self.properties = """
             id
             entity_type
+            parent_types
             name
             description
             attribute_order
+
+            created_at
+            updated_at
         """
 
     def list(self, **kwargs) -> List[Dict]:
@@ -27,7 +31,7 @@ class Capability:
         :return: List of capabilities
         :rtype: List[Dict]
         """
-        customAttributes = kwargs.get("customAttributes")
+        custom_attributes = kwargs.get("customAttributes")
         self.opencti.admin_logger.info("Listing capabilities")
         query = (
             """
@@ -36,7 +40,7 @@ class Capability:
                     edges {
                         node {
                             """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                         }
                     }

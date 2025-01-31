@@ -360,7 +360,7 @@ class Settings:
 
         query = (
             """
-            mutation SettingsDeleteMessage($id: ID!, $input: String!) {
+            mutation SettingsEditDeleteMessage($id: ID!, $input: String!) {
                 settingsEdit(id: $id) {
                     deleteMessage(input: $input) {
                         id

@@ -29,6 +29,8 @@ class Group:
             name
             description
 
+            entity_type
+            parent_types
             created_at
             updated_at
 
@@ -125,7 +127,7 @@ class Group:
         orderMode = kwargs.get("orderMode", None)
         search = kwargs.get("search", None)
         filters = kwargs.get("filters", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         getAll = kwargs.get("getAll", False)
         withPagination = kwargs.get("withPagination", False)
 
@@ -142,7 +144,7 @@ class Group:
                     edges {
                         node {
                                 """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                         }
                     }
@@ -211,7 +213,7 @@ class Group:
         id = kwargs.get("id", None)
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
             self.opencti.admin_logger.info("Fetching group with ID", {"id": id})
             query = (
@@ -219,7 +221,7 @@ class Group:
                 query Group($id: String!) {
                     group(id: $id) {
                         """
-                + (self.properties if customAttributes is None else customAttributes)
+                + (self.properties if custom_attributes is None else custom_attributes)
                 + """
                     }
                 }
@@ -229,7 +231,7 @@ class Group:
             return self.opencti.process_multiple_fields(result["data"]["group"])
         elif filters is not None or search is not None:
             results = self.list(
-                filters=filters, search=search, customAttributes=customAttributes
+                filters=filters, search=search, customAttributes=custom_attributes
             )
             return results[0] if results else None
         else:
@@ -275,11 +277,11 @@ class Group:
         no_creators = kwargs.get("no_creators", False)
         restrict_delete = kwargs.get("restrict_delete", False)
         auto_new_marking = kwargs.get("auto_new_marking", False)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
 
         if name is None or group_confidence_level is None:
             self.opencti.admin_logger.error(
-                "[opencti_group] Missing parameters: name and " "group_confidence_level"
+                "[opencti_group] Missing parameters: name and group_confidence_level"
             )
             return None
 
@@ -300,7 +302,7 @@ class Group:
             mutation GroupAdd($input: GroupAddInput!) {
                 groupAdd(input: $input) {
                     """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                 }
             }
@@ -352,7 +354,7 @@ class Group:
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
 
         if id is None or input is None:
             self.opencti.admin_logger.error(
@@ -367,7 +369,7 @@ class Group:
                 groupEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                     }
                 }
@@ -402,7 +404,7 @@ class Group:
             "Adding member to group", {"groupId": id, "userId": user_id}
         )
         query = """
-            mutation MemberAdd($groupId: ID!, $userId: ID!) {
+            mutation GroupEditMemberAdd($groupId: ID!, $userId: ID!) {
                 groupEdit(id: $groupId) {
                     relationAdd(input: {
                         fromId: $userId,
@@ -449,7 +451,7 @@ class Group:
         )
         query = (
             """
-            mutation MemberDelete ($groupId: ID!, $userId: StixRef!) {
+            mutation GroupEditMemberDelete ($groupId: ID!, $userId: StixRef!) {
                 groupEdit(id: $groupId) {
                     relationDelete(fromId: $userId, relationship_type: "member-of") {
                         """
@@ -488,7 +490,7 @@ class Group:
             "Adding role to group", {"groupId": id, "roleId": role_id}
         )
         query = """
-            mutation RoleAdd($groupId: ID!, $roleId: ID!) {
+            mutation GroupEditRoleAdd($groupId: ID!, $roleId: ID!) {
                 groupEdit(id: $groupId) {
                     relationAdd(input: {
                         toId: $roleId, relationship_type: "has-role"
@@ -534,7 +536,7 @@ class Group:
         )
         query = (
             """
-            mutation RoleDelete($groupId: ID!, $roleId: StixRef!) {
+            mutation GroupEditRoleDelete($groupId: ID!, $roleId: StixRef!) {
                 groupEdit(id: $groupId) {
                     relationDelete(toId: $roleId, relationship_type: "has-role") {
                         """
@@ -581,7 +583,7 @@ class Group:
         )
         query = (
             """
-            mutation EditDefaultMarking($id: ID!, $entity_type: String!, $values: [String!]) {
+            mutation GroupEditEditDefaultMarking($id: ID!, $entity_type: String!, $values: [String!]) {
                 groupEdit(id: $id) {
                     editDefaultMarking(input: {
                         entity_type: $entity_type,
@@ -699,7 +701,7 @@ class Group:
         )
         query = (
             """
-            mutation MarkingForbid($groupId: ID!, $markingId: StixRef!) {
+            mutation GroupEditMarkingRemove($groupId: ID!, $markingId: StixRef!) {
                 groupEdit(id: $groupId) {
                     relationDelete(toId: $markingId, relationship_type: "accesses-to") {
                         """

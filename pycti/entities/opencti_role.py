@@ -71,9 +71,9 @@ class Role:
         after = kwargs.get("after", None)
         orderBy = kwargs.get("orderBy", None)
         orderMode = kwargs.get("orderMode", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         getAll = kwargs.get("getAll", False)
-        withPagination = kwargs.get("withPagination", False)
+        with_pagination = kwargs.get("withPagination", False)
 
         self.opencti.admin_logger.info(
             "Searching roles matching search term", {"search": search}
@@ -89,7 +89,7 @@ class Role:
                     edges {
                         node {
                             """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                         }
                     }
@@ -135,7 +135,7 @@ class Role:
             return final_data
         else:
             return self.opencti.process_multiple(
-                result["data"]["roles"], withPagination
+                result["data"]["roles"], with_pagination
             )
 
     def read(self, **kwargs) -> Optional[Dict]:
@@ -155,7 +155,7 @@ class Role:
         """
         id = kwargs.get("id", None)
         search = kwargs.get("search", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
 
         if id is not None:
             self.opencti.admin_logger.info("Reading role", {"id": id})
@@ -164,7 +164,7 @@ class Role:
                 query RoleRead($id: String!) {
                     role(id: $id) {
                         """
-                + (self.properties if customAttributes is None else customAttributes)
+                + (self.properties if custom_attributes is None else custom_attributes)
                 + """
                     }
                 }
@@ -218,7 +218,7 @@ class Role:
         """
         name = kwargs.get("name", None)
         description = kwargs.get("description", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
 
         if name is None:
             self.opencti.admin_logger.error("[opencti_role] Missing parameter: name")
@@ -232,7 +232,7 @@ class Role:
             mutation RoleCreate($input: RoleAddInput!) {
                 roleAdd(input: $input) {
                     """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                 }
             }
@@ -271,7 +271,7 @@ class Role:
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
 
         if id is None or input is None:
             self.opencti.admin_logger.error(
@@ -288,7 +288,7 @@ class Role:
                 roleEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                     }
                 }
@@ -325,7 +325,7 @@ class Role:
         )
         query = (
             """
-            mutation RoleAddCapability($id: ID!, $input: InternalRelationshipAddInput!) {
+            mutation RoleEditAddCapability($id: ID!, $input: InternalRelationshipAddInput!) {
                 roleEdit(id: $id) {
                     relationAdd(input: $input) {
                         id
@@ -388,7 +388,7 @@ class Role:
         )
         query = (
             """
-            mutation RoleDeleteCapability($id: ID!, $toId: StixRef!) {
+            mutation RoleEditDeleteCapability($id: ID!, $toId: StixRef!) {
                 roleEdit(id: $id) {
                     relationDelete(toId: $toId, relationship_type: "has-capability") {
                         """

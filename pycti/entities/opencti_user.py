@@ -39,6 +39,8 @@ class User:
             account_status
             account_lock_after_date
 
+            entity_type
+            parent_types
             created_at
             updated_at
 
@@ -128,6 +130,11 @@ class User:
             unit_system
             submenu_show_icons
             submenu_auto_collapse
+
+            entity_type
+            parent_types
+            created_at
+            updated_at
 
             objectOrganization {
                 edges {
@@ -225,9 +232,9 @@ class User:
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         include_sessions = kwargs.get("include_sessions", False)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         getAll = kwargs.get("getAll", False)
-        withPagination = kwargs.get("withPagination", False)
+        with_pagination = kwargs.get("withPagination", False)
 
         if getAll:
             first = 100
@@ -242,7 +249,7 @@ class User:
                     edges {
                         node {
                     """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + (self.session_properties if include_sessions else "")
             + """
                         }
@@ -290,7 +297,7 @@ class User:
             return final_data
         else:
             return self.opencti.process_multiple(
-                result["data"]["users"], withPagination
+                result["data"]["users"], with_pagination
             )
 
     def read(self, **kwargs) -> Optional[Dict]:
@@ -317,7 +324,7 @@ class User:
         id = kwargs.get("id", None)
         include_sessions = kwargs.get("include_sessions", False)
         include_token = kwargs.get("include_token", False)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         if id is not None:
@@ -327,7 +334,7 @@ class User:
                 query UserRead($id: String!) {
                     user(id: $id) {
                         """
-                + (self.properties if customAttributes is None else customAttributes)
+                + (self.properties if custom_attributes is None else custom_attributes)
                 + (self.token_properties if include_token else "")
                 + (self.session_properties if include_sessions else "")
                 + """
@@ -342,7 +349,7 @@ class User:
                 filters=filters,
                 search=search,
                 include_sessions=include_sessions,
-                customAttributes=customAttributes,
+                customAttributes=custom_attributes,
             )
             user = results[0] if results else None
             if not include_token or user is None:
@@ -352,7 +359,7 @@ class User:
                     id=user["id"],
                     include_sessions=include_sessions,
                     include_token=include_token,
-                    customAttributes=customAttributes,
+                    customAttributes=custom_attributes,
                 )
         else:
             self.opencti.admin_logger.error(
@@ -429,7 +436,7 @@ class User:
         description = kwargs.get("description", None)
         language = kwargs.get("language", None)
         theme = kwargs.get("theme", None)
-        objectOrganization = kwargs.get("objectOrganization", None)
+        object_organization = kwargs.get("objectOrganization", None)
         account_status = kwargs.get("account_status", None)
         account_lock_after_date = kwargs.get("account_lock_after_date", None)
         unit_system = kwargs.get("unit_system", None)
@@ -438,7 +445,7 @@ class User:
         monochrome_labels = kwargs.get("monochrome_labels", False)
         groups = kwargs.get("groups", None)
         user_confidence_level = kwargs.get("user_confidence_level", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         include_token = kwargs.get("include_token", False)
 
         if name is None or user_email is None:
@@ -461,7 +468,7 @@ class User:
             mutation UserAdd($input: UserAddInput!) {
                 userAdd(input: $input) {
                     """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + (self.token_properties if include_token else "")
             + """
                 }
@@ -480,7 +487,7 @@ class User:
                     "description": description,
                     "language": language,
                     "theme": theme,
-                    "objectOrganization": objectOrganization,
+                    "objectOrganization": object_organization,
                     "account_status": account_status,
                     "account_lock_after_date": account_lock_after_date,
                     "unit_system": unit_system,
@@ -527,7 +534,7 @@ class User:
         :rtype: dict
         """
         include_token = kwargs.get("include_token", False)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
 
         self.opencti.admin_logger.info("Reading MeUser")
         query = (
@@ -535,7 +542,7 @@ class User:
             query Me {
                 me {
                     """
-            + (self.me_properties if customAttributes is None else customAttributes)
+            + (self.me_properties if custom_attributes is None else custom_attributes)
             + (self.token_properties if include_token else "")
             + """
                 }
@@ -559,7 +566,7 @@ class User:
         """
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
-        customAttributes = kwargs.get("customAttributes", None)
+        custom_attributes = kwargs.get("customAttributes", None)
         if id is None or input is None:
             self.opencti.admin_logger.error(
                 "[opencti_user] Missing parameters: id and input"
@@ -577,7 +584,7 @@ class User:
                 userEdit(id: $id) {
                     fieldPatch(input: $input) {
                         """
-            + (self.properties if customAttributes is None else customAttributes)
+            + (self.properties if custom_attributes is None else custom_attributes)
             + """
                     }
                 }
@@ -611,7 +618,7 @@ class User:
             "Adding user to group", {"id": id, "group_id": group_id}
         )
         query = """
-            mutation UserAddMembership($id: ID!, $group_id: ID!) {
+            mutation UserEditAddMembership($id: ID!, $group_id: ID!) {
                 userEdit(id: $id) {
                     relationAdd(input: {
                         relationship_type: "member-of",
@@ -660,7 +667,7 @@ class User:
         )
         query = (
             """
-            mutation UserDeleteMembership($id: ID!, $group_id: StixRef!) {
+            mutation UserEditDeleteMembership($id: ID!, $group_id: StixRef!) {
                 userEdit(id: $id) {
                     relationDelete(toId: $group_id, relationship_type: "member-of") {
                         """
@@ -699,7 +706,7 @@ class User:
         )
         query = (
             """
-            mutation UserAddOrganization($id: ID!, $organization_id: ID!) {
+            mutation UserEditAddOrganization($id: ID!, $organization_id: ID!) {
                 userEdit(id: $id) {
                     organizationAdd(organizationId: $organization_id) {
                         """
@@ -740,7 +747,7 @@ class User:
         )
         query = (
             """
-            mutation UserDeleteOrganization($id: ID!, $organization_id: ID!) {
+            mutation UserEditDeleteOrganization($id: ID!, $organization_id: ID!) {
                 userEdit(id: $id) {
                     organizationDelete(organizationId: $organization_id) {
                         """
@@ -778,7 +785,7 @@ class User:
         self.opencti.admin_logger.info("Rotating API key for user", {"id": id})
         query = (
             """
-            mutation UserRotateToken($id: ID!) {
+            mutation UserEditRotateToken($id: ID!) {
                 userEdit(id: $id) {
                     tokenRenew {
                         """
