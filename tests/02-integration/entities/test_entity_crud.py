@@ -19,7 +19,8 @@ def test_entity_create(entity_class):
         assert test_indicator is not None, "Response is NoneType"
         assert "id" in test_indicator, "No ID on object"
     finally:
-        entity_class.base_class().delete(id=test_indicator["id"])
+        if test_indicator and "id" in test_indicator:
+            entity_class.base_class().delete(id=test_indicator["id"])
 
 
 def test_read(entity_class):
@@ -37,7 +38,8 @@ def test_read(entity_class):
         )
 
     finally:
-        entity_class.base_class().delete(id=test_indicator["id"])
+        if test_indicator and "id" in test_indicator:
+            entity_class.base_class().delete(id=test_indicator["id"])
 
 
 def test_update(entity_class):
@@ -73,7 +75,8 @@ def test_update(entity_class):
             result = test_indicator
 
     finally:
-        entity_class.base_class().delete(id=result["id"])
+        if test_indicator and "id" in test_indicator:
+            entity_class.base_class().delete(id=result["id"])
 
 
 def test_delete(entity_class):
@@ -87,7 +90,8 @@ def test_delete(entity_class):
         result = entity_class.own_class().read(id=test_indicator["id"])
         assert result is None, f"Read returned value '{result}' after delete"
     except AssertionError:
-        entity_class.base_class().delete(id=test_indicator["id"])
+        if test_indicator and "id" in test_indicator:
+            entity_class.base_class().delete(id=test_indicator["id"])
 
 
 def test_filter(entity_class):
@@ -108,7 +112,8 @@ def test_filter(entity_class):
             entity_class.get_compare_exception_keys(),
         )
     finally:
-        entity_class.base_class().delete(id=test_indicator["id"])
+        if test_indicator and "id" in test_indicator:
+            entity_class.base_class().delete(id=test_indicator["id"])
 
 
 def test_search(entity_class):
@@ -127,7 +132,8 @@ def test_search(entity_class):
             entity_class.get_compare_exception_keys(),
         )
     finally:
-        entity_class.base_class().delete(id=test_indicator["id"])
+        if test_indicator and "id" in test_indicator:
+            entity_class.base_class().delete(id=test_indicator["id"])
 
 
 def test_relation(entity_class):
@@ -153,5 +159,7 @@ def test_relation(entity_class):
         result = entity_class.own_class().read(id=test_indicator["id"])
         assert len(result["objectsIds"]) == 0
     finally:
-        entity_class.base_class().delete(id=test_indicator["id"])
-        entity_class.base_class().delete(id=test_indicator2["id"])
+        if test_indicator and "id" in test_indicator:
+            entity_class.base_class().delete(id=test_indicator["id"])
+        if test_indicator2 and "id" in test_indicator2:
+            entity_class.base_class().delete(id=test_indicator2["id"])
