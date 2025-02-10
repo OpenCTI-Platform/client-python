@@ -2497,7 +2497,11 @@ class OpenCTIStix2:
             delete_id = item["id"]
             force_delete = operation == "delete-force"
             self.opencti.stix.delete(id=delete_id)
-        elif operation == "restore":
+        elif operation == "delete-draft":
+                    self.opencti.draft.delete(item["id"])
+                elif item["opencti_operation"] == "revert-draft":
+                    self.opencti.stix_core_object.remove_from_draft(id=item["id"])
+                elif item["opencti_operation"] == "restore":
                     self.opencti.trash.delete_operation_restore(item["id"])
                 elif item["opencti_operation"] == "merge":
             target_id = item["merge_target_id"]
