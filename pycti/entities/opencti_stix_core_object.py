@@ -1890,3 +1890,26 @@ class StixCoreObject:
         else:
             self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
             return None
+
+    """
+        Remove a Stix-Core-Object object from draft (revert)
+
+        :param id: the Stix-Core-Object id
+        :return void
+    """
+
+    def remove_from_draft(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.app_logger.info("Draft remove stix_core_object", {"id": id})
+            query = """
+                mutation StixCoreObjectEditDraftRemove($id: ID!) {
+                    stixCoreObjectEdit(id: $id) {
+                        removeFromDraft
+                    }
+                }
+            """
+            self.opencti.query(query, {"id": id})
+        else:
+            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            return None
