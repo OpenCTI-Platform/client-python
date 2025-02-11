@@ -198,7 +198,6 @@ class Settings:
             platform_banner_level
             platform_whitemark
             analytics_google_analytics_v4
-            enterprise_license
         """
             + self.password_policy_properties
         )
