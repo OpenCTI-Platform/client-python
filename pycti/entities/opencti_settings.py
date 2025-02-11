@@ -19,33 +19,26 @@ class Settings:
             standard_id
             entity_type
             parent_types
-
             platform_organization {
                 id, name, description
             }
-
             platform_title
             platform_favicon
             platform_email
             platform_url
             platform_language
-
             platform_cluster {
                 instances_number
             }
-
             platform_modules {
                 id, enable, warning
             }
-
             platform_providers {
                 name, type, strategy, provider
             }
-
             platform_user_statuses {
                 status, message
             }
-
             platform_theme
             platform_theme_dark_background
             platform_theme_dark_paper
@@ -67,36 +60,27 @@ class Settings:
             platform_theme_light_logo_login
             platform_map_tile_server_dark
             platform_map_tile_server_light
-
             platform_openbas_url
             platform_openbas_disable_display
-
             platform_openerm_url
             platform_openmtd_url
-
             platform_ai_enabled
             platform_ai_type
             platform_ai_model
             platform_ai_has_token
-
             platform_login_message
             platform_consent_message
             platform_consent_confirm_text
-
             platform_banner_text
             platform_banner_level
-
             platform_session_idle_timeout
             platform_session_timeout
-
             platform_whitemark
             platform_demo
             platform_reference_attachment
-
             platform_feature_flags {
                 id, enable, warning
             }
-
             platform_critical_alerts {
                 message, type
                 details {
@@ -105,9 +89,7 @@ class Settings:
                     }
                 }
             }
-
             platform_trash_enabled
-
             platform_protected_sensitive_config {
                 enabled
                 markings {
@@ -132,12 +114,25 @@ class Settings:
                     enabled, protected_ids
                 }
             }
-
             created_at
             updated_at
-            enterprise_edition
+            platform_enterprise_edition {
+                license_enterprise
+                license_by_configuration
+                license_customer
+                license_validated
+                license_valid_cert
+                license_expired
+                license_expiration_prevention
+                license_start_date
+                license_expiration_date
+                license_platform
+                license_type
+                license_platform_match
+                license_creator
+                license_global
+            }
             analytics_google_analytics_v4
-
             activity_listeners {
                 id, name, entity_type
             }
@@ -170,16 +165,13 @@ class Settings:
         self.editable_properties = (
             """
             id
-
             platform_organization {
                 id
             }
-
             platform_title
             platform_favicon
             platform_email
             platform_language
-
             platform_theme
             platform_theme_dark_background
             platform_theme_dark_paper
@@ -199,16 +191,14 @@ class Settings:
             platform_theme_light_logo
             platform_theme_light_logo_collapsed
             platform_theme_light_logo_login
-
             platform_login_message
             platform_consent_message
             platform_consent_confirm_text
             platform_banner_text
             platform_banner_level
-
             platform_whitemark
             analytics_google_analytics_v4
-            enterprise_edition
+            enterprise_license
         """
             + self.password_policy_properties
         )
