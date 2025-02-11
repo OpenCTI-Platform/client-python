@@ -197,22 +197,8 @@ class Settings:
             platform_banner_text
             platform_banner_level
             platform_whitemark
-            platform_enterprise_edition {
-                license_enterprise
-                license_by_configuration
-                license_customer
-                license_validated
-                license_valid_cert
-                license_expired
-                license_expiration_prevention
-                license_start_date
-                license_expiration_date
-                license_platform
-                license_type
-                license_platform_match
-                license_creator
-                license_global
-            }
+            analytics_google_analytics_v4
+            enterprise_license
         """
             + self.password_policy_properties
         )
