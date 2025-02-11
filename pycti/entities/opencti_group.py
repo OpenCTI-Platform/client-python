@@ -28,35 +28,28 @@ class Group:
             standard_id
             name
             description
-
             entity_type
             parent_types
             created_at
             updated_at
-
             default_assignation
             no_creators
             restrict_delete
             default_hidden_types
-
             auto_new_marking
-
             allowed_marking {
                 id, standard_id, definition_type, definition
             }
-
             default_marking {
                 entity_type
                 values {
                     id, standard_id, definition_type, definition
                 }
             }
-
             not_shareable_marking_types
             max_shareable_marking {
                 id, standard_id, definition_type, definition
             }
-
             group_confidence_level {
                 max_confidence
                 overrides {
@@ -64,7 +57,6 @@ class Group:
                     max_confidence
                 }
             }
-
             roles {
                 edges {
                     node {
@@ -75,7 +67,6 @@ class Group:
                     }
                 }
             }
-
             members {
                 edges {
                     node {
@@ -123,15 +114,15 @@ class Group:
         """
         first = kwargs.get("first", 500)
         after = kwargs.get("after", None)
-        orderBy = kwargs.get("orderBy", None)
-        orderMode = kwargs.get("orderMode", None)
+        order_by = kwargs.get("orderBy", None)
+        order_mode = kwargs.get("orderMode", None)
         search = kwargs.get("search", None)
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
-        getAll = kwargs.get("getAll", False)
-        withPagination = kwargs.get("withPagination", False)
+        get_all = kwargs.get("getAll", False)
+        with_pagination = kwargs.get("withPagination", False)
 
-        if getAll:
+        if get_all:
             first = 100
 
         self.opencti.admin_logger.info(
@@ -164,14 +155,14 @@ class Group:
             {
                 "first": first,
                 "after": after,
-                "orderBy": orderBy,
-                "orderMode": orderMode,
+                "orderBy": order_by,
+                "orderMode": order_mode,
                 "search": search,
                 "filters": filters,
             },
         )
 
-        if getAll:
+        if get_all:
             final_data = []
             data = self.opencti.process_multiple(result["data"]["groups"])
             final_data = final_data + data
@@ -182,8 +173,8 @@ class Group:
                     {
                         "first": first,
                         "after": after,
-                        "orderBy": orderBy,
-                        "orderMode": orderMode,
+                        "orderBy": order_by,
+                        "orderMode": order_mode,
                         "search": search,
                         "filters": filters,
                     },
@@ -193,7 +184,7 @@ class Group:
             return final_data
         else:
             return self.opencti.process_multiple(
-                result["data"]["groups"], withPagination
+                result["data"]["groups"], with_pagination
             )
 
     def read(self, **kwargs) -> Optional[Dict]:
@@ -414,7 +405,6 @@ class Group:
                         from {
                             id, entity_type
                         }
-
                         to {
                             id, entity_type
                         }
@@ -499,7 +489,6 @@ class Group:
                         from {
                             id, entity_type
                         }
-
                         to {
                             id, entity_type
                         }

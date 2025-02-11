@@ -19,13 +19,10 @@ class Role:
             standard_id
             entity_type
             parent_types
-
             name
             description
-
             created_at
             updated_at
-
             capabilities {
                 id
                 name
@@ -69,17 +66,17 @@ class Role:
         search = kwargs.get("search", None)
         first = kwargs.get("first", 500)
         after = kwargs.get("after", None)
-        orderBy = kwargs.get("orderBy", None)
-        orderMode = kwargs.get("orderMode", None)
+        order_by = kwargs.get("orderBy", None)
+        order_mode = kwargs.get("orderMode", None)
         custom_attributes = kwargs.get("customAttributes", None)
-        getAll = kwargs.get("getAll", False)
+        get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
 
         self.opencti.admin_logger.info(
             "Searching roles matching search term", {"search": search}
         )
 
-        if getAll:
+        if get_all:
             first = 100
 
         query = (
@@ -109,12 +106,12 @@ class Role:
             {
                 "first": first,
                 "after": after,
-                "orderBy": orderBy,
-                "orderMode": orderMode,
+                "orderBy": order_by,
+                "orderMode": order_mode,
                 "search": search,
             },
         )
-        if getAll:
+        if get_all:
             final_data = []
             data = self.opencti.process_multiple(result["data"]["roles"])
             final_data = final_data + data
@@ -125,8 +122,8 @@ class Role:
                     {
                         "first": first,
                         "after": after,
-                        "orderBy": orderBy,
-                        "orderMode": orderMode,
+                        "orderBy": order_by,
+                        "orderMode": order_mode,
                         "search": search,
                     },
                 )
@@ -333,7 +330,6 @@ class Role:
                         parent_types
                         created_at
                         updated_at
-
                         from {
                             ... on Role {
                                 """
@@ -341,7 +337,6 @@ class Role:
             + """
                             }
                         }
-
                         to {
                             ... on Capability {
                                 id, name, description

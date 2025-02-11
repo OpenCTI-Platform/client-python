@@ -12,12 +12,12 @@ class Capability:
         self.opencti = opencti
         self.properties = """
             id
+            standard_id
             entity_type
             parent_types
             name
             description
             attribute_order
-
             created_at
             updated_at
         """

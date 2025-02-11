@@ -28,34 +28,27 @@ class User:
             lastname
             name
             description
-
             language
             theme
             unit_system
-
             external
             restrict_delete
-
             account_status
             account_lock_after_date
-
             entity_type
             parent_types
             created_at
             updated_at
-
             unit_system
             submenu_show_icons
             submenu_auto_collapse
             monochrome_labels
-
             roles {
                 id, name, description
                 capabilities {
                     id, name
                 }
             }
-
             groups {
                 edges {
                     node {
@@ -63,7 +56,6 @@ class User:
                     }
                 }
             }
-
             objectOrganization {
                 edges {
                     node {
@@ -71,11 +63,9 @@ class User:
                     }
                 }
             }
-
             administrated_organizations {
                 id, name, description
             }
-
             user_confidence_level {
                 max_confidence
                 overrides {
@@ -124,18 +114,15 @@ class User:
             lastname
             name
             description
-
             theme
             language
             unit_system
             submenu_show_icons
             submenu_auto_collapse
-
             entity_type
             parent_types
             created_at
             updated_at
-
             objectOrganization {
                 edges {
                     node {
@@ -143,15 +130,12 @@ class User:
                     }
                 }
             }
-
             administrated_organizations {
                 id, name
             }
-
             capabilities {
                 id, name, description
             }
-
             groups {
                 edges {
                     node {
@@ -159,7 +143,6 @@ class User:
                     }
                 }
             }
-
             effective_confidence_level {
                 max_confidence
                 source {
@@ -227,16 +210,16 @@ class User:
         """
         first = kwargs.get("first", 500)
         after = kwargs.get("after", None)
-        orderBy = kwargs.get("orderBy", "name")
-        orderMode = kwargs.get("orderMode", "asc")
+        order_by = kwargs.get("orderBy", "name")
+        order_mode = kwargs.get("orderMode", "asc")
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
         include_sessions = kwargs.get("include_sessions", False)
         custom_attributes = kwargs.get("customAttributes", None)
-        getAll = kwargs.get("getAll", False)
+        get_all = kwargs.get("getAll", False)
         with_pagination = kwargs.get("withPagination", False)
 
-        if getAll:
+        if get_all:
             first = 100
 
         self.opencti.admin_logger.info(
@@ -268,14 +251,14 @@ class User:
             {
                 "first": first,
                 "after": after,
-                "orderBy": orderBy,
-                "orderMode": orderMode,
+                "orderBy": order_by,
+                "orderMode": order_mode,
                 "filters": filters,
                 "search": search,
             },
         )
 
-        if getAll:
+        if get_all:
             final_data = []
             data = self.opencti.process_multiple(result["data"]["users"])
             final_data = final_data + data
@@ -286,8 +269,8 @@ class User:
                     {
                         "first": first,
                         "after": after,
-                        "orderBy": orderBy,
-                        "orderMode": orderMode,
+                        "orderBy": order_by,
+                        "orderMode": order_mode,
                         "filters": filters,
                         "search": search,
                     },
