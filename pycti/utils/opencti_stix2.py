@@ -30,6 +30,7 @@ from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
 from pycti.utils.opencti_stix2_utils import (
     OBSERVABLES_VALUE_INT,
     STIX_CYBER_OBSERVABLE_MAPPING,
+    STIX_OBJECTS,
 )
 
 datefinder.ValueError = ValueError, OverflowError
@@ -905,6 +906,22 @@ class OpenCTIStix2:
             # relationships
             "relationship": self.opencti.stix_core_relationship,
             "sighting": self.opencti.stix_sighting_relationship,
+        }
+
+    def get_internal_helper(self):
+        # Import
+        return {
+            "user": self.opencti.user,
+            "group": self.opencti.group,
+            "capability": self.opencti.capability,
+            "role": self.opencti.role,
+            "settings": self.opencti.settings,
+            "work": self.opencti.work,
+            "deleteoperation": self.opencti.trash,
+            "draftworkspace": self.opencti.draft,
+            "playbook": self.opencti.playbook,
+            "workspace": self.opencti.workspace,
+            "publicdashboard": self.opencti.public_dashboard,
         }
 
     def generate_standard_id_from_stix(self, data):
@@ -2483,6 +2500,21 @@ class OpenCTIStix2:
             item["id"], organization_ids, sharing_direct_container
         )
 
+    def element_operation_delete(self, item):
+        # If data is stix, just use the generic stix function for deletion
+        if item["type"] in STIX_OBJECTS:
+            item["force_delete"] = item["opencti_operation"] == "delete-force"
+            self.opencti.stix.delete(id=item["id"])
+        else:
+            # Element is not knowledge we need to use the right api
+            stix_helper = self.get_internal_helper().get(item["type"])
+            if stix_helper and hasattr(stix_helper, "delete"):
+                stix_helper.delete(id=item["id"])
+            else:
+                raise ValueError(
+                    "Delete operation or no stix helper", {"type": item["type"]}
+                )
+
     def import_item(
         self,
         item,
@@ -2499,15 +2531,11 @@ class OpenCTIStix2:
                     item["opencti_operation"] == "delete"
                     or item["opencti_operation"] == "delete-force"
                 ):
-                    delete_id = item["id"]
-                    force_delete = item["opencti_operation"] == "delete-force"
-                    self.opencti.stix.delete(id=delete_id, force_delete=force_delete)
-                elif item["opencti_operation"] == "delete-draft":
-                    self.opencti.draft.delete(item["id"])
+                    self.element_operation_delete(item=item)
                 elif item["opencti_operation"] == "revert-draft":
                     self.opencti.stix_core_object.remove_from_draft(id=item["id"])
                 elif item["opencti_operation"] == "restore":
-                    self.opencti.trash.delete_operation_restore(item["id"])
+                    self.opencti.trash.restore(item["id"])
                 elif item["opencti_operation"] == "merge":
                     target_id = item["merge_target_id"]
                     source_ids = item["merge_source_ids"]
