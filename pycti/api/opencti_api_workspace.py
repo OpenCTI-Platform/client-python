@@ -1,5 +1,5 @@
-class OpenCTIApiDraft:
-    """OpenCTIApiDraft"""
+class OpenCTIApiWorkspace:
+    """OpenCTIApiWorkspace"""
 
     def __init__(self, api):
         self.api = api
@@ -7,8 +7,8 @@ class OpenCTIApiDraft:
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
         query = """
-            mutation DraftWorkspaceDelete($id: ID!) {
-                draftWorkspaceDelete(id: $id)
+            mutation WorkspaceDelete($id: ID!) {
+                workspaceDelete(id: $id)
             }
            """
         self.api.query(

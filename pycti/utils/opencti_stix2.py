@@ -30,6 +30,7 @@ from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
 from pycti.utils.opencti_stix2_utils import (
     OBSERVABLES_VALUE_INT,
     STIX_CYBER_OBSERVABLE_MAPPING,
+    STIX_OBJECTS,
 )
 
 datefinder.ValueError = ValueError, OverflowError
@@ -906,6 +907,22 @@ class OpenCTIStix2:
             # relationships
             "relationship": self.opencti.stix_core_relationship,
             "sighting": self.opencti.stix_sighting_relationship,
+        }
+
+    def get_internal_helper(self):
+        # Import
+        return {
+            "user": self.opencti.user,
+            "group": self.opencti.group,
+            "capability": self.opencti.capability,
+            "role": self.opencti.role,
+            "settings": self.opencti.settings,
+            "work": self.opencti.work,
+            "deleteoperation": self.opencti.trash,
+            "draftworkspace": self.opencti.draft,
+            "playbook": self.opencti.playbook,
+            "workspace": self.opencti.workspace,
+            "publicdashboard": self.opencti.public_dashboard,
         }
 
     def generate_standard_id_from_stix(self, data):
@@ -2492,18 +2509,29 @@ class OpenCTIStix2:
             item["id"], organization_ids, sharing_direct_container
         )
 
+    def element_operation_delete(self, item, operation):
+        # If data is stix, just use the generic stix function for deletion
+        if item["type"] in STIX_OBJECTS:
+            item["force_delete"] = operation == "delete-force"
+            self.opencti.stix.delete(id=item["id"])
+        else:
+            # Element is not knowledge we need to use the right api
+            stix_helper = self.get_internal_helper().get(item["type"])
+            if stix_helper and hasattr(stix_helper, "delete"):
+                stix_helper.delete(id=item["id"])
+            else:
+                raise ValueError(
+                    "Delete operation or no stix helper", {"type": item["type"]}
+                )
+
     def apply_opencti_operation(self, item, operation):
         if operation == "delete" or operation == "delete-force":
-            delete_id = item["id"]
-            force_delete = operation == "delete-force"
-            self.opencti.stix.delete(id=delete_id)
-        elif operation == "delete-draft":
-                    self.opencti.draft.delete(item["id"])
-                elif item["opencti_operation"] == "revert-draft":
-                    self.opencti.stix_core_object.remove_from_draft(id=item["id"])
-                elif item["opencti_operation"] == "restore":
-                    self.opencti.trash.delete_operation_restore(item["id"])
-                elif item["opencti_operation"] == "merge":
+            self.element_operation_delete(item=item, operation=operation)
+        elif item["opencti_operation"] == "revert-draft":
+            self.opencti.stix_core_object.remove_from_draft(id=item["id"])
+        elif item["opencti_operation"] == "restore":
+            self.opencti.trash.restore(item["id"])
+        elif item["opencti_operation"] == "merge":
             target_id = item["merge_target_id"]
             source_ids = item["merge_source_ids"]
             self.opencti.stix.merge(id=target_id, object_ids=source_ids)
@@ -2520,10 +2548,10 @@ class OpenCTIStix2:
         elif operation == "unshare":
             self.organization_unshare(item=item)
         elif operation == "clear_access_restriction":
-                    self.opencti.stix_core_object.clear_access_restriction(
-                        element_id=item["id"]
-                    )
-                elif item["opencti_operation"] == "enrichment":
+            self.opencti.stix_core_object.clear_access_restriction(
+                element_id=item["id"]
+            )
+        elif item["opencti_operation"] == "enrichment":
             connector_ids = item["connector_ids"]
             self.opencti.stix_core_object.ask_enrichment(
                 element_id=item["id"], connector_ids=connector_ids
