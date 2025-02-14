@@ -178,11 +178,11 @@ class OpenCTIStix2Splitter:
         # Put in cache
         if self.cache_index.get(item_id) is None:
             # enlist only if compatible
-            if item["type"] == "relationship" and item.get("opencti_operation") is None:
+            if item["type"] == "relationship":
                 is_compatible = (
                     item["source_ref"] is not None and item["target_ref"] is not None
                 )
-            elif item["type"] == "sighting" and item.get("opencti_operation") is None:
+            elif item["type"] == "sighting":
                 is_compatible = (
                     item["sighting_of_ref"] is not None
                     and len(item["where_sighted_refs"]) > 0
