@@ -2409,7 +2409,9 @@ class OpenCTIStix2:
 
     def apply_patch_files(self, item):
         field_patch = item["opencti_field_patch"]
-        field_patch_files = next((op for op in field_patch if op.key == "x_opencti_files"), None)
+        field_patch_files = next(
+            (op for op in field_patch if op.key == "x_opencti_files"), None
+        )
         if field_patch_files is not None:
             for file in field_patch_files.value:
                 if "data" in file:
