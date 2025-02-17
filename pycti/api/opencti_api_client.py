@@ -71,6 +71,25 @@ from pycti.utils.opencti_stix2 import OpenCTIStix2
 from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
 
 
+def build_request_headers(token: str, custom_headers: str, app_logger):
+    headers_dict = {
+        "User-Agent": "pycti/" + __version__,
+        "Authorization": "Bearer " + token,
+    }
+    # Build and add custom headers
+    if custom_headers is not None:
+        for header_pair in custom_headers.strip().split(";"):
+            if header_pair:  # Skip empty header pairs
+                try:
+                    key, value = header_pair.split(":", 1)
+                    headers_dict[key.strip()] = value.strip()
+                except ValueError:
+                    app_logger.warning(
+                        "Ignored invalid header pair", {"header_pair": header_pair}
+                    )
+    return headers_dict
+
+
 class File:
     def __init__(self, name, data, mime="text/plain"):
         self.name = name
@@ -109,14 +128,14 @@ class OpenCTIApiClient:
         self,
         url: str,
         token: str,
-        log_level="info",
+        log_level: str = "info",
         ssl_verify: Union[bool, str] = False,
         proxies: Union[Dict[str, str], None] = None,
-        json_logging=False,
-        bundle_send_to_queue=True,
+        json_logging: bool = False,
+        bundle_send_to_queue: bool = True,
         cert: Union[str, Tuple[str, str], None] = None,
-        auth=None,
-        perform_health_check=True,
+        custom_headers: str = None,
+        perform_health_check: bool = True,
     ):
         """Constructor method"""
 
@@ -138,17 +157,10 @@ class OpenCTIApiClient:
         # Define API
         self.api_token = token
         self.api_url = url + "/graphql"
-        self.request_headers = {
-            "User-Agent": "pycti/" + __version__,
-            "Authorization": "Bearer " + token,
-        }
-
-        if auth is not None:
-            self.session = requests.session()
-            self.session.auth = auth
-        else:
-            self.session = requests.session()
-
+        self.request_headers = build_request_headers(
+            token, custom_headers, self.app_logger
+        )
+        self.session = requests.session()
         # Define the dependencies
         self.work = OpenCTIApiWork(self)
         self.playbook = OpenCTIApiPlaybook(self)
