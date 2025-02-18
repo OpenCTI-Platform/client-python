@@ -2410,10 +2410,10 @@ class OpenCTIStix2:
     def apply_patch_files(self, item):
         field_patch = item["opencti_field_patch"]
         field_patch_files = next(
-            (op for op in field_patch if op.key == "x_opencti_files"), None
+            (op for op in field_patch if op["key"] == "x_opencti_files"), None
         )
         if field_patch_files is not None:
-            for file in field_patch_files.value:
+            for file in field_patch_files["value"]:
                 if "data" in file:
                     if StixCyberObservableTypes.has_value(item["type"]):
                         self.opencti.stix_cyber_observable.add_file(
@@ -2442,35 +2442,36 @@ class OpenCTIStix2:
                             version=file.get("version", None),
                             data=base64.b64decode(file["data"]),
                             fileMarkings=file.get("object_marking_refs", None),
-                            mime_type=file["mime_type"],
+                            mime_type=file.get("mime_type", None),
                             no_trigger_import=file.get("no_trigger_import", False),
                         )
 
     def apply_patch(self, item):
         field_patch = item["opencti_field_patch"]
         field_patch_without_files = [
-            op for op in field_patch if op.key != "x_opencti_files"
+            op for op in field_patch if op["key"] != "x_opencti_files"
         ]
-        if item["type"] == "relationship":
-            self.opencti.stix_core_relationship.update_field(
-                id=item["id"], input=field_patch_without_files
-            )
-        elif item["type"] == "sighting":
-            self.opencti.stix_sighting_relationship.update_field(
-                id=item["id"], input=field_patch_without_files
-            )
-        elif StixCyberObservableTypes.has_value(item["type"]):
-            self.opencti.stix_cyber_observable.update_field(
-                id=item["id"], input=field_patch_without_files
-            )
-        elif item["type"] == "external-reference":
-            self.opencti.external_reference.update_field(
-                id=item["id"], input=field_patch_without_files
-            )
-        else:
-            self.opencti.stix_domain_object.update_field(
-                id=item["id"], input=field_patch_without_files
-            )
+        if len(field_patch_without_files) > 0:
+            if item["type"] == "relationship":
+                self.opencti.stix_core_relationship.update_field(
+                    id=item["id"], input=field_patch_without_files
+                )
+            elif item["type"] == "sighting":
+                self.opencti.stix_sighting_relationship.update_field(
+                    id=item["id"], input=field_patch_without_files
+                )
+            elif StixCyberObservableTypes.has_value(item["type"]):
+                self.opencti.stix_cyber_observable.update_field(
+                    id=item["id"], input=field_patch_without_files
+                )
+            elif item["type"] == "external-reference":
+                self.opencti.external_reference.update_field(
+                    id=item["id"], input=field_patch_without_files
+                )
+            else:
+                self.opencti.stix_domain_object.update_field(
+                    id=item["id"], input=field_patch_without_files
+                )
         self.apply_patch_files(item)
 
     def import_item(
