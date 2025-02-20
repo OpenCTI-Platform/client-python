@@ -2412,39 +2412,23 @@ class OpenCTIStix2:
         field_patch_files = next(
             (op for op in field_patch if op["key"] == "x_opencti_files"), None
         )
+        do_add_file = self.opencti.stix_domain_object.add_file
+        if StixCyberObservableTypes.has_value(item["type"]):
+            do_add_file = self.opencti.stix_cyber_observable.add_file
+        elif item["type"] == "external-reference":
+            do_add_file = self.opencti.external_reference.add_file
         if field_patch_files is not None:
             for file in field_patch_files["value"]:
                 if "data" in file:
-                    if StixCyberObservableTypes.has_value(item["type"]):
-                        self.opencti.stix_cyber_observable.add_file(
-                            id=item["id"],
-                            file_name=file["name"],
-                            version=file.get("version", None),
-                            data=base64.b64decode(file["data"]),
-                            fileMarkings=file.get("object_marking_refs", None),
-                            mime_type=file["mime_type"],
-                            no_trigger_import=file.get("no_trigger_import", False),
-                        )
-                    elif item["type"] == "external-reference":
-                        self.opencti.external_reference.add_file(
-                            id=item["id"],
-                            file_name=file["name"],
-                            version=file.get("version", None),
-                            data=base64.b64decode(file["data"]),
-                            fileMarkings=file.get("object_marking_refs", None),
-                            mime_type=file["mime_type"],
-                            no_trigger_import=file.get("no_trigger_import", False),
-                        )
-                    else:
-                        self.opencti.stix_domain_object.add_file(
-                            id=item["id"],
-                            file_name=file["name"],
-                            version=file.get("version", None),
-                            data=base64.b64decode(file["data"]),
-                            fileMarkings=file.get("object_marking_refs", None),
-                            mime_type=file.get("mime_type", None),
-                            no_trigger_import=file.get("no_trigger_import", False),
-                        )
+                    do_add_file(
+                        id=item["id"],
+                        file_name=file["name"],
+                        version=file.get("version", None),
+                        data=base64.b64decode(file["data"]),
+                        fileMarkings=file.get("object_marking_refs", None),
+                        mime_type=file.get("mime_type", None),
+                        no_trigger_import=file.get("no_trigger_import", False),
+                    )
 
     def apply_patch(self, item):
         field_patch = item["opencti_field_patch"]
