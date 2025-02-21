@@ -423,7 +423,7 @@ class ListenQueue(threading.Thread):
             scheme, token = authorization.split()
             if scheme.lower() != "bearer" or token != self.opencti_token:
                 return {"error": "Invalid credentials"}
-        except Exception as e:
+        except Exception:
             return {"error": "Invalid credentials"}
         # 02. Parse the data and execute
         try:
