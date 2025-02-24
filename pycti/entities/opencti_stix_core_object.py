@@ -1783,6 +1783,34 @@ class StixCoreObject:
             return None
 
     """
+        Ask enrichment with single connector
+
+        :param element_id: the Stix-Core-Object id
+        :param connector_id the connector
+        :return void
+    """
+
+    def ask_enrichment(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        connector_id = kwargs.get("connector_id", None)
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $connectorId: ID!) {
+                stixCoreObjectEdit(id: $id) {
+                    askEnrichment(connectorId: $connectorId) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": element_id,
+                "connectorId": connector_id,
+            },
+        )
+
+    """
         Ask enrichment with multiple connectors
 
         :param element_id: the Stix-Core-Object id
@@ -1790,13 +1818,13 @@ class StixCoreObject:
         :return void
     """
 
-    def ask_enrichment(self, **kwargs):
+    def ask_enrichments(self, **kwargs):
         element_id = kwargs.get("element_id", None)
         connector_ids = kwargs.get("connector_ids", None)
         query = """
-            mutation StixCoreObjectEdit($id: ID!, $connectorId: [ID!]!) {
+            mutation StixCoreObjectEdit($id: ID!, $connectorIds: [ID!]!) {
                 stixCoreObjectEdit(id: $id) {
-                    askEnrichment(connectorId: $connectorId) {
+                    askEnrichments(connectorIds: $connectorIds) {
                       id
                     }
                 }

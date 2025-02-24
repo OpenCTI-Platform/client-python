@@ -2525,9 +2525,9 @@ class OpenCTIStix2:
                 )
 
     def apply_opencti_operation(self, item, operation):
-        if operation == "delete" or operation == "delete-force":
+        if operation == "delete" or operation == "delete_force":
             self.element_operation_delete(item=item, operation=operation)
-        elif item["opencti_operation"] == "revert-draft":
+        elif item["opencti_operation"] == "revert_draft":
             self.opencti.stix_core_object.remove_from_draft(id=item["id"])
         elif item["opencti_operation"] == "restore":
             self.opencti.trash.restore(item["id"])
@@ -2553,7 +2553,7 @@ class OpenCTIStix2:
             )
         elif item["opencti_operation"] == "enrichment":
             connector_ids = item["connector_ids"]
-            self.opencti.stix_core_object.ask_enrichment(
+            self.opencti.stix_core_object.ask_enrichments(
                 element_id=item["id"], connector_ids=connector_ids
             )
         else:
