@@ -45,7 +45,7 @@ def start_loop(loop):
 
 
 def get_config_variable(
-    env_var: str,
+    env_var: Union[str, List[str]],
     yaml_path: List,
     config: Dict = {},
     isNumber: Optional[bool] = False,
@@ -61,8 +61,17 @@ def get_config_variable(
     :param default: default value
     """
 
-    if os.getenv(env_var) is not None:
-        result = os.getenv(env_var)
+    # Get env var
+    env_result = None
+    env_vars = env_var if type(env_var) is list else [env_var]
+    for var in env_vars:
+        if os.getenv(var) is not None:
+            env_result = os.getenv(var)
+            break
+
+    # If env not found check in config file
+    if env_result is not None:
+        result = env_result
     elif yaml_path is not None:
         if yaml_path[0] in config and yaml_path[1] in config[yaml_path[0]]:
             result = config[yaml_path[0]][yaml_path[1]]
@@ -876,29 +885,31 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             "CONNECTOR_ID", ["connector", "id"], config
         )
         self.listen_protocol = get_config_variable(
-            "LISTEN_PROTOCOL", ["connector", "listen_protocol"], config, default="AMQP"
+            "CONNECTOR_LISTEN_PROTOCOL",
+            ["connector", "listen_protocol"],
+            config,
+            default="AMQP",
         ).upper()
         self.listen_protocol_api_port = get_config_variable(
-            "LISTEN_PROTOCOL_API_PORT",
+            "CONNECTOR_LISTEN_PROTOCOL_API_PORT",
             ["connector", "listen_protocol_api_port"],
             config,
             default=7070,
         )
         self.listen_protocol_api_path = get_config_variable(
-            "LISTEN_PROTOCOL_API_PATH",
+            "CONNECTOR_LISTEN_PROTOCOL_API_PATH",
             ["connector", "listen_protocol_api_path"],
             config,
             default="/api/callback",
         )
         self.listen_protocol_api_ssl = get_config_variable(
-            "LISTEN_PROTOCOL_API_SSL",
+            "CONNECTOR_LISTEN_PROTOCOL_API_SSL",
             ["connector", "listen_protocol_api_ssl"],
             config,
             default=False,
         )
-
         self.listen_protocol_api_uri = get_config_variable(
-            "LISTEN_PROTOCOL_API_URI",
+            "CONNECTOR_LISTEN_PROTOCOL_API_URI",
             ["connector", "listen_protocol_api_uri"],
             config,
             default=(
@@ -908,7 +919,10 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             ),
         )
         self.queue_protocol = get_config_variable(
-            "QUEUE_PROTOCOL", ["connector", "queue_protocol"], config, default="amqp"
+            ["QUEUE_PROTOCOL", "CONNECTOR_QUEUE_PROTOCOL"],
+            ["connector", "queue_protocol"],
+            config,
+            default="amqp",
         )
         self.connect_type = get_config_variable(
             "CONNECTOR_TYPE", ["connector", "type"], config
