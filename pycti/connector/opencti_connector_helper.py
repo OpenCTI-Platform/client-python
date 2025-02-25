@@ -1669,6 +1669,9 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 if not draft_id:
                     self.connector_logger.error("Draft couldn't be created")
                     return []
+                if work_id:
+                    if draft_id:
+                        self.api.work.add_draft_context(work_id, draft_id)
 
         # If directory setup, write the bundle to the target directory
         if bundle_send_to_directory and bundle_send_to_directory_path is not None:
