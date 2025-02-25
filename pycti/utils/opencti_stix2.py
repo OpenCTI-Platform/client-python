@@ -2431,7 +2431,9 @@ class OpenCTIStix2:
                     )
 
     def apply_patch(self, item):
-        field_patch = self.opencti.get_attribute_in_extension("opencti_field_patch", item)
+        field_patch = self.opencti.get_attribute_in_extension(
+            "opencti_field_patch", item
+        )
         if field_patch is None:
             field_patch = item["opencti_field_patch"]
         field_patch_without_files = [
@@ -2484,7 +2486,9 @@ class OpenCTIStix2:
         worker_logger = self.opencti.logger_class("worker")
         try:
             self.opencti.set_retry_number(processing_count)
-            opencti_operation = self.opencti.get_attribute_in_extension("opencti_operation", item)
+            opencti_operation = self.opencti.get_attribute_in_extension(
+                "opencti_operation", item
+            )
             if opencti_operation is not None:
                 self.apply_opencti_operation(item, opencti_operation)
             elif "opencti_operation" in item:
