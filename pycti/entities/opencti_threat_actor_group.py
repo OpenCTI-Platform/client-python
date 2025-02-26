@@ -216,7 +216,9 @@ class ThreatActorGroup:
             final_data = final_data + data
             while result["data"]["threatActorsGroup"]["pageInfo"]["hasNextPage"]:
                 after = result["data"]["threatActorsGroup"]["pageInfo"]["endCursor"]
-                self.opencti.app_logger.info("Listing threatActorsGroup", {"after": after})
+                self.opencti.app_logger.info(
+                    "Listing threatActorsGroup", {"after": after}
+                )
                 result = self.opencti.query(
                     query,
                     {
@@ -228,7 +230,9 @@ class ThreatActorGroup:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["threatActorsGroup"])
+                data = self.opencti.process_multiple(
+                    result["data"]["threatActorsGroup"]
+                )
                 final_data = final_data + data
             return final_data
         else:

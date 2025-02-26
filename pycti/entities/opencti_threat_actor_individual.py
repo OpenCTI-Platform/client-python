@@ -213,11 +213,17 @@ class ThreatActorIndividual:
         )
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["threatActorsIndividuals"])
+            data = self.opencti.process_multiple(
+                result["data"]["threatActorsIndividuals"]
+            )
             final_data = final_data + data
             while result["data"]["threatActorsIndividuals"]["pageInfo"]["hasNextPage"]:
-                after = result["data"]["threatActorsIndividuals"]["pageInfo"]["endCursor"]
-                self.opencti.app_logger.info("Listing threatActorsIndividuals", {"after": after})
+                after = result["data"]["threatActorsIndividuals"]["pageInfo"][
+                    "endCursor"
+                ]
+                self.opencti.app_logger.info(
+                    "Listing threatActorsIndividuals", {"after": after}
+                )
                 result = self.opencti.query(
                     query,
                     {
@@ -229,7 +235,9 @@ class ThreatActorIndividual:
                         "orderMode": order_mode,
                     },
                 )
-                data = self.opencti.process_multiple(result["data"]["threatActorsIndividuals"])
+                data = self.opencti.process_multiple(
+                    result["data"]["threatActorsIndividuals"]
+                )
                 final_data = final_data + data
             return final_data
         else:
