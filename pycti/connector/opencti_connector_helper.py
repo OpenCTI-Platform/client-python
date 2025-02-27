@@ -361,11 +361,18 @@ class ListenQueue(threading.Thread):
             if work_id:
                 self.helper.api.work.to_processed(work_id, message)
 
+            self.helper.draft_id = ""
+            self.helper.api.set_draft_id("")
+            self.helper.api_impersonate.set_draft_id("")
+
         except Exception as e:  # pylint: disable=broad-except
             self.helper.metric.inc("error_count")
             self.helper.connector_logger.error(
                 "Error in message processing, reporting error to API"
             )
+            self.helper.draft_id = ""
+            self.helper.api.set_draft_id("")
+            self.helper.api_impersonate.set_draft_id("")
             if work_id:
                 try:
                     self.helper.api.work.to_processed(work_id, str(e), True)
