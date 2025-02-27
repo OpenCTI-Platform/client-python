@@ -2680,7 +2680,7 @@ class OpenCTIStix2:
             elif ERROR_TYPE_DRAFT_LOCK in error_msg:
                 bundles_technical_error_counter.add(1)
                 if work_id is not None:
-                    self.opencti.work.api.set_draft_id('')
+                    self.opencti.work.api.set_draft_id("")
                     self.opencti.work.report_expectation(
                         work_id,
                         {
