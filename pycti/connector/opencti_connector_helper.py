@@ -230,6 +230,7 @@ class ListenQueue(threading.Thread):
         connector_config: Dict,
         applicant_id,
         listen_protocol,
+        listen_protocol_api_ssl,
         listen_protocol_api_path,
         listen_protocol_api_port,
         callback,
@@ -244,6 +245,7 @@ class ListenQueue(threading.Thread):
         self.config = config
         self.opencti_token = opencti_token
         self.listen_protocol = listen_protocol
+        self.listen_protocol_api_ssl = listen_protocol_api_ssl
         self.listen_protocol_api_path = listen_protocol_api_path
         self.listen_protocol_api_port = listen_protocol_api_port
         self.connector_applicant_id = applicant_id
@@ -501,15 +503,22 @@ class ListenQueue(threading.Thread):
                     # Wait some time and then retry ListenQueue again.
                     time.sleep(10)
         elif self.listen_protocol == "API":
+            self.helper.connector_logger.info("Starting Listen HTTP thread")
             app.add_api_route(
                 self.listen_protocol_api_path, self._process_callback, methods=["POST"]
             )
-            ssl_ctx = create_callback_ssl_context(self.config)
             config = uvicorn.Config(
-                app, host="0.0.0.0", port=self.listen_protocol_api_port, reload=False
+                app,
+                host="0.0.0.0",
+                port=self.listen_protocol_api_port,
+                reload=False,
+                log_config=None,
+                log_level=None,
             )
             config.load()  # Manually calling the .load() to trigger needed actions outside HTTPS
-            config.ssl = ssl_ctx
+            if self.listen_protocol_api_ssl:
+                ssl_ctx = create_callback_ssl_context(self.config)
+                config.ssl = ssl_ctx
             server = uvicorn.Server(config)
             server.run()
 
@@ -1578,6 +1587,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             self.connector_config,
             self.applicant_id,
             self.listen_protocol,
+            self.listen_protocol_api_ssl,
             self.listen_protocol_api_path,
             self.listen_protocol_api_port,
             message_callback,
