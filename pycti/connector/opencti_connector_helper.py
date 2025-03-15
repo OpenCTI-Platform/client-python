@@ -20,6 +20,7 @@ from typing import Callable, Dict, List, Optional, Union
 import pika
 import uvicorn
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from filigran_sseclient import SSEClient
 from pika.exceptions import NackError, UnroutableError
 from pydantic import TypeAdapter
@@ -45,7 +46,7 @@ def start_loop(loop):
 
 
 def get_config_variable(
-    env_var: Union[str, List[str]],
+    env_var: str,
     yaml_path: List,
     config: Dict = {},
     isNumber: Optional[bool] = False,
@@ -61,17 +62,8 @@ def get_config_variable(
     :param default: default value
     """
 
-    # Get env var
-    env_result = None
-    env_vars = env_var if type(env_var) is list else [env_var]
-    for var in env_vars:
-        if os.getenv(var) is not None:
-            env_result = os.getenv(var)
-            break
-
-    # If env not found check in config file
-    if env_result is not None:
-        result = env_result
+    if os.getenv(env_var) is not None:
+        result = os.getenv(env_var)
     elif yaml_path is not None:
         if yaml_path[0] in config and yaml_path[1] in config[yaml_path[0]]:
             result = config[yaml_path[0]][yaml_path[1]]
@@ -427,26 +419,37 @@ class ListenQueue(threading.Thread):
                         "Failing reporting the processing"
                     )
 
-    async def _process_callback(self, request: Request):
+    async def _http_process_callback(self, request: Request):
         # 01. Check the authentication
-        try:
-            authorization: str = request.headers.get("Authorization")
-            scheme, token = authorization.split()
-            if scheme.lower() != "bearer" or token != self.opencti_token:
-                return {"error": "Invalid credentials"}
-        except Exception:
-            return {"error": "Invalid credentials"}
+        authorization: str = request.headers.get("Authorization", "")
+        items = authorization.split() if isinstance(authorization, str) else []
+        if (
+            len(items) != 2
+            or items[0].lower() != "bearer"
+            or items[1] != self.opencti_token
+        ):
+            return JSONResponse(
+                status_code=401, content={"error": "Invalid credentials"}
+            )
         # 02. Parse the data and execute
         try:
             data = await request.json()  # Get the JSON payload
-        except Exception as e:
-            return {"error": "Invalid JSON payload", "details": str(e)}
+        except json.JSONDecodeError as e:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Invalid JSON payload", "details": str(e)},
+            )
         try:
             self._data_handler(data)
         except Exception as e:
-            return {"error": "Error processing message", "details": str(e)}
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Error processing message", "details": str(e)},
+            )
         # all good
-        return {"message": "Message successfully processed"}
+        return JSONResponse(
+            status_code=202, content={"message": "Message successfully processed"}
+        )
 
     def run(self) -> None:
         if self.listen_protocol == "AMQP":
@@ -505,7 +508,9 @@ class ListenQueue(threading.Thread):
         elif self.listen_protocol == "API":
             self.helper.connector_logger.info("Starting Listen HTTP thread")
             app.add_api_route(
-                self.listen_protocol_api_path, self._process_callback, methods=["POST"]
+                self.listen_protocol_api_path,
+                self._http_process_callback,
+                methods=["POST"],
             )
             config = uvicorn.Config(
                 app,
@@ -927,12 +932,6 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
                 else "http://127.0.0.1:7070"
             ),
         )
-        self.queue_protocol = get_config_variable(
-            ["QUEUE_PROTOCOL", "CONNECTOR_QUEUE_PROTOCOL"],
-            ["connector", "queue_protocol"],
-            config,
-            default="amqp",
-        )
         self.connect_type = get_config_variable(
             "CONNECTOR_TYPE", ["connector", "type"], config
         )
@@ -1112,6 +1111,25 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         self.applicant_id = connector_configuration["connector_user_id"]
         self.connector_state = connector_configuration["connector_state"]
         self.connector_config = connector_configuration["config"]
+
+        # Configure the push information protocol
+        self.queue_protocol = get_config_variable(
+            env_var="CONNECTOR_QUEUE_PROTOCOL",
+            yaml_path=["connector", "queue_protocol"],
+            config=config,
+        )
+        if not self.queue_protocol:  # for backwards compatibility
+            self.queue_protocol = get_config_variable(
+                env_var="QUEUE_PROTOCOL",
+                yaml_path=["connector", "queue_protocol"],
+                config=config,
+            )
+            if self.queue_protocol:
+                self.connector_logger.error(
+                    "QUEUE_PROTOCOL is deprecated, please use CONNECTOR_QUEUE_PROTOCOL instead."
+                )
+        if not self.queue_protocol:
+            self.queue_protocol = "amqp"
 
         # Overwrite connector config for RabbitMQ if given manually / in conf
         self.connector_config["connection"]["host"] = get_config_variable(
