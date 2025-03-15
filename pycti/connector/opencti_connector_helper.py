@@ -435,20 +435,26 @@ class ListenQueue(threading.Thread):
         try:
             data = await request.json()  # Get the JSON payload
         except json.JSONDecodeError as e:
+            self.helper.connector_logger.error(
+                "Invalid JSON payload", {"cause": str(e)}
+            )
             return JSONResponse(
                 status_code=400,
-                content={"error": "Invalid JSON payload", "details": str(e)},
+                content={"error": "Invalid JSON payload"},
             )
         try:
             self._data_handler(data)
         except Exception as e:
+            self.helper.connector_logger.error(
+                "Error processing message", {"cause": str(e)}
+            )
             return JSONResponse(
                 status_code=500,
-                content={"error": "Error processing message", "details": str(e)},
+                content={"error": "Error processing message"},
             )
         # all good
         return JSONResponse(
-            status_code=202, content={"message": "Message successfully processed"}
+            status_code=202, content={"message": "Message successfully received"}
         )
 
     def run(self) -> None:
