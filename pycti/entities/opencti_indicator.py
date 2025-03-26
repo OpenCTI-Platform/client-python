@@ -403,7 +403,9 @@ class Indicator:
                 )
             if "x_mitre_plateforms" not in stix_object:
                 stix_object["x_mitre_plateforms"] = (
-                    self.opencti.get_attribute_in_mitre_extension("platforms", stix_object)
+                    self.opencti.get_attribute_in_mitre_extension(
+                        "platforms", stix_object
+                    )
                 )
 
             return self.create(
