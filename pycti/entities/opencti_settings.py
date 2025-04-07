@@ -166,7 +166,6 @@ class Settings:
         self.editable_properties = (
             """
             id
-            entity_type
             platform_organization {
                 id
             }
