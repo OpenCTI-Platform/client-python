@@ -138,6 +138,7 @@ class Settings:
             }
         """
         self.messages_properties = """
+            entity_type
             platform_messages {
                 id, message, activated, dismissible, updated_at, color
                 recipients {
@@ -165,6 +166,7 @@ class Settings:
         self.editable_properties = (
             """
             id
+            entity_type
             platform_organization {
                 id
             }
