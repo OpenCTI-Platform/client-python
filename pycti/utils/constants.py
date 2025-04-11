@@ -12,7 +12,22 @@ from stix2.properties import (
 from stix2.utils import NOW
 
 
-class StixCyberObservableTypes(Enum):
+class CaseInsensitiveMixin:
+    """Mixin providing case-insensitive value checking for Enum classes."""
+    _lower_values_cache = None
+
+    @classmethod
+    def _get_lower_values(cls):
+        if cls._lower_values_cache is None:
+            cls._lower_values_cache = {v.lower() for v in cls._value2member_map_}
+        return cls._lower_values_cache
+
+    @classmethod
+    def has_value(cls, value):
+        return value.lower() in cls._get_lower_values()
+
+
+class StixCyberObservableTypes(CaseInsensitiveMixin, Enum):
     AUTONOMOUS_SYSTEM = "Autonomous-System"
     DIRECTORY = "Directory"
     DOMAIN_NAME = "Domain-Name"
@@ -47,48 +62,28 @@ class StixCyberObservableTypes(Enum):
     SIMPLE_OBSERVABLE = "Simple-Observable"
     PERSONA = "Persona"
 
-    @classmethod
-    def has_value(cls, value):
-        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
-        return value.lower() in lower_attr
 
-
-class IdentityTypes(Enum):
+class IdentityTypes(CaseInsensitiveMixin, Enum):
     SECTOR = "Sector"
     ORGANIZATION = "Organization"
     INDIVIDUAL = "Individual"
     SYSTEM = "System"
 
-    @classmethod
-    def has_value(cls, value):
-        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
-        return value.lower() in lower_attr
 
-
-class ThreatActorTypes(Enum):
+class ThreatActorTypes(CaseInsensitiveMixin, Enum):
     THREAT_ACTOR_GROUP = "Threat-Actor-Group"
     THREAT_ACTOR_INDIVIDUAL = "Threat-Actor-Individual"
 
-    @classmethod
-    def has_value(cls, value):
-        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
-        return value.lower() in lower_attr
 
-
-class LocationTypes(Enum):
+class LocationTypes(CaseInsensitiveMixin, Enum):
     REGION = "Region"
     COUNTRY = "Country"
     ADMINISTRATIVE_AREA = "Administrative-Area"
     CITY = "City"
     POSITION = "Position"
 
-    @classmethod
-    def has_value(cls, value):
-        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
-        return value.lower() in lower_attr
 
-
-class ContainerTypes(Enum):
+class ContainerTypes(CaseInsensitiveMixin, Enum):
     NOTE = "Note"
     OBSERVED_DATA = "Observed-Data"
     OPINION = "Opinion"
@@ -96,25 +91,15 @@ class ContainerTypes(Enum):
     GROUPING = "Grouping"
     CASE = "Case"
 
-    @classmethod
-    def has_value(cls, value):
-        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
-        return value.lower() in lower_attr
 
-
-class StixMetaTypes(Enum):
+class StixMetaTypes(CaseInsensitiveMixin, Enum):
     MARKING_DEFINITION = "Marking-Definition"
     LABEL = "Label"
     EXTERNAL_REFERENCE = "External-Reference"
     KILL_CHAIN_PHASE = "Kill-Chain-Phase"
 
-    @classmethod
-    def has_value(cls, value):
-        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
-        return value.lower() in lower_attr
 
-
-class MultipleRefRelationship(Enum):
+class MultipleRefRelationship(CaseInsensitiveMixin, Enum):
     OPERATING_SYSTEM = "operating-system"
     SAMPLE = "sample"
     CONTAINS = "contains"
@@ -131,11 +116,6 @@ class MultipleRefRelationship(Enum):
     SERVICE_DDL = "service-dll"
     INSTALLED_SOFTWARE = "installed-software"
     RELATION_ANALYSIS_SCO = "analysis-sco"
-
-    @classmethod
-    def has_value(cls, value):
-        lower_attr = list(map(lambda x: x.lower(), cls._value2member_map_))
-        return value.lower() in lower_attr
 
 
 # Custom objects
