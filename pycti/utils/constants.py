@@ -14,6 +14,7 @@ from stix2.utils import NOW
 
 class CaseInsensitiveMixin:
     """Mixin providing case-insensitive value checking for Enum classes."""
+
     _lower_values_cache = None
 
     @classmethod
