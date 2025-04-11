@@ -50,6 +50,10 @@ jobs:
       - run:
           name: install dependencies
           command: >
+            pip3 install --user -r ci-requirements.txt
+      - run:
+          name: install dependencies
+          command: >
             pip3 install --user -r requirements.txt -r test-requirements.txt
       - run:
           name: check version
