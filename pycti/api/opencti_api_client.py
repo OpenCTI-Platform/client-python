@@ -118,10 +118,14 @@ class OpenCTIApiClient:
         ```
     :param json_logging: format the logs as json if set to True
     :type json_logging: bool, optional
+    :param bundle_send_to_queue: if bundle will be sent to queue
+    :type bundle_send_to_queue: bool, optional
     :param cert: If String, file path to pem file. If Tuple, a ('path_to_cert.crt', 'path_to_key.key') pair representing the certificate and the key.
     :type cert: str, tuple, optional
-    :param auth: Add a AuthBase class with custom authentication for you OpenCTI infrastructure.
-    :type auth: requests.auth.AuthBase, optional
+    :param custom_headers: Add custom headers to use with the graphql queries
+    :type custom_headers: str, optional must in the format header01:value;header02:value
+    :param perform_health_check: if client init must check the api access
+    :type perform_health_check: bool, optional
     """
 
     def __init__(
