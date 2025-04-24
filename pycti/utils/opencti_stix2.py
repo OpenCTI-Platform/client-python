@@ -2418,11 +2418,8 @@ class OpenCTIStix2:
         field_patch_files = next(
             (op for op in field_patch if op["key"] == "x_opencti_files"), None
         )
-        item_id = self.opencti.get_attribute_in_extension(
-            "id", item
-        )
+        item_id = self.opencti.get_attribute_in_extension("id", item)
         worker_logger = self.opencti.logger_class("worker")
-        worker_logger.warning("id found: " + item_id)
         if item_id is None:
             item_id = item["id"]
         do_add_file = self.opencti.stix_domain_object.add_file
@@ -2452,9 +2449,7 @@ class OpenCTIStix2:
         field_patch_without_files = [
             op for op in field_patch if op["key"] != "x_opencti_files"
         ]
-        item_id = self.opencti.get_attribute_in_extension(
-            "id", item
-        )
+        item_id = self.opencti.get_attribute_in_extension("id", item)
         if item_id is None:
             item_id = item["id"]
         if len(field_patch_without_files) > 0:
@@ -2719,10 +2714,6 @@ class OpenCTIStix2:
             # Platform does not know what to do and raises an error:
             # That also works for missing reference with too much execution
             else:
-                worker_logger.error(
-                    "Message reprocess for bad gateway",
-                    {"count": processing_count},
-                )
                 bundles_technical_error_counter.add(1)
                 if work_id is not None:
                     item_str = json.dumps(item)
