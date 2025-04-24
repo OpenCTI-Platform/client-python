@@ -2419,7 +2419,6 @@ class OpenCTIStix2:
             (op for op in field_patch if op["key"] == "x_opencti_files"), None
         )
         item_id = self.opencti.get_attribute_in_extension("id", item)
-        worker_logger = self.opencti.logger_class("worker")
         if item_id is None:
             item_id = item["id"]
         do_add_file = self.opencti.stix_domain_object.add_file
