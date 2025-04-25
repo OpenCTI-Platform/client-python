@@ -2500,6 +2500,9 @@ class OpenCTIStix2:
         if processing_count > MAX_PROCESSING_COUNT:
             if work_id is not None:
                 item_str = json.dumps(item)
+                # report expectation without impersonated user
+                current_applicant_id = self.opencti.get_request_headers()["opencti-applicant-id"]
+                self.opencti.set_applicant_id_header('')
                 self.opencti.work.report_expectation(
                     work_id,
                     {
@@ -2509,6 +2512,7 @@ class OpenCTIStix2:
                         ),
                     },
                 )
+                self.opencti.set_applicant_id_header(current_applicant_id)
                 return False
         try:
             self.opencti.set_retry_number(processing_count)
@@ -2645,7 +2649,11 @@ class OpenCTIStix2:
                             ):
                                 self.import_object(item, update, types)
             if work_id is not None:
+                # report expectation without impersonated user
+                current_applicant_id = self.opencti.get_request_headers()["opencti-applicant-id"]
+                self.opencti.set_applicant_id_header('')
                 self.opencti.work.report_expectation(work_id, None)
+                self.opencti.set_applicant_id_header(current_applicant_id)
             bundles_success_counter.add(1)
             return True
         except (RequestException, Timeout):
@@ -2702,6 +2710,9 @@ class OpenCTIStix2:
                 bundles_technical_error_counter.add(1)
                 if work_id is not None:
                     self.opencti.work.api.set_draft_id("")
+                    # report expectation without impersonated user
+                    current_applicant_id = self.opencti.get_request_headers()["opencti-applicant-id"]
+                    self.opencti.set_applicant_id_header('')
                     self.opencti.work.report_expectation(
                         work_id,
                         {
@@ -2709,6 +2720,7 @@ class OpenCTIStix2:
                             "source": "Draft in read only",
                         },
                     )
+                    self.opencti.set_applicant_id_header(current_applicant_id)
                 return False
             # Platform does not know what to do and raises an error:
             # That also works for missing reference with too much execution
@@ -2716,6 +2728,9 @@ class OpenCTIStix2:
                 bundles_technical_error_counter.add(1)
                 if work_id is not None:
                     item_str = json.dumps(item)
+                    # report expectation without impersonated user
+                    current_applicant_id = self.opencti.get_request_headers()["opencti-applicant-id"]
+                    self.opencti.set_applicant_id_header('')
                     self.opencti.work.report_expectation(
                         work_id,
                         {
@@ -2727,6 +2742,7 @@ class OpenCTIStix2:
                             ),
                         },
                     )
+                    self.opencti.set_applicant_id_header(current_applicant_id)
                 return False
 
     def import_bundle(
