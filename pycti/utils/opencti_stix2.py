@@ -2475,6 +2475,7 @@ class OpenCTIStix2:
         self.apply_patch_files(item)
 
     def apply_opencti_operation(self, item, operation):
+        self.opencti.app_logger.info("-- apply_opencti_opeartion --")
         if operation == "delete":
             delete_id = item["id"]
             self.opencti.stix.delete(id=delete_id)
@@ -2485,6 +2486,7 @@ class OpenCTIStix2:
         elif operation == "patch":
             self.apply_patch(item=item)
         elif operation == "add_pir_dependency":
+            self.opencti.app_logger.info("add_pir_dependency operation !!")
             id = item["id"]
             input = item["input"]
             self.opencti.pir.add_pir_dependency(id=id, input=input)
@@ -2504,6 +2506,7 @@ class OpenCTIStix2:
         work_id: str = None,
     ):
         worker_logger = self.opencti.logger_class("worker")
+        self.opencti.app_logger.info("------import item----------")
         # Ultimate protection to avoid infinite retry
         if processing_count > MAX_PROCESSING_COUNT:
             if work_id is not None:
@@ -2744,6 +2747,7 @@ class OpenCTIStix2:
         types: List = None,
         work_id: str = None,
     ) -> List:
+        self.opencti.app_logger.info("---import bundle------")
         # Check if the bundle is correctly formatted
         if "type" not in stix_bundle or stix_bundle["type"] != "bundle":
             raise ValueError("JSON data type is not a STIX2 bundle")
@@ -2759,10 +2763,13 @@ class OpenCTIStix2:
         _, bundles = stix2_splitter.split_bundle_with_expectations(
             stix_bundle, False, event_version
         )
-        # Import every element in a specific order
+        self.opencti.app_logger.info("---import bundle after splitter------", { "bundles": json.dumps(bundles) })
+    # Import every element in a specific order
         imported_elements = []
         for bundle in bundles:
+            self.opencti.app_logger.info("---bundle------")
             for item in bundle["objects"]:
+                self.opencti.app_logger.info("---item------", { "item": item["id"] })
                 self.import_item(item, update, types, 0, work_id)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
 
