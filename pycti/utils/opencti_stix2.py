@@ -2484,6 +2484,14 @@ class OpenCTIStix2:
             self.opencti.stix.merge(id=target_id, object_ids=source_ids)
         elif operation == "patch":
             self.apply_patch(item=item)
+        elif operation == "add_pir_dependency":
+            id = item["id"]
+            input = item["input"]
+            self.opencti.pir.add_pir_dependency(id=id, input=input)
+        elif operation == "delete_pir_dependency":
+            id = item["id"]
+            input = item["input"]
+            self.opencti.pir.delete_pir_dependency(id=id, input=input)
         else:
             raise ValueError("Not supported opencti_operation")
 
