@@ -2759,7 +2759,7 @@ class OpenCTIStix2:
         _, bundles = stix2_splitter.split_bundle_with_expectations(
             stix_bundle, False, event_version
         )
-    # Import every element in a specific order
+        # Import every element in a specific order
         imported_elements = []
         for bundle in bundles:
             for item in bundle["objects"]:
