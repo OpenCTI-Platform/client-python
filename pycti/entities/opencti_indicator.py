@@ -314,7 +314,7 @@ class Indicator:
         if id is not None and input is not None:
             self.opencti.app_logger.info("Updating Indicator", {"id": id})
             query = """
-                        mutation IndicatorFieldPatch($id: ID!, $input: [EditInput]!) {
+                        mutation IndicatorFieldPatch($id: ID!, $input: [EditInput!]!) {
                             indicatorFieldPatch(id: $id, input: $input) {
                                 id
                                 standard_id
