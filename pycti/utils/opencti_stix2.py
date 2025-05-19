@@ -2554,11 +2554,11 @@ class OpenCTIStix2:
     def apply_opencti_operation(self, item, operation):
         if operation == "delete" or operation == "delete_force":
             self.element_operation_delete(item=item, operation=operation)
-        elif item["opencti_operation"] == "revert_draft":
+        elif operation == "revert_draft":
             self.opencti.stix_core_object.remove_from_draft(id=item["id"])
-        elif item["opencti_operation"] == "restore":
+        elif operation == "restore":
             self.opencti.trash.restore(item["id"])
-        elif item["opencti_operation"] == "merge":
+        elif operation == "merge":
             target_id = self.opencti.get_attribute_in_extension("merge_target_id", item)
             if target_id is None:
                 target_id = item["merge_target_id"]
@@ -2592,7 +2592,7 @@ class OpenCTIStix2:
             self.opencti.stix_core_object.clear_access_restriction(
                 element_id=item["id"]
             )
-        elif item["opencti_operation"] == "enrichment":
+        elif operation == "enrichment":
             connector_ids = self.opencti.get_attribute_in_extension(
                 "connector_ids", item
             )
