@@ -301,13 +301,13 @@ class Indicator:
                 "name or pattern or pattern_type or x_opencti_main_observable_type"
             )
 
-
     """
         Update an Indicator object field
 
         :param id: the Indicator id
         :param input: the input of the field
     """
+
     def update_field(self, **kwargs):
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
