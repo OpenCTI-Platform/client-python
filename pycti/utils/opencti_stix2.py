@@ -2485,6 +2485,10 @@ class OpenCTIStix2:
                 self.opencti.external_reference.update_field(
                     id=item_id, input=field_patch_without_files
                 )
+            elif item["type"] == "indicator":
+                self.opencti.indicator.update_field(
+                    id=item_id, input=field_patch_without_files
+                )
             else:
                 self.opencti.stix_domain_object.update_field(
                     id=item_id, input=field_patch_without_files
