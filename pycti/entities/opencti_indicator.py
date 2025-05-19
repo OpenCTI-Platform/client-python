@@ -316,10 +316,9 @@ class Indicator:
             query = """
                         mutation IndicatorFieldPatch($id: ID!, $input: [EditInput]!) {
                             indicatorFieldPatch(id: $id, input: $input) {
-                                    id
-                                    standard_id
-                                    entity_type
-                                }
+                                id
+                                standard_id
+                                entity_type
                             }
                         }
                     """
