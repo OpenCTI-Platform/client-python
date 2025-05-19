@@ -2492,17 +2492,13 @@ class OpenCTIStix2:
         self.apply_patch_files(item)
 
     def rule_apply(self, item):
-        rule_id = self.opencti.get_attribute_in_extension(
-            "opencti_rule", item
-        )
+        rule_id = self.opencti.get_attribute_in_extension("opencti_rule", item)
         if rule_id is None:
             rule_id = item["opencti_rule"]
         self.opencti.stix_core_object.rule_apply(element_id=item["id"], rule_id=rule_id)
 
     def rule_clear(self, item):
-        rule_id = self.opencti.get_attribute_in_extension(
-            "opencti_rule", item
-        )
+        rule_id = self.opencti.get_attribute_in_extension("opencti_rule", item)
         if rule_id is None:
             rule_id = item["opencti_rule"]
         self.opencti.stix_core_object.rule_clear(element_id=item["id"], rule_id=rule_id)
@@ -2563,9 +2559,7 @@ class OpenCTIStix2:
         elif item["opencti_operation"] == "restore":
             self.opencti.trash.restore(item["id"])
         elif item["opencti_operation"] == "merge":
-            target_id = self.opencti.get_attribute_in_extension(
-                "merge_target_id", item
-            )
+            target_id = self.opencti.get_attribute_in_extension("merge_target_id", item)
             if target_id is None:
                 target_id = item["merge_target_id"]
             source_ids = self.opencti.get_attribute_in_extension(
