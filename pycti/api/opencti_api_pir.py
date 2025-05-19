@@ -24,7 +24,7 @@ class OpenCTIApiPir:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         query = """
-            mutation PirDeleteDependency($id: ID!, $input: PirDeleteDependencyInput!) {
+            mutation PirDeleteDependency($id: ID!, $input: PIRDependencyDeleteInput!) {
                 pirDeleteDependency(id: $id, input: $input)
             }
            """
