@@ -2492,26 +2492,50 @@ class OpenCTIStix2:
         self.apply_patch_files(item)
 
     def rule_apply(self, item):
-        rule_id = item["opencti_rule"]
+        rule_id = self.opencti.get_attribute_in_extension(
+            "opencti_rule", item
+        )
+        if rule_id is None:
+            rule_id = item["opencti_rule"]
         self.opencti.stix_core_object.rule_apply(element_id=item["id"], rule_id=rule_id)
 
     def rule_clear(self, item):
-        rule_id = item["opencti_rule"]
+        rule_id = self.opencti.get_attribute_in_extension(
+            "opencti_rule", item
+        )
+        if rule_id is None:
+            rule_id = item["opencti_rule"]
         self.opencti.stix_core_object.rule_clear(element_id=item["id"], rule_id=rule_id)
 
     def rules_rescan(self, item):
         self.opencti.stix_core_object.rules_rescan(element_id=item["id"])
 
     def organization_share(self, item):
-        organization_ids = item["sharing_organization_ids"]
-        sharing_direct_container = item["sharing_direct_container"]
+        organization_ids = self.opencti.get_attribute_in_extension(
+            "sharing_organization_ids", item
+        )
+        if organization_ids is None:
+            organization_ids = item["sharing_organization_ids"]
+        sharing_direct_container = self.opencti.get_attribute_in_extension(
+            "sharing_direct_container", item
+        )
+        if sharing_direct_container is None:
+            sharing_direct_container = item["sharing_direct_container"]
         self.opencti.stix_core_object.organization_share(
             item["id"], organization_ids, sharing_direct_container
         )
 
     def organization_unshare(self, item):
-        organization_ids = item["sharing_organization_ids"]
-        sharing_direct_container = item["sharing_direct_container"]
+        organization_ids = self.opencti.get_attribute_in_extension(
+            "sharing_organization_ids", item
+        )
+        if organization_ids is None:
+            organization_ids = item["sharing_organization_ids"]
+        sharing_direct_container = self.opencti.get_attribute_in_extension(
+            "sharing_direct_container", item
+        )
+        if sharing_direct_container is None:
+            sharing_direct_container = item["sharing_direct_container"]
         self.opencti.stix_core_object.organization_unshare(
             item["id"], organization_ids, sharing_direct_container
         )
@@ -2539,8 +2563,16 @@ class OpenCTIStix2:
         elif item["opencti_operation"] == "restore":
             self.opencti.trash.restore(item["id"])
         elif item["opencti_operation"] == "merge":
-            target_id = item["merge_target_id"]
-            source_ids = item["merge_source_ids"]
+            target_id = self.opencti.get_attribute_in_extension(
+                "merge_target_id", item
+            )
+            if target_id is None:
+                target_id = item["merge_target_id"]
+            source_ids = self.opencti.get_attribute_in_extension(
+                "merge_source_ids", item
+            )
+            if source_ids is None:
+                source_ids = item["merge_source_ids"]
             self.opencti.stix.merge(id=target_id, object_ids=source_ids)
         elif operation == "patch":
             self.apply_patch(item=item)
@@ -2567,7 +2599,11 @@ class OpenCTIStix2:
                 element_id=item["id"]
             )
         elif item["opencti_operation"] == "enrichment":
-            connector_ids = item["connector_ids"]
+            connector_ids = self.opencti.get_attribute_in_extension(
+                "connector_ids", item
+            )
+            if connector_ids is None:
+                connector_ids = item["connector_ids"]
             self.opencti.stix_core_object.ask_enrichments(
                 element_id=item["id"], connector_ids=connector_ids
             )
