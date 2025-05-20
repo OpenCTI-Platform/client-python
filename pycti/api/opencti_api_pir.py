@@ -8,7 +8,7 @@ class OpenCTIApiPir:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         query = """
-            mutation PirAddDependency($id: ID!, $input: PIRDependencyAddInput!) {
+            mutation PirAddDependency($id: ID!, $input: PirDependencyAddInput!) {
                 pirAddDependency(id: $id, input: $input)
             }
            """
@@ -24,7 +24,7 @@ class OpenCTIApiPir:
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         query = """
-            mutation PirDeleteDependency($id: ID!, $input: PIRDependencyDeleteInput!) {
+            mutation PirDeleteDependency($id: ID!, $input: PirDependencyDeleteInput!) {
                 pirDeleteDependency(id: $id, input: $input)
             }
            """
