@@ -2500,7 +2500,6 @@ class OpenCTIStix2:
         if processing_count > MAX_PROCESSING_COUNT:
             if work_id is not None:
                 item_str = json.dumps(item)
-                # report expectation without impersonated user
                 self.opencti.work.report_expectation(
                     work_id,
                     {
@@ -2646,7 +2645,6 @@ class OpenCTIStix2:
                             ):
                                 self.import_object(item, update, types)
             if work_id is not None:
-                # report expectation without impersonated user
                 self.opencti.work.report_expectation(work_id, None)
             bundles_success_counter.add(1)
             return True
@@ -2704,7 +2702,6 @@ class OpenCTIStix2:
                 bundles_technical_error_counter.add(1)
                 if work_id is not None:
                     self.opencti.work.api.set_draft_id("")
-                    # report expectation without impersonated user
                     self.opencti.work.report_expectation(
                         work_id,
                         {
@@ -2719,7 +2716,6 @@ class OpenCTIStix2:
                 bundles_technical_error_counter.add(1)
                 if work_id is not None:
                     item_str = json.dumps(item)
-                    # report expectation without impersonated user
                     self.opencti.work.report_expectation(
                         work_id,
                         {
