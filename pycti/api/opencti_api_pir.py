@@ -4,12 +4,12 @@ class OpenCTIApiPir:
     def __init__(self, api):
         self.api = api
 
-    def add_pir_dependency(self, **kwargs):
+    def pir_flag_element(self, **kwargs):
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         query = """
-            mutation PirAddDependency($id: ID!, $input: PirDependencyAddInput!) {
-                pirAddDependency(id: $id, input: $input)
+            mutation PirFlagElement($id: ID!, $input: PirFlagElementInput!) {
+                pirFlagElement(id: $id, input: $input)
             }
            """
         self.api.query(
@@ -20,12 +20,12 @@ class OpenCTIApiPir:
             },
         )
 
-    def delete_pir_dependency(self, **kwargs):
+    def pir_unflag_element(self, **kwargs):
         id = kwargs.get("id", None)
         input = kwargs.get("input", None)
         query = """
-            mutation PirDeleteDependency($id: ID!, $input: PirDependencyDeleteInput!) {
-                pirDeleteDependency(id: $id, input: $input)
+            mutation PirUnflagElement($id: ID!, $input: PirUnflagElementInput!) {
+                pirUnflagElement(id: $id, input: $input)
             }
            """
         self.api.query(
