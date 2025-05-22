@@ -669,6 +669,11 @@ class Identity:
                     if "x_opencti_organization_type" in stix_object
                     else None
                 ),
+                security_platform_type=(
+                    stix_object["security_platform_type"]
+                    if "security_platform_type" in stix_object
+                    else None
+                ),
                 x_opencti_reliability=(
                     stix_object["x_opencti_reliability"]
                     if "x_opencti_reliability" in stix_object
