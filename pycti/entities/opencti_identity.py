@@ -476,7 +476,7 @@ class Identity:
                 input_variables["x_opencti_reliability"] = x_opencti_reliability
                 input_variables["x_opencti_score"] = x_opencti_score
                 result_data_field = "organizationAdd"
-            elif type == IdentityTypes.SECURITY.value:
+            elif type == IdentityTypes.SECURITYPLATFORM.value:
                 query = """
                     mutation SecurityPlatformAdd($input: SecurityPlatformAddInput!) {
                         securityPlatformAdd(input: $input) {
