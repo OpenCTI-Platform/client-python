@@ -487,9 +487,7 @@ class Identity:
                         }
                     }
                 """
-                input_variables["security_platform_type"] = (
-                    security_platform_type
-                )
+                input_variables["security_platform_type"] = security_platform_type
                 result_data_field = "securityPlatformAdd"
             elif type == IdentityTypes.INDIVIDUAL.value:
                 query = """
@@ -570,6 +568,8 @@ class Identity:
                     type = "Sector"
                 elif stix_object["identity_class"] == "system":
                     type = "System"
+                elif stix_object["identity_class"] == "securityplatform":
+                    type = "SecurityPlatform"
 
             # Search in extensions
             if "x_opencti_aliases" not in stix_object:
