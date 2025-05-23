@@ -299,7 +299,7 @@ class OpenCTIApiClient:
 
         query_headers = self.request_headers
         if disable_impersonate and "opencti-applicant-id" in query_headers:
-            del query_headers["opencti"]
+            del query_headers["opencti-applicant-id"]
         # If yes, transform variable (file to null) and create multipart query
         if len(files_vars) > 0:
             multipart_data = {
