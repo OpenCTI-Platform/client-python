@@ -488,6 +488,11 @@ class Identity:
                     }
                 """
                 input_variables["security_platform_type"] = security_platform_type
+                # no need for these attributes for security platform
+                del input_variables["contact_information"]
+                del input_variables["lang"]
+                del input_variables["roles"]
+                del input_variables["x_opencti_aliases"]
                 result_data_field = "securityPlatformAdd"
             elif type == IdentityTypes.INDIVIDUAL.value:
                 query = """
