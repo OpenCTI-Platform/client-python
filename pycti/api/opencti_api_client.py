@@ -297,7 +297,7 @@ class OpenCTIApiClient:
             else:
                 query_var[key] = val
 
-        query_headers = self.request_headers
+        query_headers = self.request_headers.copy()
         if disable_impersonate and "opencti-applicant-id" in query_headers:
             del query_headers["opencti-applicant-id"]
         # If yes, transform variable (file to null) and create multipart query
