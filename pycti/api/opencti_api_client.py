@@ -10,8 +10,8 @@ import requests
 
 from pycti import __version__
 from pycti.api.opencti_api_connector import OpenCTIApiConnector
-from pycti.api.opencti_api_pir import OpenCTIApiPir
 from pycti.api.opencti_api_draft import OpenCTIApiDraft
+from pycti.api.opencti_api_pir import OpenCTIApiPir
 from pycti.api.opencti_api_playbook import OpenCTIApiPlaybook
 from pycti.api.opencti_api_public_dashboard import OpenCTIApiPublicDashboard
 from pycti.api.opencti_api_trash import OpenCTIApiTrash
