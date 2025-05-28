@@ -18,16 +18,17 @@ class OpenCTIApiTrash:
         )
 
     def delete(self, **kwargs):
-        """Delete a role given its ID
+        """Delete a trash item given its ID
 
-        :param id: ID for the role on the platform.
+        :param id: ID for the delete operation on the platform.
         :type id: str
         """
         id = kwargs.get("id", None)
         if id is None:
-            self.api.admin_logger.error("[opencti_role] Missing parameter: id")
+            self.api.admin_logger.error(
+                "[opencti_trash] Cant confirm delete, missing parameter: id"
+            )
             return None
-
         query = """
             mutation DeleteOperationConfirm($id: ID!) {
                 deleteOperationConfirm(id: $id) {

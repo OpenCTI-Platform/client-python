@@ -334,7 +334,7 @@ class Indicator:
             )
         else:
             self.opencti.app_logger.error(
-                "[opencti_stix_domain_object] Missing parameters: id and input"
+                "[opencti_stix_domain_object] Cant update indicator field, missing parameters: id and input"
             )
             return None
 

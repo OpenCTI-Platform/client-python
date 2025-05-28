@@ -133,6 +133,11 @@ class OpenCTIApiWork:
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
+        if id is None:
+            self.opencti.admin_logger.error(
+                "[opencti_work] Cant delete work, missing parameter: id"
+            )
+            return None
         query = """
         mutation ConnectorWorksMutation($workId: ID!) {
             workEdit(id: $workId) {

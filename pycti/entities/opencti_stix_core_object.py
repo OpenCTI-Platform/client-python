@@ -1702,7 +1702,9 @@ class StixCoreObject:
             """
             self.opencti.query(query, {"elementId": element_id, "ruleId": rule_id})
         else:
-            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant apply rule, missing parameters: id"
+            )
             return None
 
     """
@@ -1727,7 +1729,9 @@ class StixCoreObject:
             """
             self.opencti.query(query, {"elementId": element_id, "ruleId": rule_id})
         else:
-            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant clear rule, missing parameters: id"
+            )
             return None
 
     """
@@ -1750,7 +1754,9 @@ class StixCoreObject:
             """
             self.opencti.query(query, {"elementId": element_id})
         else:
-            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant rescan rule, missing parameters: id"
+            )
             return None
 
     """
@@ -1779,7 +1785,9 @@ class StixCoreObject:
                 },
             )
         else:
-            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant clear access restriction, missing parameters: id"
+            )
             return None
 
     """
@@ -1937,5 +1945,7 @@ class StixCoreObject:
             """
             self.opencti.query(query, {"id": id})
         else:
-            self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant remove from draft, missing parameters: id"
+            )
             return None
