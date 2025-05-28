@@ -2543,7 +2543,7 @@ class OpenCTIStix2:
     def element_operation_delete(self, item, operation):
         # If data is stix, just use the generic stix function for deletion
         if item["type"] in STIX_OBJECTS:
-            force_delete = operation == "delete-force"
+            force_delete = operation == "delete_force"
             self.opencti.stix.delete(id=item["id"], force_delete=force_delete)
         else:
             # Element is not knowledge we need to use the right api

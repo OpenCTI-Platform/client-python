@@ -323,7 +323,9 @@ class Group:
         """
         id = kwargs.get("id", None)
         if id is None:
-            self.opencti.admin_logger.error("[opencti_user] Missing parameter: id")
+            self.opencti.admin_logger.error(
+                "[opencti_group] Cant delete group, missing parameter: id"
+            )
             return None
         self.opencti.admin_logger.info("Deleting group", {"id": id})
         query = """
