@@ -31,7 +31,7 @@ class OpenCTIApiTrash:
             return None
         query = """
             mutation DeleteOperationConfirm($id: ID!) {
-                deleteOperationConfirm(id: $id) {
+                deleteOperationConfirm(id: $id)
             }
         """
         self.api.query(
