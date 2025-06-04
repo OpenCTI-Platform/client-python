@@ -2562,7 +2562,7 @@ class OpenCTIStix2:
                 stix_helper.delete(id=item["id"])
             else:
                 raise ValueError(
-                    "Delete operation or no stix helper", {"type": item["type"]}
+                    "Delete operation or not found stix helper", {"type": item["type"]}
                 )
 
     def apply_opencti_operation(self, item, operation):
