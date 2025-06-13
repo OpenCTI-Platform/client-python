@@ -1248,8 +1248,7 @@ class StixCoreRelationship:
                 "[opencti_stix_core_relationship] Missing parameters: stixObject"
             )
 
-
-"""
+    """
         Share element to multiple organizations
 
         :param entity_id: the stix_core_relationship id
@@ -1257,78 +1256,77 @@ class StixCoreRelationship:
         :return void
     """
 
-
-def organization_share(self, entity_id, organization_ids, sharing_direct_container):
-    query = """
-            mutation StixCoreRelationshipEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
-                stixCoreRelationshipEdit(id: $id) {
-                    restrictionOrganizationAdd(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
-                      id
+    def organization_share(self, entity_id, organization_ids, sharing_direct_container):
+        query = """
+                mutation StixCoreRelationshipEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
+                    stixCoreRelationshipEdit(id: $id) {
+                        restrictionOrganizationAdd(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
+                          id
+                        }
                     }
                 }
-            }
-        """
-    self.opencti.query(
-        query,
-        {
-            "id": entity_id,
-            "organizationId": organization_ids,
-            "directContainerSharing": sharing_direct_container,
-        },
-    )
+            """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
+            },
+        )
 
+    """
+        Unshare element from multiple organizations
+    
+        :param entity_id: the stix_core_relationship id
+        :param organization_id:s the organization to share with
+        :return void
+    """
 
-"""
-    Unshare element from multiple organizations
-
-    :param entity_id: the stix_core_relationship id
-    :param organization_id:s the organization to share with
-    :return void
-"""
-
-
-def organization_unshare(self, entity_id, organization_ids, sharing_direct_container):
-    query = """
-            mutation StixCoreRelationshipEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
-                stixCoreRelationshipEdit(id: $id) {
-                    restrictionOrganizationDelete(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
-                      id
+    def organization_unshare(
+        self, entity_id, organization_ids, sharing_direct_container
+    ):
+        query = """
+                mutation StixCoreRelationshipEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
+                    stixCoreRelationshipEdit(id: $id) {
+                        restrictionOrganizationDelete(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
+                          id
+                        }
                     }
                 }
-            }
-        """
-    self.opencti.query(
-        query,
-        {
-            "id": entity_id,
-            "organizationId": organization_ids,
-            "directContainerSharing": sharing_direct_container,
-        },
-    )
+            """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
+            },
+        )
 
-
-"""
+    """
         Remove a stix_core_relationship object from draft (revert)
 
         :param id: the stix_core_relationship id
         :return void
     """
 
-
-def remove_from_draft(self, **kwargs):
-    id = kwargs.get("id", None)
-    if id is not None:
-        self.opencti.app_logger.info("Draft remove stix_core_relationship", {"id": id})
-        query = """
-                mutation StixCoreRelationshipEditDraftRemove($id: ID!) {
-                    stixCoreRelationshipEdit(id: $id) {
-                        removeFromDraft
+    def remove_from_draft(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.app_logger.info(
+                "Draft remove stix_core_relationship", {"id": id}
+            )
+            query = """
+                    mutation StixCoreRelationshipEditDraftRemove($id: ID!) {
+                        stixCoreRelationshipEdit(id: $id) {
+                            removeFromDraft
+                        }
                     }
-                }
-            """
-        self.opencti.query(query, {"id": id})
-    else:
-        self.opencti.app_logger.error(
-            "[stix_core_relationship] Cant remove from draft, missing parameters: id"
-        )
-        return None
+                """
+            self.opencti.query(query, {"id": id})
+        else:
+            self.opencti.app_logger.error(
+                "[stix_core_relationship] Cant remove from draft, missing parameters: id"
+            )
+            return None
