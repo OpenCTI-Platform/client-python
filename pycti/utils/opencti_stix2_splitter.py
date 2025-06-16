@@ -35,6 +35,7 @@ class OpenCTIStix2Splitter:
         self.cache_index = {}
         self.cache_refs = {}
         self.elements = []
+        self.nb_incompatible_items = 0
 
     def get_internal_ids_in_extension(self, item):
         ids = []
@@ -189,6 +190,8 @@ class OpenCTIStix2Splitter:
                 is_compatible = is_id_supported(item_id)
             if is_compatible:
                 self.elements.append(item)
+            else:
+                self.nb_incompatible_items = self.nb_incompatible_items + 1
             self.cache_index[item_id] = item
             for internal_id in self.get_internal_ids_in_extension(item):
                 self.cache_index[internal_id] = item
@@ -201,7 +204,7 @@ class OpenCTIStix2Splitter:
         use_json=True,
         event_version=None,
         cleanup_inconsistent_bundle=False,
-    ) -> Tuple[int, list]:
+    ) -> Tuple[int, int, list]:
         """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
             try:
@@ -251,11 +254,11 @@ class OpenCTIStix2Splitter:
                 )
             )
 
-        return number_expectations, bundles
+        return number_expectations, self.nb_incompatible_items, bundles
 
     @deprecated("Use split_bundle_with_expectations instead")
     def split_bundle(self, bundle, use_json=True, event_version=None) -> list:
-        expectations, bundles = self.split_bundle_with_expectations(
+        _, _, bundles = self.split_bundle_with_expectations(
             bundle, use_json, event_version
         )
         return bundles

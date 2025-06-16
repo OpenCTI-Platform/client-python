@@ -1921,6 +1921,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         (
             expectations_number,
             bundles,
+            _
         ) = stix2_splitter.split_bundle_with_expectations(
             bundle=bundle,
             use_json=True,
