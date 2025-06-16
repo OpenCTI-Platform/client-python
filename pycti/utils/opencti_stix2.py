@@ -2748,8 +2748,10 @@ class OpenCTIStix2:
         )
 
         stix2_splitter = OpenCTIStix2Splitter()
-        _, nb_incompatible_elements, bundles = stix2_splitter.split_bundle_with_expectations(
-            stix_bundle, False, event_version
+        _, nb_incompatible_elements, bundles = (
+            stix2_splitter.split_bundle_with_expectations(
+                stix_bundle, False, event_version
+            )
         )
 
         # Report every element ignored during bundle splitting
