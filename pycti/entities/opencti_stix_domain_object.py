@@ -1015,7 +1015,7 @@ class StixDomainObject:
             ... on Vulnerability {
                 name
                 description
-                                x_opencti_aliases
+                x_opencti_aliases
                 x_opencti_cvss_vector
                 x_opencti_cvss_base_score
                 x_opencti_cvss_base_severity
