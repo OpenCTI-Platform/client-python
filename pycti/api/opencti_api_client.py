@@ -18,6 +18,7 @@ from pycti.api.opencti_api_public_dashboard import OpenCTIApiPublicDashboard
 from pycti.api.opencti_api_trash import OpenCTIApiTrash
 from pycti.api.opencti_api_work import OpenCTIApiWork
 from pycti.api.opencti_api_workspace import OpenCTIApiWorkspace
+from pycti.api.opencti_api_internal_file import OpenCTIApiInternalFile
 from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_campaign import Campaign
 from pycti.entities.opencti_capability import Capability
@@ -182,6 +183,7 @@ class OpenCTIApiClient:
         self.connector = OpenCTIApiConnector(self)
         self.stix2 = OpenCTIStix2(self)
         self.pir = OpenCTIApiPir(self)
+        self.internal_file = OpenCTIApiInternalFile(self)
 
         # Define the entities
         self.vocabulary = Vocabulary(self)

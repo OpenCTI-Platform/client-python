@@ -941,6 +941,7 @@ class OpenCTIStix2:
             "workspace": self.opencti.workspace,
             "publicdashboard": self.opencti.public_dashboard,
             "notification": self.opencti.notification,
+            "internalfile": self.opencti.internal_file
         }
 
     def generate_standard_id_from_stix(self, data):
@@ -2598,7 +2599,22 @@ class OpenCTIStix2:
         else:
             # Element is not knowledge we need to use the right api
             stix_helper = self.get_internal_helper().get(item["type"])
-            if stix_helper and hasattr(stix_helper, "delete"):
+
+            self.opencti.app_logger.info(stix_helper)
+            self.opencti.app_logger.info(
+                "-------- TYPE ----------",
+                {"type": item["type"]},
+            )
+            if item["type"] == "internalfile":
+                self.opencti.app_logger.info(
+                    "-------- internal file ----------",
+                    {"type": item["type"]},
+                )
+                self.opencti.app_logger.info(item)
+                fileName = self.opencti.get_attribute_in_extension("id", item)
+                self.opencti.app_logger.info(fileName)
+                stix_helper.delete(fileName=item["fileName"])
+            elif stix_helper and hasattr(stix_helper, "delete"):
                 stix_helper.delete(id=item["id"])
             else:
                 raise ValueError(
