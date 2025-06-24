@@ -941,7 +941,7 @@ class OpenCTIStix2:
             "workspace": self.opencti.workspace,
             "publicdashboard": self.opencti.public_dashboard,
             "notification": self.opencti.notification,
-            "internalfile": self.opencti.internal_file
+            "internalfile": self.opencti.internal_file,
         }
 
     def generate_standard_id_from_stix(self, data):
