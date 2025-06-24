@@ -2613,7 +2613,7 @@ class OpenCTIStix2:
                 self.opencti.app_logger.info(item)
                 fileName = self.opencti.get_attribute_in_extension("id", item)
                 self.opencti.app_logger.info(fileName)
-                stix_helper.delete(fileName=item["fileName"])
+                stix_helper.delete(fileName=fileName)
             elif stix_helper and hasattr(stix_helper, "delete"):
                 stix_helper.delete(id=item["id"])
             else:

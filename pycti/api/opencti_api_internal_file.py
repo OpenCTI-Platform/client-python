@@ -6,10 +6,6 @@ class OpenCTIApiInternalFile:
 
     def delete(self, **kwargs):
         fileName = kwargs.get("fileName", None)
-        self.opencti.app_logger.info(
-            "-------- fileName ----------",
-            {"filename": fileName},
-        )
         if fileName is not None:
             query = """
                 mutation InternalFileDelete($fileName: String) {
@@ -23,7 +19,7 @@ class OpenCTIApiInternalFile:
                 },
             )
         else:
-            self.opencti.app_logger.error(
+            self.api.app_logger.error(
                 "[stix_internal_file] Cant delete internal file, missing parameters: fileName"
             )
             return None
