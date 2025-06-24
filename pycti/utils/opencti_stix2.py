@@ -2599,23 +2599,8 @@ class OpenCTIStix2:
         else:
             # Element is not knowledge we need to use the right api
             stix_helper = self.get_internal_helper().get(item["type"])
-
-            self.opencti.app_logger.info(stix_helper)
-            self.opencti.app_logger.info(
-                "-------- TYPE ----------",
-                {"type": item["type"]},
-            )
-            if item["type"] == "internalfile":
-                self.opencti.app_logger.info(
-                    "-------- internal file ----------",
-                    {"type": item["type"]},
-                )
-                self.opencti.app_logger.info(item)
-                fileName = self.opencti.get_attribute_in_extension("id", item)
-                self.opencti.app_logger.info(fileName)
-                stix_helper.delete(fileName=fileName)
-            elif stix_helper and hasattr(stix_helper, "delete"):
-                stix_helper.delete(id=item["id"])
+            if stix_helper and hasattr(stix_helper, "delete"):
+                stix_helper.delete(id=item["id"], item=item)
             else:
                 raise ValueError(
                     "Delete operation or not found stix helper", {"type": item["type"]}

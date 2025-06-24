@@ -5,7 +5,8 @@ class OpenCTIApiInternalFile:
         self.api = api
 
     def delete(self, **kwargs):
-        fileName = kwargs.get("fileName", None)
+        item = kwargs.get("item", None)
+        fileName = self.api.get_attribute_in_extension("id", item)
         if fileName is not None:
             query = """
                 mutation InternalFileDelete($fileName: String) {
