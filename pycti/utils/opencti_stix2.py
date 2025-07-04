@@ -2665,6 +2665,26 @@ class OpenCTIStix2:
             self.opencti.stix_core_object.ask_enrichments(
                 element_id=item["id"], connector_ids=connector_ids
             )
+        elif operation == "add_organizations":
+            raise ValueError(
+                "Not implemented opencti_operation",
+                {"operation": operation},
+            )
+        elif operation == "remove_organizations":
+            raise ValueError(
+                "Not implemented opencti_operation",
+                {"operation": operation},
+            )
+        elif operation == "add_groups":
+            raise ValueError(
+                "Not implemented opencti_operation",
+                {"operation": operation},
+            )
+        elif operation == "remove_groups":
+            raise ValueError(
+                "Not implemented opencti_operation",
+                {"operation": operation},
+            )
         else:
             raise ValueError(
                 "Not supported opencti_operation",
