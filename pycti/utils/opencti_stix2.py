@@ -2595,10 +2595,13 @@ class OpenCTIStix2:
             organization_ids = item["organization_ids"]
         if item["type"] == "user":
             for organization_id in organization_ids:
-                self.opencti.user.add_organization(id=item["id"], organization_id=organization_id)
+                self.opencti.user.add_organization(
+                    id=item["id"], organization_id=organization_id
+                )
         else:
             raise ValueError(
-                "Add organizations operation not compatible with type", {"type": item["type"]}
+                "Add organizations operation not compatible with type",
+                {"type": item["type"]},
             )
 
     def element_remove_organizations(self, item):
@@ -2609,16 +2612,17 @@ class OpenCTIStix2:
             organization_ids = item["organization_ids"]
         if item["type"] == "user":
             for organization_id in organization_ids:
-                self.opencti.user.delete_organization(id=item["id"], organization_id=organization_id)
+                self.opencti.user.delete_organization(
+                    id=item["id"], organization_id=organization_id
+                )
         else:
             raise ValueError(
-                "Remove organizations operation not compatible with type", {"type": item["type"]}
+                "Remove organizations operation not compatible with type",
+                {"type": item["type"]},
             )
 
     def element_add_groups(self, item):
-        group_ids = self.opencti.get_attribute_in_extension(
-            "group_ids", item
-        )
+        group_ids = self.opencti.get_attribute_in_extension("group_ids", item)
         if group_ids is None:
             group_ids = item["group_ids"]
         if item["type"] == "user":
@@ -2630,9 +2634,7 @@ class OpenCTIStix2:
             )
 
     def element_remove_groups(self, item):
-        group_ids = self.opencti.get_attribute_in_extension(
-            "group_ids", item
-        )
+        group_ids = self.opencti.get_attribute_in_extension("group_ids", item)
         if group_ids is None:
             group_ids = item["group_ids"]
         if item["type"] == "user":
@@ -2640,7 +2642,8 @@ class OpenCTIStix2:
                 self.opencti.user.delete_membership(id=item["id"], group_id=group_id)
         else:
             raise ValueError(
-                "Remove groups operation not compatible with type", {"type": item["type"]}
+                "Remove groups operation not compatible with type",
+                {"type": item["type"]},
             )
 
     def element_operation_delete(self, item, operation):
