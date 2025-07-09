@@ -2720,11 +2720,17 @@ class OpenCTIStix2:
             input = item["input"]
             self.opencti.pir.pir_unflag_element(id=id, input=input)
         elif operation == "rule_apply":
+            self.rule_apply(item=item)
+        elif operation == "inferred_entity":
             raise ValueError(
                 "Not supported opencti_operation",
                 {"operation": operation},
             )
-            self.rule_apply(item=item)
+        elif operation == "inferred_rel":
+            raise ValueError(
+                "Not supported opencti_operation",
+                {"operation": operation},
+            )
         elif operation == "rule_clear":
             self.rule_clear(item=item)
         elif operation == "rules_rescan":
