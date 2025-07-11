@@ -16,10 +16,10 @@ class OpenCTIApiInferred:
 
     def create_inferred_entity(self, **kwargs):
         input = kwargs.get("input", None)
-        self.api.app_logger.info("Creating inferred rel", {"input": input})
+        self.api.app_logger.info("Creating inferred entity", {"input": input})
         query = """
-            mutation inferredRelationAdd($jsonInput: String!) {
-                inferredRelationAdd(jsonInput: $jsonInput)
+            mutation inferredEntityAdd($jsonInput: String!) {
+                inferredEntityAdd(jsonInput: $jsonInput)
             }
            """
         self.api.query(query, {"jsonInput": input})
