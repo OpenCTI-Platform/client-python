@@ -799,10 +799,9 @@ class User:
         input = {
             "target_user_id": id,
             "email_template_id": template_id,
-            "email_object": template_id,
         }
         query = """
-                mutation SendUserMail(input: SendUserMailInput!) {
+                mutation SendUserMail($input: SendUserMailInput!) {
                     sendUserMail(input: $input) {
                 }
             }
