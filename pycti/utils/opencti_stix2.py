@@ -2651,7 +2651,7 @@ class OpenCTIStix2:
         if template_id is None:
             template_id = item["template_id"]
         if item["type"] == "user":
-            self.opencti.user.send_mail(id=item["id"], template_id=template_id)
+            self.opencti.user.send_mail(id=item["id"], template_id=template_id[0])
         else:
             raise ValueError(
                 "Not supported opencti_operation for this type",
