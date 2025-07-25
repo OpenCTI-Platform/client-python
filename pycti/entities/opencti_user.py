@@ -802,9 +802,8 @@ class User:
         }
         query = """
                 mutation SendUserMail($input: SendUserMailInput!) {
-                    sendUserMail(input: $input) {
+                    sendUserMail(input: $input)
                 }
-            }
             """
         self.opencti.query(query, {"input": input})
 
