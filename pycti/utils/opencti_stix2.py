@@ -885,6 +885,7 @@ class OpenCTIStix2:
             "Tool": self.opencti.tool.read,
             "Vocabulary": self.opencti.vocabulary.read,
             "Vulnerability": self.opencti.vulnerability.read,
+            "SecurityAssessment": self.opencti.security_assessment.read,
         }
 
     def get_reader(self, entity_type: str):
