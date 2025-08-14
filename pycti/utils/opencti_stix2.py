@@ -2632,7 +2632,7 @@ class OpenCTIStix2:
             if source_ids is None:
                 source_ids = item["merge_source_ids"]
             self.opencti.stix.merge(id=target_id, object_ids=source_ids)
-        elif operation == "patch":
+        elif operation == "patch" or operation == "upsert_patch":
             self.apply_patch(item=item)
         elif operation == "pir_flag_element":
             id = item["id"]
@@ -2699,10 +2699,12 @@ class OpenCTIStix2:
             opencti_operation = self.opencti.get_attribute_in_extension(
                 "opencti_operation", item
             )
-            if opencti_operation is not None:
+            if opencti_operation is None and "opencti_operation" in item:
+                opencti_operation=item["opencti_operation"]
+            if opencti_operation is not None and opencti_operation == "upsert_patch":
                 self.apply_opencti_operation(item, opencti_operation)
-            elif "opencti_operation" in item:
-                self.apply_opencti_operation(item, item["opencti_operation"])
+            if opencti_operation is not None and opencti_operation != "upsert_patch":
+                self.apply_opencti_operation(item, opencti_operation)
             elif item["type"] == "relationship":
                 # Import relationship
                 self.import_relationship(item, update, types)
