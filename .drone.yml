@@ -3,6 +3,11 @@ kind: pipeline
 name: client-python-tests
 
 steps:
+  - name: Runner information
+    image: alpine:3.19
+    commands:
+    - echo DRONE_STAGE_MACHINE ${DRONE_STAGE_MACHINE}
+    
   - name: sleep-for-opencti
     image: python:3.11
     commands:
