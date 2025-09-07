@@ -99,7 +99,7 @@ class OpenCTIStix2:
     # region utils
     def unknown_type(self, stix_object: Dict) -> None:
         """Log an error for unknown STIX object types.
-        
+
         :param stix_object: STIX object with unknown type
         :type stix_object: Dict
         """
@@ -122,7 +122,7 @@ class OpenCTIStix2:
 
     def format_date(self, date: Any = None) -> str:
         """Format a date to ISO 8601 string format.
-        
+
         :param date: Date to format (various formats supported)
         :type date: Any
         :return: ISO 8601 formatted date string
@@ -827,7 +827,7 @@ class OpenCTIStix2:
     # Please use get_reader instead of this definition
     def get_readers(self):
         """Get a dictionary mapping entity types to their read methods.
-        
+
         :return: Dictionary mapping entity types to read functions
         :rtype: dict
         """
@@ -879,7 +879,7 @@ class OpenCTIStix2:
 
     def get_reader(self, entity_type: str):
         """Get the appropriate reader function for a given entity type.
-        
+
         :param entity_type: Type of the entity
         :type entity_type: str
         :return: Reader function for the entity type
@@ -906,7 +906,7 @@ class OpenCTIStix2:
 
     def get_stix_helper(self):
         """Get a dictionary mapping STIX types to their helper functions.
-        
+
         :return: Dictionary mapping STIX types to generate_id functions
         :rtype: dict
         """
@@ -959,7 +959,7 @@ class OpenCTIStix2:
 
     def get_internal_helper(self):
         """Get a dictionary mapping internal types to their helper functions.
-        
+
         :return: Dictionary mapping internal types to generate_id functions
         :rtype: dict
         """
@@ -982,7 +982,7 @@ class OpenCTIStix2:
 
     def generate_standard_id_from_stix(self, data):
         """Generate a standard ID from STIX data.
-        
+
         :param data: STIX data dictionary
         :type data: dict
         :return: Generated standard ID or None

@@ -8,10 +8,10 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 class AttackPattern:
     """Main AttackPattern class for OpenCTI
-    
+
     :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
     """
-    
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -244,7 +244,7 @@ class AttackPattern:
     @staticmethod
     def generate_id(name, x_mitre_id=None):
         """Generate a STIX ID for an Attack Pattern.
-        
+
         :param name: The name of the attack pattern
         :type name: str
         :param x_mitre_id: Optional MITRE ATT&CK ID
@@ -263,7 +263,7 @@ class AttackPattern:
     @staticmethod
     def generate_id_from_data(data):
         """Generate a STIX ID from attack pattern data.
-        
+
         :param data: Dictionary containing 'name' and optionally 'x_mitre_id' keys
         :type data: dict
         :return: STIX ID for the attack pattern
@@ -274,7 +274,7 @@ class AttackPattern:
 
     def list(self, **kwargs):
         """List Attack Pattern objects.
-        
+
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)

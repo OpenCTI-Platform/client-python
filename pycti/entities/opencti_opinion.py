@@ -8,12 +8,12 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 class Opinion:
     """Main Opinion class for OpenCTI
-    
+
     Manages analyst opinions and assessments in the OpenCTI platform.
-    
+
     :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
     """
-    
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """

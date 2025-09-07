@@ -8,12 +8,12 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 class Event:
     """Main Event class for OpenCTI
-    
+
     Manages security events in the OpenCTI platform.
-    
+
     :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
     """
-    
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -234,7 +234,7 @@ class Event:
     @staticmethod
     def generate_id(name):
         """Generate a STIX ID for an Event.
-        
+
         :param name: The name of the event
         :type name: str
         :return: STIX ID for the event
@@ -249,7 +249,7 @@ class Event:
     @staticmethod
     def generate_id_from_data(data):
         """Generate a STIX ID from event data.
-        
+
         :param data: Dictionary containing 'name' key
         :type data: dict
         :return: STIX ID for the event
@@ -259,7 +259,7 @@ class Event:
 
     def list(self, **kwargs):
         """List Event objects.
-        
+
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)

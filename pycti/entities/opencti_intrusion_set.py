@@ -8,12 +8,12 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 class IntrusionSet:
     """Main IntrusionSet class for OpenCTI
-    
+
     Manages intrusion sets (APT groups) in the OpenCTI platform.
-    
+
     :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
     """
-    
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -240,7 +240,7 @@ class IntrusionSet:
     @staticmethod
     def generate_id(name):
         """Generate a STIX ID for an Intrusion Set.
-        
+
         :param name: The name of the intrusion set
         :type name: str
         :return: STIX ID for the intrusion set
@@ -255,7 +255,7 @@ class IntrusionSet:
     @staticmethod
     def generate_id_from_data(data):
         """Generate a STIX ID from intrusion set data.
-        
+
         :param data: Dictionary containing 'name' key
         :type data: dict
         :return: STIX ID for the intrusion set
@@ -265,7 +265,7 @@ class IntrusionSet:
 
     def list(self, **kwargs):
         """List Intrusion Set objects.
-        
+
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
@@ -356,7 +356,7 @@ class IntrusionSet:
 
     def read(self, **kwargs):
         """Read an Intrusion Set object.
-        
+
         :param id: the id of the Intrusion Set
         :param filters: the filters to apply if no id provided
         :param customAttributes: custom attributes to return
@@ -401,7 +401,7 @@ class IntrusionSet:
 
     def create(self, **kwargs):
         """Create an Intrusion Set object.
-        
+
         :param name: the name of the Intrusion Set
         :param description: description of the intrusion set
         :param aliases: list of aliases

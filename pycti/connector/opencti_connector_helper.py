@@ -38,9 +38,9 @@ app = FastAPI()
 
 def killProgramHook(etype, value, tb):
     """Exception hook to terminate the program.
-    
+
     :param etype: Exception type
-    :param value: Exception value  
+    :param value: Exception value
     :param tb: Traceback object
     """
     os.kill(os.getpid(), signal.SIGTERM)
@@ -48,7 +48,7 @@ def killProgramHook(etype, value, tb):
 
 def start_loop(loop):
     """Start an asyncio event loop.
-    
+
     :param loop: The asyncio event loop to start
     :type loop: asyncio.AbstractEventLoop
     """
@@ -105,7 +105,7 @@ def get_config_variable(
 
 def is_memory_certificate(certificate):
     """Check if a certificate is provided as a PEM string in memory.
-    
+
     :param certificate: The certificate data to check
     :type certificate: str
     :return: True if the certificate is a PEM string, False otherwise
@@ -116,7 +116,7 @@ def is_memory_certificate(certificate):
 
 def ssl_verify_locations(ssl_context, certdata):
     """Load certificate verification locations into SSL context.
-    
+
     :param ssl_context: The SSL context to configure
     :type ssl_context: ssl.SSLContext
     :param certdata: Certificate data (file path or PEM string)
@@ -133,10 +133,10 @@ def ssl_verify_locations(ssl_context, certdata):
 
 def data_to_temp_file(data):
     """Write data to a temporary file securely.
-    
+
     Creates a temporary file in the most secure manner possible.
     The file is readable and writable only by the creating user ID.
-    
+
     :param data: The data to write to the temporary file
     :type data: str
     :return: Path to the created temporary file
@@ -155,7 +155,7 @@ def data_to_temp_file(data):
 
 def ssl_cert_chain(ssl_context, cert_data, key_data, passphrase):
     """Load certificate chain into SSL context.
-    
+
     :param ssl_context: The SSL context to configure
     :type ssl_context: ssl.SSLContext
     :param cert_data: Certificate data (file path or PEM string)
@@ -192,7 +192,7 @@ def ssl_cert_chain(ssl_context, cert_data, key_data, passphrase):
 
 def create_callback_ssl_context(config) -> ssl.SSLContext:
     """Create SSL context for API callback server.
-    
+
     :param config: Configuration dictionary
     :type config: dict
     :return: Configured SSL context
@@ -228,7 +228,7 @@ def create_callback_ssl_context(config) -> ssl.SSLContext:
 
 def create_mq_ssl_context(config) -> ssl.SSLContext:
     """Create SSL context for message queue connections.
-    
+
     :param config: Configuration dictionary
     :type config: dict
     :return: Configured SSL context for MQ connections
@@ -351,7 +351,7 @@ class ListenQueue(threading.Thread):
 
     def _set_draft_id(self, draft_id):
         """Set the draft ID for the helper and API instances.
-        
+
         :param draft_id: The draft ID to set
         :type draft_id: str
         """
@@ -610,7 +610,7 @@ class ListenQueue(threading.Thread):
 
     def stop(self):
         """Stop the ListenQueue thread and close connections.
-        
+
         This method sets the exit event, closes the RabbitMQ connection,
         and waits for the processing thread to complete.
         """
@@ -863,7 +863,7 @@ class ListenStream(threading.Thread):
 
     def stop(self):
         """Stop the ListenStream thread.
-        
+
         This method sets the exit event to signal the stream listening thread to stop.
         """
         self.helper.connector_logger.info("Preparing ListenStream for clean shutdown")
@@ -890,7 +890,7 @@ class ConnectorInfo:
     @property
     def all_details(self):
         """Get all connector information details as a dictionary.
-        
+
         :return: Dictionary containing all connector status information
         :rtype: dict
         """
@@ -910,7 +910,7 @@ class ConnectorInfo:
     @run_and_terminate.setter
     def run_and_terminate(self, value):
         """Set the run_and_terminate flag.
-        
+
         :param value: Whether the connector should run once and terminate
         :type value: bool
         """
@@ -923,7 +923,7 @@ class ConnectorInfo:
     @buffering.setter
     def buffering(self, value):
         """Set the buffering status.
-        
+
         :param value: Whether the connector is currently buffering
         :type value: bool
         """
@@ -936,7 +936,7 @@ class ConnectorInfo:
     @queue_threshold.setter
     def queue_threshold(self, value):
         """Set the queue threshold value.
-        
+
         :param value: The queue size threshold in MB
         :type value: float
         """
@@ -949,7 +949,7 @@ class ConnectorInfo:
     @queue_messages_size.setter
     def queue_messages_size(self, value):
         """Set the current queue messages size.
-        
+
         :param value: The current size of messages in the queue in MB
         :type value: float
         """
@@ -962,7 +962,7 @@ class ConnectorInfo:
     @next_run_datetime.setter
     def next_run_datetime(self, value):
         """Set the next scheduled run datetime.
-        
+
         :param value: The datetime for the next scheduled run
         :type value: datetime
         """
@@ -975,7 +975,7 @@ class ConnectorInfo:
     @last_run_datetime.setter
     def last_run_datetime(self, value):
         """Set the last run datetime.
-        
+
         :param value: The datetime of the last run
         :type value: datetime
         """
@@ -1352,7 +1352,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def stop(self) -> None:
         """Stop the connector and clean up resources.
-        
+
         This method stops all running threads (listen queue, ping thread) and
         unregisters the connector from OpenCTI.
         """
@@ -1366,7 +1366,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_name(self) -> Optional[Union[bool, int, str]]:
         """Get the connector name.
-        
+
         :return: The name of the connector
         :rtype: Optional[Union[bool, int, str]]
         """
@@ -1374,7 +1374,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_stream_collection(self):
         """Get the stream collection configuration.
-        
+
         :return: Stream collection configuration dictionary
         :rtype: dict
         :raises ValueError: If no stream is connected
@@ -1414,7 +1414,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_only_contextual(self) -> Optional[Union[bool, int, str]]:
         """Get the only_contextual configuration value.
-        
+
         :return: Whether the connector processes only contextual data
         :rtype: Optional[Union[bool, int, str]]
         """
@@ -1422,7 +1422,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_run_and_terminate(self) -> Optional[Union[bool, int, str]]:
         """Get the run_and_terminate configuration value.
-        
+
         :return: Whether the connector should run once and terminate
         :rtype: Optional[Union[bool, int, str]]
         """
@@ -1430,7 +1430,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_validate_before_import(self) -> Optional[Union[bool, int, str]]:
         """Get the validate_before_import configuration value.
-        
+
         :return: Whether to validate data before importing
         :rtype: Optional[Union[bool, int, str]]
         """
@@ -1465,7 +1465,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def force_ping(self):
         """Force a ping to the OpenCTI API to update connector state.
-        
+
         This method manually triggers a ping to synchronize the connector state
         with the OpenCTI platform.
         """
@@ -1882,7 +1882,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_opencti_url(self) -> Optional[Union[bool, int, str]]:
         """Get the OpenCTI URL.
-        
+
         :return: The URL of the OpenCTI platform
         :rtype: Optional[Union[bool, int, str]]
         """
@@ -1890,7 +1890,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_opencti_token(self) -> Optional[Union[bool, int, str]]:
         """Get the OpenCTI API token.
-        
+
         :return: The API token for OpenCTI authentication
         :rtype: Optional[Union[bool, int, str]]
         """
@@ -1898,7 +1898,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_connector(self) -> OpenCTIConnector:
         """Get the OpenCTIConnector instance.
-        
+
         :return: The OpenCTIConnector instance
         :rtype: OpenCTIConnector
         """
@@ -2452,7 +2452,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
 
     def get_data_from_enrichment(self, data, standard_id, opencti_entity):
         """Extract STIX entity and objects from enrichment data.
-        
+
         :param data: The enrichment data containing a bundle
         :type data: dict
         :param standard_id: The STIX standard ID of the entity

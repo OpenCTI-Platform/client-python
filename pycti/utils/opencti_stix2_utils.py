@@ -151,13 +151,14 @@ OBSERVABLES_VALUE_INT = [
 
 class OpenCTIStix2Utils:
     """Utility class for STIX2 operations in OpenCTI
-    
+
     Provides helper methods for STIX2 conversions and pattern generation.
     """
+
     @staticmethod
     def stix_observable_opencti_type(observable_type):
         """Convert STIX observable type to OpenCTI type.
-        
+
         :param observable_type: STIX observable type
         :type observable_type: str
         :return: Corresponding OpenCTI type or "Unknown"
@@ -171,7 +172,7 @@ class OpenCTIStix2Utils:
     @staticmethod
     def create_stix_pattern(observable_type, observable_value):
         """Create a STIX pattern from an observable type and value.
-        
+
         :param observable_type: Type of the observable
         :type observable_type: str
         :param observable_value: Value of the observable
@@ -198,10 +199,10 @@ class OpenCTIStix2Utils:
     @staticmethod
     def generate_random_stix_id(stix_type):
         """Generate random stix id (uuid v1) - DEPRECATED.
-        
+
         This function is deprecated and should not be used anymore.
         Please use the generate_id function for SDO or proper SCO constructor.
-        
+
         :param stix_type: the stix type
         :raises ValueError: Always raises an error as this function is deprecated
         """
@@ -214,7 +215,7 @@ class OpenCTIStix2Utils:
         openCTIApiClient, entity: Dict, type_path: str, method: str
     ) -> Any:
         """Retrieve the appropriate API class for a given entity type and method.
-        
+
         :param openCTIApiClient: OpenCTI API client instance
         :param entity: Entity dictionary containing the type
         :type entity: Dict

@@ -25,7 +25,7 @@ class Indicator:
     @staticmethod
     def generate_id(pattern):
         """Generate a STIX ID for an Indicator.
-        
+
         :param pattern: The STIX pattern
         :type pattern: str
         :return: STIX ID for the indicator
@@ -39,7 +39,7 @@ class Indicator:
     @staticmethod
     def generate_id_from_data(data):
         """Generate a STIX ID from indicator data.
-        
+
         :param data: Dictionary containing 'pattern' key
         :type data: dict
         :return: STIX ID for the indicator
@@ -317,7 +317,7 @@ class Indicator:
 
     def update_field(self, **kwargs):
         """Update an Indicator object field.
-        
+
         :param id: the Indicator id
         :param input: the input of the field
         :return: Updated indicator object

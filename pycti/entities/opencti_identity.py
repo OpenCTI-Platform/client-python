@@ -10,12 +10,12 @@ from pycti.utils.constants import IdentityTypes
 
 class Identity:
     """Main Identity class for OpenCTI
-    
+
     Manages individual, organization, and system identities in OpenCTI.
-    
+
     :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
     """
-    
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -266,7 +266,7 @@ class Identity:
     @staticmethod
     def generate_id(name, identity_class):
         """Generate a STIX ID for an Identity.
-        
+
         :param name: The name of the identity
         :type name: str
         :param identity_class: The class of the identity (individual, group, organization, etc.)
@@ -282,7 +282,7 @@ class Identity:
     @staticmethod
     def generate_id_from_data(data):
         """Generate a STIX ID from identity data.
-        
+
         :param data: Dictionary containing 'name' and 'identity_class' keys
         :type data: dict
         :return: STIX ID for the identity
@@ -292,7 +292,7 @@ class Identity:
 
     def list(self, **kwargs):
         """List Identity objects.
-        
+
         :param types: the list of types
         :param filters: the filters to apply
         :param search: the search keyword
