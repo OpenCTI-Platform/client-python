@@ -4,7 +4,8 @@ orbs:
   slack: circleci/slack@4.13.3
   ms-teams: cloudradar-monitoring/ms-teams@0.0.1
 env:
-  BASE_REPO: opencti
+  DOCKER_REPO: opencti
+  GHCR_REPO: ghcr.io/OpenCTI-Platform/client-python
 jobs:
   ensure_formatting:
     docker:
@@ -50,55 +51,41 @@ jobs:
       - ms-teams/report:
           only_on_fail: true
           webhook_url: $MS_TEAMS_WEBHOOK_URL
-  build-container-python-3-11:
-    docker:
-      - image: cimg/base:stable-20.04
+
+  build-container:
+    executor: docker/docker
+    parameters:
+      python_version:
+        type: string
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
-          name: Build opencti/python-client-container
+          name: Setup Docker Buildx
           command: |
-            docker run --privileged --rm tonistiigi/binfmt --install all
-            CIRCLE_TAG=${CIRCLE_TAG:-nightly}
-            echo "CIRCLE_TAG=${CIRCLE_TAG}"
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker buildx create --platform linux/amd64,linux/arm64 --use --name mybuilder || true
-            docker buildx inspect mybuilder --bootstrap            
-            docker buildx build . \
-              --platform linux/amd64,linux/arm64 \
-              -t ${{ env.BASE_REPO }}/client-python-3-11:${CIRCLE_TAG} \
-              -t ${{ env.BASE_REPO }}client-python-3-11:latest \
-              --build-arg BASE_IMAGE="python:3.11-alpine3.20" 
+            docker buildx create --driver docker-container --name multiarch --use
+      - run:
+          name: Login to Docker Hub
+          command: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - run:
+          name: Login to GitHub Container Registry
+          command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
 
       - run:
-          name: Push image to regsitry
-          command: docker push ${{ env.BASE_REPO }}/client-python-3-11:latest --all-tags
-
-  build-container-python-3-12:
-    docker:
-      - image: cimg/base:stable-20.04
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Build opencti/python-client
+          name: Build and Push Alpine Multi-arch Image
           command: |
-            docker run --privileged --rm tonistiigi/binfmt --install all
-            CIRCLE_TAG=${CIRCLE_TAG:-nightly}
-            echo "CIRCLE_TAG=${CIRCLE_TAG}"
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker buildx create --platform linux/amd64,linux/arm64 --use --name mybuilder || true
-            docker buildx inspect mybuilder --bootstrap
-            docker buildx build . \
+            VERSION=${CIRCLE_TAG:-latest}
+            PYTHON_VERSION_TAG=$(echo "<< parameters.python_version >>" | sed 's/\./-/g')
+            docker buildx build \
               --platform linux/amd64,linux/arm64 \
-              -t ${{ env.BASE_REPO }}/client-python-3-12:${CIRCLE_TAG} \
-              -t ${{ env.BASE_REPO }}/client-python-3-12:latest \
-              --build-arg BASE_IMAGE="python:3.12-alpine3.20" 
-
-      - run:
-          name: Push image to regsitry
-          command: docker push ${{ env.BASE_REPO }}/client-python-3-12:latest --all-tags
+              --file Dockerfile.alpine \
+              --tag ${{ env.DOCKER_REPO }}/client-python-${PYTHON_VERSION_TAG}:${VERSION} \
+              --tag ${{ env.DOCKER_REPO }}/client-python-${PYTHON_VERSION_TAG}:latest \
+              --tag ${{ env.GHCR_REPO }}/client-python-${PYTHON_VERSION_TAG}:${VERSION} \
+              --tag ${{ env.GHCR_REPO }}/client-python-${PYTHON_VERSION_TAG}:latest \
+              --push \
+              --file Dockerfile
 
   build-library:
     working_directory: ~/opencti-client
@@ -196,18 +183,17 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - build-container-python-3-11:
+
+      - build-container:
+          matrix:
+            parameters:
+              python_version: ["3.11", "3.12"]
           requires:
             - build-library
           filters:
             tags:
               only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
-      - build-container-python-3-12:
-          requires:
-            - build-library
-          filters:
-            tags:
-              only: /[0-9]+(\.[0-9]+)+(\.[0-9]+)?\.?(\w)*/
+
       - build-library:
           filters:
             tags:
