@@ -1,4 +1,11 @@
 class Stix:
+    """Main Stix class for OpenCTI
+
+    Provides generic STIX object operations in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
 
@@ -11,16 +18,17 @@ class Stix:
 
     def delete(self, **kwargs):
         id = kwargs.get("id", None)
+        force_delete = kwargs.get("force_delete", True)
         if id is not None:
             self.opencti.app_logger.info("Deleting Stix element", {"id": id})
             query = """
-                 mutation StixEdit($id: ID!) {
+                 mutation StixEdit($id: ID!, $forceDelete: Boolean) {
                      stixEdit(id: $id) {
-                         delete
+                         delete(forceDelete: $forceDelete)
                      }
                  }
              """
-            self.opencti.query(query, {"id": id})
+            self.opencti.query(query, {"id": id, "forceDelete": force_delete})
         else:
             self.opencti.app_logger.error("[opencti_stix] Missing parameters: id")
             return None

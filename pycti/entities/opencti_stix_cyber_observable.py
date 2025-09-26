@@ -17,6 +17,15 @@ from .stix_cyber_observable.opencti_stix_cyber_observable_properties import (
 
 
 class StixCyberObservable(StixCyberObservableDeprecatedMixin):
+    """Main StixCyberObservable class for OpenCTI
+
+    Manages STIX cyber observables (indicators of compromise) in the OpenCTI platform.
+    Note: Deprecated methods are available through StixCyberObservableDeprecatedMixin.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    :param file: file handling configuration
+    """
+
     def __init__(self, opencti, file):
 
         self.opencti = opencti
@@ -185,12 +194,13 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
         version = kwargs.get("version", None)
         mime_type = kwargs.get("mime_type", "text/plain")
         no_trigger_import = kwargs.get("no_trigger_import", False)
+        embedded = kwargs.get("embedded", False)
         if id is not None and file_name is not None:
             final_file_name = os.path.basename(file_name)
             query = """
-                    mutation StixCyberObservableEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
+                    mutation StixCyberObservableEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean, $embedded: Boolean) {
                         stixCyberObservableEdit(id: $id) {
-                            importPush(file: $file, version: $version, fileMarkings: $fileMarkings, noTriggerImport: $noTriggerImport) {
+                            importPush(file: $file, version: $version, fileMarkings: $fileMarkings, noTriggerImport: $noTriggerImport, embedded: $embedded) {
                                 id
                                 name
                             }
@@ -219,6 +229,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                         if isinstance(no_trigger_import, bool)
                         else no_trigger_import == "True"
                     ),
+                    "embedded": embedded,
                 },
             )
         else:
@@ -747,6 +758,16 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                         if "dst_port" in observable_data
                         else None
                     ),
+                    "networkSrc": (
+                        observable_data["src_ref"]
+                        if "src_ref" in observable_data
+                        else None
+                    ),
+                    "networkDst": (
+                        observable_data["dst_ref"]
+                        if "dst_ref" in observable_data
+                        else None
+                    ),
                     "protocols": (
                         observable_data["protocols"]
                         if "protocols" in observable_data
@@ -799,6 +820,18 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     ),
                 }
             elif type == "Software":
+                if (
+                    "x_opencti_product" not in observable_data
+                    and self.opencti.get_attribute_in_extension(
+                        "x_opencti_product", observable_data
+                    )
+                    is not None
+                ):
+                    observable_data["x_opencti_product"] = (
+                        self.opencti.get_attribute_in_extension(
+                            "x_opencti_product", observable_data
+                        )
+                    )
                 input_variables["Software"] = {
                     "name": (
                         observable_data["name"] if "name" in observable_data else None
@@ -820,6 +853,11 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     "version": (
                         observable_data["version"]
                         if "version" in observable_data
+                        else None
+                    ),
+                    "x_opencti_product": (
+                        observable_data["x_opencti_product"]
+                        if "x_opencti_product" in observable_data
                         else None
                     ),
                 }
@@ -919,7 +957,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     ),
                 }
             elif type == "Windows-Registry-Value-Type":
-                input_variables["WindowsRegistryKeyValueType"] = {
+                input_variables["WindowsRegistryValueType"] = {
                     "name": (
                         observable_data["name"] if "name" in observable_data else None
                     ),

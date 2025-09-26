@@ -9,6 +9,13 @@ from pycti.utils.constants import IdentityTypes
 
 
 class Identity:
+    """Main Identity class for OpenCTI
+
+    Manages individual, organization, and system identities in OpenCTI.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -19,6 +26,14 @@ class Identity:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -43,10 +58,14 @@ class Identity:
                 }
                 ... on Organization {
                     x_opencti_organization_type
+                    x_opencti_score
                 }
                 ... on Individual {
                     x_opencti_firstname
                     x_opencti_lastname
+                }
+                ... on SecurityPlatform {
+                    security_platform_type
                 }
             }
             objectMarking {
@@ -102,6 +121,10 @@ class Identity:
             }
             ... on Organization {
                 x_opencti_organization_type
+                x_opencti_score
+            }
+            ... on SecurityPlatform {
+                security_platform_type
             }
         """
         self.properties_with_files = """
@@ -112,6 +135,14 @@ class Identity:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -136,10 +167,14 @@ class Identity:
                 }
                 ... on Organization {
                     x_opencti_organization_type
+                    x_opencti_score
                 }
                 ... on Individual {
                     x_opencti_firstname
                     x_opencti_lastname
+                }
+                ... on SecurityPlatform {
+                    security_platform_type
                 }
             }
             objectMarking {
@@ -208,6 +243,10 @@ class Identity:
             }
             ... on Organization {
                 x_opencti_organization_type
+                x_opencti_score
+            }
+            ... on SecurityPlatform {
+                security_platform_type
             }
             importFiles {
                 edges {
@@ -226,6 +265,15 @@ class Identity:
 
     @staticmethod
     def generate_id(name, identity_class):
+        """Generate a STIX ID for an Identity.
+
+        :param name: The name of the identity
+        :type name: str
+        :param identity_class: The class of the identity (individual, group, organization, etc.)
+        :type identity_class: str
+        :return: STIX ID for the identity
+        :rtype: str
+        """
         data = {"name": name.lower().strip(), "identity_class": identity_class.lower()}
         data = canonicalize(data, utf8=False)
         id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
@@ -233,20 +281,32 @@ class Identity:
 
     @staticmethod
     def generate_id_from_data(data):
+        """Generate a STIX ID from identity data.
+
+        :param data: Dictionary containing 'name' and 'identity_class' keys
+        :type data: dict
+        :return: STIX ID for the identity
+        :rtype: str
+        """
         return Identity.generate_id(data["name"], data["identity_class"])
 
-    """
-        List Identity objects
+    def list(self, **kwargs):
+        """List Identity objects.
 
         :param types: the list of types
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination
-        :return List of Identity objects
-    """
-
-    def list(self, **kwargs):
+        :param orderBy: field to order results by
+        :param orderMode: ordering mode (asc/desc)
+        :param customAttributes: custom attributes to return
+        :param getAll: whether to retrieve all results
+        :param withPagination: whether to include pagination info
+        :param withFiles: whether to include files
+        :return: List of Identity objects
+        :rtype: list
+        """
         types = kwargs.get("types", None)
         filters = kwargs.get("filters", None)
         search = kwargs.get("search", None)
@@ -394,8 +454,10 @@ class Identity:
         contact_information = kwargs.get("contact_information", None)
         roles = kwargs.get("roles", None)
         x_opencti_aliases = kwargs.get("x_opencti_aliases", None)
+        security_platform_type = kwargs.get("security_platform_type", None)
         x_opencti_organization_type = kwargs.get("x_opencti_organization_type", None)
         x_opencti_reliability = kwargs.get("x_opencti_reliability", None)
+        x_opencti_score = kwargs.get("x_opencti_score", None)
         x_opencti_firstname = kwargs.get("x_opencti_firstname", None)
         x_opencti_lastname = kwargs.get("x_opencti_lastname", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
@@ -440,7 +502,26 @@ class Identity:
                     x_opencti_organization_type
                 )
                 input_variables["x_opencti_reliability"] = x_opencti_reliability
+                input_variables["x_opencti_score"] = x_opencti_score
                 result_data_field = "organizationAdd"
+            elif type == IdentityTypes.SECURITYPLATFORM.value:
+                query = """
+                    mutation SecurityPlatformAdd($input: SecurityPlatformAddInput!) {
+                        securityPlatformAdd(input: $input) {
+                            id
+                            standard_id
+                            entity_type
+                            parent_types
+                        }
+                    }
+                """
+                input_variables["security_platform_type"] = security_platform_type
+                # no need for these attributes for security platform
+                del input_variables["contact_information"]
+                del input_variables["lang"]
+                del input_variables["roles"]
+                del input_variables["x_opencti_aliases"]
+                result_data_field = "securityPlatformAdd"
             elif type == IdentityTypes.INDIVIDUAL.value:
                 query = """
                     mutation IndividualAdd($input: IndividualAddInput!) {
@@ -520,6 +601,8 @@ class Identity:
                     type = "Sector"
                 elif stix_object["identity_class"] == "system":
                     type = "System"
+                elif stix_object["identity_class"] == "securityplatform":
+                    type = "SecurityPlatform"
 
             # Search in extensions
             if "x_opencti_aliases" not in stix_object:
@@ -532,9 +615,19 @@ class Identity:
                         "organization_type", stix_object
                     )
                 )
+            if "security_platform_type" not in stix_object:
+                stix_object["security_platform_type"] = (
+                    self.opencti.get_attribute_in_extension(
+                        "security_platform_type", stix_object
+                    )
+                )
             if "x_opencti_reliability" not in stix_object:
                 stix_object["x_opencti_reliability"] = (
                     self.opencti.get_attribute_in_extension("reliability", stix_object)
+                )
+            if "x_opencti_score" not in stix_object:
+                stix_object["x_opencti_score"] = (
+                    self.opencti.get_attribute_in_extension("score", stix_object)
                 )
             if "x_opencti_organization_type" not in stix_object:
                 stix_object["x_opencti_organization_type"] = (
@@ -609,9 +702,19 @@ class Identity:
                     if "x_opencti_organization_type" in stix_object
                     else None
                 ),
+                security_platform_type=(
+                    stix_object["security_platform_type"]
+                    if "security_platform_type" in stix_object
+                    else None
+                ),
                 x_opencti_reliability=(
                     stix_object["x_opencti_reliability"]
                     if "x_opencti_reliability" in stix_object
+                    else None
+                ),
+                x_opencti_score=(
+                    stix_object["x_opencti_score"]
+                    if "x_opencti_score" in stix_object
                     else None
                 ),
                 x_opencti_firstname=(

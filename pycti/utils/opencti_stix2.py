@@ -29,7 +29,9 @@ from pycti.utils.opencti_stix2_splitter import OpenCTIStix2Splitter
 from pycti.utils.opencti_stix2_update import OpenCTIStix2Update
 from pycti.utils.opencti_stix2_utils import (
     OBSERVABLES_VALUE_INT,
+    STIX_CORE_OBJECTS,
     STIX_CYBER_OBSERVABLE_MAPPING,
+    STIX_META_OBJECTS,
 )
 
 datefinder.ValueError = ValueError, OverflowError
@@ -48,6 +50,7 @@ STIX_EXT_OCTI = "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
 STIX_EXT_OCTI_SCO = "extension-definition--f93e2c80-4231-4f9a-af8b-95c9bd566a82"
 STIX_EXT_MITRE = "extension-definition--322b8f77-262a-4cb8-a915-1e441e00329b"
 PROCESSING_COUNT: int = 4
+MAX_PROCESSING_COUNT: int = 100
 
 meter = metrics.get_meter(__name__)
 bundles_timeout_error_counter = meter.create_counter(
@@ -95,6 +98,11 @@ class OpenCTIStix2:
     ######### UTILS
     # region utils
     def unknown_type(self, stix_object: Dict) -> None:
+        """Log an error for unknown STIX object types.
+
+        :param stix_object: STIX object with unknown type
+        :type stix_object: Dict
+        """
         self.opencti.app_logger.error(
             "Unknown object type, doing nothing...", {"type": stix_object["type"]}
         )
@@ -113,6 +121,13 @@ class OpenCTIStix2:
             return None
 
     def format_date(self, date: Any = None) -> str:
+        """Format a date to ISO 8601 string format.
+
+        :param date: Date to format (various formats supported)
+        :type date: Any
+        :return: ISO 8601 formatted date string
+        :rtype: str
+        """
         """converts multiple input date formats to OpenCTI style dates
 
         :param date: input date
@@ -305,7 +320,7 @@ class OpenCTIStix2:
         object_marking_ids = (
             stix_object["object_marking_refs"]
             if "object_marking_refs" in stix_object
-            else []
+            else None
         )
 
         # Open vocabularies
@@ -417,7 +432,10 @@ class OpenCTIStix2:
             stix_object["kill_chain_phases"] = self.opencti.get_attribute_in_extension(
                 "kill_chain_phases", stix_object
             )
-        if "kill_chain_phases" in stix_object:
+        if (
+            "kill_chain_phases" in stix_object
+            and stix_object["kill_chain_phases"] is not None
+        ):
             for kill_chain_phase in stix_object["kill_chain_phases"]:
                 if (
                     kill_chain_phase["kill_chain_name"] + kill_chain_phase["phase_name"]
@@ -460,7 +478,10 @@ class OpenCTIStix2:
                         "type": kill_chain_phase["entity_type"],
                     }
                 kill_chain_phases_ids.append(kill_chain_phase["id"])
-        elif "x_opencti_kill_chain_phases" in stix_object:
+        elif (
+            "x_opencti_kill_chain_phases" in stix_object
+            and stix_object["x_opencti_kill_chain_phases"] is not None
+        ):
             for kill_chain_phase in stix_object["x_opencti_kill_chain_phases"]:
                 if (
                     kill_chain_phase["kill_chain_name"] + kill_chain_phase["phase_name"]
@@ -522,7 +543,10 @@ class OpenCTIStix2:
                     "external_references", stix_object
                 )
             )
-        if "external_references" in stix_object:
+        if (
+            "external_references" in stix_object
+            and stix_object["external_references"] is not None
+        ):
             for external_reference in stix_object["external_references"]:
                 try:
                     url = (
@@ -703,7 +727,10 @@ class OpenCTIStix2:
                     self.opencti.app_logger.warning(
                         "Cannot generate external reference"
                     )
-        elif "x_opencti_external_references" in stix_object:
+        elif (
+            "x_opencti_external_references" in stix_object
+            and stix_object["x_opencti_external_references"] is not None
+        ):
             for external_reference in stix_object["x_opencti_external_references"]:
                 url = external_reference["url"] if "url" in external_reference else None
                 source_name = (
@@ -743,6 +770,7 @@ class OpenCTIStix2:
                                 fileMarkings=file.get("object_marking_refs", None),
                                 mime_type=file["mime_type"],
                                 no_trigger_import=file.get("no_trigger_import", False),
+                                embedded=file.get("embedded", False),
                             )
                 if (
                     self.opencti.get_attribute_in_extension("files", external_reference)
@@ -760,6 +788,7 @@ class OpenCTIStix2:
                                 fileMarkings=file.get("object_marking_refs", None),
                                 mime_type=file["mime_type"],
                                 no_trigger_import=file.get("no_trigger_import", False),
+                                embedded=file.get("embedded", False),
                             )
                 external_references_ids.append(external_reference_id)
         # Granted refs
@@ -772,7 +801,10 @@ class OpenCTIStix2:
             granted_refs_ids = self.opencti.get_attribute_in_extension(
                 "granted_refs", stix_object
             )
-        elif "x_opencti_granted_refs" in stix_object:
+        elif (
+            "x_opencti_granted_refs" in stix_object
+            and stix_object["x_opencti_granted_refs"] is not None
+        ):
             granted_refs_ids = stix_object["x_opencti_granted_refs"]
         # Sample refs
         sample_refs_ids = (
@@ -794,6 +826,11 @@ class OpenCTIStix2:
 
     # Please use get_reader instead of this definition
     def get_readers(self):
+        """Get a dictionary mapping entity types to their read methods.
+
+        :return: Dictionary mapping entity types to read functions
+        :rtype: dict
+        """
         return {
             "Attack-Pattern": self.opencti.attack_pattern.read,
             "Campaign": self.opencti.campaign.read,
@@ -841,6 +878,13 @@ class OpenCTIStix2:
         }
 
     def get_reader(self, entity_type: str):
+        """Get the appropriate reader function for a given entity type.
+
+        :param entity_type: Type of the entity
+        :type entity_type: str
+        :return: Reader function for the entity type
+        :rtype: callable or None
+        """
         # Map types
         if entity_type == "StixFile":
             entity_type = "File"
@@ -861,6 +905,11 @@ class OpenCTIStix2:
     # endregion
 
     def get_stix_helper(self):
+        """Get a dictionary mapping STIX types to their helper functions.
+
+        :return: Dictionary mapping STIX types to generate_id functions
+        :rtype: dict
+        """
         # Import
         return {
             # entities
@@ -908,7 +957,37 @@ class OpenCTIStix2:
             "sighting": self.opencti.stix_sighting_relationship,
         }
 
+    def get_internal_helper(self):
+        """Get a dictionary mapping internal types to their helper functions.
+
+        :return: Dictionary mapping internal types to generate_id functions
+        :rtype: dict
+        """
+        # Import
+        return {
+            "user": self.opencti.user,
+            "group": self.opencti.group,
+            "capability": self.opencti.capability,
+            "role": self.opencti.role,
+            "settings": self.opencti.settings,
+            "work": self.opencti.work,
+            "deleteoperation": self.opencti.trash,
+            "draftworkspace": self.opencti.draft,
+            "playbook": self.opencti.playbook,
+            "workspace": self.opencti.workspace,
+            "publicdashboard": self.opencti.public_dashboard,
+            "notification": self.opencti.notification,
+            "internalfile": self.opencti.internal_file,
+        }
+
     def generate_standard_id_from_stix(self, data):
+        """Generate a standard ID from STIX data.
+
+        :param data: STIX data dictionary
+        :type data: dict
+        :return: Generated standard ID or None
+        :rtype: str or None
+        """
         stix_helpers = self.get_stix_helper()
         helper = stix_helpers.get(data["type"])
         return helper.generate_id_from_data(data)
@@ -1014,6 +1093,7 @@ class OpenCTIStix2:
                             fileMarkings=file.get("object_marking_refs", None),
                             mime_type=file["mime_type"],
                             no_trigger_import=file.get("no_trigger_import", False),
+                            embedded=file.get("embedded", False),
                         )
             if (
                 self.opencti.get_attribute_in_extension("files", stix_object)
@@ -1031,6 +1111,7 @@ class OpenCTIStix2:
                             fileMarkings=file.get("object_marking_refs", None),
                             mime_type=file["mime_type"],
                             no_trigger_import=file.get("no_trigger_import", False),
+                            embedded=file.get("embedded", False),
                         )
         return stix_object_results
 
@@ -1143,6 +1224,7 @@ class OpenCTIStix2:
                             fileMarkings=file.get("object_marking_refs", None),
                             mime_type=file["mime_type"],
                             no_trigger_import=file.get("no_trigger_import", False),
+                            embedded=file.get("embedded", False),
                         )
             if (
                 self.opencti.get_attribute_in_extension("files", stix_object)
@@ -1160,6 +1242,7 @@ class OpenCTIStix2:
                             fileMarkings=file.get("object_marking_refs", None),
                             mime_type=file["mime_type"],
                             no_trigger_import=file.get("no_trigger_import", False),
+                            embedded=file.get("embedded", False),
                         )
             if "id" in stix_object:
                 self.mapping_cache[stix_object["id"]] = {
@@ -2417,6 +2500,9 @@ class OpenCTIStix2:
         field_patch_files = next(
             (op for op in field_patch if op["key"] == "x_opencti_files"), None
         )
+        item_id = self.opencti.get_attribute_in_extension("id", item)
+        if item_id is None:
+            item_id = item["id"]
         do_add_file = self.opencti.stix_domain_object.add_file
         if StixCyberObservableTypes.has_value(item["type"]):
             do_add_file = self.opencti.stix_cyber_observable.add_file
@@ -2426,13 +2512,14 @@ class OpenCTIStix2:
             for file in field_patch_files["value"]:
                 if "data" in file:
                     do_add_file(
-                        id=item["id"],
+                        id=item_id,
                         file_name=file["name"],
                         version=file.get("version", None),
                         data=base64.b64decode(file["data"]),
                         fileMarkings=file.get("object_marking_refs", None),
                         mime_type=file.get("mime_type", None),
                         no_trigger_import=file.get("no_trigger_import", False),
+                        embedded=file.get("embedded", False),
                     )
 
     def apply_patch(self, item):
@@ -2444,41 +2531,280 @@ class OpenCTIStix2:
         field_patch_without_files = [
             op for op in field_patch if op["key"] != "x_opencti_files"
         ]
+        item_id = self.opencti.get_attribute_in_extension("id", item)
+        if item_id is None:
+            item_id = item["id"]
         if len(field_patch_without_files) > 0:
             if item["type"] == "relationship":
                 self.opencti.stix_core_relationship.update_field(
-                    id=item["id"], input=field_patch_without_files
+                    id=item_id, input=field_patch_without_files
                 )
             elif item["type"] == "sighting":
                 self.opencti.stix_sighting_relationship.update_field(
-                    id=item["id"], input=field_patch_without_files
+                    id=item_id, input=field_patch_without_files
                 )
             elif StixCyberObservableTypes.has_value(item["type"]):
                 self.opencti.stix_cyber_observable.update_field(
-                    id=item["id"], input=field_patch_without_files
+                    id=item_id, input=field_patch_without_files
                 )
             elif item["type"] == "external-reference":
                 self.opencti.external_reference.update_field(
-                    id=item["id"], input=field_patch_without_files
+                    id=item_id, input=field_patch_without_files
+                )
+            elif item["type"] == "indicator":
+                self.opencti.indicator.update_field(
+                    id=item_id, input=field_patch_without_files
+                )
+            elif item["type"] == "notification":
+                self.opencti.notification.update_field(
+                    id=item_id, input=field_patch_without_files
+                )
+            elif item["type"] == "user":
+                self.opencti.user.update_field(
+                    id=item_id, input=field_patch_without_files
                 )
             else:
                 self.opencti.stix_domain_object.update_field(
-                    id=item["id"], input=field_patch_without_files
+                    id=item_id, input=field_patch_without_files
                 )
         self.apply_patch_files(item)
 
+    def rule_apply(self, item):
+        rule_id = self.opencti.get_attribute_in_extension("opencti_rule", item)
+        if rule_id is None:
+            rule_id = item["opencti_rule"]
+        self.opencti.stix_core_object.rule_apply(element_id=item["id"], rule_id=rule_id)
+
+    def rule_clear(self, item):
+        rule_id = self.opencti.get_attribute_in_extension("opencti_rule", item)
+        if rule_id is None:
+            rule_id = item["opencti_rule"]
+        self.opencti.stix_core_object.rule_clear(element_id=item["id"], rule_id=rule_id)
+
+    def rules_rescan(self, item):
+        self.opencti.stix_core_object.rules_rescan(element_id=item["id"])
+
+    def organization_share(self, item):
+        organization_ids = self.opencti.get_attribute_in_extension(
+            "sharing_organization_ids", item
+        )
+        if organization_ids is None:
+            organization_ids = item["sharing_organization_ids"]
+        sharing_direct_container = self.opencti.get_attribute_in_extension(
+            "sharing_direct_container", item
+        )
+        if sharing_direct_container is None:
+            sharing_direct_container = item["sharing_direct_container"]
+
+        if item["type"] == "relationship":
+            self.opencti.stix_core_relationship.organization_share(
+                item["id"], organization_ids, sharing_direct_container
+            )
+        elif item["type"] == "sighting":
+            self.opencti.stix_sighting_relationship.organization_share(
+                item["id"], organization_ids, sharing_direct_container
+            )
+        else:
+            # Element is considered stix core object
+            self.opencti.stix_core_object.organization_share(
+                item["id"], organization_ids, sharing_direct_container
+            )
+
+    def organization_unshare(self, item):
+        organization_ids = self.opencti.get_attribute_in_extension(
+            "sharing_organization_ids", item
+        )
+        if organization_ids is None:
+            organization_ids = item["sharing_organization_ids"]
+        sharing_direct_container = self.opencti.get_attribute_in_extension(
+            "sharing_direct_container", item
+        )
+        if sharing_direct_container is None:
+            sharing_direct_container = item["sharing_direct_container"]
+        if item["type"] == "relationship":
+            self.opencti.stix_core_relationship.organization_unshare(
+                item["id"], organization_ids, sharing_direct_container
+            )
+        elif item["type"] == "sighting":
+            self.opencti.stix_sighting_relationship.organization_unshare(
+                item["id"], organization_ids, sharing_direct_container
+            )
+        else:
+            # Element is considered stix core object
+            self.opencti.stix_core_object.organization_unshare(
+                item["id"], organization_ids, sharing_direct_container
+            )
+
+    def element_add_organizations(self, item):
+        organization_ids = self.opencti.get_attribute_in_extension(
+            "organization_ids", item
+        )
+        if organization_ids is None:
+            organization_ids = item["organization_ids"]
+        if item["type"] == "user":
+            for organization_id in organization_ids:
+                self.opencti.user.add_organization(
+                    id=item["id"], organization_id=organization_id
+                )
+        else:
+            raise ValueError(
+                "Add organizations operation not compatible with type",
+                {"type": item["type"]},
+            )
+
+    def element_remove_organizations(self, item):
+        organization_ids = self.opencti.get_attribute_in_extension(
+            "organization_ids", item
+        )
+        if organization_ids is None:
+            organization_ids = item["organization_ids"]
+        if item["type"] == "user":
+            for organization_id in organization_ids:
+                self.opencti.user.delete_organization(
+                    id=item["id"], organization_id=organization_id
+                )
+        else:
+            raise ValueError(
+                "Remove organizations operation not compatible with type",
+                {"type": item["type"]},
+            )
+
+    def element_add_groups(self, item):
+        group_ids = self.opencti.get_attribute_in_extension("group_ids", item)
+        if group_ids is None:
+            group_ids = item["group_ids"]
+        if item["type"] == "user":
+            for group_id in group_ids:
+                self.opencti.user.add_membership(id=item["id"], group_id=group_id)
+        else:
+            raise ValueError(
+                "Add groups operation not compatible with type", {"type": item["type"]}
+            )
+
+    def element_remove_groups(self, item):
+        group_ids = self.opencti.get_attribute_in_extension("group_ids", item)
+        if group_ids is None:
+            group_ids = item["group_ids"]
+        if item["type"] == "user":
+            for group_id in group_ids:
+                self.opencti.user.delete_membership(id=item["id"], group_id=group_id)
+        else:
+            raise ValueError(
+                "Remove groups operation not compatible with type",
+                {"type": item["type"]},
+            )
+
+    def send_email(self, item):
+        template_id = self.opencti.get_attribute_in_extension("template_id", item)
+        if template_id is None:
+            template_id = item["template_id"]
+        if item["type"] == "user":
+            self.opencti.user.send_mail(id=item["id"], template_id=template_id[0])
+        else:
+            raise ValueError(
+                "Not supported opencti_operation for this type",
+                {"type": item["type"]},
+            )
+
+    def element_operation_delete(self, item, operation):
+        # If data is stix, just use the generic stix function for deletion
+        force_delete = operation == "delete_force"
+        if item["type"] == "relationship":
+            self.opencti.stix_core_relationship.delete(id=item["id"])
+        elif item["type"] == "external-reference":
+            self.opencti.external_reference.delete(item["id"])
+        elif item["type"] == "sighting":
+            self.opencti.stix_sighting_relationship.delete(id=item["id"])
+        elif item["type"] in STIX_META_OBJECTS:
+            self.opencti.stix.delete(id=item["id"], force_delete=force_delete)
+        elif item["type"] in list(STIX_CYBER_OBSERVABLE_MAPPING.keys()):
+            self.opencti.stix_cyber_observable.delete(id=item["id"])
+        elif item["type"] in STIX_CORE_OBJECTS:
+            self.opencti.stix_core_object.delete(id=item["id"])
+        else:
+            # Element is not knowledge we need to use the right api
+            stix_helper = self.get_internal_helper().get(item["type"])
+            if stix_helper and hasattr(stix_helper, "delete"):
+                stix_helper.delete(id=item["id"], item=item)
+            else:
+                raise ValueError(
+                    "Delete operation or not found stix helper", {"type": item["type"]}
+                )
+
+    def element_remove_from_draft(self, item):
+        if item["type"] == "relationship":
+            self.opencti.stix_core_relationship.remove_from_draft(id=item["id"])
+        elif item["type"] == "sighting":
+            self.opencti.stix_sighting_relationship.remove_from_draft(id=item["id"])
+        else:
+            # Element is considered stix core object
+            self.opencti.stix_core_object.remove_from_draft(id=item["id"])
+
     def apply_opencti_operation(self, item, operation):
-        if operation == "delete":
-            delete_id = item["id"]
-            self.opencti.stix.delete(id=delete_id)
+        if operation == "delete" or operation == "delete_force":
+            self.element_operation_delete(item=item, operation=operation)
+        elif operation == "revert_draft":
+            self.element_remove_from_draft(item=item)
+        elif operation == "restore":
+            self.opencti.trash.restore(item["id"])
         elif operation == "merge":
-            target_id = item["merge_target_id"]
-            source_ids = item["merge_source_ids"]
+            target_id = self.opencti.get_attribute_in_extension("merge_target_id", item)
+            if target_id is None:
+                target_id = item["merge_target_id"]
+            source_ids = self.opencti.get_attribute_in_extension(
+                "merge_source_ids", item
+            )
+            if source_ids is None:
+                source_ids = item["merge_source_ids"]
             self.opencti.stix.merge(id=target_id, object_ids=source_ids)
         elif operation == "patch":
             self.apply_patch(item=item)
+        elif operation == "pir_flag_element":
+            id = item["id"]
+            input = item["input"]
+            self.opencti.pir.pir_flag_element(id=id, input=input)
+        elif operation == "pir_unflag_element":
+            id = item["id"]
+            input = item["input"]
+            self.opencti.pir.pir_unflag_element(id=id, input=input)
+        elif operation == "rule_apply":
+            self.rule_apply(item=item)
+        elif operation == "rule_clear":
+            self.rule_clear(item=item)
+        elif operation == "rules_rescan":
+            self.rules_rescan(item=item)
+        elif operation == "share":
+            self.organization_share(item=item)
+        elif operation == "unshare":
+            self.organization_unshare(item=item)
+        elif operation == "clear_access_restriction":
+            self.opencti.stix_core_object.clear_access_restriction(
+                element_id=item["id"]
+            )
+        elif operation == "enrichment":
+            connector_ids = self.opencti.get_attribute_in_extension(
+                "connector_ids", item
+            )
+            if connector_ids is None:
+                connector_ids = item["connector_ids"]
+            self.opencti.stix_core_object.ask_enrichments(
+                element_id=item["id"], connector_ids=connector_ids
+            )
+        elif operation == "add_organizations":
+            self.element_add_organizations(item)
+        elif operation == "remove_organizations":
+            self.element_remove_organizations(item)
+        elif operation == "add_groups":
+            self.element_add_groups(item)
+        elif operation == "remove_groups":
+            self.element_remove_groups(item)
+        elif operation == "send_email":
+            self.send_email(item=item)
         else:
-            raise ValueError("Not supported opencti_operation")
+            raise ValueError(
+                "Not supported opencti_operation",
+                {"operation": operation},
+            )
 
     def import_item(
         self,
@@ -2489,6 +2815,20 @@ class OpenCTIStix2:
         work_id: str = None,
     ):
         worker_logger = self.opencti.logger_class("worker")
+        # Ultimate protection to avoid infinite retry
+        if processing_count > MAX_PROCESSING_COUNT:
+            if work_id is not None:
+                item_str = json.dumps(item)
+                self.opencti.work.report_expectation(
+                    work_id,
+                    {
+                        "error": "Max number of retries reached, please see error logs of workers for more details",
+                        "source": (
+                            item_str if len(item_str) < 50000 else "Bundle too large"
+                        ),
+                    },
+                )
+                return False
         try:
             self.opencti.set_retry_number(processing_count)
             opencti_operation = self.opencti.get_attribute_in_extension(
@@ -2727,9 +3067,25 @@ class OpenCTIStix2:
         )
 
         stix2_splitter = OpenCTIStix2Splitter()
-        _, bundles = stix2_splitter.split_bundle_with_expectations(
-            stix_bundle, False, event_version
+        _, incompatible_elements, bundles = (
+            stix2_splitter.split_bundle_with_expectations(
+                stix_bundle, False, event_version
+            )
         )
+
+        # Report every element ignored during bundle splitting
+        if work_id is not None:
+            for incompatible_element in incompatible_elements:
+                self.opencti.work.report_expectation(
+                    work_id,
+                    {
+                        "error": "Incompatible element in bundle",
+                        "source": "Element "
+                        + incompatible_element["id"]
+                        + " is incompatible and couldn't be processed",
+                    },
+                )
+
         # Import every element in a specific order
         imported_elements = []
         for bundle in bundles:

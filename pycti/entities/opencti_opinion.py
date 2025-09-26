@@ -7,6 +7,13 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Opinion:
+    """Main Opinion class for OpenCTI
+
+    Manages analyst opinions and assessments in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -17,6 +24,14 @@ class Opinion:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -219,9 +234,9 @@ class Opinion:
         if created is not None:
             if isinstance(created, datetime.datetime):
                 created = created.isoformat()
-            data = {"opinion": opinion, "created": created}
+            data = {"opinion": opinion.strip(), "created": created}
         else:
-            data = {"opinion": opinion}
+            data = {"opinion": opinion.strip()}
         data = canonicalize(data, utf8=False)
         id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
         return "opinion--" + id

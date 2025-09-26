@@ -7,6 +7,13 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Task:
+    """Main Task class for OpenCTI
+
+    Manages tasks and to-do items in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -17,6 +24,14 @@ class Task:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -299,7 +314,7 @@ class Task:
             data = self.opencti.process_multiple(result["data"]["tasks"])
             final_data = final_data + data
             while result["data"]["tasks"]["pageInfo"]["hasNextPage"]:
-                after = result["date"]["tasks"]["pageInfo"]["endCursor"]
+                after = result["data"]["tasks"]["pageInfo"]["endCursor"]
                 self.opencti.app_logger.info("Listing Tasks", {"after": after})
                 result = self.opencti.query(
                     query,

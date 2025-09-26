@@ -9,6 +9,14 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class ExternalReference:
+    """Main ExternalReference class for OpenCTI
+
+    Manages external references and citations in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    :param file: file handling configuration
+    """
+
     def __init__(self, opencti, file):
         self.opencti = opencti
         self.file = file
@@ -276,12 +284,13 @@ class ExternalReference:
         file_markings = kwargs.get("fileMarkings", None)
         mime_type = kwargs.get("mime_type", "text/plain")
         no_trigger_import = kwargs.get("no_trigger_import", False)
+        embedded = kwargs.get("embedded", False)
         if id is not None and file_name is not None:
             final_file_name = os.path.basename(file_name)
             query = """
-                mutation ExternalReferenceEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
+                mutation ExternalReferenceEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean, $embedded: Boolean) {
                     externalReferenceEdit(id: $id) {
-                        importPush(file: $file, fileMarkings: $fileMarkings, version: $version, noTriggerImport: $noTriggerImport) {
+                        importPush(file: $file, fileMarkings: $fileMarkings, version: $version, noTriggerImport: $noTriggerImport, embedded: $embedded) {
                             id
                             name
                         }
@@ -310,6 +319,7 @@ class ExternalReference:
                         if isinstance(no_trigger_import, bool)
                         else no_trigger_import == "True"
                     ),
+                    "embedded": embedded,
                 },
             )
         else:

@@ -6,6 +6,13 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Feedback:
+    """Main Feedback class for OpenCTI
+
+    Manages feedback and analyst assessments in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -16,6 +23,14 @@ class Feedback:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -204,6 +219,14 @@ class Feedback:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -490,7 +513,7 @@ class Feedback:
             data = self.opencti.process_multiple(result["data"]["feedbacks"])
             final_data = final_data + data
             while result["data"]["feedbacks"]["pageInfo"]["hasNextPage"]:
-                after = result["date"]["feedbacks"]["pageInfo"]["endCursor"]
+                after = result["data"]["feedbacks"]["pageInfo"]["endCursor"]
                 self.opencti.app_logger.info("Listing Feedbacks", {"after": after})
                 result = self.opencti.query(
                     query,

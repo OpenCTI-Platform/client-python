@@ -8,6 +8,13 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class Note:
+    """Main Note class for OpenCTI
+
+    Manages notes and annotations in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -18,6 +25,14 @@ class Note:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -219,6 +234,14 @@ class Note:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -441,9 +464,9 @@ class Note:
         if created is not None:
             if isinstance(created, datetime.datetime):
                 created = created.isoformat()
-            data = {"content": content, "created": created}
+            data = {"content": content.strip(), "created": created}
         else:
-            data = {"content": content}
+            data = {"content": content.strip()}
         data = canonicalize(data, utf8=False)
         id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
         return "note--" + id

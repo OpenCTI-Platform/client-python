@@ -7,6 +7,14 @@ import magic
 
 
 class StixDomainObject:
+    """Main StixDomainObject class for OpenCTI
+
+    Manages STIX Domain Objects in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    :param file: file handling configuration
+    """
+
     def __init__(self, opencti, file):
         self.opencti = opencti
         self.file = file
@@ -477,14 +485,54 @@ class StixDomainObject:
             ... on Vulnerability {
                 name
                 description
+                x_opencti_aliases
+                x_opencti_cvss_vector_string
                 x_opencti_cvss_base_score
                 x_opencti_cvss_base_severity
                 x_opencti_cvss_attack_vector
+                x_opencti_cvss_attack_complexity
+                x_opencti_cvss_privileges_required
+                x_opencti_cvss_user_interaction
+                x_opencti_cvss_scope
+                x_opencti_cvss_confidentiality_impact
                 x_opencti_cvss_integrity_impact
                 x_opencti_cvss_availability_impact
+                x_opencti_cvss_exploit_code_maturity
+                x_opencti_cvss_remediation_level
+                x_opencti_cvss_report_confidence
+                x_opencti_cvss_temporal_score
+                x_opencti_cvss_v2_vector_string
+                x_opencti_cvss_v2_base_score
+                x_opencti_cvss_v2_access_vector
+                x_opencti_cvss_v2_access_complexity
+                x_opencti_cvss_v2_authentication
+                x_opencti_cvss_v2_confidentiality_impact
+                x_opencti_cvss_v2_integrity_impact
+                x_opencti_cvss_v2_availability_impact
+                x_opencti_cvss_v2_exploitability
+                x_opencti_cvss_v2_remediation_level
+                x_opencti_cvss_v2_report_confidence
+                x_opencti_cvss_v2_temporal_score
+                x_opencti_cvss_v4_vector_string
+                x_opencti_cvss_v4_base_score
+                x_opencti_cvss_v4_base_severity
+                x_opencti_cvss_v4_attack_vector
+                x_opencti_cvss_v4_attack_complexity
+                x_opencti_cvss_v4_attack_requirements
+                x_opencti_cvss_v4_privileges_required
+                x_opencti_cvss_v4_user_interaction
+                x_opencti_cvss_v4_confidentiality_impact_v
+                x_opencti_cvss_v4_confidentiality_impact_s
+                x_opencti_cvss_v4_integrity_impact_v
+                x_opencti_cvss_v4_integrity_impact_s
+                x_opencti_cvss_v4_availability_impact_v
+                x_opencti_cvss_v4_availability_impact_s
+                x_opencti_cvss_v4_exploit_maturity
+                x_opencti_cwe
                 x_opencti_cisa_kev
                 x_opencti_epss_score
                 x_opencti_epss_percentile
+                x_opencti_score
             }
             ... on Incident {
                 name
@@ -975,14 +1023,54 @@ class StixDomainObject:
             ... on Vulnerability {
                 name
                 description
+                x_opencti_aliases
+                x_opencti_cvss_vector_string
                 x_opencti_cvss_base_score
                 x_opencti_cvss_base_severity
                 x_opencti_cvss_attack_vector
+                x_opencti_cvss_attack_complexity
+                x_opencti_cvss_privileges_required
+                x_opencti_cvss_user_interaction
+                x_opencti_cvss_scope
+                x_opencti_cvss_confidentiality_impact
                 x_opencti_cvss_integrity_impact
                 x_opencti_cvss_availability_impact
+                x_opencti_cvss_exploit_code_maturity
+                x_opencti_cvss_remediation_level
+                x_opencti_cvss_report_confidence
+                x_opencti_cvss_temporal_score
+                x_opencti_cvss_v2_vector_string
+                x_opencti_cvss_v2_base_score
+                x_opencti_cvss_v2_access_vector
+                x_opencti_cvss_v2_access_complexity
+                x_opencti_cvss_v2_authentication
+                x_opencti_cvss_v2_confidentiality_impact
+                x_opencti_cvss_v2_integrity_impact
+                x_opencti_cvss_v2_availability_impact
+                x_opencti_cvss_v2_exploitability
+                x_opencti_cvss_v2_remediation_level
+                x_opencti_cvss_v2_report_confidence
+                x_opencti_cvss_v2_temporal_score
+                x_opencti_cvss_v4_vector_string
+                x_opencti_cvss_v4_base_score
+                x_opencti_cvss_v4_base_severity
+                x_opencti_cvss_v4_attack_vector
+                x_opencti_cvss_v4_attack_complexity
+                x_opencti_cvss_v4_attack_requirements
+                x_opencti_cvss_v4_privileges_required
+                x_opencti_cvss_v4_user_interaction
+                x_opencti_cvss_v4_confidentiality_impact_v
+                x_opencti_cvss_v4_confidentiality_impact_s
+                x_opencti_cvss_v4_integrity_impact_v
+                x_opencti_cvss_v4_integrity_impact_s
+                x_opencti_cvss_v4_availability_impact_v
+                x_opencti_cvss_v4_availability_impact_s
+                x_opencti_cvss_v4_exploit_maturity
+                x_opencti_cwe
                 x_opencti_cisa_kev
                 x_opencti_epss_score
                 x_opencti_epss_percentile
+                x_opencti_score
             }
             ... on Incident {
                 name
@@ -1288,12 +1376,13 @@ class StixDomainObject:
         version = kwargs.get("version", None)
         mime_type = kwargs.get("mime_type", "text/plain")
         no_trigger_import = kwargs.get("no_trigger_import", False)
+        embedded = kwargs.get("embedded", False)
         if id is not None and file_name is not None:
             final_file_name = os.path.basename(file_name)
             query = """
-                mutation StixDomainObjectEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean) {
+                mutation StixDomainObjectEdit($id: ID!, $file: Upload!, $fileMarkings: [String], $version: DateTime, $noTriggerImport: Boolean, $embedded: Boolean) {
                     stixDomainObjectEdit(id: $id) {
-                        importPush(file: $file, version: $version, fileMarkings: $fileMarkings, noTriggerImport: $noTriggerImport) {
+                        importPush(file: $file, version: $version, fileMarkings: $fileMarkings, noTriggerImport: $noTriggerImport, embedded: $embedded) {
                             id
                             name
                         }
@@ -1322,6 +1411,7 @@ class StixDomainObject:
                         if isinstance(no_trigger_import, bool)
                         else no_trigger_import == "True"
                     ),
+                    "embedded": embedded,
                 },
             )
         else:

@@ -7,6 +7,13 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class CaseRfi:
+    """Main CaseRfi (Request for Information) class for OpenCTI
+
+    Manages RFI cases in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -17,6 +24,14 @@ class CaseRfi:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -232,6 +247,14 @@ class CaseRfi:
             spec_version
             created_at
             updated_at
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -530,7 +553,7 @@ class CaseRfi:
             data = self.opencti.process_multiple(result["data"]["caseRfis"])
             final_data = final_data + data
             while result["data"]["caseRfis"]["pageInfo"]["hasNextPage"]:
-                after = result["date"]["caseRfis"]["pageInfo"]["endCursor"]
+                after = result["data"]["caseRfis"]["pageInfo"]["endCursor"]
                 self.opencti.app_logger.info("Listing Case Rfis", {"after": after})
                 result = self.opencti.query(
                     query,
@@ -685,6 +708,7 @@ class CaseRfi:
         created = kwargs.get("created", None)
         modified = kwargs.get("modified", None)
         name = kwargs.get("name", None)
+        content = kwargs.get("content", None)
         description = kwargs.get("description", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         granted_refs = kwargs.get("objectOrganization", None)
@@ -726,6 +750,7 @@ class CaseRfi:
                         "modified": modified,
                         "name": name,
                         "description": description,
+                        "content": content,
                         "x_opencti_stix_ids": x_opencti_stix_ids,
                         "x_opencti_workflow_id": x_opencti_workflow_id,
                         "update": update,
@@ -858,6 +883,13 @@ class CaseRfi:
                 stix_object["x_opencti_assignee_ids"] = (
                     self.opencti.get_attribute_in_extension("assignee_ids", stix_object)
                 )
+            if "x_opencti_content" not in stix_object or "content" not in stix_object:
+                stix_object["content"] = self.opencti.get_attribute_in_extension(
+                    "content", stix_object
+                )
+            if "x_opencti_content" in stix_object:
+                stix_object["content"] = stix_object["x_opencti_content"]
+
             if "x_opencti_participant_ids" not in stix_object:
                 stix_object["x_opencti_participant_ids"] = (
                     self.opencti.get_attribute_in_extension(
@@ -882,6 +914,11 @@ class CaseRfi:
                 externalReferences=(
                     extras["external_references_ids"]
                     if "external_references_ids" in extras
+                    else None
+                ),
+                content=(
+                    self.opencti.stix2.convert_markdown(stix_object["content"])
+                    if "content" in stix_object
                     else None
                 ),
                 revoked=stix_object["revoked"] if "revoked" in stix_object else None,

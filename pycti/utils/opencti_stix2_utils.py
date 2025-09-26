@@ -2,7 +2,29 @@ from typing import Any, Dict
 
 from stix2 import EqualityComparisonExpression, ObjectPath, ObservationExpression
 
-SUPPORTED_STIX_ENTITY_OBJECTS = [
+SUPPORTED_INTERNAL_OBJECTS = [
+    "user",
+    "group",
+    "capability",
+    "role",
+    "settings",
+    "notification",
+    "work",
+    "trash",
+    "draftworkspace",
+    "playbook",
+    "deleteoperation",
+    "workspace",
+    "publicdashboard",
+]
+
+STIX_META_OBJECTS = [
+    "label",
+    "vocabulary",
+    "kill-chain-phase",
+]
+
+STIX_CORE_OBJECTS = [
     "attack-pattern",
     "campaign",
     "case-incident",
@@ -27,8 +49,6 @@ SUPPORTED_STIX_ENTITY_OBJECTS = [
     "indicator",
     "infrastructure",
     "intrusion-set",
-    "kill-chain-phase",
-    "label",
     "language",
     "location",
     "malware",
@@ -43,9 +63,10 @@ SUPPORTED_STIX_ENTITY_OBJECTS = [
     "x-opencti-task",
     "threat-actor",
     "tool",
-    "vocabulary",
     "vulnerability",
 ]
+
+SUPPORTED_STIX_ENTITY_OBJECTS = STIX_META_OBJECTS + STIX_CORE_OBJECTS
 
 STIX_CYBER_OBSERVABLE_MAPPING = {
     "autonomous-system": "Autonomous-System",
@@ -82,6 +103,12 @@ STIX_CYBER_OBSERVABLE_MAPPING = {
     "simple-observable": "Simple-Observable",
     "persona": "Persona",
 }
+
+STIX_OBJECTS = (
+    SUPPORTED_STIX_ENTITY_OBJECTS  # entities
+    + list(STIX_CYBER_OBSERVABLE_MAPPING.keys())  # observables
+    + ["relationship", "sighting"]  # relationships
+)
 
 PATTERN_MAPPING = {
     "Autonomous-System": ["number"],
@@ -123,8 +150,20 @@ OBSERVABLES_VALUE_INT = [
 
 
 class OpenCTIStix2Utils:
+    """Utility class for STIX2 operations in OpenCTI
+
+    Provides helper methods for STIX2 conversions and pattern generation.
+    """
+
     @staticmethod
     def stix_observable_opencti_type(observable_type):
+        """Convert STIX observable type to OpenCTI type.
+
+        :param observable_type: STIX observable type
+        :type observable_type: str
+        :return: Corresponding OpenCTI type or "Unknown"
+        :rtype: str
+        """
         if observable_type in STIX_CYBER_OBSERVABLE_MAPPING:
             return STIX_CYBER_OBSERVABLE_MAPPING[observable_type]
         else:
@@ -132,6 +171,15 @@ class OpenCTIStix2Utils:
 
     @staticmethod
     def create_stix_pattern(observable_type, observable_value):
+        """Create a STIX pattern from an observable type and value.
+
+        :param observable_type: Type of the observable
+        :type observable_type: str
+        :param observable_value: Value of the observable
+        :type observable_value: str
+        :return: STIX pattern string or None if type not supported
+        :rtype: str or None
+        """
         if observable_type in PATTERN_MAPPING:
             lhs = ObjectPath(
                 (
@@ -148,14 +196,16 @@ class OpenCTIStix2Utils:
         else:
             return None
 
-    """Generate random stix id (uuid v1)
-    This id will stored and resolved by openCTI
-    We will stored only 5 stix of this type to prevent database flooding
-    :param stix_type: the stix type
-    """
-
     @staticmethod
     def generate_random_stix_id(stix_type):
+        """Generate random stix id (uuid v1) - DEPRECATED.
+
+        This function is deprecated and should not be used anymore.
+        Please use the generate_id function for SDO or proper SCO constructor.
+
+        :param stix_type: the stix type
+        :raises ValueError: Always raises an error as this function is deprecated
+        """
         raise ValueError(
             "This function should not be used anymore, please use the generate_id function for SDO or proper SCO constructor"
         )
@@ -164,6 +214,18 @@ class OpenCTIStix2Utils:
     def retrieveClassForMethod(
         openCTIApiClient, entity: Dict, type_path: str, method: str
     ) -> Any:
+        """Retrieve the appropriate API class for a given entity type and method.
+
+        :param openCTIApiClient: OpenCTI API client instance
+        :param entity: Entity dictionary containing the type
+        :type entity: Dict
+        :param type_path: Path to the type field in the entity
+        :type type_path: str
+        :param method: Name of the method to check for
+        :type method: str
+        :return: The API class that has the specified method, or None
+        :rtype: Any
+        """
         if entity is not None and type_path in entity:
             attributeName = entity[type_path].lower().replace("-", "_")
             if hasattr(openCTIApiClient, attributeName):

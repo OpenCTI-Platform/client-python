@@ -10,8 +10,15 @@ import requests
 
 from pycti import __version__
 from pycti.api.opencti_api_connector import OpenCTIApiConnector
+from pycti.api.opencti_api_draft import OpenCTIApiDraft
+from pycti.api.opencti_api_internal_file import OpenCTIApiInternalFile
+from pycti.api.opencti_api_notification import OpenCTIApiNotification
+from pycti.api.opencti_api_pir import OpenCTIApiPir
 from pycti.api.opencti_api_playbook import OpenCTIApiPlaybook
+from pycti.api.opencti_api_public_dashboard import OpenCTIApiPublicDashboard
+from pycti.api.opencti_api_trash import OpenCTIApiTrash
 from pycti.api.opencti_api_work import OpenCTIApiWork
+from pycti.api.opencti_api_workspace import OpenCTIApiWorkspace
 from pycti.entities.opencti_attack_pattern import AttackPattern
 from pycti.entities.opencti_campaign import Campaign
 from pycti.entities.opencti_capability import Capability
@@ -71,6 +78,25 @@ from pycti.utils.opencti_stix2 import OpenCTIStix2
 from pycti.utils.opencti_stix2_utils import OpenCTIStix2Utils
 
 
+def build_request_headers(token: str, custom_headers: str, app_logger):
+    headers_dict = {
+        "User-Agent": "pycti/" + __version__,
+        "Authorization": "Bearer " + token,
+    }
+    # Build and add custom headers
+    if custom_headers is not None:
+        for header_pair in custom_headers.strip().split(";"):
+            if header_pair:  # Skip empty header pairs
+                try:
+                    key, value = header_pair.split(":", 1)
+                    headers_dict[key.strip()] = value.strip()
+                except ValueError:
+                    app_logger.warning(
+                        "Ignored invalid header pair", {"header_pair": header_pair}
+                    )
+    return headers_dict
+
+
 class File:
     def __init__(self, name, data, mime="text/plain"):
         self.name = name
@@ -99,24 +125,28 @@ class OpenCTIApiClient:
         ```
     :param json_logging: format the logs as json if set to True
     :type json_logging: bool, optional
+    :param bundle_send_to_queue: if bundle will be sent to queue
+    :type bundle_send_to_queue: bool, optional
     :param cert: If String, file path to pem file. If Tuple, a ('path_to_cert.crt', 'path_to_key.key') pair representing the certificate and the key.
     :type cert: str, tuple, optional
-    :param auth: Add a AuthBase class with custom authentication for you OpenCTI infrastructure.
-    :type auth: requests.auth.AuthBase, optional
+    :param custom_headers: Add custom headers to use with the graphql queries
+    :type custom_headers: str, optional must in the format header01:value;header02:value
+    :param perform_health_check: if client init must check the api access
+    :type perform_health_check: bool, optional
     """
 
     def __init__(
         self,
         url: str,
         token: str,
-        log_level="info",
+        log_level: str = "info",
         ssl_verify: Union[bool, str] = False,
         proxies: Union[Dict[str, str], None] = None,
-        json_logging=False,
-        bundle_send_to_queue=True,
+        json_logging: bool = False,
+        bundle_send_to_queue: bool = True,
         cert: Union[str, Tuple[str, str], None] = None,
-        auth=None,
-        perform_health_check=True,
+        custom_headers: str = None,
+        perform_health_check: bool = True,
     ):
         """Constructor method"""
 
@@ -138,22 +168,22 @@ class OpenCTIApiClient:
         # Define API
         self.api_token = token
         self.api_url = url + "/graphql"
-        self.request_headers = {
-            "User-Agent": "pycti/" + __version__,
-            "Authorization": "Bearer " + token,
-        }
-
-        if auth is not None:
-            self.session = requests.session()
-            self.session.auth = auth
-        else:
-            self.session = requests.session()
-
+        self.request_headers = build_request_headers(
+            token, custom_headers, self.app_logger
+        )
+        self.session = requests.session()
         # Define the dependencies
         self.work = OpenCTIApiWork(self)
+        self.notification = OpenCTIApiNotification(self)
+        self.trash = OpenCTIApiTrash(self)
+        self.draft = OpenCTIApiDraft(self)
+        self.workspace = OpenCTIApiWorkspace(self)
+        self.public_dashboard = OpenCTIApiPublicDashboard(self)
         self.playbook = OpenCTIApiPlaybook(self)
         self.connector = OpenCTIApiConnector(self)
         self.stix2 = OpenCTIStix2(self)
+        self.pir = OpenCTIApiPir(self)
+        self.internal_file = OpenCTIApiInternalFile(self)
 
         # Define the entities
         self.vocabulary = Vocabulary(self)
@@ -248,13 +278,15 @@ class OpenCTIApiClient:
             "" if retry_number is None else str(retry_number)
         )
 
-    def query(self, query, variables=None):
+    def query(self, query, variables=None, disable_impersonate=False):
         """submit a query to the OpenCTI GraphQL API
 
         :param query: GraphQL query string
         :type query: str
         :param variables: GraphQL query variables, defaults to {}
         :type variables: dict, optional
+        :param disable_impersonate: removes impersonate header if set to True, defaults to False
+        :type disable_impersonate: bool, optional
         :return: returns the response json content
         :rtype: Any
         """
@@ -279,6 +311,9 @@ class OpenCTIApiClient:
             else:
                 query_var[key] = val
 
+        query_headers = self.request_headers.copy()
+        if disable_impersonate and "opencti-applicant-id" in query_headers:
+            del query_headers["opencti-applicant-id"]
         # If yes, transform variable (file to null) and create multipart query
         if len(files_vars) > 0:
             multipart_data = {
@@ -345,7 +380,7 @@ class OpenCTIApiClient:
                 self.api_url,
                 data=multipart_data,
                 files=multipart_files,
-                headers=self.request_headers,
+                headers=query_headers,
                 verify=self.ssl_verify,
                 cert=self.cert,
                 proxies=self.proxies,
@@ -356,7 +391,7 @@ class OpenCTIApiClient:
             r = self.session.post(
                 self.api_url,
                 json={"query": query, "variables": variables},
-                headers=self.request_headers,
+                headers=query_headers,
                 verify=self.ssl_verify,
                 cert=self.cert,
                 proxies=self.proxies,

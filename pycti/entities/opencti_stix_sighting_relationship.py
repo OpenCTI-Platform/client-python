@@ -7,6 +7,13 @@ from stix2.canonicalization.Canonicalize import canonicalize
 
 
 class StixSightingRelationship:
+    """Main StixSightingRelationship class for OpenCTI
+
+    Manages STIX sighting relationships in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    """
+
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -25,6 +32,14 @@ class StixSightingRelationship:
             created
             modified
             confidence
+            status {
+                id
+                template {
+                  id
+                  name
+                  color
+                }
+            }
             createdBy {
                 ... on Identity {
                     id
@@ -525,6 +540,7 @@ class StixSightingRelationship:
         external_references = kwargs.get("externalReferences", None)
         x_opencti_stix_ids = kwargs.get("x_opencti_stix_ids", None)
         x_opencti_workflow_id = kwargs.get("x_opencti_workflow_id", None)
+        granted_refs = kwargs.get("objectOrganization", None)
         update = kwargs.get("update", False)
 
         self.opencti.app_logger.info(
@@ -561,6 +577,7 @@ class StixSightingRelationship:
                     "externalReferences": external_references,
                     "x_opencti_stix_ids": x_opencti_stix_ids,
                     "x_opencti_workflow_id": x_opencti_workflow_id,
+                    "objectOrganization": granted_refs,
                     "update": update,
                 }
             },
@@ -793,6 +810,87 @@ class StixSightingRelationship:
         else:
             self.opencti.app_logger.error("Missing parameters: id")
             return False
+
+    """
+        Share element to multiple organizations
+
+        :param entity_id: the stix_sighting id
+        :param organization_id:s the organization to share with
+        :return void
+    """
+
+    def organization_share(self, entity_id, organization_ids, sharing_direct_container):
+        query = """
+                mutation StixSightingRelationshipEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
+                    stixSightingRelationshipEdit(id: $id) {
+                        restrictionOrganizationAdd(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
+                          id
+                        }
+                    }
+                }
+            """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
+            },
+        )
+
+    """
+        Unshare element from multiple organizations
+    
+        :param entity_id: the stix_sighting id
+        :param organization_id:s the organization to share with
+        :return void
+    """
+
+    def organization_unshare(
+        self, entity_id, organization_ids, sharing_direct_container
+    ):
+        query = """
+                mutation StixSightingRelationshipEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
+                    stixSightingRelationshipEdit(id: $id) {
+                        restrictionOrganizationDelete(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
+                          id
+                        }
+                    }
+                }
+            """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
+            },
+        )
+
+    """
+        Remove a stix_sighting object from draft (revert)
+
+        :param id: the stix_sighting id
+        :return void
+    """
+
+    def remove_from_draft(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.app_logger.info("Draft remove stix_sighting", {"id": id})
+            query = """
+                    mutation StixSightingRelationshipEditDraftRemove($id: ID!) {
+                        stixSightingRelationshipEdit(id: $id) {
+                            removeFromDraft
+                        }
+                    }
+                """
+            self.opencti.query(query, {"id": id})
+        else:
+            self.opencti.app_logger.error(
+                "[stix_sighting] Cant remove from draft, missing parameters: id"
+            )
+            return None
 
     """
         Delete a stix_sighting

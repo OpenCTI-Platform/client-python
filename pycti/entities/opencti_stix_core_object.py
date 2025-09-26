@@ -3,6 +3,14 @@ import json
 
 
 class StixCoreObject:
+    """Main StixCoreObject class for OpenCTI
+
+    Base class for managing STIX core objects in the OpenCTI platform.
+
+    :param opencti: instance of :py:class:`~pycti.api.opencti_api_client.OpenCTIApiClient`
+    :param file: file handling configuration
+    """
+
     def __init__(self, opencti, file):
         self.opencti = opencti
         self.file = file
@@ -354,14 +362,54 @@ class StixCoreObject:
             ... on Vulnerability {
                 name
                 description
+                x_opencti_aliases
+                x_opencti_cvss_vector_string
                 x_opencti_cvss_base_score
                 x_opencti_cvss_base_severity
                 x_opencti_cvss_attack_vector
+                x_opencti_cvss_attack_complexity
+                x_opencti_cvss_privileges_required
+                x_opencti_cvss_user_interaction
+                x_opencti_cvss_scope
+                x_opencti_cvss_confidentiality_impact
                 x_opencti_cvss_integrity_impact
                 x_opencti_cvss_availability_impact
+                x_opencti_cvss_exploit_code_maturity
+                x_opencti_cvss_remediation_level
+                x_opencti_cvss_report_confidence
+                x_opencti_cvss_temporal_score
+                x_opencti_cvss_v2_vector_string
+                x_opencti_cvss_v2_base_score
+                x_opencti_cvss_v2_access_vector
+                x_opencti_cvss_v2_access_complexity
+                x_opencti_cvss_v2_authentication
+                x_opencti_cvss_v2_confidentiality_impact
+                x_opencti_cvss_v2_integrity_impact
+                x_opencti_cvss_v2_availability_impact
+                x_opencti_cvss_v2_exploitability
+                x_opencti_cvss_v2_remediation_level
+                x_opencti_cvss_v2_report_confidence
+                x_opencti_cvss_v2_temporal_score
+                x_opencti_cvss_v4_vector_string
+                x_opencti_cvss_v4_base_score
+                x_opencti_cvss_v4_base_severity
+                x_opencti_cvss_v4_attack_vector
+                x_opencti_cvss_v4_attack_complexity
+                x_opencti_cvss_v4_attack_requirements
+                x_opencti_cvss_v4_privileges_required
+                x_opencti_cvss_v4_user_interaction
+                x_opencti_cvss_v4_confidentiality_impact_v
+                x_opencti_cvss_v4_confidentiality_impact_s
+                x_opencti_cvss_v4_integrity_impact_v
+                x_opencti_cvss_v4_integrity_impact_s
+                x_opencti_cvss_v4_availability_impact_v
+                x_opencti_cvss_v4_availability_impact_s
+                x_opencti_cvss_v4_exploit_maturity
+                x_opencti_cwe
                 x_opencti_cisa_kev
                 x_opencti_epss_score
                 x_opencti_epss_percentile
+                x_opencti_score
             }
             ... on Incident {
                 name
@@ -1025,14 +1073,54 @@ class StixCoreObject:
             ... on Vulnerability {
                 name
                 description
+                x_opencti_aliases
+                x_opencti_cvss_vector_string
                 x_opencti_cvss_base_score
                 x_opencti_cvss_base_severity
                 x_opencti_cvss_attack_vector
+                x_opencti_cvss_attack_complexity
+                x_opencti_cvss_privileges_required
+                x_opencti_cvss_user_interaction
+                x_opencti_cvss_scope
+                x_opencti_cvss_confidentiality_impact
                 x_opencti_cvss_integrity_impact
                 x_opencti_cvss_availability_impact
+                x_opencti_cvss_exploit_code_maturity
+                x_opencti_cvss_remediation_level
+                x_opencti_cvss_report_confidence
+                x_opencti_cvss_temporal_score
+                x_opencti_cvss_v2_vector_string
+                x_opencti_cvss_v2_base_score
+                x_opencti_cvss_v2_access_vector
+                x_opencti_cvss_v2_access_complexity
+                x_opencti_cvss_v2_authentication
+                x_opencti_cvss_v2_confidentiality_impact
+                x_opencti_cvss_v2_integrity_impact
+                x_opencti_cvss_v2_availability_impact
+                x_opencti_cvss_v2_exploitability
+                x_opencti_cvss_v2_remediation_level
+                x_opencti_cvss_v2_report_confidence
+                x_opencti_cvss_v2_temporal_score
+                x_opencti_cvss_v4_vector_string
+                x_opencti_cvss_v4_base_score
+                x_opencti_cvss_v4_base_severity
+                x_opencti_cvss_v4_attack_vector
+                x_opencti_cvss_v4_attack_complexity
+                x_opencti_cvss_v4_attack_requirements
+                x_opencti_cvss_v4_privileges_required
+                x_opencti_cvss_v4_user_interaction
+                x_opencti_cvss_v4_confidentiality_impact_v
+                x_opencti_cvss_v4_confidentiality_impact_s
+                x_opencti_cvss_v4_integrity_impact_v
+                x_opencti_cvss_v4_integrity_impact_s
+                x_opencti_cvss_v4_availability_impact_v
+                x_opencti_cvss_v4_availability_impact_s
+                x_opencti_cvss_v4_exploit_maturity
+                x_opencti_cwe
                 x_opencti_cisa_kev
                 x_opencti_epss_score
                 x_opencti_epss_percentile
+                x_opencti_score
             }
             ... on Incident {
                 name
@@ -1681,6 +1769,228 @@ class StixCoreObject:
             return None
 
     """
+        Apply rule to Stix-Core-Object object
+
+        :param element_id: the Stix-Core-Object id
+        :param rule_id: the rule to apply
+        :return void
+    """
+
+    def rule_apply(self, **kwargs):
+        rule_id = kwargs.get("rule_id", None)
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None and rule_id is not None:
+            self.opencti.app_logger.info(
+                "Apply rule stix_core_object", {"id": element_id}
+            )
+            query = """
+                mutation StixCoreApplyRule($elementId: ID!, $ruleId: ID!) {
+                    ruleApply(elementId: $elementId, ruleId: $ruleId)
+                }
+            """
+            self.opencti.query(query, {"elementId": element_id, "ruleId": rule_id})
+        else:
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant apply rule, missing parameters: id"
+            )
+            return None
+
+    """
+        Apply rule clear to Stix-Core-Object object
+
+        :param element_id: the Stix-Core-Object id
+        :param rule_id: the rule to apply
+        :return void
+    """
+
+    def rule_clear(self, **kwargs):
+        rule_id = kwargs.get("rule_id", None)
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None and rule_id is not None:
+            self.opencti.app_logger.info(
+                "Apply rule clear stix_core_object", {"id": element_id}
+            )
+            query = """
+                mutation StixCoreClearRule($elementId: ID!, $ruleId: ID!) {
+                    ruleClear(elementId: $elementId, ruleId: $ruleId)
+                }
+            """
+            self.opencti.query(query, {"elementId": element_id, "ruleId": rule_id})
+        else:
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant clear rule, missing parameters: id"
+            )
+            return None
+
+    """
+        Apply rules rescan to Stix-Core-Object object
+
+        :param element_id: the Stix-Core-Object id
+        :return void
+    """
+
+    def rules_rescan(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None:
+            self.opencti.app_logger.info(
+                "Apply rules rescan stix_core_object", {"id": element_id}
+            )
+            query = """
+                mutation StixCoreRescanRules($elementId: ID!) {
+                    rulesRescan(elementId: $elementId)
+                }
+            """
+            self.opencti.query(query, {"elementId": element_id})
+        else:
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant rescan rule, missing parameters: id"
+            )
+            return None
+
+    """
+        Ask clear restriction
+
+        :param element_id: the Stix-Core-Object id
+        :return void
+    """
+
+    def clear_access_restriction(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        if element_id is not None:
+            query = """
+                mutation StixCoreObjectEdit($id: ID!) {
+                    stixCoreObjectEdit(id: $id) {
+                        clearAccessRestriction {
+                          id
+                        }
+                    }
+                }
+            """
+            self.opencti.query(
+                query,
+                {
+                    "id": element_id,
+                },
+            )
+        else:
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant clear access restriction, missing parameters: id"
+            )
+            return None
+
+    """
+        Ask enrichment with single connector
+
+        :param element_id: the Stix-Core-Object id
+        :param connector_id the connector
+        :return void
+    """
+
+    def ask_enrichment(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        connector_id = kwargs.get("connector_id", None)
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $connectorId: ID!) {
+                stixCoreObjectEdit(id: $id) {
+                    askEnrichment(connectorId: $connectorId) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": element_id,
+                "connectorId": connector_id,
+            },
+        )
+
+    """
+        Ask enrichment with multiple connectors
+
+        :param element_id: the Stix-Core-Object id
+        :param connector_ids the connectors
+        :return void
+    """
+
+    def ask_enrichments(self, **kwargs):
+        element_id = kwargs.get("element_id", None)
+        connector_ids = kwargs.get("connector_ids", None)
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $connectorIds: [ID!]!) {
+                stixCoreObjectEdit(id: $id) {
+                    askEnrichments(connectorIds: $connectorIds) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": element_id,
+                "connectorIds": connector_ids,
+            },
+        )
+
+    """
+        Share element to multiple organizations
+
+        :param entity_id: the Stix-Core-Object id
+        :param organization_id:s the organization to share with
+        :return void
+    """
+
+    def organization_share(self, entity_id, organization_ids, sharing_direct_container):
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
+                stixCoreObjectEdit(id: $id) {
+                    restrictionOrganizationAdd(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
+            },
+        )
+
+    """
+        Unshare element from multiple organizations
+
+        :param entity_id: the Stix-Core-Object id
+        :param organization_id:s the organization to share with
+        :return void
+    """
+
+    def organization_unshare(
+        self, entity_id, organization_ids, sharing_direct_container
+    ):
+        query = """
+            mutation StixCoreObjectEdit($id: ID!, $organizationId: [ID!]!, $directContainerSharing: Boolean) {
+                stixCoreObjectEdit(id: $id) {
+                    restrictionOrganizationDelete(organizationId: $organizationId, directContainerSharing: $directContainerSharing) {
+                      id
+                    }
+                }
+            }
+        """
+        self.opencti.query(
+            query,
+            {
+                "id": entity_id,
+                "organizationId": organization_ids,
+                "directContainerSharing": sharing_direct_container,
+            },
+        )
+
+    """
         Delete a Stix-Core-Object object
 
         :param id: the Stix-Core-Object id
@@ -1701,4 +2011,29 @@ class StixCoreObject:
             self.opencti.query(query, {"id": id})
         else:
             self.opencti.app_logger.error("[stix_core_object] Missing parameters: id")
+            return None
+
+    """
+        Remove a Stix-Core-Object object from draft (revert)
+
+        :param id: the Stix-Core-Object id
+        :return void
+    """
+
+    def remove_from_draft(self, **kwargs):
+        id = kwargs.get("id", None)
+        if id is not None:
+            self.opencti.app_logger.info("Draft remove stix_core_object", {"id": id})
+            query = """
+                mutation StixCoreObjectEditDraftRemove($id: ID!) {
+                    stixCoreObjectEdit(id: $id) {
+                        removeFromDraft
+                    }
+                }
+            """
+            self.opencti.query(query, {"id": id})
+        else:
+            self.opencti.app_logger.error(
+                "[stix_core_object] Cant remove from draft, missing parameters: id"
+            )
             return None

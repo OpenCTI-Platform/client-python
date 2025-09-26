@@ -10,6 +10,7 @@ from pycti.utils.opencti_stix2_identifier import (
 )
 from pycti.utils.opencti_stix2_utils import (
     STIX_CYBER_OBSERVABLE_MAPPING,
+    SUPPORTED_INTERNAL_OBJECTS,
     SUPPORTED_STIX_ENTITY_OBJECTS,
 )
 
@@ -17,8 +18,10 @@ OPENCTI_EXTENSION = "extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba"
 
 supported_types = (
     SUPPORTED_STIX_ENTITY_OBJECTS  # entities
+    + SUPPORTED_INTERNAL_OBJECTS  # internals
     + list(STIX_CYBER_OBSERVABLE_MAPPING.keys())  # observables
     + ["relationship", "sighting"]  # relationships
+    + ["pir"]
 )
 
 
@@ -31,10 +34,16 @@ def is_id_supported(key):
 
 
 class OpenCTIStix2Splitter:
+    """STIX2 bundle splitter for OpenCTI
+
+    Splits large STIX2 bundles into smaller chunks for processing.
+    """
+
     def __init__(self):
         self.cache_index = {}
         self.cache_refs = {}
         self.elements = []
+        self.incompatible_items = []
 
     def get_internal_ids_in_extension(self, item):
         ids = []
@@ -65,7 +74,7 @@ class OpenCTIStix2Splitter:
         for key in list(item.keys()):
             value = item[key]
             # Recursive enlist for every refs
-            if key.endswith("_refs"):
+            if key.endswith("_refs") and item[key] is not None:
                 to_keep = []
                 for element_ref in item[key]:
                     # We need to check if this ref is not already a reference
@@ -119,7 +128,7 @@ class OpenCTIStix2Splitter:
                 else:
                     item[key] = None
             # Case for embedded elements (deduplicating and cleanup)
-            elif key == "external_references":
+            elif key == "external_references" and item[key] is not None:
                 # specific case of splitting external references
                 # reference_ids = []
                 deduplicated_references = []
@@ -145,7 +154,7 @@ class OpenCTIStix2Splitter:
                         #     reference_ids.append(reference_id)
                         # nb_deps += self.enlist_element(reference_id, raw_data)
                 item[key] = deduplicated_references
-            elif key == "kill_chain_phases":
+            elif key == "kill_chain_phases" and item[key] is not None:
                 # specific case of splitting kill_chain phases
                 # kill_chain_ids = []
                 deduplicated_kill_chain = []
@@ -189,6 +198,8 @@ class OpenCTIStix2Splitter:
                 is_compatible = is_id_supported(item_id)
             if is_compatible:
                 self.elements.append(item)
+            else:
+                self.incompatible_items.append(item)
             self.cache_index[item_id] = item
             for internal_id in self.get_internal_ids_in_extension(item):
                 self.cache_index[internal_id] = item
@@ -201,7 +212,7 @@ class OpenCTIStix2Splitter:
         use_json=True,
         event_version=None,
         cleanup_inconsistent_bundle=False,
-    ) -> Tuple[int, list]:
+    ) -> Tuple[int, list, list]:
         """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
             try:
@@ -251,11 +262,11 @@ class OpenCTIStix2Splitter:
                 )
             )
 
-        return number_expectations, bundles
+        return number_expectations, self.incompatible_items, bundles
 
     @deprecated("Use split_bundle_with_expectations instead")
     def split_bundle(self, bundle, use_json=True, event_version=None) -> list:
-        expectations, bundles = self.split_bundle_with_expectations(
+        _, _, bundles = self.split_bundle_with_expectations(
             bundle, use_json, event_version
         )
         return bundles
