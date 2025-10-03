@@ -10,7 +10,8 @@ def test_split_bundle():
     stix_splitter = OpenCTIStix2Splitter()
     with open("./tests/data/enterprise-attack.json") as file:
         content = file.read()
-    expectations, _, bundles; _ = stix_splitter.split_bundle_with_expectations(content)
+    expectations, _, bundles
+    _ = stix_splitter.split_bundle_with_expectations(content)
     assert expectations == 7016
 
 
