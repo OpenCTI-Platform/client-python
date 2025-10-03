@@ -8,7 +8,7 @@ import random
 import time
 import traceback
 import uuid
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import datefinder
 import dateutil.parser
