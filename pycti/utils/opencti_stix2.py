@@ -8,7 +8,7 @@ import random
 import time
 import traceback
 import uuid
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 import datefinder
 import dateutil.parser
@@ -196,7 +196,7 @@ class OpenCTIStix2:
         file_path: str,
         update: bool = False,
         types: List = None,
-    ) -> Optional[List]:
+    ) -> Optional[Tuple[list, list]]:
         """import a stix2 bundle from a file
 
         :param file_path: valid path to the file
@@ -221,7 +221,8 @@ class OpenCTIStix2:
         update: bool = False,
         types: List = None,
         work_id: str = None,
-    ) -> List:
+        objects_max_deps: int = 0,
+    ) -> Tuple[list, list]:
         """import a stix2 bundle from JSON data
 
         :param json_data: JSON data
@@ -231,11 +232,13 @@ class OpenCTIStix2:
         :param types: list of stix2 types, defaults to None
         :type types: list, optional
         :param work_id work_id: str, optional
-        :return: list of imported stix2 objects
-        :rtype: List
+        :param objects_max_deps: max deps amount of objects, reject object import if larger than configured amount
+        :type objects_max_deps: int, optional
+        :return: list of imported stix2 objects and a list of stix2 objects with too many deps
+        :rtype: Tuple[List,List]
         """
         data = json.loads(json_data)
-        return self.import_bundle(data, update, types, work_id)
+        return self.import_bundle(data, update, types, work_id, objects_max_deps)
 
     def resolve_author(self, title: str) -> Optional[Identity]:
         if "fireeye" in title.lower() or "mandiant" in title.lower():
@@ -3060,7 +3063,8 @@ class OpenCTIStix2:
         update: bool = False,
         types: List = None,
         work_id: str = None,
-    ) -> List:
+        objects_max_deps: int = 0,
+    ) -> Tuple[list, list]:
         # Check if the bundle is correctly formatted
         if "type" not in stix_bundle or stix_bundle["type"] != "bundle":
             raise ValueError("JSON data type is not a STIX2 bundle")
@@ -3072,8 +3076,8 @@ class OpenCTIStix2:
             else None
         )
 
-        stix2_splitter = OpenCTIStix2Splitter()
-        _, incompatible_elements, bundles = (
+        stix2_splitter = OpenCTIStix2Splitter(objects_max_deps)
+        _, incompatible_elements, bundles, too_large_elements_bundles = (
             stix2_splitter.split_bundle_with_expectations(
                 stix_bundle, False, event_version
             )
@@ -3099,7 +3103,7 @@ class OpenCTIStix2:
                 self.import_item(item, update, types, 0, work_id)
                 imported_elements.append({"id": item["id"], "type": item["type"]})
 
-        return imported_elements
+        return imported_elements, too_large_elements_bundles
 
     @staticmethod
     def put_attribute_in_extension(

@@ -33,17 +33,19 @@ def is_id_supported(key):
     return True
 
 
-class OpenCTIStix2Splitter:
+class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
     """STIX2 bundle splitter for OpenCTI
 
     Splits large STIX2 bundles into smaller chunks for processing.
     """
 
-    def __init__(self):
+    def __init__(self, objects_max_deps: int = 0):
+        self.objects_max_deps = objects_max_deps
         self.cache_index = {}
         self.cache_refs = {}
         self.elements = []
         self.incompatible_items = []
+        self.too_large_elements = []
 
     def get_internal_ids_in_extension(self, item):
         ids = []
@@ -196,7 +198,9 @@ class OpenCTIStix2Splitter:
                 )
             else:
                 is_compatible = is_id_supported(item_id)
-            if is_compatible:
+            if self.objects_max_deps is not 0 and nb_deps >= self.objects_max_deps:
+                self.too_large_elements.append(item)
+            elif is_compatible:
                 self.elements.append(item)
             else:
                 self.incompatible_items.append(item)
@@ -212,7 +216,7 @@ class OpenCTIStix2Splitter:
         use_json=True,
         event_version=None,
         cleanup_inconsistent_bundle=False,
-    ) -> Tuple[int, list, list]:
+    ) -> Tuple[int, list, list, list]:
         """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
             try:
@@ -262,11 +266,28 @@ class OpenCTIStix2Splitter:
                 )
             )
 
-        return number_expectations, self.incompatible_items, bundles
+        too_large_elements_bundles = []
+        for too_large_element in self.too_large_elements:
+            too_large_elements_bundles.append(
+                self.stix2_create_bundle(
+                    bundle_data["id"],
+                    too_large_element["nb_deps"],
+                    [too_large_element],
+                    use_json,
+                    event_version,
+                )
+            )
+
+        return (
+            number_expectations,
+            self.incompatible_items,
+            bundles,
+            too_large_elements_bundles,
+        )
 
     @deprecated("Use split_bundle_with_expectations instead")
     def split_bundle(self, bundle, use_json=True, event_version=None) -> list:
-        _, _, bundles = self.split_bundle_with_expectations(
+        _, _, bundles, _ = self.split_bundle_with_expectations(
             bundle, use_json, event_version
         )
         return bundles
