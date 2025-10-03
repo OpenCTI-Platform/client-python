@@ -1,5 +1,6 @@
 # coding: utf-8
 import os
+
 from pycti import OpenCTIApiClient
 
 # Variables

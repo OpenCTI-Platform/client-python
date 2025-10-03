@@ -1,5 +1,6 @@
 # coding: utf-8
 import os
+
 from stix2 import TLP_GREEN
 
 from pycti import OpenCTIApiClient

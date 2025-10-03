@@ -1,6 +1,6 @@
 # coding: utf-8
-import os
 import argparse
+import os
 
 from dateutil.parser import parse
 
