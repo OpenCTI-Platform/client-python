@@ -198,7 +198,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                 )
             else:
                 is_compatible = is_id_supported(item_id)
-            if self.objects_max_deps is not 0 and nb_deps >= self.objects_max_deps:
+            if self.objects_max_deps != 0 and nb_deps >= self.objects_max_deps:
                 self.too_large_elements.append(item)
             elif is_compatible:
                 self.elements.append(item)
