@@ -80,11 +80,11 @@ def test_split_internal_ids_bundle():
     stix_splitter = OpenCTIStix2Splitter()
     with open("./tests/data/bundle_with_internal_ids.json") as file:
         content = file.read()
-    expectations, _, bundles = stix_splitter.split_bundle_with_expectations(content)
+    expectations, _, bundles, _ = stix_splitter.split_bundle_with_expectations(content)
     assert expectations == 4
     # Split with cleanup_inconsistent_bundle
     stix_splitter = OpenCTIStix2Splitter()
-    expectations, _, bundles = stix_splitter.split_bundle_with_expectations(
+    expectations, _, bundles, _ = stix_splitter.split_bundle_with_expectations(
         bundle=content, cleanup_inconsistent_bundle=True
     )
     assert expectations == 4
