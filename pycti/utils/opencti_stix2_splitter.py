@@ -39,8 +39,8 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
     Splits large STIX2 bundles into smaller chunks for processing.
     """
 
-    def __init__(self, objects_max_deps: int = 0):
-        self.objects_max_deps = objects_max_deps
+    def __init__(self, objects_max_refs: int = 0):
+        self.objects_max_refs = objects_max_refs
         self.cache_index = {}
         self.cache_refs = {}
         self.elements = []
@@ -203,7 +203,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                 )
             else:
                 is_compatible = is_id_supported(item_id)
-            if 0 < self.objects_max_deps <= raw_nb_refs:
+            if 0 < self.objects_max_refs <= raw_nb_refs:
                 self.too_large_elements.append(item)
             elif is_compatible:
                 self.elements.append(item)
