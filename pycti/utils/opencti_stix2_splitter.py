@@ -63,6 +63,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
         self, item_id, raw_data, cleanup_inconsistent_bundle, parent_acc
     ):
         nb_deps = 1
+        raw_nb_refs = 0
         if item_id not in raw_data:
             return 0
 
@@ -79,6 +80,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
             if key.endswith("_refs") and item[key] is not None:
                 to_keep = []
                 for element_ref in item[key]:
+                    raw_nb_refs += 1
                     # We need to check if this ref is not already a reference
                     is_missing_ref = raw_data.get(element_ref) is None
                     must_be_cleaned = is_missing_ref and cleanup_inconsistent_bundle
@@ -105,6 +107,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                             to_keep.append(element_ref)
                     item[key] = to_keep
             elif key.endswith("_ref"):
+                raw_nb_refs += 1
                 is_missing_ref = raw_data.get(value) is None
                 must_be_cleaned = is_missing_ref and cleanup_inconsistent_bundle
                 not_dependency_ref = (
@@ -131,6 +134,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                     item[key] = None
             # Case for embedded elements (deduplicating and cleanup)
             elif key == "external_references" and item[key] is not None:
+                raw_nb_refs += 1
                 # specific case of splitting external references
                 # reference_ids = []
                 deduplicated_references = []
@@ -157,6 +161,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                         # nb_deps += self.enlist_element(reference_id, raw_data)
                 item[key] = deduplicated_references
             elif key == "kill_chain_phases" and item[key] is not None:
+                raw_nb_refs += 1
                 # specific case of splitting kill_chain phases
                 # kill_chain_ids = []
                 deduplicated_kill_chain = []
@@ -198,7 +203,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                 )
             else:
                 is_compatible = is_id_supported(item_id)
-            if 0 < self.objects_max_deps <= nb_deps:
+            if 0 < self.objects_max_deps <= raw_nb_refs:
                 self.too_large_elements.append(item)
             elif is_compatible:
                 self.elements.append(item)
