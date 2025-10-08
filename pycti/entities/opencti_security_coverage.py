@@ -6,7 +6,7 @@ import uuid
 from stix2.canonicalization.Canonicalize import canonicalize
 
 
-class SecurityAssessment:
+class SecurityCoverage:
     def __init__(self, opencti):
         self.opencti = opencti
         self.properties = """
@@ -17,8 +17,11 @@ class SecurityAssessment:
             spec_version
             created_at
             updated_at
-            objectAssess {
-                id
+            objectCovered {
+                __typename
+                ... on StixCoreObject {
+                  id
+                }
             }
             objectMarking {
                 id
@@ -34,25 +37,24 @@ class SecurityAssessment:
         """
 
     @staticmethod
-    def generate_id(name):
-        name = name.lower().strip()
-        data = {"name": name}
+    def generate_id(covered_ref):
+        data = {"covered_ref": covered_ref.lower().strip()}
         data = canonicalize(data, utf8=False)
         id = str(uuid.uuid5(uuid.UUID("00abedb4-aa42-466c-9c01-fed23315a9b7"), data))
-        return "securityAssessment--" + id
+        return "security-coverage--" + id
 
     @staticmethod
     def generate_id_from_data(data):
-        return SecurityAssessment.generate_id(data["name"])
+        return SecurityCoverage.generate_id(data["covered_ref"])
 
     """
-        List SecurityAssessment objects
+        List securityCoverage objects
 
         :param filters: the filters to apply
         :param search: the search keyword
         :param first: return the first n rows from the after ID (or the beginning if not set)
         :param after: ID of the first row for pagination
-        :return List of SecurityAssessment objects
+        :return List of SecurityCoverage objects
     """
 
     def list(self, **kwargs):
@@ -67,12 +69,12 @@ class SecurityAssessment:
         with_pagination = kwargs.get("withPagination", False)
 
         self.opencti.app_logger.info(
-            "Listing SecurityAssessment with filters", {"filters": json.dumps(filters)}
+            "Listing SecurityCoverage with filters", {"filters": json.dumps(filters)}
         )
         query = (
             """
-                query SecurityAssessment($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: SecurityAssessmentOrdering, $orderMode: OrderingMode) {
-                    securityAssessments(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
+                query SecurityCoverage($filters: FilterGroup, $search: String, $first: Int, $after: ID, $orderBy: SecurityCoverageOrdering, $orderMode: OrderingMode) {
+                    securityCoverages(filters: $filters, search: $search, first: $first, after: $after, orderBy: $orderBy, orderMode: $orderMode) {
                         edges {
                             node {
                                 """
@@ -105,12 +107,12 @@ class SecurityAssessment:
 
         if get_all:
             final_data = []
-            data = self.opencti.process_multiple(result["data"]["securityAssessments"])
+            data = self.opencti.process_multiple(result["data"]["securityCoverages"])
             final_data = final_data + data
-            while result["data"]["securityAssessments"]["pageInfo"]["hasNextPage"]:
-                after = result["data"]["securityAssessments"]["pageInfo"]["endCursor"]
+            while result["data"]["securityCoverages"]["pageInfo"]["hasNextPage"]:
+                after = result["data"]["securityCoverages"]["pageInfo"]["endCursor"]
                 self.opencti.app_logger.info(
-                    "Listing SecurityAssessment", {"after": after}
+                    "Listing SecurityCoverage", {"after": after}
                 )
                 result = self.opencti.query(
                     query,
@@ -124,21 +126,21 @@ class SecurityAssessment:
                     },
                 )
                 data = self.opencti.process_multiple(
-                    result["data"]["securityAssessments"]
+                    result["data"]["securityCoverages"]
                 )
                 final_data = final_data + data
             return final_data
         else:
             return self.opencti.process_multiple(
-                result["data"]["securityAssessments"], with_pagination
+                result["data"]["securityCoverages"], with_pagination
             )
 
     """
-        Read a SecurityAssessment object
+        Read a SecurityCoverage object
 
-        :param id: the id of the SecurityAssessment
+        :param id: the id of the SecurityCoverage
         :param filters: the filters to apply if no id provided
-        :return SecurityAssessment object
+        :return SecurityCoverage object
     """
 
     def read(self, **kwargs):
@@ -146,11 +148,11 @@ class SecurityAssessment:
         filters = kwargs.get("filters", None)
         custom_attributes = kwargs.get("customAttributes", None)
         if id is not None:
-            self.opencti.app_logger.info("Reading SecurityAssessment", {"id": id})
+            self.opencti.app_logger.info("Reading SecurityCoverage", {"id": id})
             query = (
                 """
-                    query SecurityAssessment($id: String!) {
-                        securityAssessment(id: $id) {
+                    query SecurityCoverage($id: String!) {
+                        securityCoverage(id: $id) {
                             """
                 + (
                     custom_attributes
@@ -164,7 +166,7 @@ class SecurityAssessment:
             )
             result = self.opencti.query(query, {"id": id})
             return self.opencti.process_multiple_fields(
-                result["data"]["securityAssessment"]
+                result["data"]["securityCoverage"]
             )
         elif filters is not None:
             result = self.list(filters=filters)
@@ -174,6 +176,6 @@ class SecurityAssessment:
                 return None
         else:
             self.opencti.app_logger.error(
-                "[opencti_tool] Missing parameters: id or filters"
+                "[opencti_security_coverage] Missing parameters: id or filters"
             )
             return None
