@@ -3099,10 +3099,10 @@ class OpenCTIStix2:
                 self.opencti.work.report_expectation(
                     work_id,
                     {
-                        "error": "Incompatible element in bundle",
+                        "error": "Too large element in bundle",
                         "source": "Element "
                         + too_large_elements_bundle["id"]
-                        + " is incompatible and couldn't be processed",
+                        + " is too large and couldn't be processed",
                     },
                 )
 
