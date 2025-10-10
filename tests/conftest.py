@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 from pytest_cases import fixture
 
 from pycti import (
