@@ -3095,6 +3095,16 @@ class OpenCTIStix2:
                         + " is incompatible and couldn't be processed",
                     },
                 )
+            for too_large_elements_bundle in too_large_elements_bundles:
+                self.opencti.work.report_expectation(
+                    work_id,
+                    {
+                        "error": "Incompatible element in bundle",
+                        "source": "Element "
+                        + too_large_elements_bundle["id"]
+                        + " is incompatible and couldn't be processed",
+                    },
+                )
 
         # Import every element in a specific order
         imported_elements = []
