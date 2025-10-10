@@ -13,15 +13,15 @@ from pycti import (
 @fixture(scope="session")
 def api_client(pytestconfig):
     if pytestconfig.getoption("--drone"):
-        return OpenCTIApiClient(
-            "http://opencti:4000",
-            "bfa014e0-e02e-4aa6-a42b-603b19dcf159",
-            ssl_verify=False,
-        )
+        api_url = os.getenv("OPENCTI_API_URL", "http://opencti:4000")
+        api_token = os.getenv("OPENCTI_API_TOKEN", "bfa014e0-e02e-4aa6-a42b-603b19dcf159")
     else:
-        return OpenCTIApiClient(
-            "http://localhost:4000",
-            "d434ce02-e58e-4cac-8b4c-42bf16748e84",
+        api_url = os.getenv("OPENCTI_API_URL", "http://localhost:4000")
+        api_token = os.getenv("OPENCTI_API_TOKEN", "d434ce02-e58e-4cac-8b4c-42bf16748e84")
+
+    return OpenCTIApiClient(
+            api_url,
+            api_token,
             ssl_verify=False,
         )
 
