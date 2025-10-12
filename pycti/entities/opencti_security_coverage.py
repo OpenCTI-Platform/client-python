@@ -179,3 +179,127 @@ class SecurityCoverage:
                 "[opencti_security_coverage] Missing parameters: id or filters"
             )
             return None
+
+    """
+        Create a Security coverage object
+
+        :return Security Coverage object
+    """
+
+    def create(self, **kwargs):
+        stix_id = kwargs.get("stix_id", None)
+        name = kwargs.get("name", None)
+        description = kwargs.get("description", None)
+        created_by = kwargs.get("createdBy", None)
+        object_marking = kwargs.get("objectMarking", None)
+        object_label = kwargs.get("objectLabel", None)
+        object_covered = kwargs.get("objectCovered", None)
+        external_references = kwargs.get("externalReferences", None)
+        coverage_last_result = kwargs.get("coverage_last_result", None)
+        coverage_valid_from = kwargs.get("coverage_valid_from", None)
+        coverage_valid_to = kwargs.get("coverage_valid_to", None)
+        coverage_information = kwargs.get("coverage_information", None)
+
+        if name is not None and object_covered is not None:
+            self.opencti.app_logger.info("Creating Security Coverage", {"name": name})
+            query = """
+                mutation SecurityCoverageAdd($input: SecurityCoverageAddInput!) {
+                    securityCoverageAdd(input: $input) {
+                        id
+                        standard_id
+                        entity_type
+                        parent_types
+                    }
+                }
+            """
+            result = self.opencti.query(
+                query,
+                {
+                    "input": {
+                        "stix_id": stix_id,
+                        "name": name,
+                        "description": description,
+                        "createdBy": created_by,
+                        "objectMarking": object_marking,
+                        "objectLabel": object_label,
+                        "objectCovered": object_covered,
+                        "externalReferences": external_references,
+                        "coverage_last_result": coverage_last_result,
+                        "coverage_valid_from": coverage_valid_from,
+                        "coverage_valid_to": coverage_valid_to,
+                        "coverage_information": coverage_information,
+                    }
+                },
+            )
+            return self.opencti.process_multiple_fields(result["data"]["securityCoverageAdd"])
+        else:
+            self.opencti.app_logger.error(
+                "[opencti_security_coverage] "
+                "Missing parameters: name or object_covered"
+            )
+
+    """
+        Import a Security coverage from a STIX2 object
+
+        :param stixObject: the Stix-Object Security coverage
+        :return Security coverage object
+    """
+
+    def import_from_stix2(self, **kwargs):
+        stix_object = kwargs.get("stixObject", None)
+        extras = kwargs.get("extras", {})
+        if stix_object is not None:
+            # Search in extensions
+            if "x_opencti_stix_ids" not in stix_object:
+                stix_object["x_opencti_stix_ids"] = (
+                    self.opencti.get_attribute_in_extension("stix_ids", stix_object)
+                )
+            if "x_opencti_granted_refs" not in stix_object:
+                stix_object["x_opencti_granted_refs"] = (
+                    self.opencti.get_attribute_in_extension("granted_refs", stix_object)
+                )
+
+            raw_coverages = stix_object["coverage"] if "coverage" in stix_object else []
+            coverage_information = list(map(lambda cov: {"coverage_name":cov["name"],"coverage_score":cov["score"]}, raw_coverages))
+
+            return self.create(
+                stix_id=stix_object["id"],
+                name=stix_object["name"],
+                coverage_last_result=stix_object["last_result"] if "last_result" in stix_object else None,
+                coverage_valid_from=stix_object["valid_from"] if "valid_from" in stix_object else None,
+                coverage_valid_to=stix_object["valid_to"] if "valid_to" in stix_object else None,
+                coverage_information=coverage_information,
+                description=(
+                    self.opencti.stix2.convert_markdown(stix_object["description"])
+                    if "description" in stix_object
+                    else None
+                ),
+                createdBy=(
+                    extras["created_by_id"] if "created_by_id" in extras else None
+                ),
+                objectMarking=(
+                    extras["object_marking_ids"]
+                    if "object_marking_ids" in extras
+                    else None
+                ),
+                objectLabel=(
+                    extras["object_label_ids"] if "object_label_ids" in extras else None
+                ),
+                objectCovered=(
+                    stix_object["covered_ref"] if "covered_ref" in stix_object else None
+                ),
+                externalReferences=(
+                    extras["external_references_ids"]
+                    if "external_references_ids" in extras
+                    else None
+                ),
+                x_opencti_stix_ids=(
+                    stix_object["x_opencti_stix_ids"]
+                    if "x_opencti_stix_ids" in stix_object
+                    else None
+                ),
+            )
+        else:
+            self.opencti.app_logger.error(
+                "[opencti_security_coverage] Missing parameters: stixObject"
+            )
