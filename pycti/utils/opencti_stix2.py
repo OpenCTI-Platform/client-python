@@ -962,7 +962,7 @@ class OpenCTIStix2:
             "narrative": self.opencti.narrative,
             "task": self.opencti.task,
             "x-opencti-task": self.opencti.task,
-            "Security-Coverage": self.opencti.security_coverage,
+            "security-coverage": self.opencti.security_coverage,
             "vocabulary": self.opencti.vocabulary,
             # relationships
             "relationship": self.opencti.stix_core_relationship,
