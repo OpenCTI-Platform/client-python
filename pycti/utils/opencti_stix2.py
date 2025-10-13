@@ -2841,7 +2841,7 @@ class OpenCTIStix2:
                 "opencti_operation", item
             )
             if opencti_operation is None and "opencti_operation" in item:
-                opencti_operation=item["opencti_operation"]
+                opencti_operation = item["opencti_operation"]
             if opencti_operation is not None and opencti_operation == "upsert_patch":
                 self.apply_opencti_operation(item, opencti_operation)
             if opencti_operation is not None and opencti_operation != "upsert_patch":
