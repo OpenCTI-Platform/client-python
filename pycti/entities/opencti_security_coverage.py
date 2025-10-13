@@ -231,7 +231,9 @@ class SecurityCoverage:
                     }
                 },
             )
-            return self.opencti.process_multiple_fields(result["data"]["securityCoverageAdd"])
+            return self.opencti.process_multiple_fields(
+                result["data"]["securityCoverageAdd"]
+            )
         else:
             self.opencti.app_logger.error(
                 "[opencti_security_coverage] "
@@ -260,14 +262,28 @@ class SecurityCoverage:
                 )
 
             raw_coverages = stix_object["coverage"] if "coverage" in stix_object else []
-            coverage_information = list(map(lambda cov: {"coverage_name":cov["name"],"coverage_score":cov["score"]}, raw_coverages))
+            coverage_information = list(
+                map(
+                    lambda cov: {
+                        "coverage_name": cov["name"],
+                        "coverage_score": cov["score"],
+                    },
+                    raw_coverages,
+                )
+            )
 
             return self.create(
                 stix_id=stix_object["id"],
                 name=stix_object["name"],
-                coverage_last_result=stix_object["last_result"] if "last_result" in stix_object else None,
-                coverage_valid_from=stix_object["valid_from"] if "valid_from" in stix_object else None,
-                coverage_valid_to=stix_object["valid_to"] if "valid_to" in stix_object else None,
+                coverage_last_result=(
+                    stix_object["last_result"] if "last_result" in stix_object else None
+                ),
+                coverage_valid_from=(
+                    stix_object["valid_from"] if "valid_from" in stix_object else None
+                ),
+                coverage_valid_to=(
+                    stix_object["valid_to"] if "valid_to" in stix_object else None
+                ),
                 coverage_information=coverage_information,
                 description=(
                     self.opencti.stix2.convert_markdown(stix_object["description"])
