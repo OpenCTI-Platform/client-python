@@ -722,7 +722,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     "key_type": (
                         observable_data["key_type"]
                         if "key_type" in observable_data
-                        else False
+                        else None
                     ),
                     "public_key": (
                         observable_data["public_key"]
@@ -732,7 +732,7 @@ class StixCyberObservable(StixCyberObservableDeprecatedMixin):
                     "fingerprint_sha256": (
                         observable_data["fingerprint_sha256"]
                         if "fingerprint_sha256" in observable_data
-                        else None
+                        else False
                     ),
                     "fingerprint_md5": (
                         observable_data["fingerprint_md5"]
