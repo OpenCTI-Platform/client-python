@@ -61,6 +61,7 @@ class OpenCTIApiConnector:
                 connectorsForWorker {
                     id
                     name
+                    connector_type
                     connector_user {
                       api_token
                     }
@@ -141,6 +142,7 @@ class OpenCTIApiConnector:
                 registerConnector(input: $input) {
                     id
                     connector_state
+                    connector_type
                     config {
                         connection {
                             host
