@@ -32,6 +32,7 @@ from pycti.utils.opencti_stix2_utils import (
     STIX_CORE_OBJECTS,
     STIX_CYBER_OBSERVABLE_MAPPING,
     STIX_META_OBJECTS,
+    OpenCTIStix2Utils,
 )
 
 datefinder.ValueError = ValueError, OverflowError
@@ -3076,8 +3077,8 @@ class OpenCTIStix2:
             else None
         )
 
-        stix2_splitter = OpenCTIStix2Splitter(objects_max_refs)
-        _, incompatible_elements, bundles, too_large_elements_bundles = (
+        stix2_splitter = OpenCTIStix2Splitter()
+        _, incompatible_elements, bundles = (
             stix2_splitter.split_bundle_with_expectations(
                 stix_bundle, False, event_version
             )
@@ -3095,23 +3096,27 @@ class OpenCTIStix2:
                         + " is incompatible and couldn't be processed",
                     },
                 )
-            for too_large_elements_bundle in too_large_elements_bundles:
-                self.opencti.work.report_expectation(
-                    work_id,
-                    {
-                        "error": "Too large element in bundle",
-                        "source": "Element "
-                        + too_large_elements_bundle["id"]
-                        + " is too large and couldn't be processed",
-                    },
-                )
 
         # Import every element in a specific order
         imported_elements = []
+        too_large_elements_bundles = []
         for bundle in bundles:
             for item in bundle["objects"]:
-                self.import_item(item, update, types, 0, work_id)
-                imported_elements.append({"id": item["id"], "type": item["type"]})
+                nb_refs = OpenCTIStix2Utils.compute_object_refs_number(item)
+                if 0 < objects_max_refs <= nb_refs:
+                    self.opencti.work.report_expectation(
+                        work_id,
+                        {
+                            "error": "Too large element in bundle",
+                            "source": "Element "
+                            + item["id"]
+                            + " is too large and couldn't be processed",
+                        },
+                    )
+                    too_large_elements_bundles.append(item)
+                else:
+                    self.import_item(item, update, types, 0, work_id)
+                    imported_elements.append({"id": item["id"], "type": item["type"]})
 
         return imported_elements, too_large_elements_bundles
 

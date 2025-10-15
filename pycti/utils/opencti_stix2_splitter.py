@@ -33,19 +33,17 @@ def is_id_supported(key):
     return True
 
 
-class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
+class OpenCTIStix2Splitter:
     """STIX2 bundle splitter for OpenCTI
 
     Splits large STIX2 bundles into smaller chunks for processing.
     """
 
-    def __init__(self, objects_max_refs: int = 0):
-        self.objects_max_refs = objects_max_refs
+    def __init__(self):
         self.cache_index = {}
         self.cache_refs = {}
         self.elements = []
         self.incompatible_items = []
-        self.too_large_elements = []
 
     def get_internal_ids_in_extension(self, item):
         ids = []
@@ -63,7 +61,6 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
         self, item_id, raw_data, cleanup_inconsistent_bundle, parent_acc
     ):
         nb_deps = 1
-        raw_nb_refs = 0
         if item_id not in raw_data:
             return 0
 
@@ -80,7 +77,6 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
             if key.endswith("_refs") and item[key] is not None:
                 to_keep = []
                 for element_ref in item[key]:
-                    raw_nb_refs += 1
                     # We need to check if this ref is not already a reference
                     is_missing_ref = raw_data.get(element_ref) is None
                     must_be_cleaned = is_missing_ref and cleanup_inconsistent_bundle
@@ -107,7 +103,6 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                             to_keep.append(element_ref)
                     item[key] = to_keep
             elif key.endswith("_ref"):
-                raw_nb_refs += 1
                 is_missing_ref = raw_data.get(value) is None
                 must_be_cleaned = is_missing_ref and cleanup_inconsistent_bundle
                 not_dependency_ref = (
@@ -134,7 +129,6 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                     item[key] = None
             # Case for embedded elements (deduplicating and cleanup)
             elif key == "external_references" and item[key] is not None:
-                raw_nb_refs += 1
                 # specific case of splitting external references
                 # reference_ids = []
                 deduplicated_references = []
@@ -161,7 +155,6 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                         # nb_deps += self.enlist_element(reference_id, raw_data)
                 item[key] = deduplicated_references
             elif key == "kill_chain_phases" and item[key] is not None:
-                raw_nb_refs += 1
                 # specific case of splitting kill_chain phases
                 # kill_chain_ids = []
                 deduplicated_kill_chain = []
@@ -203,9 +196,8 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                 )
             else:
                 is_compatible = is_id_supported(item_id)
-            if 0 < self.objects_max_refs <= raw_nb_refs:
-                self.too_large_elements.append(item)
-            elif is_compatible:
+
+            if is_compatible:
                 self.elements.append(item)
             else:
                 self.incompatible_items.append(item)
@@ -221,7 +213,7 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
         use_json=True,
         event_version=None,
         cleanup_inconsistent_bundle=False,
-    ) -> Tuple[int, list, list, list]:
+    ) -> Tuple[int, list, list]:
         """splits a valid stix2 bundle into a list of bundles"""
         if use_json:
             try:
@@ -271,28 +263,15 @@ class OpenCTIStix2Splitter:  # pylint: disable=too-many-instance-attributes
                 )
             )
 
-        too_large_elements_bundles = []
-        for too_large_element in self.too_large_elements:
-            too_large_elements_bundles.append(
-                self.stix2_create_bundle(
-                    bundle_data["id"],
-                    too_large_element["nb_deps"],
-                    [too_large_element],
-                    use_json,
-                    event_version,
-                )
-            )
-
         return (
             number_expectations,
             self.incompatible_items,
             bundles,
-            too_large_elements_bundles,
         )
 
     @deprecated("Use split_bundle_with_expectations instead")
     def split_bundle(self, bundle, use_json=True, event_version=None) -> list:
-        _, _, bundles, _ = self.split_bundle_with_expectations(
+        _, _, bundles = self.split_bundle_with_expectations(
             bundle, use_json, event_version
         )
         return bundles
