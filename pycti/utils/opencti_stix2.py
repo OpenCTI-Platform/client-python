@@ -3102,6 +3102,7 @@ class OpenCTIStix2:
         too_large_elements_bundles = []
         for bundle in bundles:
             for item in bundle["objects"]:
+                # If item is considered too large, meaning that it has a number of refs higher than inputted objects_max_refs, do not import it
                 nb_refs = OpenCTIStix2Utils.compute_object_refs_number(item)
                 if 0 < objects_max_refs <= nb_refs:
                     self.opencti.work.report_expectation(
