@@ -102,7 +102,7 @@ STIX_CYBER_OBSERVABLE_MAPPING = {
     "media-content": "Media-Content",
     "simple-observable": "Simple-Observable",
     "persona": "Persona",
-    "ssh-key": "SSH-Key"
+    "ssh-key": "SSH-Key",
 }
 
 STIX_OBJECTS = (
