@@ -17,6 +17,7 @@ class SecurityCoverage:
             spec_version
             created_at
             updated_at
+            external_uri
             objectCovered {
                 __typename
                 ... on StixCoreObject {
@@ -195,10 +196,12 @@ class SecurityCoverage:
         object_label = kwargs.get("objectLabel", None)
         object_covered = kwargs.get("objectCovered", None)
         external_references = kwargs.get("externalReferences", None)
+        external_uri = kwargs.get("external_uri", None)
         coverage_last_result = kwargs.get("coverage_last_result", None)
         coverage_valid_from = kwargs.get("coverage_valid_from", None)
         coverage_valid_to = kwargs.get("coverage_valid_to", None)
         coverage_information = kwargs.get("coverage_information", None)
+        auto_enrichment_disable = kwargs.get("auto_enrichment_disable", None)
 
         if name is not None and object_covered is not None:
             self.opencti.app_logger.info("Creating Security Coverage", {"name": name})
@@ -223,11 +226,13 @@ class SecurityCoverage:
                         "objectMarking": object_marking,
                         "objectLabel": object_label,
                         "objectCovered": object_covered,
+                        "external_uri": external_uri,
                         "externalReferences": external_references,
                         "coverage_last_result": coverage_last_result,
                         "coverage_valid_from": coverage_valid_from,
                         "coverage_valid_to": coverage_valid_to,
                         "coverage_information": coverage_information,
+                        "auto_enrichment_disable": auto_enrichment_disable,
                     }
                 },
             )
@@ -275,6 +280,16 @@ class SecurityCoverage:
             return self.create(
                 stix_id=stix_object["id"],
                 name=stix_object["name"],
+                external_uri=(
+                    stix_object["external_uri"]
+                    if "external_uri" in stix_object
+                    else None
+                ),
+                auto_enrichment_disable=(
+                    stix_object["auto_enrichment_disable"]
+                    if "auto_enrichment_disable" in stix_object
+                    else False
+                ),
                 coverage_last_result=(
                     stix_object["last_result"] if "last_result" in stix_object else None
                 ),
