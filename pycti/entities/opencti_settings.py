@@ -40,7 +40,23 @@ class Settings:
                 status, message
             }
             platform_theme {
-                id, name, built_in
+                id
+                standard_id
+                entity_type
+                parent_types
+                name
+                theme_background
+                theme_paper
+                theme_nav
+                theme_primary
+                theme_secondary
+                theme_accent:
+                theme_logo
+                theme_logo_collapsed
+                theme_logo_login
+                theme_text_color
+                toConfigurationExport
+                built_in
             }
             platform_map_tile_server_dark
             platform_map_tile_server_light
@@ -157,9 +173,6 @@ class Settings:
             platform_favicon
             platform_email
             platform_language
-            platform_theme {
-                id, name, built_in
-            }
             platform_login_message
             platform_consent_message
             platform_consent_confirm_text
