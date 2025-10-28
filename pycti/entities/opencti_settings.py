@@ -40,7 +40,7 @@ class Settings:
                 status, message
             }
             platform_theme {
-                id, name
+                id, name, built_in
             }
             platform_map_tile_server_dark
             platform_map_tile_server_light
