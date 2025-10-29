@@ -55,7 +55,6 @@ class Settings:
                 theme_logo_collapsed
                 theme_logo_login
                 theme_text_color
-                toConfigurationExport
                 built_in
             }
             platform_map_tile_server_dark
