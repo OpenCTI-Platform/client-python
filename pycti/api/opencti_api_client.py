@@ -3,6 +3,8 @@ import base64
 import datetime
 import io
 import json
+import os
+import tempfile
 from typing import Dict, Tuple, Union
 
 import magic
@@ -166,6 +168,9 @@ class OpenCTIApiClient:
         self.app_logger = self.logger_class("api")
         self.admin_logger = self.logger_class("admin")
 
+        # Setup proxy certificates if provided
+        self._setup_proxy_certificates()
+
         # Define API
         self.api_token = token
         self.api_url = url + "/graphql"
@@ -247,6 +252,63 @@ class OpenCTIApiClient:
         if perform_health_check and not self.health_check():
             raise ValueError(
                 "OpenCTI API is not reachable. Waiting for OpenCTI API to start or check your configuration..."
+            )
+
+    def _setup_proxy_certificates(self):
+        """Setup HTTPS proxy certificates from environment variable.
+
+        Detects HTTPS_CA_CERTIFICATES environment variable and combines
+        proxy certificates with system certificates for SSL verification.
+        """
+        https_ca_certificates = os.getenv("HTTPS_CA_CERTIFICATES")
+        if not https_ca_certificates:
+            return
+
+        try:
+            # Create secure temporary directory
+            cert_dir = tempfile.mkdtemp(prefix="opencti_proxy_certs_")
+
+            # Write proxy certificate to temp file
+            proxy_cert_file = os.path.join(cert_dir, "proxy-ca.crt")
+            with open(proxy_cert_file, "w") as f:
+                f.write(https_ca_certificates)
+
+            # Find system certificates
+            system_cert_paths = [
+                "/etc/ssl/certs/ca-certificates.crt",  # Debian/Ubuntu
+                "/etc/pki/tls/certs/ca-bundle.crt",  # RHEL/CentOS
+                "/etc/ssl/cert.pem",  # Alpine/BSD
+            ]
+
+            # Create combined certificate bundle
+            combined_cert_file = os.path.join(cert_dir, "combined-ca-bundle.crt")
+            with open(combined_cert_file, "w") as combined:
+                # Add system certificates first
+                for system_path in system_cert_paths:
+                    if os.path.exists(system_path):
+                        with open(system_path, "r") as sys_certs:
+                            combined.write(sys_certs.read())
+                            combined.write("\n")
+                        break
+
+                # Add proxy certificate
+                combined.write(https_ca_certificates)
+
+            # Update ssl_verify to use combined certificate bundle
+            self.ssl_verify = combined_cert_file
+
+            # Set environment variables for urllib and other libraries
+            os.environ["REQUESTS_CA_BUNDLE"] = combined_cert_file
+            os.environ["SSL_CERT_FILE"] = combined_cert_file
+
+            self.app_logger.info(
+                "Proxy certificates configured",
+                {"cert_bundle": combined_cert_file},
+            )
+
+        except Exception as e:
+            self.app_logger.warning(
+                "Failed to setup proxy certificates", {"error": str(e)}
             )
 
     def set_applicant_id_header(self, applicant_id):
