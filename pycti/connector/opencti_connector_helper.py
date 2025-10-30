@@ -776,11 +776,14 @@ class ListenStreamBatch(threading.Thread):
         self.max_batches_per_minute = max_batches_per_minute
         if max_batches_per_minute is not None:
             from collections import deque
+
             self.batch_timestamps = deque()
         else:
             self.batch_timestamps = None
 
-    def _process_batch_and_update_state(self, batch, last_msg_id, trigger_reason="unknown"):
+    def _process_batch_and_update_state(
+        self, batch, last_msg_id, trigger_reason="unknown"
+    ):
         """Process a batch of messages and update connector state.
 
         This method handles:
@@ -831,7 +834,7 @@ class ListenStreamBatch(threading.Thread):
                 "trigger_reason": trigger_reason,
                 "elapsed_time": elapsed,
                 "timestamp": time.time(),
-            }
+            },
         }
 
         self.callback(batch_data)
@@ -843,7 +846,7 @@ class ListenStreamBatch(threading.Thread):
                 {
                     "batch_size": len(batch),
                     "trigger": trigger_reason,
-                }
+                },
             )
             self.exit_event.set()
             return False
@@ -895,9 +898,8 @@ class ListenStreamBatch(threading.Thread):
                         "max_batches_per_minute": self.max_batches_per_minute,
                         "current_batch_count": len(self.batch_timestamps),
                         "wait_seconds": round(wait_time, 2),
-                    }
+                    },
                 )
-
 
                 chunk_size = 30.0
                 total_slept = 0.0
@@ -2338,7 +2340,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
             if max_batches_per_minute > 10000:
                 self.connector_logger.warning(
                     "Very high max_batches_per_minute configured",
-                    {"max_batches_per_minute": max_batches_per_minute}
+                    {"max_batches_per_minute": max_batches_per_minute},
                 )
 
         params = self._resolve_stream_parameters(
@@ -2356,9 +2358,7 @@ class OpenCTIConnectorHelper:  # pylint: disable=too-many-public-methods
         if max_batches_per_minute is not None:
             self.connector_logger.info(
                 "Batch rate limiting enabled",
-                {
-                    "max_batches_per_minute": max_batches_per_minute
-                }
+                {"max_batches_per_minute": max_batches_per_minute},
             )
 
         self._listen_stream_batch_thread = ListenStreamBatch(
