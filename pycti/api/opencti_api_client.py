@@ -259,6 +259,7 @@ class OpenCTIApiClient:
 
         Detects HTTPS_CA_CERTIFICATES environment variable and combines
         proxy certificates with system certificates for SSL verification.
+        Supports both inline certificate content and file paths.
         """
         https_ca_certificates = os.getenv("HTTPS_CA_CERTIFICATES")
         if not https_ca_certificates:
@@ -268,10 +269,25 @@ class OpenCTIApiClient:
             # Create secure temporary directory
             cert_dir = tempfile.mkdtemp(prefix="opencti_proxy_certs_")
 
+            # Determine if HTTPS_CA_CERTIFICATES contains inline content or file path
+            cert_content = self._get_certificate_content(https_ca_certificates)
+            if not cert_content:
+                self.app_logger.warning(
+                    "Invalid HTTPS_CA_CERTIFICATES: not a valid certificate or file path",
+                    {
+                        "value": (
+                            https_ca_certificates[:50] + "..."
+                            if len(https_ca_certificates) > 50
+                            else https_ca_certificates
+                        )
+                    },
+                )
+                return
+
             # Write proxy certificate to temp file
             proxy_cert_file = os.path.join(cert_dir, "proxy-ca.crt")
             with open(proxy_cert_file, "w") as f:
-                f.write(https_ca_certificates)
+                f.write(cert_content)
 
             # Find system certificates
             system_cert_paths = [
@@ -292,7 +308,7 @@ class OpenCTIApiClient:
                         break
 
                 # Add proxy certificate
-                combined.write(https_ca_certificates)
+                combined.write(cert_content)
 
             # Update ssl_verify to use combined certificate bundle
             self.ssl_verify = combined_cert_file
@@ -310,6 +326,52 @@ class OpenCTIApiClient:
             self.app_logger.warning(
                 "Failed to setup proxy certificates", {"error": str(e)}
             )
+
+    def _get_certificate_content(self, https_ca_certificates):
+        """Extract certificate content from environment variable.
+
+        Supports both inline certificate content (PEM format) and file paths.
+
+        :param https_ca_certificates: Content from HTTPS_CA_CERTIFICATES env var
+        :type https_ca_certificates: str
+        :return: Certificate content in PEM format or None if invalid
+        :rtype: str or None
+        """
+        # Check if it's inline certificate content (starts with PEM header)
+        if https_ca_certificates.strip().startswith("-----BEGIN CERTIFICATE-----"):
+            self.app_logger.debug(
+                "HTTPS_CA_CERTIFICATES contains inline certificate content"
+            )
+            return https_ca_certificates
+
+        # Check if it's a file path
+        if os.path.isfile(https_ca_certificates.strip()):
+            cert_file_path = https_ca_certificates.strip()
+            try:
+                with open(cert_file_path, "r") as f:
+                    cert_content = f.read()
+                    # Validate it's actually a certificate
+                    if "-----BEGIN CERTIFICATE-----" in cert_content:
+                        self.app_logger.debug(
+                            "HTTPS_CA_CERTIFICATES contains valid certificate file path",
+                            {"file_path": cert_file_path},
+                        )
+                        return cert_content
+                    else:
+                        self.app_logger.warning(
+                            "File at HTTPS_CA_CERTIFICATES path does not contain valid certificate",
+                            {"file_path": cert_file_path},
+                        )
+                        return None
+            except Exception as e:
+                self.app_logger.warning(
+                    "Failed to read certificate file",
+                    {"file_path": cert_file_path, "error": str(e)},
+                )
+                return None
+
+        # Neither inline content nor valid file path
+        return None
 
     def set_applicant_id_header(self, applicant_id):
         self.request_headers["opencti-applicant-id"] = applicant_id
