@@ -777,7 +777,9 @@ class ListenStreamBatch(threading.Thread):
         - Invoking user callback with batch
         - Updating connector state with last processed message ID
         - Handling state reset scenarios
-        - ALWAYS updating state, even if callback fails
+
+        Note: If callback fails, state will NOT be updated and exception will propagate.
+        This matches ListenStream behavior where failed messages are retried on restart.
 
         Args:
             batch: List of SSE message objects to process
@@ -821,28 +823,7 @@ class ListenStreamBatch(threading.Thread):
             }
         }
 
-        # Invoke user's callback function with exception handling
-        callback_failed = False
-        callback_error = None
-        try:
-            self.callback(batch_data)
-        except Exception as ex:
-            callback_failed = True
-            callback_error = ex
-            self.helper.connector_logger.error(
-                "Batch callback failed - continuing with next batch",
-                {
-                    "error": str(ex),
-                    "error_type": type(ex).__name__,
-                    "batch_size": len(batch),
-                    "trigger": trigger_reason,
-                    "last_msg_id": last_msg_id,
-                },
-            )
-            self.helper.metric.inc("error_count")
-
-        # Update state with last processed message EVEN IF CALLBACK FAILED
-        # This ensures the connector progresses through the stream
+        self.callback(batch_data)
         state = self.helper.get_state()
         if state is None:
             # State was reset from UI during processing
@@ -851,7 +832,6 @@ class ListenStreamBatch(threading.Thread):
                 {
                     "batch_size": len(batch),
                     "trigger": trigger_reason,
-                    "callback_failed": callback_failed,
                 }
             )
             self.exit_event.set()
@@ -860,16 +840,6 @@ class ListenStreamBatch(threading.Thread):
         # Update and save state
         state["start_from"] = str(last_msg_id)
         self.helper.set_state(state)
-
-        if callback_failed:
-            self.helper.connector_logger.warning(
-                "State updated despite callback failure - batch will NOT be retried",
-                {
-                    "batch_size": len(batch),
-                    "last_msg_id": last_msg_id,
-                    "error": str(callback_error),
-                }
-            )
 
         return True
 
@@ -1038,6 +1008,12 @@ class ListenStreamBatch(threading.Thread):
                         state = self.helper.get_state()
                         if state is None:
                             self.exit_event.set()
+                        else:
+                            # Only update state if batch is empty to prevent message loss
+                            # If batch has unprocessed messages, state will be updated after batch processing
+                            if len(batch) == 0:
+                                state["start_from"] = str(msg.id)
+                                self.helper.set_state(state)
                         last_msg_id = msg.id
                     else:
                         batch.append(msg)
