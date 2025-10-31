@@ -1,0 +1,99 @@
+{
+  "input": {
+    "observableData": {
+      "type": "x509-certificate",
+      "spec_version": "2.1",
+      "id": "x509-certificate--9a4c2364-468d-5e8f-88de-49cd06cc5249",
+      "is_self_signed": false,
+      "hashes": {
+        "SHA-1": "3ba7e9f806eb30d2f4e3f905e53f07e9acf08e1e",
+        "SHA-256": "73b8ed5becf1ba6493d2e2215a42dfdc7877e91e311ff5e59fb43d094871e699",
+        "MD5": "956f4b8a30ec423d4bbec9ec60df71df"
+      },
+      "serial_number": "3311565258528077731295218946714536456",
+      "signature_algorithm": "SHA256-RSA",
+      "issuer": "C=US, O=DigiCert Inc, CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1",
+      "validity_not_before": "2025-01-02T00:00:00Z",
+      "validity_not_after": "2026-01-21T23:59:59Z",
+      "subject": "C=US, ST=California, L=San Francisco, O=Cloudflare\\, Inc., CN=cloudflare-dns.com",
+      "subject_public_key_algorithm": "ECDSA",
+      "object_marking_refs": [
+        "marking-definition--613f2e26-407d-48c7-9eca-b8e91df99dc9"
+      ],
+      "authority_key_identifier": "748580c066c7df37decfbd2937aa031dbeedcd17",
+      "basic_constraints": "{\"is_ca\":null,\"max_path_len\":null}",
+      "certificate_policies": "[CertificatePolicy(cps=['http://www.digicert.com/CPS'], id='2.23.140.1.2.2', user_notice=Unset())]",
+      "crl_distribution_points": "['http://crl3.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl', 'http://crl4.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl']",
+      "extended_key_usage": "{\"client_auth\":true,\"server_auth\":true}",
+      "key_usage": "{\"certificate_sign\":null,\"content_commitment\":null,\"crl_sign\":null,\"data_encipherment\":null,\"decipher_only\":null,\"digital_signature\":true,\"encipher_only\":null,\"key_agreement\":true,\"key_encipherment\":null,\"value\":17}",
+      "x_opencti_created_by_ref": "identity--6f9f67f6-7eb2-5397-a02f-d8130aadb954",
+      "nb_deps": 1
+    },
+    "createdBy": "identity--6f9f67f6-7eb2-5397-a02f-d8130aadb954",
+    "objectMarking": [
+      "marking-definition--613f2e26-407d-48c7-9eca-b8e91df99dc9"
+    ],
+    "objectLabel": [],
+    "externalReferences": [],
+    "objectOrganization": [],
+    "update": false
+  },
+  "output": {
+    "type": "X509-Certificate",
+    "stix_id": "x509-certificate--9a4c2364-468d-5e8f-88de-49cd06cc5249",
+    "x_opencti_score": null,
+    "x_opencti_description": null,
+    "createIndicator": false,
+    "createdBy": "identity--6f9f67f6-7eb2-5397-a02f-d8130aadb954",
+    "objectMarking": [
+      "marking-definition--613f2e26-407d-48c7-9eca-b8e91df99dc9"
+    ],
+    "objectOrganization": [],
+    "objectLabel": [],
+    "externalReferences": [],
+    "update": false,
+    "X509Certificate": {
+      "hashes": [
+        {
+          "algorithm": "SHA-1",
+          "hash": "3ba7e9f806eb30d2f4e3f905e53f07e9acf08e1e"
+        },
+        {
+          "algorithm": "SHA-256",
+          "hash": "73b8ed5becf1ba6493d2e2215a42dfdc7877e91e311ff5e59fb43d094871e699"
+        },
+        {
+          "algorithm": "MD5",
+          "hash": "956f4b8a30ec423d4bbec9ec60df71df"
+        }
+      ],
+      "is_self_signed": false,
+      "version": null,
+      "serial_number": "3311565258528077731295218946714536456",
+      "signature_algorithm": "SHA256-RSA",
+      "issuer": "C=US, O=DigiCert Inc, CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1",
+      "validity_not_before": "2025-01-02T00:00:00Z",
+      "validity_not_after": "2026-01-21T23:59:59Z",
+      "subject": "C=US, ST=California, L=San Francisco, O=Cloudflare\\, Inc., CN=cloudflare-dns.com",
+      "subject_public_key_algorithm": "ECDSA",
+      "subject_public_key_modulus": null,
+      "subject_public_key_exponent": null,
+      "basic_constraints": "{\"is_ca\":null,\"max_path_len\":null}",
+      "name_constraints": null,
+      "policy_constraints": null,
+      "key_usage": "{\"certificate_sign\":null,\"content_commitment\":null,\"crl_sign\":null,\"data_encipherment\":null,\"decipher_only\":null,\"digital_signature\":true,\"encipher_only\":null,\"key_agreement\":true,\"key_encipherment\":null,\"value\":17}",
+      "extended_key_usage": "{\"client_auth\":true,\"server_auth\":true}",
+      "subject_key_identifier": null,
+      "authority_key_identifier": "748580c066c7df37decfbd2937aa031dbeedcd17",
+      "subject_alternative_name": null,
+      "issuer_alternative_name": null,
+      "subject_directory_attributes": null,
+      "crl_distribution_points": "['http://crl3.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl', 'http://crl4.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crl']",
+      "inhibit_any_policy": null,
+      "private_key_usage_period_not_before": null,
+      "private_key_usage_period_not_after": null,
+      "certificate_policies": "[CertificatePolicy(cps=['http://www.digicert.com/CPS'], id='2.23.140.1.2.2', user_notice=Unset())]",
+      "policy_mappings": null
+    }
+  }
+}
