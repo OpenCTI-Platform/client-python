@@ -177,12 +177,47 @@ CgKCAQEA0Z3VS5JJcds3xfn/ygWyF0qJDr9oYRH/9dMfqHCOq45DqMVJLJBJnMzN
         assert not hasattr(api_client, "ssl_verify") or api_client.ssl_verify is False
 
     def test_setup_proxy_certificates_exception_handling(self, api_client):
-        """Test _setup_proxy_certificates handles exceptions gracefully."""
+        """Test _setup_proxy_certificates raises exception on error."""
         with patch.dict(os.environ, {"HTTPS_CA_CERTIFICATES": self.SAMPLE_CERTIFICATE}):
             with patch("tempfile.mkdtemp", side_effect=Exception("Mock error")):
-                api_client._setup_proxy_certificates()
+                with pytest.raises(Exception, match="Mock error"):
+                    api_client._setup_proxy_certificates()
 
-        # Should log warning and continue
-        api_client.app_logger.warning.assert_called_with(
+        # Should log error before raising
+        api_client.app_logger.error.assert_called_with(
             "Failed to setup proxy certificates", {"error": "Mock error"}
         )
+
+    def test_cleanup_temp_certificates_successful(self, api_client):
+        """Test _cleanup_temp_certificates successfully removes temporary directory."""
+        # Create a real temporary directory
+        temp_dir = tempfile.mkdtemp(prefix="opencti_test_")
+        api_client.temp_cert_dir = temp_dir
+
+        # Call cleanup
+        api_client._cleanup_temp_certificates()
+
+        # Verify directory was removed and temp_cert_dir reset
+        assert not os.path.exists(temp_dir)
+        assert api_client.temp_cert_dir is None
+
+    @patch("shutil.rmtree")
+    @patch("os.path.exists")
+    def test_cleanup_temp_certificates_with_error(
+        self, mock_exists, mock_rmtree, api_client
+    ):
+        """Test _cleanup_temp_certificates handles errors during removal."""
+        temp_dir = "/tmp/opencti_test_certs"
+        api_client.temp_cert_dir = temp_dir
+        mock_exists.return_value = True
+        mock_rmtree.side_effect = OSError("Permission denied")
+
+        # Call cleanup - should not raise exception
+        api_client._cleanup_temp_certificates()
+
+        # Should log warning and reset temp_cert_dir
+        api_client.app_logger.warning.assert_called_with(
+            "Failed to cleanup temporary certificates",
+            {"cert_dir": temp_dir, "error": "Permission denied"},
+        )
+        assert api_client.temp_cert_dir is None
