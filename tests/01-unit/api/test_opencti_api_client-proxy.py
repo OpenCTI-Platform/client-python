@@ -166,6 +166,12 @@ CgKCAQEA0Z3VS5JJcds3xfn/ygWyF0qJDr9oYRH/9dMfqHCOq45DqMVJLJBJnMzN
     @patch.dict(os.environ, {"HTTPS_CA_CERTIFICATES": "/path/to/cert.crt"})
     def test_setup_proxy_certificates_with_invalid_path(self, mock_mkdtemp, api_client):
         """Test _setup_proxy_certificates with invalid certificate file path."""
+        from pycti.api import opencti_api_client
+
+        # Reset global state to ensure clean test
+        opencti_api_client._PROXY_CERT_BUNDLE = None
+        opencti_api_client._PROXY_CERT_DIR = None
+
         mock_mkdtemp.return_value = "/tmp/test_certs"
 
         # Mock _get_certificate_content to return None (invalid)
@@ -176,8 +182,18 @@ CgKCAQEA0Z3VS5JJcds3xfn/ygWyF0qJDr9oYRH/9dMfqHCOq45DqMVJLJBJnMzN
         api_client.app_logger.warning.assert_called()
         assert not hasattr(api_client, "ssl_verify") or api_client.ssl_verify is False
 
+        # Cleanup
+        opencti_api_client._PROXY_CERT_BUNDLE = None
+        opencti_api_client._PROXY_CERT_DIR = None
+
     def test_setup_proxy_certificates_exception_handling(self, api_client):
         """Test _setup_proxy_certificates raises exception on error."""
+        from pycti.api import opencti_api_client
+
+        # Reset global state to ensure clean test
+        opencti_api_client._PROXY_CERT_BUNDLE = None
+        opencti_api_client._PROXY_CERT_DIR = None
+
         with patch.dict(os.environ, {"HTTPS_CA_CERTIFICATES": self.SAMPLE_CERTIFICATE}):
             with patch("tempfile.mkdtemp", side_effect=Exception("Mock error")):
                 with pytest.raises(Exception, match="Mock error"):
@@ -188,36 +204,79 @@ CgKCAQEA0Z3VS5JJcds3xfn/ygWyF0qJDr9oYRH/9dMfqHCOq45DqMVJLJBJnMzN
             "Failed to setup proxy certificates", {"error": "Mock error"}
         )
 
-    def test_cleanup_temp_certificates_successful(self, api_client):
-        """Test _cleanup_temp_certificates successfully removes temporary directory."""
+        # Cleanup
+        opencti_api_client._PROXY_CERT_BUNDLE = None
+        opencti_api_client._PROXY_CERT_DIR = None
+
+    def test_cleanup_proxy_certificates_successful(self):
+        """Test _cleanup_proxy_certificates successfully removes temporary directory."""
+        from pycti.api import opencti_api_client
+
         # Create a real temporary directory
         temp_dir = tempfile.mkdtemp(prefix="opencti_test_")
-        api_client.temp_cert_dir = temp_dir
+        opencti_api_client._PROXY_CERT_DIR = temp_dir
 
         # Call cleanup
-        api_client._cleanup_temp_certificates()
+        opencti_api_client._cleanup_proxy_certificates()
 
-        # Verify directory was removed and temp_cert_dir reset
+        # Verify directory was removed and _PROXY_CERT_DIR reset
         assert not os.path.exists(temp_dir)
-        assert api_client.temp_cert_dir is None
+        assert opencti_api_client._PROXY_CERT_DIR is None
 
-    @patch("shutil.rmtree")
-    @patch("os.path.exists")
-    def test_cleanup_temp_certificates_with_error(
-        self, mock_exists, mock_rmtree, api_client
-    ):
-        """Test _cleanup_temp_certificates handles errors during removal."""
+    @patch("pycti.api.opencti_api_client.shutil.rmtree")
+    @patch("pycti.api.opencti_api_client.os.path.exists")
+    def test_cleanup_proxy_certificates_with_error(self, mock_exists, mock_rmtree):
+        """Test _cleanup_proxy_certificates handles errors during removal."""
+        from pycti.api import opencti_api_client
+
         temp_dir = "/tmp/opencti_test_certs"
-        api_client.temp_cert_dir = temp_dir
+        opencti_api_client._PROXY_CERT_DIR = temp_dir
         mock_exists.return_value = True
         mock_rmtree.side_effect = OSError("Permission denied")
 
         # Call cleanup - should not raise exception
-        api_client._cleanup_temp_certificates()
+        opencti_api_client._cleanup_proxy_certificates()
 
-        # Should log warning and reset temp_cert_dir
-        api_client.app_logger.warning.assert_called_with(
-            "Failed to cleanup temporary certificates",
-            {"cert_dir": temp_dir, "error": "Permission denied"},
-        )
-        assert api_client.temp_cert_dir is None
+        # Should reset _PROXY_CERT_DIR
+        assert opencti_api_client._PROXY_CERT_DIR is None
+
+    def test_singleton_behavior_multiple_instances(self):
+        """Test that multiple instances reuse the same certificate bundle."""
+        from pycti.api import opencti_api_client
+
+        # Reset global state
+        opencti_api_client._PROXY_CERT_BUNDLE = None
+        opencti_api_client._PROXY_CERT_DIR = None
+
+        with patch.dict(os.environ, {"HTTPS_CA_CERTIFICATES": self.SAMPLE_CERTIFICATE}):
+            with patch("tempfile.mkdtemp", return_value="/tmp/test_certs"):
+                with patch("builtins.open", mock_open()):
+                    with patch("os.path.exists", return_value=True):
+                        # Create first instance
+                        client1 = OpenCTIApiClient(
+                            url="http://localhost:4000",
+                            token="test-token",
+                            ssl_verify=False,
+                            perform_health_check=False,
+                        )
+
+                        # Verify certificate bundle was created
+                        assert opencti_api_client._PROXY_CERT_BUNDLE is not None
+                        first_bundle = opencti_api_client._PROXY_CERT_BUNDLE
+                        assert client1.ssl_verify == first_bundle
+
+                        # Create second instance
+                        client2 = OpenCTIApiClient(
+                            url="http://localhost:4000",
+                            token="test-token2",
+                            ssl_verify=False,
+                            perform_health_check=False,
+                        )
+
+                        # Verify same bundle is reused
+                        assert opencti_api_client._PROXY_CERT_BUNDLE == first_bundle
+                        assert client2.ssl_verify == first_bundle
+
+        # Cleanup
+        opencti_api_client._PROXY_CERT_BUNDLE = None
+        opencti_api_client._PROXY_CERT_DIR = None
