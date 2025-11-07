@@ -298,18 +298,6 @@ class OpenCTIApiClient:
 
                 # Determine if HTTPS_CA_CERTIFICATES contains inline content or file path
                 cert_content = self._get_certificate_content(https_ca_certificates)
-                if not cert_content:
-                    self.app_logger.warning(
-                        "Invalid HTTPS_CA_CERTIFICATES: not a valid certificate or file path",
-                        {
-                            "value": (
-                                https_ca_certificates[:50] + "..."
-                                if len(https_ca_certificates) > 50
-                                else https_ca_certificates
-                            )
-                        },
-                    )
-                    return
 
                 # Write proxy certificate to temp file
                 proxy_cert_file = os.path.join(cert_dir, "proxy-ca.crt")
@@ -373,8 +361,9 @@ class OpenCTIApiClient:
 
         :param https_ca_certificates: Content from HTTPS_CA_CERTIFICATES env var
         :type https_ca_certificates: str
-        :return: Certificate content in PEM format or None if invalid
-        :rtype: str or None
+        :return: Certificate content in PEM format
+        :rtype: str
+        :raises ValueError: If the certificate content is invalid or cannot be read
         """
         # Strip whitespace once at the beginning
         stripped_https_ca_certificates = https_ca_certificates.strip()
@@ -400,20 +389,21 @@ class OpenCTIApiClient:
                         )
                         return cert_content
                     else:
-                        self.app_logger.warning(
-                            "File at HTTPS_CA_CERTIFICATES path does not contain valid certificate",
-                            {"file_path": cert_file_path},
+                        raise ValueError(
+                            f"File at HTTPS_CA_CERTIFICATES path does not contain valid certificate: {cert_file_path}"
                         )
-                        return None
+            except ValueError:
+                # Re-raise ValueError from certificate validation
+                raise
             except Exception as e:
-                self.app_logger.warning(
-                    "Failed to read certificate file",
-                    {"file_path": cert_file_path, "error": str(e)},
+                raise ValueError(
+                    f"Failed to read certificate file at {cert_file_path}: {str(e)}"
                 )
-                return None
 
         # Neither inline content nor valid file path
-        return None
+        raise ValueError(
+            f"HTTPS_CA_CERTIFICATES is not a valid certificate or file path: {https_ca_certificates[:50]}..."
+        )
 
     def set_applicant_id_header(self, applicant_id):
         self.request_headers["opencti-applicant-id"] = applicant_id
