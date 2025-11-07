@@ -75,13 +75,11 @@ CgKCAQEA0Z3VS5JJcds3xfn/ygWyF0qJDr9oYRH/9dMfqHCOq45DqMVJLJBJnMzN
             invalid_file_path = invalid_file.name
 
         try:
-            result = api_client._get_certificate_content(invalid_file_path)
-
-            assert result is None
-            api_client.app_logger.warning.assert_called_with(
-                "File at HTTPS_CA_CERTIFICATES path does not contain valid certificate",
-                {"file_path": invalid_file_path},
-            )
+            with pytest.raises(
+                ValueError,
+                match="File at HTTPS_CA_CERTIFICATES path does not contain valid certificate",
+            ):
+                api_client._get_certificate_content(invalid_file_path)
         finally:
             # Clean up
             os.unlink(invalid_file_path)
@@ -90,15 +88,19 @@ CgKCAQEA0Z3VS5JJcds3xfn/ygWyF0qJDr9oYRH/9dMfqHCOq45DqMVJLJBJnMzN
         """Test _get_certificate_content with a nonexistent file path."""
         nonexistent_path = "/tmp/nonexistent_certificate.crt"
 
-        result = api_client._get_certificate_content(nonexistent_path)
-
-        assert result is None
+        with pytest.raises(
+            ValueError,
+            match="HTTPS_CA_CERTIFICATES is not a valid certificate or file path",
+        ):
+            api_client._get_certificate_content(nonexistent_path)
 
     def test_get_certificate_content_invalid_content(self, api_client):
         """Test _get_certificate_content with invalid content (not PEM, not file)."""
-        result = api_client._get_certificate_content(self.INVALID_CONTENT)
-
-        assert result is None
+        with pytest.raises(
+            ValueError,
+            match="HTTPS_CA_CERTIFICATES is not a valid certificate or file path",
+        ):
+            api_client._get_certificate_content(self.INVALID_CONTENT)
 
     def test_get_certificate_content_whitespace_handling(self, api_client):
         """Test _get_certificate_content handles whitespace correctly."""
@@ -174,13 +176,19 @@ CgKCAQEA0Z3VS5JJcds3xfn/ygWyF0qJDr9oYRH/9dMfqHCOq45DqMVJLJBJnMzN
 
         mock_mkdtemp.return_value = "/tmp/test_certs"
 
-        # Mock _get_certificate_content to return None (invalid)
-        with patch.object(api_client, "_get_certificate_content", return_value=None):
-            api_client._setup_proxy_certificates()
+        # Mock _get_certificate_content to raise ValueError (invalid)
+        with patch.object(
+            api_client,
+            "_get_certificate_content",
+            side_effect=ValueError("Invalid certificate"),
+        ):
+            with pytest.raises(ValueError, match="Invalid certificate"):
+                api_client._setup_proxy_certificates()
 
-        # Should log warning and return early
-        api_client.app_logger.warning.assert_called()
-        assert not hasattr(api_client, "ssl_verify") or api_client.ssl_verify is False
+        # Should log error before raising
+        api_client.app_logger.error.assert_called_with(
+            "Failed to setup proxy certificates", {"error": "Invalid certificate"}
+        )
 
         # Cleanup
         opencti_api_client._PROXY_CERT_BUNDLE = None
