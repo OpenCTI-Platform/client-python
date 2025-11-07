@@ -1,9 +1,12 @@
 # coding: utf-8
+import atexit
 import base64
 import datetime
 import io
 import json
 import os
+import shutil
+import signal
 import tempfile
 from typing import Dict, Tuple, Union
 
@@ -168,8 +171,17 @@ class OpenCTIApiClient:
         self.app_logger = self.logger_class("api")
         self.admin_logger = self.logger_class("admin")
 
+        # Initialize temp certificate directory tracker
+        self.temp_cert_dir = None
+
         # Setup proxy certificates if provided
         self._setup_proxy_certificates()
+
+        # Register cleanup handlers for temp certificates
+        if self.temp_cert_dir:
+            atexit.register(self._cleanup_temp_certificates)
+            signal.signal(signal.SIGTERM, self._signal_handler)
+            signal.signal(signal.SIGINT, self._signal_handler)
 
         # Define API
         self.api_token = token
@@ -268,6 +280,7 @@ class OpenCTIApiClient:
         try:
             # Create secure temporary directory
             cert_dir = tempfile.mkdtemp(prefix="opencti_proxy_certs_")
+            self.temp_cert_dir = cert_dir
 
             # Determine if HTTPS_CA_CERTIFICATES contains inline content or file path
             cert_content = self._get_certificate_content(https_ca_certificates)
@@ -323,9 +336,10 @@ class OpenCTIApiClient:
             )
 
         except Exception as e:
-            self.app_logger.warning(
+            self.app_logger.error(
                 "Failed to setup proxy certificates", {"error": str(e)}
             )
+            raise
 
     def _get_certificate_content(self, https_ca_certificates):
         """Extract certificate content from environment variable.
@@ -337,16 +351,19 @@ class OpenCTIApiClient:
         :return: Certificate content in PEM format or None if invalid
         :rtype: str or None
         """
+        # Strip whitespace once at the beginning
+        stripped_https_ca_certificates = https_ca_certificates.strip()
+        
         # Check if it's inline certificate content (starts with PEM header)
-        if https_ca_certificates.strip().startswith("-----BEGIN CERTIFICATE-----"):
+        if stripped_https_ca_certificates.startswith("-----BEGIN CERTIFICATE-----"):
             self.app_logger.debug(
                 "HTTPS_CA_CERTIFICATES contains inline certificate content"
             )
             return https_ca_certificates
 
         # Check if it's a file path
-        if os.path.isfile(https_ca_certificates.strip()):
-            cert_file_path = https_ca_certificates.strip()
+        if os.path.isfile(stripped_https_ca_certificates):
+            cert_file_path = stripped_https_ca_certificates
             try:
                 with open(cert_file_path, "r") as f:
                     cert_content = f.read()
@@ -372,6 +389,43 @@ class OpenCTIApiClient:
 
         # Neither inline content nor valid file path
         return None
+
+    def _cleanup_temp_certificates(self):
+        """Clean up temporary certificate directory.
+        
+        This method is called on normal program exit via atexit
+        or when receiving termination signals (SIGTERM/SIGINT).
+        """
+        if self.temp_cert_dir and os.path.exists(self.temp_cert_dir):
+            try:
+                shutil.rmtree(self.temp_cert_dir)
+                self.app_logger.debug(
+                    "Cleaned up temporary certificates",
+                    {"cert_dir": self.temp_cert_dir}
+                )
+            except Exception as e:
+                self.app_logger.warning(
+                    "Failed to cleanup temporary certificates",
+                    {"cert_dir": self.temp_cert_dir, "error": str(e)}
+                )
+            finally:
+                self.temp_cert_dir = None
+
+    def _signal_handler(self, signum, frame):
+        """Handle termination signals (SIGTERM/SIGINT).
+        
+        Performs cleanup and then raises SystemExit to allow
+        normal shutdown procedures to complete.
+        
+        :param signum: Signal number
+        :param frame: Current stack frame
+        """
+        self.app_logger.info(
+            "Received termination signal, cleaning up",
+            {"signal": signum}
+        )
+        self._cleanup_temp_certificates()
+        raise SystemExit(0)
 
     def set_applicant_id_header(self, applicant_id):
         self.request_headers["opencti-applicant-id"] = applicant_id
